@@ -39,7 +39,7 @@ func NewAPICommand(ctx context.Context, basename string) *cobra.Command {
 		},
 	}
 
-	nfs := opts.AddFlags(cmd.Flags())
+	nfs := opts.AddFlags(cmd.Flags(), basename)
 	flag.SetUsageAndHelpFunc(cmd, *nfs, 80)
 
 	return cmd

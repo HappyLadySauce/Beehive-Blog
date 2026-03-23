@@ -21,12 +21,12 @@ func NewOptions() *Options {
 }
 
 // AddFlags adds the flags to the specified FlagSet and returns the grouped flag sets.
-func (o *Options) AddFlags(fs *pflag.FlagSet) *flag.NamedFlagSets {
+func (o *Options) AddFlags(fs *pflag.FlagSet, basename string) *flag.NamedFlagSets {
 	nfs := &flag.NamedFlagSets{}
 
 	// add the flags to the NamedFlagSets
 	configFS := nfs.FlagSet("Config")
-	options.AddConfigFlag(configFS)
+	options.AddConfigFlag(configFS, basename)
 
 	serverFS := nfs.FlagSet("Server")
 	o.Server.AddFlags(serverFS)

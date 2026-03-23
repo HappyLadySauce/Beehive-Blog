@@ -14,7 +14,6 @@ import (
 )
 
 const (
-	basename       = "Beehive-Blog"
 	configFlagName = "config"
 )
 
@@ -27,7 +26,7 @@ func init() {
 
 // addConfigFlag adds flags for a specific server to the specified FlagSet
 // object.
-func AddConfigFlag(fs *pflag.FlagSet) {
+func AddConfigFlag(fs *pflag.FlagSet, basename string) {
 	fs.AddFlag(pflag.Lookup(configFlagName))
 
 	viper.AutomaticEnv()
