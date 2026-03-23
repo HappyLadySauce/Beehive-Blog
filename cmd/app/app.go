@@ -12,11 +12,7 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/options"
 )
 
-const (
-	basename = "Beehive-Blog"
-)
-
-func NewAPICommand(ctx context.Context) *cobra.Command {
+func NewAPICommand(ctx context.Context, basename string) *cobra.Command {
 	opts := options.NewOptions()
 	cmd := &cobra.Command{
 		Use:   basename,

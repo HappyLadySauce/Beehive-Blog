@@ -9,9 +9,13 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app"
 )
 
+const (
+	basename = "Beehive-Blog"
+)
+
 func main() {
 	ctx := context.TODO()
-	cmd := app.NewAPICommand(ctx)
+	cmd := app.NewAPICommand(ctx, basename)
 	code := cli.Run(cmd)
 	os.Exit(code)
 }
