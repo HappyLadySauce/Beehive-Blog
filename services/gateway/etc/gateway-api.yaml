@@ -1,0 +1,50 @@
+Name: gateway-api
+Host: 0.0.0.0
+Port: 8888
+
+# Redis 配置
+RedisHost: "localhost:6379"
+RedisPass: ""
+RedisDB: 0
+
+# RabbitMQ 配置（可选）
+RabbitMQURL: "amqp://guest:guest@localhost:5672/"
+RabbitMQExchange: "im.events"
+RabbitMQQueue: "gateway.push.default"
+RabbitMQRouteKey: "message.created"
+
+# IP 地理位置查询配置（可选）
+# 优先级顺序：GeoIP2 > IPIP > 百度 > ip-api
+# 会自动跳过未启用或配置错误的查询源
+IPQuery:
+  # 查询超时时间（秒）
+  Timeout: 5
+  
+  # GeoIP2 本地数据库（优先级最高，推荐生产环境使用）
+  # 支持自动下载 GeoLite2 免费版（需要 MaxMind License Key）
+  # 申请地址：https://www.maxmind.com/en/geolite2/signup
+  GeoIP2Enabled: true
+  GeoIP2CityDB: "./data/GeoLite2-City.mmdb"
+  GeoIP2ISPDB: "./data/GeoLite2-ASN.mmdb"
+  
+  # GeoLite2 自动下载配置
+  # 启用后会自动下载并每日更新数据库
+  # ⚠️ 敏感信息建议通过环境变量 GEO_LITE2_LICENSE_KEY 传入，不要硬编码在配置文件中
+  GeoLite2AutoDownload: true
+  GeoLite2LicenseKey: ""  # 留空则从环境变量 GEO_LITE2_LICENSE_KEY 读取
+  GeoLite2DataDir: "./data"
+  
+  # IPIP.net 在线API（国内精准，需要申请 Token）
+  # 官网：https://www.ipip.net/
+  IPIPEnabled: false
+  IPIPToken: ""  # 留空则从环境变量 IPIP_TOKEN 读取
+  
+  # 百度地图 IP 定位 API（国内）
+  # 官网：https://lbsyun.baidu.com/
+  BaiduEnabled: false
+  BaiduAK: ""  # 留空则从环境变量 BAIDU_AK 读取
+  
+  # ip-api.com 免费 API（国内外，无需注册，有速率限制）
+  # 适合开发测试使用
+  IPAPIEnabled: true
+  IPAPILang: "zh-CN"
