@@ -1,33 +1,41 @@
 package options
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/spf13/pflag"
 )
 
+const (
+	DefaultBindAddress = "127.0.0.1"
+	DefaultBindPort    = 8081
+)
+
 type ServerOptions struct {
-	BindAddress string `json:"bind-address" mapstructure:"bind-address"`
-	BindPort    int    `json:"bind-port"    mapstructure:"bind-port"`
+	BindAddress string `json:"bindAddress" mapstructure:"bindAddress"`
+	BindPort    int    `json:"bindPort"    mapstructure:"bindPort"`
 }
 
 func NewServerOptions() *ServerOptions {
-	return &ServerOptions{}
+	return &ServerOptions{
+		BindAddress: DefaultBindAddress,
+		BindPort:    DefaultBindPort,
+	}
 }
 
-
-func (i *ServerOptions) Validate() []error {
-	var errors []error
+func (i *ServerOptions) Validate() error {
+	var errs []error
 	if i.BindAddress == "" {
-		errors = append(errors, fmt.Errorf("bind-address is required"))
+		errs = append(errs, fmt.Errorf("bindAddress is empty"))
 	}
-	if i.BindPort == 0 {
-		errors = append(errors, fmt.Errorf("bind-port is required"))
+	if i.BindPort <= 0 || i.BindPort > 65535 {
+		errs = append(errs, fmt.Errorf("bindPort is out of range"))
 	}
-	return errors
-}	
+	return errors.Join(errs...)
+}
 
 func (i *ServerOptions) AddFlags(fs *pflag.FlagSet) {
-	fs.StringVarP(&i.BindAddress, "bind-address", "b", "127.0.0.1", "IP address on which to serve the --port, set to 0.0.0.0 for all interfaces")
-	fs.IntVarP(&i.BindPort, "bind-port", "p", 8081, "port to listen to for incoming requests")
+	fs.StringVarP(&i.BindAddress, "bindAddress", "b", i.BindAddress, "IP address on which to serve the --port, set to 0.0.0.0 for all interfaces")
+	fs.IntVarP(&i.BindPort, "bindPort", "p", i.BindPort, "port to listen to for incoming requests")
 }
