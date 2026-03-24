@@ -8,8 +8,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/component-base/cli/flag"
+	"k8s.io/klog/v2"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/options"
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/router"
 )
 
 func NewAPICommand(ctx context.Context, basename string) *cobra.Command {
@@ -41,10 +43,23 @@ func NewAPICommand(ctx context.Context, basename string) *cobra.Command {
 
 	nfs := opts.AddFlags(cmd.Flags(), basename)
 	flag.SetUsageAndHelpFunc(cmd, *nfs, 80)
-
+	
 	return cmd
 }
 
 func run(ctx context.Context, opts *options.Options) error {
+	serve(opts)
+
+	<-ctx.Done()
+	os.Exit(0)
 	return nil
+}
+
+
+func serve(opt *options.Options) {
+	address := fmt.Sprintf("%s:%d", opt.Server.BindAddress, opt.Server.BindPort)
+	klog.V(1).InfoS("Listening and serving on", "address", address)
+	go func() {
+		klog.Fatal(router.Router().Run(address))
+	}()
 }
