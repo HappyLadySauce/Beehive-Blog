@@ -20,7 +20,7 @@ const (
 var cfgFile string
 
 func init() {
-	pflag.StringVarP(&cfgFile, "config", "c", cfgFile, "Read configuration from specified `FILE`, "+
+	pflag.StringVarP(&cfgFile, "config", "f", cfgFile, "Read configuration from specified `FILE`, "+
 		"support JSON, TOML, YAML, HCL, or Java properties formats.")
 }
 
