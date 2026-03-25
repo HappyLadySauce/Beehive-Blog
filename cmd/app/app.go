@@ -6,13 +6,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"k8s.io/component-base/cli/flag"
 	"k8s.io/klog/v2"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/options"
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/router"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 )
 
@@ -71,8 +71,22 @@ func NewAPICommand(ctx context.Context, basename string) *cobra.Command {
 }
 
 func run(ctx context.Context, serviceCtx *svc.ServiceContext) error {
-	// 创建 HTTP 服务器
-	srv := serve(serviceCtx)
+	return serve(ctx, serviceCtx)
+}
+
+func serve(ctx context.Context, svcCtx *svc.ServiceContext) error {
+	address := fmt.Sprintf("%s:%d", svcCtx.Config.ServerOptions.BindAddress, svcCtx.Config.ServerOptions.BindPort)
+	klog.InfoS("Listening and serving on", "address", address)
+
+	// 使用 router.NewServer 创建 http.Server 以支持优雅关闭
+	srv := router.NewServer(address)
+
+	// 在 goroutine 中启动服务器
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			klog.Fatal(err)
+		}
+	}()
 
 	// 等待 context 取消信号（优雅关闭）
 	<-ctx.Done()
@@ -89,37 +103,4 @@ func run(ctx context.Context, serviceCtx *svc.ServiceContext) error {
 
 	klog.InfoS("Server exited gracefully")
 	return nil
-}
-
-func serve(svcCtx *svc.ServiceContext) *http.Server {
-	address := fmt.Sprintf("%s:%d", svcCtx.Config.ServerOptions.BindAddress, svcCtx.Config.ServerOptions.BindPort)
-	klog.InfoS("Listening and serving on", "address", address)
-
-	// 创建 gin 引擎
-	gin.SetMode(gin.ReleaseMode)
-	router := gin.New()
-	router.Use(gin.Recovery())
-
-	// 注册路由
-	router.GET("/livez", func(c *gin.Context) {
-		c.String(http.StatusOK, "livez")
-	})
-	router.GET("/readyz", func(c *gin.Context) {
-		c.String(http.StatusOK, "readyz")
-	})
-
-	// 创建 HTTP 服务器
-	srv := &http.Server{
-		Addr:    address,
-		Handler: router,
-	}
-
-	// 在 goroutine 中启动服务器
-	go func() {
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			klog.Fatal(err)
-		}
-	}()
-
-	return srv
 }

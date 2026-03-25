@@ -1,6 +1,8 @@
 package router
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -62,4 +64,13 @@ func V1() *gin.RouterGroup {
 // Router returns the main Gin engine instance.
 func Router() *gin.Engine {
 	return router
+}
+
+// NewServer creates an http.Server with the given address using the Gin router.
+// This allows for graceful shutdown.
+func NewServer(addr string) *http.Server {
+	return &http.Server{
+		Addr:    addr,
+		Handler: router,
+	}
 }
