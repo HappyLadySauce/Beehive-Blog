@@ -24,16 +24,13 @@ type ServiceContext struct {
 // 初始化数据库连接和 Redis 连接
 func NewServiceContext(c options.Options) (*ServiceContext, error) {
 	// 构建 PostgreSQL DSN（使用 keyword/value 格式）
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable charset=%s time_zone=%s parseTime=%v loc=%s",
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable TimeZone=%s",
 		c.DatabaseOptions.Host,
 		c.DatabaseOptions.Username,
 		c.DatabaseOptions.Password,
 		c.DatabaseOptions.Database,
 		c.DatabaseOptions.Port,
-		c.DatabaseOptions.Charset,
 		c.DatabaseOptions.TimeZone,
-		c.DatabaseOptions.ParseTime,
-		c.DatabaseOptions.Loc,
 	)
 
 	// 初始化数据库连接

@@ -4,7 +4,7 @@ server:
 
 # 数据库配置
 db:
-    host: localhost         # 数据库主机地址
+    host: 127.0.0.1         # 数据库主机地址
     port: 5432              # 数据库端口
     username: Beehive-Blog  # 数据库用户名
     password: Beehive-Blog  # 数据库密码
@@ -16,7 +16,7 @@ db:
 
 # Redis 配置
 redis:
-    redisHost: localhost:6379   # Redis 主机地址
+    redisHost: 127.0.0.1:6379       # Redis 主机地址
     redisPass: ""               # Redis 密码，无密码时留空
     redisDB: 0                  # Redis 数据库索引
 

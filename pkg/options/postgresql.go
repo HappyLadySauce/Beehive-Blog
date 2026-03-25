@@ -13,10 +13,7 @@ const (
 	DefaultDatabaseUsername  = "Beehive-Blog"
 	DefaultDatabasePassword  = "Beehive-Blog"
 	DefaultDatabaseDatabase  = "Beehive-Blog"
-	DefaultDatabaseCharset   = "utf8mb4"
 	DefaultDatabaseTimeZone  = "Asia/Shanghai"
-	DefaultDatabaseParseTime = true
-	DefaultDatabaseLoc       = "Local"
 )
 
 type DatabaseOptions struct {
@@ -25,10 +22,7 @@ type DatabaseOptions struct {
 	Username  string `json:"username" mapstructure:"username"`
 	Password  string `json:"password" mapstructure:"password"`
 	Database  string `json:"database" mapstructure:"database"`
-	Charset   string `json:"charset" mapstructure:"charset"`
 	TimeZone  string `json:"timeZone" mapstructure:"timeZone"`
-	ParseTime bool   `json:"parseTime" mapstructure:"parseTime"`
-	Loc       string `json:"loc" mapstructure:"loc"`
 }
 
 func NewDatabaseOptions() *DatabaseOptions {
@@ -38,10 +32,7 @@ func NewDatabaseOptions() *DatabaseOptions {
 		Username:  DefaultDatabaseUsername,
 		Password:  DefaultDatabasePassword,
 		Database:  DefaultDatabaseDatabase,
-		Charset:   DefaultDatabaseCharset,
 		TimeZone:  DefaultDatabaseTimeZone,
-		ParseTime: DefaultDatabaseParseTime,
-		Loc:       DefaultDatabaseLoc,
 	}
 }
 
@@ -65,12 +56,6 @@ func (o *DatabaseOptions) Validate() error {
 	if o.TimeZone == "" {
 		errs = append(errs, fmt.Errorf("timeZone is empty"))
 	}
-	if o.Charset == "" {
-		errs = append(errs, fmt.Errorf("charset is empty"))
-	}
-	if o.Loc == "" {
-		errs = append(errs, fmt.Errorf("loc is empty"))
-	}
 	return errors.Join(errs...)
 }
 
@@ -80,8 +65,5 @@ func (o *DatabaseOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&o.Username, "username", o.Username, "database username")
 	fs.StringVar(&o.Password, "password", o.Password, "database password")
 	fs.StringVar(&o.Database, "database", o.Database, "database name")
-	fs.StringVar(&o.Charset, "charset", o.Charset, "database charset")
 	fs.StringVar(&o.TimeZone, "timeZone", o.TimeZone, "database timeZone")
-	fs.BoolVar(&o.ParseTime, "parseTime", o.ParseTime, "database parseTime")
-	fs.StringVar(&o.Loc, "loc", o.Loc, "database loc")
 }
