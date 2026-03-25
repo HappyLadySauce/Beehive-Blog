@@ -48,11 +48,13 @@ func NewServiceContext(c options.Options) (*ServiceContext, error) {
 	sqlDB.SetMaxOpenConns(25)
 	sqlDB.SetMaxIdleConns(5)
 
+	// 初始化 Redis 连接
 	client := redis.NewClient(&redis.Options{
 		Addr:     c.RedisOptions.RedisHost,
 		Password: c.RedisOptions.RedisPass,
 		DB:       c.RedisOptions.RedisDB,
 	})
+	// 测试 Redis 连接是否成功
 	if _, err := client.Ping(context.Background()).Result(); err != nil {
 		return nil, fmt.Errorf("failed to connect to Redis: %w", err)
 	}
