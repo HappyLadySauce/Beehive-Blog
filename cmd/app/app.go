@@ -97,7 +97,7 @@ func serve(ctx context.Context, svcCtx *svc.ServiceContext) error {
 	defer cancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		klog.ErrorS(err, "Server forced to shutdown")
+		klog.ErrorS(err, "Failed to shutdown server timeout, Server forced to shutdown")
 		return err
 	}
 
