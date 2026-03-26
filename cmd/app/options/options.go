@@ -14,6 +14,7 @@ import (
 // 应用选项
 type Options struct {
 	*options.ServerOptions          `mapstructure:"server"`
+	*options.JWTOptions             `mapstructure:"jwt"`
 	*options.DatabaseOptions          `mapstructure:"db"`
 	*options.RedisOptions           `mapstructure:"redis"`
 }
@@ -23,6 +24,7 @@ type Options struct {
 func NewOptions() *Options {
 	return &Options{
 		ServerOptions: options.NewServerOptions(),
+		JWTOptions: options.NewJWTOptions(),
 		DatabaseOptions: options.NewDatabaseOptions(),
 		RedisOptions: options.NewRedisOptions(),
 	}
@@ -40,6 +42,9 @@ func (o *Options) AddFlags(fs *pflag.FlagSet, basename string) *flag.NamedFlagSe
 
 	serverFS := nfs.FlagSet("Server")
 	o.ServerOptions.AddFlags(serverFS)
+
+	jwtFS := nfs.FlagSet("JWT")
+	o.JWTOptions.AddFlags(jwtFS)
 
 	dbFS := nfs.FlagSet("PostgreSQL")
 	o.DatabaseOptions.AddFlags(dbFS)

@@ -8,6 +8,7 @@ func (o *Options) Validate() error {
 	var errs []error
 
 	errs = append(errs, o.ServerOptions.Validate())
+	errs = append(errs, o.JWTOptions.Validate())
 	errs = append(errs, o.DatabaseOptions.Validate())
 	errs = append(errs, o.RedisOptions.Validate())
 

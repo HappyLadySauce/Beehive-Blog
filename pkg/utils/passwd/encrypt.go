@@ -1,37 +1,25 @@
 package passwd
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 const (
-	// SaltLength 盐值长度（字节）
-	SaltLength = 16
-	// BcryptCost bcrypt 加密成本
-	BcryptCost = 10
+	// BcryptCost bcrypt 加密成本 (10-14 之间，越高越安全但越慢)
+	BcryptCost = 12
 )
 
-// GenerateSalt 生成随机盐值
-func GenerateSalt() (string, error) {
-	salt := make([]byte, SaltLength)
-	if _, err := rand.Read(salt); err != nil {
-		return "", fmt.Errorf("failed to generate salt: %w", err)
+// HashPassword 使用 bcrypt 加密密码
+// bcrypt 内部会自动生成随机盐值，无需外部传入
+func HashPassword(password string) (string, error) {
+	if len(password) == 0 {
+		return "", fmt.Errorf("password cannot be empty")
 	}
-	return hex.EncodeToString(salt), nil
-}
 
-// HashPassword 使用盐值加密密码
-// 使用 bcrypt 算法，将盐值与密码结合后生成哈希
-func HashPassword(password, salt string) (string, error) {
-	// 将盐值与密码结合
-	saltedPassword := password + salt
-
-	// 使用 bcrypt 生成哈希
-	hash, err := bcrypt.GenerateFromPassword([]byte(saltedPassword), BcryptCost)
+	// bcrypt 会自动生成盐值并包含在哈希结果中
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), BcryptCost)
 	if err != nil {
 		return "", fmt.Errorf("failed to hash password: %w", err)
 	}
@@ -40,11 +28,17 @@ func HashPassword(password, salt string) (string, error) {
 }
 
 // VerifyPassword 验证密码是否正确
-func VerifyPassword(password, salt, hashedPassword string) bool {
-	// 将盐值与密码结合
-	saltedPassword := password + salt
+func VerifyPassword(password, hashedPassword string) bool {
+	if len(password) == 0 || len(hashedPassword) == 0 {
+		return false
+	}
 
-	// 使用 bcrypt 验证
-	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(saltedPassword))
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 	return err == nil
+}
+
+// IsHashedPassword 检查字符串是否已经是 bcrypt 哈希格式
+func IsHashedPassword(str string) bool {
+	// bcrypt 哈希以 $2a$, $2b$, $2x$, $2y$ 开头
+	return len(str) == 60 && (str[:4] == "$2a$" || str[:4] == "$2b$" || str[:4] == "$2x$" || str[:4] == "$2y$")
 }

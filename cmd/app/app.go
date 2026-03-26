@@ -13,6 +13,8 @@ import (
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/options"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/router"
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/auth"
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/user"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 )
 
@@ -80,6 +82,11 @@ func serve(ctx context.Context, svcCtx *svc.ServiceContext) error {
 
 	// 使用 router.NewServer 创建 http.Server 以支持优雅关闭
 	srv := router.NewServer(address)
+
+	// 初始化用户路由
+	user.Init(svcCtx)
+	// 初始化认证路由
+	auth.Init(svcCtx)
 
 	// 在 goroutine 中启动服务器
 	go func() {
