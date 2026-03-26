@@ -992,6 +992,24 @@ Beehive-Blog 个人博客系统
 | GET /admin/statistics | ❌ | ❌ | ✅ |
 | GET /admin/links | ❌ | ❌ | ✅ |
 | GET /admin/recycle-bin | ❌ | ❌ | ✅ |
+| POST /admin/backup | ❌ | ❌ | ✅ |
+| POST /admin/restore | ❌ | ❌ | ✅ |
+| GET /admin/logs | ❌ | ❌ | ✅ |
+| **通知系统** ||||
+| GET /notifications | ❌ | ✅ | ✅ |
+| PUT /notifications/:id/read | ❌ | ✅ | ✅ |
+| PUT /notifications/read-all | ❌ | ✅ | ✅ |
+| DELETE /notifications/:id | ❌ | ✅ | ✅ |
+| PUT /profile/notification-settings | ❌ | ✅ | ✅ |
+| POST /subscriptions | ❌ | ✅ | ✅ |
+| DELETE /subscriptions/:id | ❌ | ✅ | ✅ |
+| GET /subscriptions | ❌ | ✅ | ✅ |
+| **搜索与订阅** ||||
+| GET /search | ✅ | ✅ | ✅ |
+| GET /rss | ✅ | ✅ | ✅ |
+| GET /rss/categories/:slug | ✅ | ✅ | ✅ |
+| GET /rss/tags/:slug | ✅ | ✅ | ✅ |
+| GET /sitemap.xml | ✅ | ✅ | ✅ |
 
 ---
 
@@ -1027,3 +1045,8 @@ Beehive-Blog 个人博客系统
 | v1.0 | 2026-03-26 | - | 初始版本，基于 UML 用例图整理 |
 | v1.1 | 2026-03-26 | - | 补充用户等级系统、个人中心、文章互动、系统管理功能 |
 | v1.2 | 2026-03-26 | - | 统一整理文档结构，增加状态定义、API规范、权限矩阵 |
+| v1.3 | 2026-03-26 | - | 补充文章功能扩展（别名、密码保护、置顶、定时发布、版本历史、导出、批量操作） |
+| v1.4 | 2026-03-26 | - | 补充附件管理增强（存储策略、分组管理、批量操作、搜索） |
+| v1.5 | 2026-03-26 | - | 补充系统功能（SEO、SMTP、全站搜索、RSS、站点地图、备份恢复、操作日志、主题外观） |
+| v1.6 | 2026-03-26 | - | 补充通知系统（邮件通知、站内消息、通知设置、Webhook、邮件订阅） |
+| v1.7 | 2026-03-26 | - | 整理文档结构，完善接口权限矩阵，统一格式规范 |
