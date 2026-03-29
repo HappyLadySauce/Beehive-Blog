@@ -9,6 +9,7 @@ import (
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/jwt"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/passwd"
+	"gorm.io/gorm"
 	"k8s.io/klog/v2"
 )
 
@@ -35,7 +36,7 @@ func (s *UserService) Register(ctx context.Context, spec *v1.RegisterRequest, re
 		tx.Rollback()
 		klog.InfoS("Username already exists", "username", spec.Username)
 		return nil, http.StatusConflict, errors.New("username already exists")
-	} else if !errors.Is(err, errors.New("record not found")) {
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 		tx.Rollback()
 		klog.ErrorS(err, "Failed to check username", "username", spec.Username)
 		return nil, http.StatusInternalServerError, errors.New("system error")
@@ -46,7 +47,7 @@ func (s *UserService) Register(ctx context.Context, spec *v1.RegisterRequest, re
 		tx.Rollback()
 		klog.InfoS("Email already exists", "email", spec.Email)
 		return nil, http.StatusConflict, errors.New("email already exists")
-	} else if !errors.Is(err, errors.New("record not found")) {
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 		tx.Rollback()
 		klog.ErrorS(err, "Failed to check email", "email", spec.Email)
 		return nil, http.StatusInternalServerError, errors.New("system error")
