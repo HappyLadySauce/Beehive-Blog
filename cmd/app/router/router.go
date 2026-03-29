@@ -8,6 +8,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	_ "github.com/HappyLadySauce/Beehive-Blog/api/swagger/docs"
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middlewares"
 )
 
 var (
@@ -45,6 +46,10 @@ func init() {
 	router = gin.Default()
 	// SetTrustedProxies sets the trusted proxies for the router.
 	_ = router.SetTrustedProxies(nil)
+
+	// Recovery middleware recovers from any panics that occur in the request cycle.
+	router.Use(gin.Recovery())
+	router.Use(middlewares.Cors())
 
 	v1 = router.Group("/api/v1")
 
