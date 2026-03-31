@@ -169,7 +169,7 @@ func LoginAttemptLimit() gin.HandlerFunc {
 		}
 		switch c.Writer.Status() {
 		case http.StatusUnauthorized:
-			failCount := limiter.Increment(failKey, time.Now())
+			failCount := limiter.Increment(failKey, now)
 			if failCount >= defaultLoginFailLimit {
 				klog.InfoS("Login attempts limited", "account", account, "clientIP", clientIP)
 			}
