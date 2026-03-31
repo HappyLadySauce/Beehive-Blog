@@ -48,12 +48,8 @@ func Auth(svcCtx *svc.ServiceContext) gin.HandlerFunc {
 			return
 		}
 
-		if isPublicPath(c.FullPath()) {
-			c.Next()
-			return
-		}
-
 		rawToken, err := extractBearerToken(c.GetHeader(authHeaderName))
+
 		if err != nil {
 			common.AbortFailMessage(c, http.StatusUnauthorized, "invalid authorization header")
 			return
@@ -178,14 +174,4 @@ func validateByRedis(c *gin.Context, redisClient *redis.Client, claims *jwt.Cust
 
 func userAuthCacheKey(userID int64) string {
 	return fmt.Sprintf("auth:user:%d", userID)
-}
-
-func isPublicPath(path string) bool {
-	_, ok := publicPaths[path]
-	return ok
-}
-
-var publicPaths = map[string]struct{}{
-	"/api/v1/user/register": {},
-	"/api/v1/auth/login":    {},
 }
