@@ -84,6 +84,8 @@ func serve(ctx context.Context, svcCtx *svc.ServiceContext) error {
 	srv := router.NewServer(address)
 
 	// 启用认证中间件
+	router.EnableRateLimit()
+	// 启用认证中间件
 	router.EnableAuth(svcCtx)
 
 	// 初始化用户路由

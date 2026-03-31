@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
@@ -36,7 +37,7 @@ func (s *UserService) Register(ctx context.Context, spec *v1.RegisterRequest, re
 	if err := tx.Where("username = ?", spec.Username).First(&existingUser).Error; err == nil {
 		tx.Rollback()
 		klog.InfoS("Username already exists", "username", spec.Username)
-		return nil, http.StatusConflict, errors.New("username already exists")
+		return nil, http.StatusConflict, errors.New("registration information is invalid or already in use")
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 		tx.Rollback()
 		klog.ErrorS(err, "Failed to check username", "username", spec.Username)
@@ -47,7 +48,7 @@ func (s *UserService) Register(ctx context.Context, spec *v1.RegisterRequest, re
 	if err := tx.Where("email = ?", spec.Email).First(&existingUser).Error; err == nil {
 		tx.Rollback()
 		klog.InfoS("Email already exists", "email", spec.Email)
-		return nil, http.StatusConflict, errors.New("email already exists")
+		return nil, http.StatusConflict, errors.New("registration information is invalid or already in use")
 	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
 		tx.Rollback()
 		klog.ErrorS(err, "Failed to check email", "email", spec.Email)
@@ -85,7 +86,7 @@ func (s *UserService) Register(ctx context.Context, spec *v1.RegisterRequest, re
 
 	// 6. 生成 JWT Token
 	jwtSecret := s.svc.Config.JWTOptions.JWTSecret
-	if jwtSecret == "" {
+	if strings.TrimSpace(jwtSecret) == "" {
 		klog.Error("JWTSecret is not configured")
 		return nil, http.StatusInternalServerError, errors.New("auth service unavailable")
 	}
@@ -101,6 +102,10 @@ func (s *UserService) Register(ctx context.Context, spec *v1.RegisterRequest, re
 		"status": string(user.Status),
 	}).Err(); err != nil {
 		klog.ErrorS(err, "Failed to write auth snapshot to redis", "userID", user.ID)
+		return nil, http.StatusInternalServerError, errors.New("auth service unavailable")
+	}
+	if err := s.svc.Redis.Expire(ctx, authCacheKey, s.svc.Config.JWTOptions.ExpireDuration).Err(); err != nil {
+		klog.ErrorS(err, "Failed to set auth snapshot ttl", "userID", user.ID)
 		return nil, http.StatusInternalServerError, errors.New("auth service unavailable")
 	}
 

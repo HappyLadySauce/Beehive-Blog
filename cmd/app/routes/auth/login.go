@@ -86,6 +86,10 @@ func (s *AuthService) Login(ctx context.Context, spec *v1.LoginRequest, request 
 		klog.ErrorS(err, "Failed to write auth snapshot to redis", "userID", user.ID)
 		return nil, http.StatusInternalServerError, errors.New("auth service unavailable")
 	}
+	if err := s.svc.Redis.Expire(ctx, authCacheKey, s.svc.Config.JWTOptions.ExpireDuration).Err(); err != nil {
+		klog.ErrorS(err, "Failed to set auth snapshot ttl", "userID", user.ID)
+		return nil, http.StatusInternalServerError, errors.New("auth service unavailable")
+	}
 
 	klog.InfoS("User login successfully",
 		"userID", user.ID,

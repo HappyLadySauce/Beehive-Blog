@@ -77,6 +77,11 @@ func EnableAuth(svcCtx *svc.ServiceContext) {
 	v1.Use(middlewares.Auth(svcCtx))
 }
 
+// EnableRateLimit 为 /api/v1 分组启用全局限流中间件。
+func EnableRateLimit() {
+	v1.Use(middlewares.RateLimit())
+}
+
 // NewServer creates an http.Server with the given address using the Gin router.
 // This allows for graceful shutdown.
 func NewServer(addr string) *http.Server {

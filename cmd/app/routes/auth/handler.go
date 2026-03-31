@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middlewares"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/router"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
@@ -47,5 +48,5 @@ func (s *AuthService) handleLogin(c *gin.Context) {
 func Init(svc *svc.ServiceContext) {
 	r := router.V1().Group("auth")
 	authService := NewAuthService(svc)
-	r.POST("/login", authService.handleLogin)
+	r.POST("/login", middlewares.LoginAttemptLimit(), authService.handleLogin)
 }
