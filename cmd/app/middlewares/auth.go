@@ -7,6 +7,7 @@ import (
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/jwt"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -30,7 +31,7 @@ func Auth(svcCtx *svc.ServiceContext) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if svcCtx == nil {
 			klog.Error("Auth middleware misconfigured: service context is nil")
-			abortWithError(c, http.StatusInternalServerError, "auth service unavailable")
+			common.AbortFailMessage(c, http.StatusInternalServerError, "auth service unavailable")
 			return
 		}
 		redisClient := svcCtx.Redis
@@ -38,12 +39,12 @@ func Auth(svcCtx *svc.ServiceContext) gin.HandlerFunc {
 
 		if redisClient == nil {
 			klog.Error("Auth middleware misconfigured: redis client is nil")
-			abortWithError(c, http.StatusInternalServerError, "auth service unavailable")
+			common.AbortFailMessage(c, http.StatusInternalServerError, "auth service unavailable")
 			return
 		}
 		if strings.TrimSpace(jwtSecret) == "" {
 			klog.Error("Auth middleware misconfigured: jwtSecret is empty")
-			abortWithError(c, http.StatusInternalServerError, "auth service unavailable")
+			common.AbortFailMessage(c, http.StatusInternalServerError, "auth service unavailable")
 			return
 		}
 
@@ -54,29 +55,29 @@ func Auth(svcCtx *svc.ServiceContext) gin.HandlerFunc {
 
 		rawToken, err := extractBearerToken(c.GetHeader(authHeaderName))
 		if err != nil {
-			abortWithError(c, http.StatusUnauthorized, "invalid authorization header")
+			common.AbortFailMessage(c, http.StatusUnauthorized, "invalid authorization header")
 			return
 		}
 
 		claims, err := jwt.ParseToken(jwtSecret, rawToken)
 		if err != nil {
-			abortWithError(c, http.StatusUnauthorized, "invalid or expired token")
+			common.AbortFailMessage(c, http.StatusUnauthorized, "invalid or expired token")
 			return
 		}
 
 		if claims.UserID <= 0 || strings.TrimSpace(claims.Role) == "" {
-			abortWithError(c, http.StatusUnauthorized, "invalid token claims")
+			common.AbortFailMessage(c, http.StatusUnauthorized, "invalid token claims")
 			return
 		}
 
 		authState, ok, err := validateByRedis(c, redisClient, claims)
 		if err != nil {
 			klog.ErrorS(err, "Redis auth validation failed", "userID", claims.UserID)
-			abortWithError(c, http.StatusInternalServerError, "auth service unavailable")
+			common.AbortFailMessage(c, http.StatusInternalServerError, "auth service unavailable")
 			return
 		}
 		if !ok {
-			abortWithError(c, http.StatusUnauthorized, "token is no longer valid")
+			common.AbortFailMessage(c, http.StatusUnauthorized, "token is no longer valid")
 			return
 		}
 		c.Set(ctxCurrentUserID, claims.UserID)
@@ -96,11 +97,11 @@ func RequireRoles(roles ...models.UserRole) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		role, ok := GetCurrentUserRole(c)
 		if !ok {
-			abortWithError(c, http.StatusUnauthorized, "unauthorized")
+			common.AbortFailMessage(c, http.StatusUnauthorized, "unauthorized")
 			return
 		}
 		if _, exists := allowed[role]; !exists {
-			abortWithError(c, http.StatusForbidden, "forbidden")
+			common.AbortFailMessage(c, http.StatusForbidden, "forbidden")
 			return
 		}
 		c.Next()
@@ -146,14 +147,6 @@ func extractBearerToken(authHeader string) (string, error) {
 	return token, nil
 }
 
-func abortWithError(c *gin.Context, httpStatus int, message string) {
-	c.AbortWithStatusJSON(httpStatus, gin.H{
-		"code":    httpStatus,
-		"message": message,
-		"data":    nil,
-	})
-}
-
 type redisAuthState struct {
 	Role   string
 	Status string
@@ -188,10 +181,11 @@ func userAuthCacheKey(userID int64) string {
 }
 
 func isPublicPath(path string) bool {
-	switch path {
-	case "/api/v1/user/register", "/api/v1/auth/login":
-		return true
-	default:
-		return false
-	}
+	_, ok := publicPaths[path]
+	return ok
+}
+
+var publicPaths = map[string]struct{}{
+	"/api/v1/user/register": {},
+	"/api/v1/auth/login":    {},
 }

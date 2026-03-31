@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"net/http"
 	"time"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/router"
@@ -27,7 +28,7 @@ func (s *UserService) handleRegister(c *gin.Context) {
 	registerRequest := v1.RegisterRequest{}
 	if err := c.ShouldBindJSON(&registerRequest); err != nil {
 		klog.ErrorS(err, "Could not read register request")
-		common.Fail(c, err)
+		common.Fail(c, http.StatusBadRequest, err)
 		return
 	}
 
@@ -37,7 +38,7 @@ func (s *UserService) handleRegister(c *gin.Context) {
 
 	response, _, err := s.Register(ctx, &registerRequest, c.Request)
 	if err != nil {
-		common.Fail(c, err)
+		common.Fail(c, http.StatusInternalServerError, err)
 		return
 	}
 	common.Success(c, response)

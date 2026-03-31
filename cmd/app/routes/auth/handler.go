@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"net/http"
 	"time"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/router"
@@ -27,7 +28,7 @@ func (s *AuthService) handleLogin(c *gin.Context) {
 	loginRequest := v1.LoginRequest{}
 	if err := c.ShouldBindJSON(&loginRequest); err != nil {
 		klog.ErrorS(err, "Could not read login request")
-		common.Fail(c, err)
+		common.Fail(c, http.StatusBadRequest, err)
 		return
 	}
 	// 创建带超时的 context，5秒超时
@@ -37,7 +38,7 @@ func (s *AuthService) handleLogin(c *gin.Context) {
 	// 调用登录服务
 	response, _, err := s.Login(ctx, &loginRequest, c.Request)
 	if err != nil {
-		common.Fail(c, err)
+		common.Fail(c, http.StatusUnauthorized, err)
 		return
 	}
 	common.Success(c, response)
