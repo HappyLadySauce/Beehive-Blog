@@ -83,6 +83,9 @@ func serve(ctx context.Context, svcCtx *svc.ServiceContext) error {
 	// 使用 router.NewServer 创建 http.Server 以支持优雅关闭
 	srv := router.NewServer(address)
 
+	// 启用认证中间件
+	router.EnableAuth(svcCtx)
+
 	// 初始化用户路由
 	user.Init(svcCtx)
 	// 初始化认证路由

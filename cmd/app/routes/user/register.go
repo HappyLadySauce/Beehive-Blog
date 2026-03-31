@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
@@ -83,14 +84,34 @@ func (s *UserService) Register(ctx context.Context, spec *v1.RegisterRequest, re
 	}
 
 	// 6. 生成 JWT Token
-	// 从配置中获取 JWT Secret
 	jwtSecret := s.svc.Config.JWTOptions.JWTSecret
 	if jwtSecret == "" {
-		jwtSecret = "beehive-blog-default-secret-key-change-in-production"
-		klog.Warning("JWTSecret is not set, using default secret. Please set a secure secret in production!")
+		klog.Error("JWTSecret is not configured")
+		return nil, http.StatusInternalServerError, errors.New("auth service unavailable")
 	}
 
-	tokenPair, err := jwt.GenerateToken(jwtSecret, user.ID, user.Username, string(user.Role), s.svc.Config.JWTOptions.ExpireDuration, s.svc.Config.JWTOptions.RefreshTokenExpireDuration)
+	// 纯 Redis 鉴权模式下，注册后必须回写鉴权快照，否则新签发 token 无法通过中间件校验。
+	if s.svc.Redis == nil {
+		klog.Error("Redis client is not configured")
+		return nil, http.StatusInternalServerError, errors.New("auth service unavailable")
+	}
+	authCacheKey := fmt.Sprintf("auth:user:%d", user.ID)
+	if err := s.svc.Redis.HSet(ctx, authCacheKey, map[string]interface{}{
+		"role":   string(user.Role),
+		"status": string(user.Status),
+	}).Err(); err != nil {
+		klog.ErrorS(err, "Failed to write auth snapshot to redis", "userID", user.ID)
+		return nil, http.StatusInternalServerError, errors.New("auth service unavailable")
+	}
+
+	tokenPair, err := jwt.GenerateToken(
+		jwtSecret,
+		user.ID,
+		user.Username,
+		string(user.Role),
+		s.svc.Config.JWTOptions.ExpireDuration,
+		s.svc.Config.JWTOptions.RefreshTokenExpireDuration,
+	)
 	if err != nil {
 		klog.ErrorS(err, "Failed to generate token", "userID", user.ID)
 		return nil, http.StatusInternalServerError, errors.New("failed to generate token")

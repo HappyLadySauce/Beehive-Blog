@@ -28,9 +28,9 @@ func GenerateToken(secret string, userID int64, username, role string, expireDur
 
 	// 生成 Access Token
 	accessClaims := CustomClaims{
-		UserID:   userID,
-		Username: username,
-		Role:     role,
+		UserID:       userID,
+		Username:     username,
+		Role:         role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(now.Add(expireDuration)),
 			IssuedAt:  jwt.NewNumericDate(now),
