@@ -36,9 +36,9 @@ func (s *UserService) handleRegister(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
-	response, _, err := s.Register(ctx, &registerRequest, c.Request)
+	response, statusCode, err := s.Register(ctx, &registerRequest, c.Request)
 	if err != nil {
-		common.Fail(c, http.StatusInternalServerError, err)
+		common.Fail(c, statusCode, err)
 		return
 	}
 	common.Success(c, response)

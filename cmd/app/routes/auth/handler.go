@@ -36,9 +36,9 @@ func (s *AuthService) handleLogin(c *gin.Context) {
 	defer cancel()
 
 	// 调用登录服务
-	response, _, err := s.Login(ctx, &loginRequest, c.Request)
+	response, statusCode, err := s.Login(ctx, &loginRequest, c.Request)
 	if err != nil {
-		common.Fail(c, http.StatusUnauthorized, err)
+		common.Fail(c, statusCode, err)
 		return
 	}
 	common.Success(c, response)
