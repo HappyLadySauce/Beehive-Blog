@@ -52,6 +52,7 @@ func NewServiceContext(c options.Options) (*ServiceContext, error) {
 
 	// 使用模型自动迁移数据库结构
 	if err := autoMigrateModels(db); err != nil {
+		_ = sqlDB.Close()
 		return nil, fmt.Errorf("failed to auto migrate models: %w", err)
 	}
 
@@ -63,6 +64,8 @@ func NewServiceContext(c options.Options) (*ServiceContext, error) {
 	})
 	// 测试 Redis 连接是否成功
 	if _, err := client.Ping(context.Background()).Result(); err != nil {
+		_ = client.Close()
+		_ = sqlDB.Close()
 		return nil, fmt.Errorf("failed to connect to Redis: %w", err)
 	}
 
