@@ -3,9 +3,10 @@ name: beehive-api-routes
 description: >-
   Standardizes Beehive-Blog Gin HTTP API layering (handler vs business methods),
   ServiceContext injection, v1 request/response DTOs under cmd/app/types, and
-  common JSON responses with safe status codes. Use when adding or changing
-  routes under cmd/app/routes, handlers, ServiceContext, cmd/app/types, API
-  endpoints, login/register patterns, or Gin middleware wiring.
+  common JSON responses with safe status codes, plus Swagger annotations and
+  docs alignment. Use when adding or changing routes under cmd/app/routes,
+  handlers, ServiceContext, cmd/app/types, API endpoints, login/register
+  patterns, Gin middleware wiring, or Swagger comments/docs.
 ---
 
 # Beehive-Blog 接口开发（路由层）
@@ -70,6 +71,14 @@ description: >-
 
 避免快照 key 永久存在导致策略与 JWT 过期时间不一致。
 
+## Swagger 文档规范
+
+- 本项目已启用 Swagger 路由：`/swagger/*any`（见 `cmd/app/router/router.go`）。
+- 新增/修改接口时，需同步维护对应 handler 的 swagger 注释（`@Summary`、`@Description`、`@Tags`、`@Accept`、`@Produce`、`@Param`、`@Success`、`@Failure`、`@Router`）。
+- `@Router` 路径必须与真实路由一致（包含 `/api/v1` 前缀语义），方法也要一致（`[get]` / `[post]` 等）。
+- `@Success` / `@Failure` 响应结构应匹配 `cmd/app/types/common/response.go` 的统一返回约定，避免文档与真实返回不一致。
+- 字段模型尽量复用 `cmd/app/types/api/v1` 下 DTO，减少重复定义与漂移。
+
 ## 新增接口自检清单
 
 复制并在 PR/提交前逐项确认：
@@ -80,6 +89,7 @@ description: >-
 - [ ] 无密码/token/连接串进入响应或不当日志；5xx 不暴露堆栈与 SQL
 - [ ] 需要鉴权的路由已在 `Init` 挂载 `middlewares.Auth` 或 `RequireRoles` 等
 - [ ] 若写 `auth:user:{id}`，已设置与 access token 一致的 TTL
+- [ ] 已补充或更新 swagger 注释，且文档路径、方法、入参出参与实际实现一致
 
 ## 更多模板
 

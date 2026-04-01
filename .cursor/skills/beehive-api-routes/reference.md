@@ -9,6 +9,33 @@
 - 统一响应：`cmd/app/types/common/response.go`
 - 服务上下文：`cmd/app/svc/serviceContext.go`
 - 鉴权中间件：`cmd/app/middlewares/auth.go`
+- Swagger 路由与示例注释：`cmd/app/router/router.go`
+
+## Swagger 注释模板（建议写在 handler 方法上方）
+
+```go
+// Login godoc
+//
+//	@Summary		用户登录
+//	@Description	用户名或邮箱登录并返回 token
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		v1.LoginRequest	true	"登录参数"
+//	@Success		200		{object}	common.BaseResponse
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		500		{object}	common.BaseResponse
+//	@Router			/api/v1/auth/login [post]
+func (s *AuthService) handleLogin(c *gin.Context) {}
+```
+
+## Swagger 维护清单
+
+- 路由改动后，先对照 `Init` 中真实注册路径，再更新 `@Router`。
+- `@Param` 使用 `cmd/app/types/api/v1` 下请求体类型，避免文档模型漂移。
+- `@Success` / `@Failure` 使用 `common.BaseResponse`，并确保状态码与业务层返回一致。
+- 确认文档访问入口 `/swagger/index.html` 可查看到最新接口项。
 
 ## Handler 骨架（伪代码）
 
