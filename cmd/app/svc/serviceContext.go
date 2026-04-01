@@ -44,9 +44,7 @@ func NewServiceContext(c options.Options) (*ServiceContext, error) {
 	// 获取底层 sql.DB 并配置连接池
 	sqlDB, err := db.DB()
 	if err != nil {
-		if sqlDB != nil {
-			_ = sqlDB.Close()
-		}
+		_ = closeGormConnPool(db)
 		return nil, fmt.Errorf("failed to get underlying sql.DB: %w", err)
 	}
 	// 设置连接池参数
@@ -119,6 +117,17 @@ func autoMigrateModels(db *gorm.DB) error {
 
 	klog.InfoS("Database auto migration completed", "modelCount", len(modelsToMigrate))
 	return nil
+}
+
+func closeGormConnPool(db *gorm.DB) error {
+	if db == nil || db.ConnPool == nil {
+		return nil
+	}
+	closer, ok := db.ConnPool.(interface{ Close() error })
+	if !ok {
+		return nil
+	}
+	return closer.Close()
 }
 
 // Close closes the ServiceContext and releases resources
