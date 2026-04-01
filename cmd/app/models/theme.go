@@ -26,7 +26,7 @@ type Theme struct {
 	Screenshot  string      `json:"screenshot" gorm:"size:500"`
 	IsActive    bool        `json:"isActive" gorm:"default:false"`
 	IsSystem    bool        `json:"isSystem" gorm:"default:false"`
-	Config      ThemeConfig `json:"config" gorm:"type:jsonb"`
+	Config      ThemeConfig `json:"config" gorm:"type:jsonb;serializer:json"`
 	CreatedAt   time.Time   `json:"createdAt" gorm:"autoCreateTime"`
 	UpdatedAt   time.Time   `json:"updatedAt" gorm:"autoUpdateTime"`
 }
@@ -55,16 +55,16 @@ func (Menu) TableName() string {
 
 // MenuItem 菜单项模型
 type MenuItem struct {
-	ID       int64  `json:"id" gorm:"primaryKey;autoIncrement"`
-	MenuID   int64  `json:"menuId" gorm:"not null;index"`
-	ParentID *int64 `json:"parentId" gorm:"index"`
-	Name     string `json:"name" gorm:"size:50;not null"`
-	Type     string `json:"type" gorm:"size:20;not null"` // link/page/category/tag
-	TargetID string `json:"targetId" gorm:"size:50"`      // 关联的资源ID
-	URL      string `json:"url" gorm:"size:500"`
-	Icon     string `json:"icon" gorm:"size:50"`
-	SortOrder int   `json:"sortOrder" gorm:"default:0"`
-	IsEnabled bool  `json:"isEnabled" gorm:"default:true"`
+	ID        int64  `json:"id" gorm:"primaryKey;autoIncrement"`
+	MenuID    int64  `json:"menuId" gorm:"not null;index"`
+	ParentID  *int64 `json:"parentId" gorm:"index"`
+	Name      string `json:"name" gorm:"size:50;not null"`
+	Type      string `json:"type" gorm:"size:20;not null"` // link/page/category/tag
+	TargetID  string `json:"targetId" gorm:"size:50"`      // 关联的资源ID
+	URL       string `json:"url" gorm:"size:500"`
+	Icon      string `json:"icon" gorm:"size:50"`
+	SortOrder int    `json:"sortOrder" gorm:"default:0"`
+	IsEnabled bool   `json:"isEnabled" gorm:"default:true"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 
@@ -79,17 +79,17 @@ func (MenuItem) TableName() string {
 
 // Page 独立页面模型
 type Page struct {
-	ID          int64         `json:"id" gorm:"primaryKey;autoIncrement"`
-	Title       string        `json:"title" gorm:"size:200;not null"`
-	Slug        string        `json:"slug" gorm:"uniqueIndex;size:100;not null"`
-	Content     string        `json:"content" gorm:"type:text;not null"`
-	Status      ArticleStatus `json:"status" gorm:"size:20;default:'published'"`
-	IsInMenu    bool          `json:"isInMenu" gorm:"default:false"`
-	SortOrder   int           `json:"sortOrder" gorm:"default:0"`
-	ViewCount   int64         `json:"viewCount" gorm:"default:0"`
-	CreatedAt   time.Time     `json:"createdAt" gorm:"autoCreateTime"`
-	UpdatedAt   time.Time     `json:"updatedAt" gorm:"autoUpdateTime"`
-	DeletedAt   *time.Time    `json:"-" gorm:"index"`
+	ID        int64         `json:"id" gorm:"primaryKey;autoIncrement"`
+	Title     string        `json:"title" gorm:"size:200;not null"`
+	Slug      string        `json:"slug" gorm:"uniqueIndex;size:100;not null"`
+	Content   string        `json:"content" gorm:"type:text;not null"`
+	Status    ArticleStatus `json:"status" gorm:"size:20;default:'published'"`
+	IsInMenu  bool          `json:"isInMenu" gorm:"default:false"`
+	SortOrder int           `json:"sortOrder" gorm:"default:0"`
+	ViewCount int64         `json:"viewCount" gorm:"default:0"`
+	CreatedAt time.Time     `json:"createdAt" gorm:"autoCreateTime"`
+	UpdatedAt time.Time     `json:"updatedAt" gorm:"autoUpdateTime"`
+	DeletedAt *time.Time    `json:"-" gorm:"index"`
 }
 
 func (Page) TableName() string {

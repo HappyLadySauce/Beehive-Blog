@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"k8s.io/klog/v2"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/options"
 )
@@ -48,6 +50,11 @@ func NewServiceContext(c options.Options) (*ServiceContext, error) {
 	sqlDB.SetMaxOpenConns(25)
 	sqlDB.SetMaxIdleConns(5)
 
+	// 使用模型自动迁移数据库结构
+	if err := autoMigrateModels(db); err != nil {
+		return nil, fmt.Errorf("failed to auto migrate models: %w", err)
+	}
+
 	// 初始化 Redis 连接
 	client := redis.NewClient(&redis.Options{
 		Addr:     c.RedisOptions.RedisHost,
@@ -64,6 +71,48 @@ func NewServiceContext(c options.Options) (*ServiceContext, error) {
 		DB:     db,
 		Redis:  client,
 	}, nil
+}
+
+func autoMigrateModels(db *gorm.DB) error {
+	modelsToMigrate := []interface{}{
+		&models.User{},
+		&models.UserLevel{},
+		&models.Category{},
+		&models.Tag{},
+		&models.Article{},
+		&models.ArticleVersion{},
+		&models.ArticleTag{},
+		&models.ArticleLike{},
+		&models.UserFavorite{},
+		&models.ArticleViewLog{},
+		&models.Comment{},
+		&models.CommentLike{},
+		&models.AttachmentGroup{},
+		&models.StoragePolicy{},
+		&models.Attachment{},
+		&models.Setting{},
+		&models.Link{},
+		&models.OperationLog{},
+		&models.Backup{},
+		&models.Theme{},
+		&models.Menu{},
+		&models.MenuItem{},
+		&models.Page{},
+		&models.Notification{},
+		&models.NotificationSetting{},
+		&models.Subscription{},
+		&models.Webhook{},
+		&models.WebhookLog{},
+	}
+
+	for _, model := range modelsToMigrate {
+		if err := db.AutoMigrate(model); err != nil {
+			return err
+		}
+	}
+
+	klog.InfoS("Database auto migration completed", "modelCount", len(modelsToMigrate))
+	return nil
 }
 
 // Close closes the ServiceContext and releases resources

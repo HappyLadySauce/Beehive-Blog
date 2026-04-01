@@ -77,7 +77,7 @@ type Webhook struct {
 	Name            string   `json:"name" gorm:"size:50;not null"`
 	URL             string   `json:"url" gorm:"size:500;not null"`
 	Secret          string   `json:"-" gorm:"size:255"`
-	Events          []string `json:"events" gorm:"type:jsonb"` // ["article.created", "comment.created"]
+	Events          []string `json:"events" gorm:"type:jsonb;serializer:json"` // ["article.created", "comment.created"]
 	Method          string   `json:"method" gorm:"size:10;default:'POST'"`
 	Headers         []byte   `json:"headers" gorm:"type:jsonb"`
 	IsEnabled       bool     `json:"isEnabled" gorm:"default:true"`

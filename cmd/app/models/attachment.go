@@ -76,7 +76,7 @@ type StoragePolicy struct {
 	IsDefault  bool                `json:"isDefault" gorm:"default:false"`
 	BaseURL    string              `json:"baseUrl" gorm:"size:500"`
 	UploadPath string              `json:"uploadPath" gorm:"size:255"`
-	Config     StoragePolicyConfig `json:"config" gorm:"type:jsonb"` // JSON 格式存储配置
+	Config     StoragePolicyConfig `json:"config" gorm:"type:jsonb;serializer:json"` // JSON 格式存储配置
 	SortOrder  int                 `json:"sortOrder" gorm:"default:0"`
 	CreatedAt  time.Time           `json:"createdAt" gorm:"autoCreateTime"`
 	UpdatedAt  time.Time           `json:"updatedAt" gorm:"autoUpdateTime"`
