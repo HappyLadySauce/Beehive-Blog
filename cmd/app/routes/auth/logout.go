@@ -3,16 +3,14 @@ package auth
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
+	authutil "github.com/HappyLadySauce/Beehive-Blog/pkg/utils/auth"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/jwt"
 	"k8s.io/klog/v2"
 )
-
-const logoutBearerPrefix = "Bearer "
 
 func (s *AuthService) Logout(ctx context.Context, spec *v1.LogoutRequest, request *http.Request) (*v1.LogoutResponse, int, error) {
 	if spec == nil {
@@ -32,7 +30,7 @@ func (s *AuthService) Logout(ctx context.Context, spec *v1.LogoutRequest, reques
 		return nil, http.StatusInternalServerError, errors.New("auth service unavailable")
 	}
 
-	rawToken, err := extractLogoutBearerToken(request.Header.Get("Authorization"))
+	rawToken, err := authutil.ExtractBearerToken(request.Header.Get("Authorization"))
 	if err != nil {
 		return nil, http.StatusUnauthorized, errors.New("invalid authorization header")
 	}
@@ -41,7 +39,7 @@ func (s *AuthService) Logout(ctx context.Context, spec *v1.LogoutRequest, reques
 		return nil, http.StatusUnauthorized, errors.New("invalid or expired token")
 	}
 
-	authCacheKey := fmt.Sprintf("auth:user:%d", claims.UserID)
+	authCacheKey := authutil.UserAuthCacheKey(claims.UserID)
 	if err := s.svc.Redis.Del(ctx, authCacheKey).Err(); err != nil {
 		klog.ErrorS(err, "Failed to remove auth snapshot from redis", "userID", claims.UserID)
 		return nil, http.StatusInternalServerError, errors.New("auth service unavailable")
@@ -51,17 +49,4 @@ func (s *AuthService) Logout(ctx context.Context, spec *v1.LogoutRequest, reques
 	return &v1.LogoutResponse{
 		Message: "logout success",
 	}, http.StatusOK, nil
-}
-
-func extractLogoutBearerToken(authHeader string) (string, error) {
-	authHeader = strings.TrimSpace(authHeader)
-	if authHeader == "" || !strings.HasPrefix(authHeader, logoutBearerPrefix) {
-		return "", errors.New("missing bearer token")
-	}
-
-	token := strings.TrimSpace(strings.TrimPrefix(authHeader, logoutBearerPrefix))
-	if token == "" {
-		return "", errors.New("empty token")
-	}
-	return token, nil
 }

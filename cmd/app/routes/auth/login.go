@@ -3,13 +3,13 @@ package auth
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
+	authutil "github.com/HappyLadySauce/Beehive-Blog/pkg/utils/auth"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/jwt"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/passwd"
 	"gorm.io/gorm"
@@ -78,7 +78,7 @@ func (s *AuthService) Login(ctx context.Context, spec *v1.LoginRequest, request 
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
 
-	authCacheKey := fmt.Sprintf("auth:user:%d", user.ID)
+	authCacheKey := authutil.UserAuthCacheKey(user.ID)
 	if err := s.svc.Redis.HSet(ctx, authCacheKey, map[string]interface{}{
 		"role":   string(user.Role),
 		"status": string(user.Status),

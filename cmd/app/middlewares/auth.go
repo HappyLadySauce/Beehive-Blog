@@ -8,6 +8,7 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
+	authutil "github.com/HappyLadySauce/Beehive-Blog/pkg/utils/auth"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/jwt"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -16,7 +17,6 @@ import (
 
 const (
 	authHeaderName   = "Authorization"
-	bearerPrefix     = "Bearer "
 	ctxCurrentUserID = "currentUserId"
 	ctxCurrentRole   = "currentUserRole"
 	ctxCurrentStatus = "currentUserStatus"
@@ -58,7 +58,7 @@ func Auth(svcCtx *svc.ServiceContext) gin.HandlerFunc {
 			return
 		}
 
-		rawToken, err := extractBearerToken(c.GetHeader(authHeaderName))
+		rawToken, err := authutil.ExtractBearerToken(c.GetHeader(authHeaderName))
 
 		if err != nil {
 			common.AbortFailMessage(c, http.StatusUnauthorized, "invalid authorization header")
@@ -141,25 +141,13 @@ func GetCurrentUserStatus(c *gin.Context) (string, bool) {
 	return status, ok
 }
 
-func extractBearerToken(authHeader string) (string, error) {
-	authHeader = strings.TrimSpace(authHeader)
-	if authHeader == "" || !strings.HasPrefix(authHeader, bearerPrefix) {
-		return "", fmt.Errorf("missing bearer token")
-	}
-	token := strings.TrimSpace(strings.TrimPrefix(authHeader, bearerPrefix))
-	if token == "" {
-		return "", fmt.Errorf("empty token")
-	}
-	return token, nil
-}
-
 type redisAuthState struct {
 	Role   string
 	Status string
 }
 
 func validateByRedis(c *gin.Context, redisClient *redis.Client, claims *jwt.CustomClaims) (redisAuthState, bool, error) {
-	key := userAuthCacheKey(claims.UserID)
+	key := authutil.UserAuthCacheKey(claims.UserID)
 	result, err := redisClient.HGetAll(c.Request.Context(), key).Result()
 	if err != nil {
 		return redisAuthState{}, false, err
@@ -180,10 +168,6 @@ func validateByRedis(c *gin.Context, redisClient *redis.Client, claims *jwt.Cust
 		return redisAuthState{}, false, nil
 	}
 	return redisAuthState{Role: role, Status: status}, true, nil
-}
-
-func userAuthCacheKey(userID int64) string {
-	return fmt.Sprintf("auth:user:%d", userID)
 }
 
 func shouldBypassAuth(method, route string) bool {
