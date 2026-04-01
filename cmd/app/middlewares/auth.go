@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -22,11 +21,6 @@ const (
 	ctxCurrentStatus = "currentUserStatus"
 )
 
-var authBypassRoutes = map[string]struct{}{
-	"POST /api/v1/auth/login":    {},
-	"POST /api/v1/user/register": {},
-}
-
 // Auth 构建认证中间件：
 // 1) 解析并校验 Bearer Token
 // 2) 校验 claims 必要字段
@@ -34,11 +28,6 @@ var authBypassRoutes = map[string]struct{}{
 // 4) 将用户信息注入到 gin.Context
 func Auth(svcCtx *svc.ServiceContext) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if shouldBypassAuth(c.Request.Method, c.FullPath()) {
-			c.Next()
-			return
-		}
-
 		if svcCtx == nil {
 			klog.Error("Auth middleware misconfigured: service context is nil")
 			common.AbortFailMessage(c, http.StatusInternalServerError, "auth service unavailable")
@@ -168,10 +157,4 @@ func validateByRedis(c *gin.Context, redisClient *redis.Client, claims *jwt.Cust
 		return redisAuthState{}, false, nil
 	}
 	return redisAuthState{Role: role, Status: status}, true, nil
-}
-
-func shouldBypassAuth(method, route string) bool {
-	key := fmt.Sprintf("%s %s", strings.ToUpper(strings.TrimSpace(method)), strings.TrimSpace(route))
-	_, ok := authBypassRoutes[key]
-	return ok
 }

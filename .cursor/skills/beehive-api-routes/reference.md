@@ -4,8 +4,9 @@
 
 ## 参考实现（本项目）
 
-- HTTP 层：`cmd/app/routes/auth/handler.go`
-- 业务层：`cmd/app/routes/auth/login.go`
+- HTTP 层（公开）：`cmd/app/routes/public/handler.go`
+- 业务层（登录）：`cmd/app/routes/public/login.go`
+- HTTP 与业务（登出）：`cmd/app/routes/user/handler.go`、`cmd/app/routes/user/logout.go`
 - 统一响应：`cmd/app/types/common/response.go`
 - 服务上下文：`cmd/app/svc/serviceContext.go`
 - 鉴权中间件：`cmd/app/middlewares/auth.go`
@@ -14,11 +15,11 @@
 ## Swagger 注释模板（建议写在 handler 方法上方）
 
 ```go
-// Login godoc
+// HandleLogin godoc
 //
 //	@Summary		用户登录
 //	@Description	用户名或邮箱登录并返回 token
-//	@Tags			auth
+//	@Tags			public
 //	@Accept			json
 //	@Produce		json
 //	@Param			request	body		v1.LoginRequest	true	"登录参数"
@@ -26,8 +27,8 @@
 //	@Failure		400		{object}	common.BaseResponse
 //	@Failure		401		{object}	common.BaseResponse
 //	@Failure		500		{object}	common.BaseResponse
-//	@Router			/api/v1/auth/login [post]
-func (s *AuthService) handleLogin(c *gin.Context) {}
+//	@Router			/api/v1/public/login [post]
+func (s *PublicService) HandleLogin(c *gin.Context) {}
 ```
 
 ## Swagger 维护清单

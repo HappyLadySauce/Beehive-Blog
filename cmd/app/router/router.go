@@ -9,7 +9,6 @@ import (
 
 	_ "github.com/HappyLadySauce/Beehive-Blog/api/swagger/docs"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middlewares"
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 )
 
 var (
@@ -70,11 +69,6 @@ func V1() *gin.RouterGroup {
 // Router returns the main Gin engine instance.
 func Router() *gin.Engine {
 	return router
-}
-
-// EnableAuth 为 /api/v1 分组启用认证中间件。
-func EnableAuth(svcCtx *svc.ServiceContext) {
-	v1.Use(middlewares.Auth(svcCtx))
 }
 
 // EnableRateLimit 为 /api/v1 分组启用全局限流中间件。

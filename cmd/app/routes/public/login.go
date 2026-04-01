@@ -1,4 +1,4 @@
-package auth
+package public
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	authutil "github.com/HappyLadySauce/Beehive-Blog/pkg/utils/auth"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/jwt"
@@ -16,7 +17,18 @@ import (
 	"k8s.io/klog/v2"
 )
 
-func (s *AuthService) Login(ctx context.Context, spec *v1.LoginRequest, request *http.Request) (*v1.LoginResponse, int, error) {
+// PublicService handles unauthenticated /public endpoints business logic (e.g. login).
+type PublicService struct {
+	svc *svc.ServiceContext
+}
+
+// NewPublicService constructs a PublicService.
+func NewPublicService(svc *svc.ServiceContext) *PublicService {
+	return &PublicService{svc: svc}
+}
+
+// Login authenticates by username or email and returns tokens.
+func (s *PublicService) Login(ctx context.Context, spec *v1.LoginRequest, request *http.Request) (*v1.LoginResponse, int, error) {
 	if spec == nil {
 		return nil, http.StatusBadRequest, errors.New("invalid login request")
 	}

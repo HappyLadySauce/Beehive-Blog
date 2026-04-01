@@ -1,14 +1,14 @@
-package user
+package public
 
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
+	authutil "github.com/HappyLadySauce/Beehive-Blog/pkg/utils/auth"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/jwt"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/passwd"
 	"gorm.io/gorm"
@@ -16,7 +16,10 @@ import (
 )
 
 // Register 用户注册
-func (s *UserService) Register(ctx context.Context, spec *v1.RegisterRequest, request *http.Request) (*v1.RegisterResponse, int, error) {
+func (s *PublicService) Register(ctx context.Context, spec *v1.RegisterRequest, request *http.Request) (*v1.RegisterResponse, int, error) {
+	if spec == nil || request == nil {
+		return nil, http.StatusBadRequest, errors.New("invalid request")
+	}
 	// 使用事务处理
 	tx := s.svc.DB.WithContext(ctx).Begin()
 	if tx.Error != nil {
@@ -96,7 +99,7 @@ func (s *UserService) Register(ctx context.Context, spec *v1.RegisterRequest, re
 		klog.Error("Redis client is not configured")
 		return nil, http.StatusInternalServerError, errors.New("auth service unavailable")
 	}
-	authCacheKey := fmt.Sprintf("auth:user:%d", user.ID)
+	authCacheKey := authutil.UserAuthCacheKey(user.ID)
 	if err := s.svc.Redis.HSet(ctx, authCacheKey, map[string]interface{}{
 		"role":   string(user.Role),
 		"status": string(user.Status),

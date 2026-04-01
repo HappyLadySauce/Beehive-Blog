@@ -1,4 +1,4 @@
-package auth
+package user
 
 import (
 	"context"
@@ -12,7 +12,8 @@ import (
 	"k8s.io/klog/v2"
 )
 
-func (s *AuthService) Logout(ctx context.Context, spec *v1.LogoutRequest, request *http.Request) (*v1.LogoutResponse, int, error) {
+// Logout invalidates the current session snapshot in Redis for the bearer token subject.
+func (s *UserService) Logout(ctx context.Context, spec *v1.LogoutRequest, request *http.Request) (*v1.LogoutResponse, int, error) {
 	if spec == nil {
 		return nil, http.StatusBadRequest, errors.New("invalid logout request")
 	}
