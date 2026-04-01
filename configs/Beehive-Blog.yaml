@@ -11,6 +11,9 @@ db:
     database: Beehive-Blog  # 数据库名称
     charset: utf8mb4        # 数据库字符集
     timeZone: Asia/Shanghai # 时区设置
+    sslMode: disable        # PostgreSQL TLS 模式: disable/require/verify-ca/verify-full（生产建议非 disable）
+    connectTimeoutSeconds: 5 # 数据库连接超时（秒）
+    autoMigrate: true       # 是否在应用启动时自动迁移（生产建议关闭，改为发布流程执行）
     parseTime: true         # 是否解析时间
     loc: Local              # 时间位置
 
@@ -19,4 +22,10 @@ redis:
     redisHost: 127.0.0.1:6379       # Redis 主机地址
     redisPass: ""               # Redis 密码，无密码时留空
     redisDB: 0                  # Redis 数据库索引
+    dialTimeoutSeconds: 5       # Redis 建连超时（秒）
+    readTimeoutSeconds: 3       # Redis 读超时（秒）
+    writeTimeoutSeconds: 3      # Redis 写超时（秒）
+    connectTimeoutSeconds: 3    # 启动阶段 Redis 探活超时（秒）
+    enableTLS: false            # 是否启用 Redis TLS（生产建议开启）
+    insecureSkipVerify: false   # 是否跳过 Redis 证书校验（仅调试场景）
 

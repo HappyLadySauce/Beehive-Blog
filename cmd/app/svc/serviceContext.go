@@ -2,8 +2,10 @@ package svc
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
 	"github.com/redis/go-redis/v9"
@@ -26,14 +28,20 @@ type ServiceContext struct {
 // 初始化数据库连接和 Redis 连接
 func NewServiceContext(c options.Options) (*ServiceContext, error) {
 	// 构建 PostgreSQL DSN（使用 keyword/value 格式）
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%d sslmode=disable TimeZone=%s",
+	dsn := fmt.Sprintf(
+		"host=%s user=%s password=%s dbname=%s port=%d sslmode=%s TimeZone=%s connect_timeout=%d",
 		c.DatabaseOptions.Host,
 		c.DatabaseOptions.Username,
 		c.DatabaseOptions.Password,
 		c.DatabaseOptions.Database,
 		c.DatabaseOptions.Port,
+		c.DatabaseOptions.SSLMode,
 		c.DatabaseOptions.TimeZone,
+		c.DatabaseOptions.ConnectTimeoutSeconds,
 	)
+	if c.DatabaseOptions.SSLMode == "disable" {
+		klog.Warning("PostgreSQL is using sslmode=disable; this is insecure for non-local environments")
+	}
 
 	// 初始化数据库连接
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
@@ -44,27 +52,47 @@ func NewServiceContext(c options.Options) (*ServiceContext, error) {
 	// 获取底层 sql.DB 并配置连接池
 	sqlDB, err := db.DB()
 	if err != nil {
-		_ = closeGormConnPool(db)
 		return nil, fmt.Errorf("failed to get underlying sql.DB: %w", err)
 	}
 	// 设置连接池参数
 	sqlDB.SetMaxOpenConns(25)
 	sqlDB.SetMaxIdleConns(5)
+	sqlDB.SetConnMaxIdleTime(5 * time.Minute)
+	sqlDB.SetConnMaxLifetime(30 * time.Minute)
 
 	// 使用模型自动迁移数据库结构
-	if err := autoMigrateModels(db); err != nil {
-		_ = sqlDB.Close()
-		return nil, fmt.Errorf("failed to auto migrate models: %w", err)
+	if c.DatabaseOptions.AutoMigrate {
+		if err := autoMigrateModels(db); err != nil {
+			_ = sqlDB.Close()
+			return nil, fmt.Errorf("failed to auto migrate models: %w", err)
+		}
+	} else {
+		klog.Info("Database auto migration is disabled by configuration")
 	}
 
 	// 初始化 Redis 连接
-	client := redis.NewClient(&redis.Options{
-		Addr:     c.RedisOptions.RedisHost,
-		Password: c.RedisOptions.RedisPass,
-		DB:       c.RedisOptions.RedisDB,
-	})
+	redisOptions := &redis.Options{
+		Addr:         c.RedisOptions.RedisHost,
+		Password:     c.RedisOptions.RedisPass,
+		DB:           c.RedisOptions.RedisDB,
+		DialTimeout:  time.Duration(c.RedisOptions.DialTimeoutSeconds) * time.Second,
+		ReadTimeout:  time.Duration(c.RedisOptions.ReadTimeoutSeconds) * time.Second,
+		WriteTimeout: time.Duration(c.RedisOptions.WriteTimeoutSeconds) * time.Second,
+	}
+	if c.RedisOptions.EnableTLS {
+		redisOptions.TLSConfig = &tls.Config{
+			MinVersion:         tls.VersionTLS12,
+			InsecureSkipVerify: c.RedisOptions.InsecureSkipVerify,
+		}
+		if c.RedisOptions.InsecureSkipVerify {
+			klog.Warning("Redis TLS cert verification is disabled; this is insecure for production")
+		}
+	}
+	client := redis.NewClient(redisOptions)
 	// 测试 Redis 连接是否成功
-	if _, err := client.Ping(context.Background()).Result(); err != nil {
+	redisPingCtx, cancel := context.WithTimeout(context.Background(), time.Duration(c.RedisOptions.ConnectTimeoutSeconds)*time.Second)
+	defer cancel()
+	if _, err := client.Ping(redisPingCtx).Result(); err != nil {
 		_ = client.Close()
 		_ = sqlDB.Close()
 		return nil, fmt.Errorf("failed to connect to Redis: %w", err)
@@ -117,17 +145,6 @@ func autoMigrateModels(db *gorm.DB) error {
 
 	klog.InfoS("Database auto migration completed", "modelCount", len(modelsToMigrate))
 	return nil
-}
-
-func closeGormConnPool(db *gorm.DB) error {
-	if db == nil || db.ConnPool == nil {
-		return nil
-	}
-	closer, ok := db.ConnPool.(interface{ Close() error })
-	if !ok {
-		return nil
-	}
-	return closer.Close()
 }
 
 // Close closes the ServiceContext and releases resources
