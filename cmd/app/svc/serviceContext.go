@@ -52,6 +52,7 @@ func NewServiceContext(c options.Options) (*ServiceContext, error) {
 	// 获取底层 sql.DB 并配置连接池
 	sqlDB, err := db.DB()
 	if err != nil {
+		// best-effort：db 已创建但无法取到底层 sql.DB 时，尝试关闭连接池避免泄漏
 		_ = closeGormConnPool(db)
 		return nil, fmt.Errorf("failed to get underlying sql.DB: %w", err)
 	}
