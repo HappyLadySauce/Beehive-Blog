@@ -42,6 +42,7 @@ description: >-
 
 - 放在 `cmd/app/types/api/v1`，命名 `XxxRequest` / `XxxResponse`。
 - 使用 `json` 与 `binding` 标签做校验；规则须与业务语义一致（例如「用户名或邮箱」不要用 `alphanum` 误伤邮箱）。
+- `ShouldBindJSON(&req)` 会自动触发 `binding` 标签校验（例如 `json:"account" binding:"required,min=3,max=50"`），无需在 handler 再重复做同等规则校验。
 - 统一响应封装：`cmd/app/types/common/response.go` 的 `Success`、`Fail`。
 - **注意**：`Fail` 在 HTTP 状态码 ≥ 500 时会将对外 `message` 统一为 `internal server error`，避免泄漏内部细节；业务层仍应用 `klog` 记录真实错误。
 
@@ -59,6 +60,7 @@ description: >-
 3. 客户端可见错误信息：简短、稳定、英文（与现有 `login` 风格一致），例如 `invalid account or password`、`system error`。
 4. 日志：使用 `klog`；可记录 `userID`、业务键、客户端 IP；**禁止**打印密码、明文 token、连接串、完整 SQL。
 5. 依赖缺失（如 JWT Secret、Redis 未配置）：返回 `500` + 对外友好文案（如 `auth service unavailable`），详细原因写日志。
+6. `binding` 校验是请求体结构校验，不替代业务规则校验；以下场景必须在业务层做二次校验：跨字段约束（如开始时间 <= 结束时间）、数据库唯一性/存在性检查、鉴权/权限检查、资源状态机校验（如用户状态、文章状态）。
 
 ## 鉴权与 Redis 快照（与本项目中间件一致）
 
@@ -84,8 +86,10 @@ description: >-
 复制并在 PR/提交前逐项确认：
 
 - [ ] `cmd/app/types/api/v1` 已定义 Request/Response，`binding` 与真实业务一致
+- [ ] `ShouldBindJSON` 已用于触发自动参数校验，且错误统一走 `common.Fail(..., 400, err)`
 - [ ] `handler` 仅：绑定、超时、调 service、`Success`/`Fail`
 - [ ] 业务方法返回 `(data, statusCode, err)`，且 handler 透传 `statusCode`
+- [ ] 涉及跨字段、权限、唯一性、状态流转时，已在业务层实现二次校验（不仅依赖 `binding`）
 - [ ] 无密码/token/连接串进入响应或不当日志；5xx 不暴露堆栈与 SQL
 - [ ] 需要鉴权的路由已在 `Init` 挂载 `middlewares.Auth` 或 `RequireRoles` 等
 - [ ] 若写 `auth:user:{id}`，已设置与 access token 一致的 TTL

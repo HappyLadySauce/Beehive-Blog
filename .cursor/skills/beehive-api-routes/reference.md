@@ -42,6 +42,8 @@ func (s *AuthService) handleLogin(c *gin.Context) {}
 ```go
 func (s *SomeService) handleXxx(c *gin.Context) {
 	var req v1.XxxRequest
+	// ShouldBindJSON 会自动按 DTO 上的 binding 标签执行参数校验
+	// 例如：json:"account" binding:"required,min=3,max=50"
 	if err := c.ShouldBindJSON(&req); err != nil {
 		klog.ErrorS(err, "Could not read request")
 		common.Fail(c, http.StatusBadRequest, err)
@@ -66,6 +68,10 @@ func (s *SomeService) Xxx(ctx context.Context, spec *v1.XxxRequest, request *htt
 	if spec == nil {
 		return nil, http.StatusBadRequest, errors.New("invalid request")
 	}
+	// 二次校验示例（业务层必做）：
+	// 1) 跨字段规则：如 StartAt <= EndAt
+	// 2) 数据一致性：唯一性/存在性检查
+	// 3) 权限与状态：当前用户是否有权限、资源是否允许当前操作
 	// 使用 s.svc.DB / s.svc.Redis / s.svc.Config
 	// 返回 (*v1.XxxResponse, http.StatusOK, nil) 或 (nil, statusCode, err)
 	return &v1.XxxResponse{}, http.StatusOK, nil
