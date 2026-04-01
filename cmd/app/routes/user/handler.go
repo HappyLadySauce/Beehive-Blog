@@ -24,6 +24,19 @@ func NewUserService(svc *svc.ServiceContext) *UserService {
 	}
 }
 
+// Register godoc
+//
+//	@Summary		用户注册
+//	@Description	创建新用户并返回访问令牌
+//	@Tags			user
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		v1.RegisterRequest	true	"注册参数"
+//	@Success		200		{object}	common.BaseResponse
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		409		{object}	common.BaseResponse
+//	@Failure		500		{object}	common.BaseResponse
+//	@Router			/api/v1/user/register [post]
 func (s *UserService) handleRegister(c *gin.Context) {
 	registerRequest := v1.RegisterRequest{}
 	if err := c.ShouldBindJSON(&registerRequest); err != nil {
