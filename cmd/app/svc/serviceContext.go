@@ -44,6 +44,9 @@ func NewServiceContext(c options.Options) (*ServiceContext, error) {
 	// 获取底层 sql.DB 并配置连接池
 	sqlDB, err := db.DB()
 	if err != nil {
+		if sqlDB != nil {
+			_ = sqlDB.Close()
+		}
 		return nil, fmt.Errorf("failed to get underlying sql.DB: %w", err)
 	}
 	// 设置连接池参数
