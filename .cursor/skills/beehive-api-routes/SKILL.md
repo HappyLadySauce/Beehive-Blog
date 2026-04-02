@@ -20,7 +20,8 @@ description: >-
 - 定义或修改 `cmd/app/types/api/v1` 中的请求/响应体
 - 讨论「接口分层」「统一返回」「ServiceContext」时
 
-/api/v1/public/*：无需登录（文章、分类、标签、公开评论）
+/api/v1/auth/*：登录/注册（无需登录）
+/api/v1/articles 等：公开内容读取（无需登录，由 `routes/content` 等包承载）
 /api/v1/user/*：登录用户
 /api/v1/admin/*：管理员（RequireRoles(admin)）
 
@@ -34,7 +35,7 @@ description: >-
 
 业务方法**不得**直接操作 `gin.Context` 写 JSON；由 handler 统一响应。
 
-参考实现：`cmd/app/routes/public/handler.go`、`cmd/app/routes/public/login.go`；登出见 `cmd/app/routes/user/handler.go`、`cmd/app/routes/user/logout.go`。
+参考实现：`cmd/app/routes/auth/handler.go`、`cmd/app/routes/auth/login.go`；登出见 `cmd/app/routes/user/handler.go`、`cmd/app/routes/user/logout.go`。
 
 ## Service 与 ServiceContext
 

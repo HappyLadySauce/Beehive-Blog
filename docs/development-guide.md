@@ -18,7 +18,7 @@
 ```mermaid
 flowchart TD
   HexoPage[Hexo 页面] --> ThemeJS[beehive-auth.js/theme.js]
-  ThemeJS -->|"POST /api/v1/public/login"| LoginAPI[Go Gin API]
+  ThemeJS -->|"POST /api/v1/auth/login"| LoginAPI[Go Gin API]
   ThemeJS -->|"Authorization: Bearer"| UserAPI[Go Gin API]
   UserAPI --> AuthMw[Auth 中间件]
   AuthMw --> JWT[JWT ParseToken]
@@ -38,7 +38,8 @@ flowchart TD
 
 - 路由入口与分组
   - `cmd/app/router/router.go`：Gin 路由注册、`/api/v1` 分组、Swagger/health
-  - `cmd/app/routes/public/*`：公开接口（当前实现包含登录/注册）
+  - `cmd/app/routes/auth/*`：认证接口（登录/注册）
+  - `cmd/app/routes/content/*`：公开内容接口（文章列表/详情等，无需登录）
   - `cmd/app/routes/user/*`：登录后接口（当前实现包含 me/profile/password/notifications/logout）
   - `cmd/app/routes/admin/*`：管理员接口（当前实现包含 `/api/v1/admin/ping`）
 - 鉴权/限流/安全中间件
@@ -271,13 +272,14 @@ CORS 配置在 `cmd/app/middlewares/cors.go`：
 
 ### 3.9 当前代码实现缺口（路由未暴露）
 
-当前 Gin 路由只暴露了认证/用户/管理员探活相关接口分组：
+当前 Gin 路由主要分组：
 
-- 公开接口：`cmd/app/routes/public/handler.go`（目前包含 `POST /api/v1/public/login`、`POST /api/v1/public/register`）
+- 认证接口：`cmd/app/routes/auth`（`POST /api/v1/auth/login`、`POST /api/v1/auth/register`）
+- 公开内容：`cmd/app/routes/content`（例如 `GET /api/v1/articles` 等）
 - 已登录接口：`cmd/app/routes/user/handler.go`（目前包含 `GET /api/v1/user/me`、`PUT /api/v1/user/profile`、`PUT /api/v1/user/password`、`GET /api/v1/user/notifications`、`POST /api/v1/user/logout`）
-- 管理员接口：`cmd/app/routes/admin/handler.go`（目前包含 `GET /api/v1/admin/ping`）
+- 管理员接口：`cmd/app/routes/admin/handler.go`（探活、Hexo 同步、文章管理等）
 
-因此，`docs/requirements.md` 中“文章/评论/附件”相关 endpoint 在当前代码中尚未注册到 Gin 路由/Swagger 输出。后续实现时，需要：
+`docs/requirements.md` 中仍有大量规划接口（评论、附件、搜索等）未完全暴露。后续实现时，需要：
 
 1. 在对应分组（public/user/admin）新增路由注册
 2. 为 handler 添加 swaggo 注释，保证 Swagger 可生成
@@ -289,8 +291,8 @@ CORS 配置在 `cmd/app/middlewares/cors.go`：
 
 根据接口权限矩阵与当前项目分组方式，建议遵循：
 
-- 访客/普通用户可读接口（例如 `GET /articles`、`GET /articles/:id`、`GET /articles/:id/comments`）
-  - 放在 `cmd/app/routes/public` 对应 handler（不挂 `middlewares.Auth`）
+- 访客/普通用户可读接口（例如 `GET /api/v1/articles`、`GET /api/v1/articles/:id`、`GET /api/v1/articles/:id/comments`）
+  - 放在 `cmd/app/routes/content`（或同类命名）对应 handler（不挂 `middlewares.Auth`）
 - 需要登录的接口（例如 `POST /comments`）
   - 放在 `cmd/app/routes/user`，并挂载 `middlewares.Auth(svcCtx)`
 - 仅管理员接口（例如文章增删改、评论审核、附件管理、策略/分组/批量/搜索等）
@@ -369,7 +371,7 @@ pnpm run clean
   - 注册表单挂载点：
     - `ui/hexo/source/register/index.md`：`<div id="beehive-register-root"></div>`
 - 登录请求：
-  - `POST /api/v1/public/login`，请求体 `{ account, password }`
+  - `POST /api/v1/auth/login`，请求体 `{ account, password }`
   - 登录成功后把 `token/refreshToken` 写入 localStorage，并跳转到首页 `/`
 - 用户态刷新：
   - 在导航组件出现时调用 `GET /api/v1/user/me`
@@ -423,7 +425,7 @@ Pretext vendor 文件由脚本拷贝生成：
 验证顺序：
 
 1. 打开 `/login/`，填写账号密码
-2. 请求是否成功命中 `POST /api/v1/public/login`
+2. 请求是否成功命中 `POST /api/v1/auth/login`
 3. 成功后是否写入 localStorage：
    - `beehive_token`
    - `beehive_refresh_token`

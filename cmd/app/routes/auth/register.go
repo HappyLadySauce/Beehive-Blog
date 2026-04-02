@@ -1,4 +1,4 @@
-package public
+package auth
 
 import (
 	"context"
@@ -15,19 +15,17 @@ import (
 	"k8s.io/klog/v2"
 )
 
-// Register 用户注册
-func (s *PublicService) Register(ctx context.Context, spec *v1.RegisterRequest, request *http.Request) (*v1.RegisterResponse, int, error) {
+// Register 用户注册。
+func (s *Service) Register(ctx context.Context, spec *v1.RegisterRequest, request *http.Request) (*v1.RegisterResponse, int, error) {
 	if spec == nil || request == nil {
 		return nil, http.StatusBadRequest, errors.New("invalid request")
 	}
-	// 使用事务处理
 	tx := s.svc.DB.WithContext(ctx).Begin()
 	if tx.Error != nil {
 		klog.ErrorS(tx.Error, "Failed to begin transaction")
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
 
-	// 确保事务最终提交或回滚
 	defer func() {
 		if r := recover(); r != nil {
 			tx.Rollback()
@@ -35,7 +33,6 @@ func (s *PublicService) Register(ctx context.Context, spec *v1.RegisterRequest, 
 		}
 	}()
 
-	// 1. 检查用户名是否已存在
 	var existingUser models.User
 	if err := tx.Where("username = ?", spec.Username).First(&existingUser).Error; err == nil {
 		tx.Rollback()
@@ -47,7 +44,6 @@ func (s *PublicService) Register(ctx context.Context, spec *v1.RegisterRequest, 
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
 
-	// 2. 检查邮箱是否已存在
 	if err := tx.Where("email = ?", spec.Email).First(&existingUser).Error; err == nil {
 		tx.Rollback()
 		klog.InfoS("Email already exists", "email", spec.Email)
@@ -58,7 +54,6 @@ func (s *PublicService) Register(ctx context.Context, spec *v1.RegisterRequest, 
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
 
-	// 3. 加密密码
 	hashedPassword, err := passwd.HashPassword(spec.Password)
 	if err != nil {
 		tx.Rollback()
@@ -66,7 +61,6 @@ func (s *PublicService) Register(ctx context.Context, spec *v1.RegisterRequest, 
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
 
-	// 4. 创建用户
 	user := &models.User{
 		Username: spec.Username,
 		Email:    spec.Email,
@@ -81,20 +75,17 @@ func (s *PublicService) Register(ctx context.Context, spec *v1.RegisterRequest, 
 		return nil, http.StatusInternalServerError, errors.New("failed to create user")
 	}
 
-	// 5. 提交事务
 	if err := tx.Commit().Error; err != nil {
 		klog.ErrorS(err, "Failed to commit transaction")
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
 
-	// 6. 生成 JWT Token
 	jwtSecret := s.svc.Config.JWTOptions.JWTSecret
 	if strings.TrimSpace(jwtSecret) == "" {
 		klog.Error("JWTSecret is not configured")
 		return nil, http.StatusInternalServerError, errors.New("auth service unavailable")
 	}
 
-	// 纯 Redis 鉴权模式下，注册后必须回写鉴权快照，否则新签发 token 无法通过中间件校验。
 	if s.svc.Redis == nil {
 		klog.Error("Redis client is not configured")
 		return nil, http.StatusInternalServerError, errors.New("auth service unavailable")

@@ -1,4 +1,4 @@
-package public
+package auth
 
 import (
 	"context"
@@ -10,7 +10,6 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
-
 	"github.com/gin-gonic/gin"
 	"k8s.io/klog/v2"
 )
@@ -19,7 +18,7 @@ import (
 //
 //	@Summary		用户登录
 //	@Description	使用用户名或邮箱登录并返回访问令牌
-//	@Tags			public
+//	@Tags			auth
 //	@Accept			json
 //	@Produce		json
 //	@Param			request	body		v1.LoginRequest	true	"登录参数"
@@ -28,8 +27,8 @@ import (
 //	@Failure		401		{object}	common.BaseResponse
 //	@Failure		403		{object}	common.BaseResponse
 //	@Failure		500		{object}	common.BaseResponse
-//	@Router			/api/v1/public/login [post]
-func (s *PublicService) HandleLogin(c *gin.Context) {
+//	@Router			/api/v1/auth/login [post]
+func (s *Service) HandleLogin(c *gin.Context) {
 	loginRequest := v1.LoginRequest{}
 	if err := c.ShouldBindJSON(&loginRequest); err != nil {
 		klog.ErrorS(err, "Could not read login request")
@@ -51,7 +50,7 @@ func (s *PublicService) HandleLogin(c *gin.Context) {
 //
 //	@Summary		用户注册
 //	@Description	创建新用户并返回访问令牌
-//	@Tags			public
+//	@Tags			auth
 //	@Accept			json
 //	@Produce		json
 //	@Param			request	body		v1.RegisterRequest	true	"注册参数"
@@ -59,8 +58,8 @@ func (s *PublicService) HandleLogin(c *gin.Context) {
 //	@Failure		400		{object}	common.BaseResponse
 //	@Failure		409		{object}	common.BaseResponse
 //	@Failure		500		{object}	common.BaseResponse
-//	@Router			/api/v1/public/register [post]
-func (s *PublicService) HandleRegister(c *gin.Context) {
+//	@Router			/api/v1/auth/register [post]
+func (s *Service) HandleRegister(c *gin.Context) {
 	registerRequest := v1.RegisterRequest{}
 	if err := c.ShouldBindJSON(&registerRequest); err != nil {
 		klog.ErrorS(err, "Could not read register request")
@@ -79,11 +78,10 @@ func (s *PublicService) HandleRegister(c *gin.Context) {
 	common.Success(c, response)
 }
 
-// Init registers unauthenticated routes under /api/v1/public.
+// Init registers routes under /api/v1/auth.
 func Init(svcCtx *svc.ServiceContext) {
-	g := router.V1().Group("/public")
-	pub := NewPublicService(svcCtx)
-	g.POST("/login", middlewares.LoginAttemptLimit(), pub.HandleLogin)
-	// 注册请求体无 account 字段，LoginAttemptLimit 不会生效；限流已由 v1 全局限流覆盖。
-	g.POST("/register", pub.HandleRegister)
+	g := router.V1().Group("/auth")
+	svc := NewService(svcCtx)
+	g.POST("/login", middlewares.LoginAttemptLimit(), svc.HandleLogin)
+	g.POST("/register", svc.HandleRegister)
 }

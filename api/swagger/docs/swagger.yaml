@@ -7,6 +7,137 @@ definitions:
       message:
         type: string
     type: object
+  v1.ArticleAuthorItem:
+    properties:
+      avatar:
+        type: string
+      id:
+        type: integer
+      nickname:
+        type: string
+      username:
+        type: string
+    type: object
+  v1.ArticleCategoryItem:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  v1.ArticleDetailResponse:
+    properties:
+      author:
+        $ref: '#/definitions/v1.ArticleAuthorItem'
+      category:
+        $ref: '#/definitions/v1.ArticleCategoryItem'
+      commentCount:
+        type: integer
+      content:
+        type: string
+      coverImage:
+        type: string
+      id:
+        type: integer
+      isPinned:
+        type: boolean
+      likeCount:
+        type: integer
+      next:
+        $ref: '#/definitions/v1.ArticleNavItem'
+      pinOrder:
+        type: integer
+      previous:
+        $ref: '#/definitions/v1.ArticleNavItem'
+      protected:
+        type: boolean
+      publishedAt:
+        type: string
+      slug:
+        type: string
+      summary:
+        type: string
+      tags:
+        items:
+          $ref: '#/definitions/v1.ArticleTagItem'
+        type: array
+      title:
+        type: string
+      updatedAt:
+        type: string
+      viewCount:
+        type: integer
+    type: object
+  v1.ArticleListItem:
+    properties:
+      author:
+        $ref: '#/definitions/v1.ArticleAuthorItem'
+      category:
+        $ref: '#/definitions/v1.ArticleCategoryItem'
+      commentCount:
+        type: integer
+      coverImage:
+        type: string
+      id:
+        type: integer
+      isPinned:
+        type: boolean
+      likeCount:
+        type: integer
+      pinOrder:
+        type: integer
+      publishedAt:
+        type: string
+      slug:
+        type: string
+      summary:
+        type: string
+      tags:
+        items:
+          $ref: '#/definitions/v1.ArticleTagItem'
+        type: array
+      title:
+        type: string
+      updatedAt:
+        type: string
+      viewCount:
+        type: integer
+    type: object
+  v1.ArticleListResponse:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/v1.ArticleListItem'
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
+  v1.ArticleNavItem:
+    properties:
+      id:
+        type: integer
+      slug:
+        type: string
+      title:
+        type: string
+    type: object
+  v1.ArticleTagItem:
+    properties:
+      color:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
   v1.LoginRequest:
     properties:
       account:
@@ -24,6 +155,11 @@ definitions:
     - password
     type: object
   v1.LogoutRequest:
+    type: object
+  v1.RecordArticleViewResponse:
+    properties:
+      viewCount:
+        type: integer
     type: object
   v1.RegisterRequest:
     properties:
@@ -195,7 +331,114 @@ paths:
       summary: Hexo 同步状态
       tags:
       - admin
-  /api/v1/public/login:
+  /api/v1/articles:
+    get:
+      description: 公开已发布文章，支持分类/标签 slug 筛选
+      parameters:
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页条数
+        in: query
+        name: pageSize
+        type: integer
+      - description: 关键词
+        in: query
+        name: keyword
+        type: string
+      - description: 分类 slug
+        in: query
+        name: category
+        type: string
+      - description: 标签 slug，逗号分隔多标签交集
+        in: query
+        name: tag
+        type: string
+      - description: 作者用户名
+        in: query
+        name: author
+        type: string
+      - description: 排序 newest|oldest|popular
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.ArticleListResponse'
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 文章列表
+      tags:
+      - articles
+  /api/v1/articles/{id}:
+    get:
+      description: 公开已发布文章详情
+      parameters:
+      - description: 文章 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.ArticleDetailResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 文章详情
+      tags:
+      - articles
+  /api/v1/articles/{id}/view:
+    post:
+      description: 已发布文章浏览量 +1
+      parameters:
+      - description: 文章 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.RecordArticleViewResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 记录文章浏览
+      tags:
+      - articles
+  /api/v1/auth/login:
     post:
       consumes:
       - application/json
@@ -232,8 +475,8 @@ paths:
             $ref: '#/definitions/common.BaseResponse'
       summary: 用户登录
       tags:
-      - public
-  /api/v1/public/register:
+      - auth
+  /api/v1/auth/register:
     post:
       consumes:
       - application/json
@@ -266,7 +509,7 @@ paths:
             $ref: '#/definitions/common.BaseResponse'
       summary: 用户注册
       tags:
-      - public
+      - auth
   /api/v1/user/logout:
     post:
       consumes:

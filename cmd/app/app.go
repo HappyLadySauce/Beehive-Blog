@@ -14,7 +14,8 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/options"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/router"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/admin"
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/public"
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/auth"
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/content"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/user"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 )
@@ -86,7 +87,8 @@ func serve(ctx context.Context, svcCtx *svc.ServiceContext) error {
 
 	router.EnableRateLimit()
 
-	public.Init(svcCtx)
+	auth.Init(svcCtx)
+	content.Init(svcCtx)
 	user.Init(svcCtx)
 	admin.Init(svcCtx)
 

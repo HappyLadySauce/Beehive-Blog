@@ -37,4 +37,5 @@ func Init(svcCtx *svc.ServiceContext) {
 	g.GET("/ping", HandlePing)
 	g.POST("/sync/posts", HandleSyncPosts(svcCtx))
 	g.GET("/sync/status", HandleSyncStatus(svcCtx))
+	registerArticleAdminRoutes(g, svcCtx)
 }

@@ -214,7 +214,7 @@
       setMessage(message, '登录中...', '');
       submit.disabled = true;
 
-      fetchJSON('/api/v1/public/login', {
+      fetchJSON('/api/v1/auth/login', {
         method: 'POST',
         body: JSON.stringify({ account: account, password: password }),
       })
@@ -274,7 +274,7 @@
       setMessage(message, '注册中...', '');
       submit.disabled = true;
 
-      fetchJSON('/api/v1/public/register', {
+      fetchJSON('/api/v1/auth/register', {
         method: 'POST',
         body: JSON.stringify({
           username: username,

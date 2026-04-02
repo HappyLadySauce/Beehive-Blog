@@ -1,4 +1,4 @@
-package public
+package auth
 
 import (
 	"context"
@@ -17,18 +17,18 @@ import (
 	"k8s.io/klog/v2"
 )
 
-// PublicService handles unauthenticated /public endpoints business logic (e.g. login).
-type PublicService struct {
+// Service 处理 /api/v1/auth 下的认证业务。
+type Service struct {
 	svc *svc.ServiceContext
 }
 
-// NewPublicService constructs a PublicService.
-func NewPublicService(svc *svc.ServiceContext) *PublicService {
-	return &PublicService{svc: svc}
+// NewService constructs an auth Service.
+func NewService(svc *svc.ServiceContext) *Service {
+	return &Service{svc: svc}
 }
 
 // Login authenticates by username or email and returns tokens.
-func (s *PublicService) Login(ctx context.Context, spec *v1.LoginRequest, request *http.Request) (*v1.LoginResponse, int, error) {
+func (s *Service) Login(ctx context.Context, spec *v1.LoginRequest, request *http.Request) (*v1.LoginResponse, int, error) {
 	if spec == nil {
 		return nil, http.StatusBadRequest, errors.New("invalid login request")
 	}
