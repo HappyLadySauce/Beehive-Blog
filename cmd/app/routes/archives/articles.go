@@ -36,7 +36,7 @@ func parseRFC3339Ptr(s *string) (*time.Time, error) {
 	}
 	parsed, err := time.Parse(time.RFC3339, t)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("publishedAt must be RFC3339 (e.g. 2026-04-02T12:00:00Z); omit the field for published articles to use server time")
 	}
 	return &parsed, nil
 }
@@ -266,7 +266,7 @@ func (a *ArticleAdmin) CreateArticle(ctx context.Context, adminUserID int64, req
 
 	pubAt, err := parseRFC3339Ptr(req.PublishedAt)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.New("invalid publishedAt")
+		return nil, http.StatusBadRequest, err
 	}
 	if st == models.ArticleStatusPublished && pubAt == nil {
 		now := time.Now()
@@ -379,7 +379,7 @@ func (a *ArticleAdmin) UpdateArticle(ctx context.Context, articleID int64, req *
 	}
 	pubAt, err := parseRFC3339Ptr(req.PublishedAt)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.New("invalid publishedAt")
+		return nil, http.StatusBadRequest, err
 	}
 	if pubAt != nil {
 		updates["published_at"] = pubAt
@@ -437,7 +437,7 @@ func (a *ArticleAdmin) UpdateArticleStatus(ctx context.Context, articleID int64,
 	}
 	pubAt, err := parseRFC3339Ptr(req.PublishedAt)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.New("invalid publishedAt")
+		return nil, http.StatusBadRequest, err
 	}
 	updates := map[string]interface{}{"status": req.Status}
 	if models.ArticleStatus(req.Status) == models.ArticleStatusPublished && pubAt == nil {
