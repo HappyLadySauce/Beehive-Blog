@@ -182,6 +182,122 @@ CORS 配置在 `cmd/app/middlewares/cors.go`：
 
 ---
 
+### 3.8 文章/评论/附件接口契约（规划）
+
+说明：本节以 `docs/requirements.md` 的接口契约为准，用于指导后续接口实现与前后端对齐。当前代码未必已全部暴露这些 endpoint。
+
+#### 3.8.1 文章管理模块（规划接口契约）
+
+- `GET /articles`（访客/普通用户/管理员）
+  - 查询参数：`page`、`pageSize`、`keyword`、`category`、`tag`、`status`（默认 `published`）、`author`、`sort`（默认 `newest`）
+  - 业务规则：
+    - `category` 与 `tag` 可同时筛选，结果取交集
+    - 普通场景仅返回 `published`；管理员可查看全部（含草稿/私密等）
+    - 支持多标签筛选（逗号分隔）
+- `GET /articles/:id`（访客/普通用户/管理员）
+  - 业务规则：
+    - 阅读量 `+1`（需防刷机制）
+    - 私密文章仅管理员可见
+- 管理端（仅管理员）
+  - `POST /articles`（创建）
+    - 支持草稿/发布两种状态，内容支持 Markdown
+  - `PUT /articles/:id`（编辑）
+    - 可选保留历史版本（版本历史见下）
+  - `DELETE /articles/:id`（删除）
+    - 软删除，删除时关联删除文章-标签关系
+  - `PUT /articles/:id/status`（设置文章状态）
+  - `PUT /articles/:id/slug`（别名/路由）
+    - 访问规则：`/archives/{slug}`
+  - `PUT /articles/:id/password`（密码保护）
+    - 为空则取消保护；访问受保护文章需校验密码
+  - `PUT /articles/:id/pin`（置顶）
+    - 按 `pinOrder` 降序展示，可同时置顶多篇
+  - `POST /articles/:id/versions/:versionId/restore`（恢复版本）
+  - `GET /articles/:id/versions`（查看历史）
+    - 保留最近约 50 个版本
+  - `GET /articles/:id/export?format={format}`（导出）
+    - `format` 支持：`markdown` / `html` / `pdf`
+  - `POST /articles/batch`（批量操作）
+
+#### 3.8.2 评论管理模块（规划接口契约）
+
+- `GET /articles/:id/comments`（访客/普通用户/管理员）
+  - 业务规则：按文章查看评论列表、支持分页、支持评论回复（嵌套展示）
+- `POST /comments`（普通用户/管理员；需要登录）
+  - 业务规则：
+    - 输入：文章 ID、评论内容、父评论 ID（回复时）
+    - 评论内容长度 1-2000 字符
+    - 新评论默认状态为 `pending`
+    - 发表评论可获得经验值（按需求文档规则）
+- 管理端（仅管理员）
+  - `DELETE /comments/:id`
+    - 软删除；删除父评论时子评论一并处理
+  - `PUT /comments/:id/status`
+    - 审核评论状态（`pending/approved/rejected/spam` 等）
+
+#### 3.8.3 附件管理模块（规划接口契约）
+
+- 管理端（仅管理员）
+  - `GET /attachments`（附件列表）
+    - 支持按类型、时间筛选；展示文件大小、上传时间
+  - `POST /attachments/upload`（上传附件）
+    - 支持类型：
+      - 图片：`jpg/jpeg/png/gif/webp`
+      - 文档：`pdf/doc/docx/xls/xlsx/ppt/pptx`
+      - 其他：`zip/rar/tar.gz`
+    - 业务规则：单文件最大 1GB、图片自动生成缩略图、重命名避免冲突
+  - `DELETE /attachments/:id`（删除附件）
+    - 物理删除文件 + 删除数据库记录
+  - 附件分类与策略/分组/批量/搜索/详情（均为管理员权限）
+    - 存储策略：
+      - `GET /attachments/policies`
+      - `POST /attachments/policies`
+      - `PUT /attachments/policies/:id`
+      - `DELETE /attachments/policies/:id`
+      - `PUT /attachments/policies/:id/default`
+    - 分组：
+      - `GET /attachments/groups`
+      - `POST /attachments/groups`
+      - `PUT /attachments/groups/:id`
+      - `DELETE /attachments/groups/:id`
+    - 批量操作：
+      - `POST /attachments/batch`
+    - 搜索：
+      - `GET /attachments?keyword={keyword}`
+    - 详情：
+      - `GET /attachments/:id`
+
+---
+
+### 3.9 当前代码实现缺口（路由未暴露）
+
+当前 Gin 路由只暴露了认证/用户/管理员探活相关接口分组：
+
+- 公开接口：`cmd/app/routes/public/handler.go`（目前包含 `POST /api/v1/public/login`、`POST /api/v1/public/register`）
+- 已登录接口：`cmd/app/routes/user/handler.go`（目前包含 `GET /api/v1/user/me`、`PUT /api/v1/user/profile`、`PUT /api/v1/user/password`、`GET /api/v1/user/notifications`、`POST /api/v1/user/logout`）
+- 管理员接口：`cmd/app/routes/admin/handler.go`（目前包含 `GET /api/v1/admin/ping`）
+
+因此，`docs/requirements.md` 中“文章/评论/附件”相关 endpoint 在当前代码中尚未注册到 Gin 路由/Swagger 输出。后续实现时，需要：
+
+1. 在对应分组（public/user/admin）新增路由注册
+2. 为 handler 添加 swaggo 注释，保证 Swagger 可生成
+3. 在 service/model 层完成业务逻辑与数据持久化
+
+---
+
+### 3.10 扩展实现落点映射（把契约变成代码）
+
+根据接口权限矩阵与当前项目分组方式，建议遵循：
+
+- 访客/普通用户可读接口（例如 `GET /articles`、`GET /articles/:id`、`GET /articles/:id/comments`）
+  - 放在 `cmd/app/routes/public` 对应 handler（不挂 `middlewares.Auth`）
+- 需要登录的接口（例如 `POST /comments`）
+  - 放在 `cmd/app/routes/user`，并挂载 `middlewares.Auth(svcCtx)`
+- 仅管理员接口（例如文章增删改、评论审核、附件管理、策略/分组/批量/搜索等）
+  - 放在 `cmd/app/routes/admin`，并挂载 `middlewares.Auth(svcCtx)` + `middlewares.RequireRoles(models.UserRoleAdmin)`
+
+> 备注：该映射只用于落点指导；具体字段校验、分页策略、限流策略等仍应以 `docs/requirements.md` 的业务规则为准，并在 handler/service 内实现完整的边界检查与错误处理。
+
 ## 4. 前端开发指南（Hexo 主题 + 账号集成）
 
 本项目前端位于 `ui/hexo`，主题源码在 `ui/hexo/themes/happyladysacue`。
