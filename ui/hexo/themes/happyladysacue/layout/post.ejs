@@ -1,0 +1,56 @@
+<%
+const tags = page.tags && page.tags.toArray ? page.tags.toArray() : [];
+const categories = page.categories && page.categories.toArray ? page.categories.toArray() : [];
+const articleToc = toc(page.content || '', { class: 'toc-list', list_number: false, max_depth: 3 });
+%>
+<div class="page-article">
+  <div class="article-shell">
+    <article class="article-card">
+      <header class="article-hero">
+        <% if (categories.length) { %>
+          <p class="eyebrow"><%= categories[0].name %></p>
+        <% } else { %>
+          <p class="eyebrow">Article</p>
+        <% } %>
+        <h1><%= page.title %></h1>
+        <div class="article-hero__meta">
+          <time datetime="<%= date_xml(page.date) %>"><%= date(page.date, config.date_format || 'YYYY-MM-DD') %></time>
+          <% if (page.updated) { %>
+            <span>更新于 <%= date(page.updated, config.date_format || 'YYYY-MM-DD') %></span>
+          <% } %>
+        </div>
+      </header>
+
+      <div class="article-content">
+        <%- page.content %>
+      </div>
+
+      <% if (tags.length) { %>
+        <footer class="article-footer">
+          <div class="tag-row">
+            <% tags.forEach(function (tag) { %>
+              <a class="tag-pill" href="<%- url_for(tag.path) %>"># <%= tag.name %></a>
+            <% }) %>
+          </div>
+        </footer>
+      <% } %>
+    </article>
+
+    <aside class="article-aside">
+      <% if (articleToc) { %>
+        <section class="sidebar-card">
+          <div class="sidebar-card__head">
+            <svg class="sidebar-card__head-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+            <h3>目录</h3>
+          </div>
+          <div class="toc-wrap"><%- articleToc %></div>
+        </section>
+      <% } %>
+
+      <%- partial('partials/sidebar') %>
+    </aside>
+  </div>
+</div>

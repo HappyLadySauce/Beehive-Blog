@@ -1,0 +1,43 @@
+<%
+function plainText(input) {
+  return String(input || '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+const siteTitle = config.title || theme.brand.name || 'Beehive Blog';
+const pageTitle = page.title ? `${plainText(page.title)} | ${siteTitle}` : siteTitle;
+const pageDescription = plainText(
+  page.description ||
+  page.excerpt ||
+  page.content ||
+  config.description ||
+  (theme.brand && theme.brand.description) ||
+  ''
+).slice(0, 180);
+const canonicalUrl = page.permalink || config.url;
+const ogImage = page.cover || (theme.seo && theme.seo.og_image) || (theme.brand && theme.brand.avatar) || '';
+%>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= pageTitle %></title>
+<meta name="description" content="<%= pageDescription %>">
+<meta name="author" content="<%= config.author || (theme.brand && theme.brand.author) || '' %>">
+<meta name="theme-color" content="<%= theme.appearance && theme.appearance.accent ? theme.appearance.accent : '#7c5cff' %>">
+<meta property="og:type" content="<%= page.layout === 'post' ? 'article' : 'website' %>">
+<meta property="og:title" content="<%= pageTitle %>">
+<meta property="og:description" content="<%= pageDescription %>">
+<meta property="og:url" content="<%= canonicalUrl %>">
+<meta property="og:site_name" content="<%= siteTitle %>">
+<% if (ogImage) { %><meta property="og:image" content="<%= url_for(ogImage) %>"><% } %>
+<meta name="twitter:card" content="summary_large_image">
+<% if (theme.seo && theme.seo.keywords && theme.seo.keywords.length) { %>
+<meta name="keywords" content="<%= theme.seo.keywords.join(', ') %>">
+<% } %>
+<link rel="canonical" href="<%= canonicalUrl %>">
+<link rel="stylesheet" href="<%- url_for('/css/theme.css') %>">
+<% if (config.feed && config.feed.path) { %>
+<link rel="alternate" href="<%- url_for(config.feed.path) %>" title="<%= siteTitle %>" type="application/atom+xml">
+<% } %>

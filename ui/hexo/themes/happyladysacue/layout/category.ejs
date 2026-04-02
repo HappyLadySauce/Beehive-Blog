@@ -1,0 +1,41 @@
+<%
+const posts = page.posts && page.posts.toArray ? page.posts.toArray() : [];
+const catName = page.category || page.title || '分类';
+%>
+<div class="page-home">
+  <div class="page-header-banner">
+    <div class="page-header-banner__inner">
+      <p class="eyebrow">Category</p>
+      <h1 class="page-header-banner__title"><%= catName %></h1>
+      <p class="page-header-banner__desc">围绕同一主题聚合文章，适合快速进入某个知识分区。</p>
+    </div>
+  </div>
+
+  <div class="content-grid">
+    <section class="content-column">
+      <div class="post-feed">
+        <% posts.forEach(function (post) { %>
+          <%- partial('partials/post-card', { post: post }) %>
+        <% }) %>
+        <% if (!posts.length) { %>
+          <p style="color:var(--text-muted);padding:24px 0;">该分类暂无文章。</p>
+        <% } %>
+      </div>
+
+      <% if (page.total && page.total > 1) { %>
+        <nav class="pagination-nav">
+          <%- paginator({
+            prev_text: '← 上一页',
+            next_text: '下一页 →',
+            end_size: 1,
+            mid_size: 2
+          }) %>
+        </nav>
+      <% } %>
+    </section>
+
+    <% if (!theme.sidebar || theme.sidebar.enable !== false) { %>
+      <%- partial('partials/sidebar') %>
+    <% } %>
+  </div>
+</div>

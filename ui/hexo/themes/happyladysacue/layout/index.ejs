@@ -1,0 +1,47 @@
+<%
+const posts = page.posts && page.posts.toArray ? page.posts.toArray() : (site.posts && site.posts.toArray ? site.posts.toArray() : []);
+const isFirstPage = !page.current || page.current === 1;
+%>
+
+<%# 首页第一页才展示全屏 Hero %>
+<% if (isFirstPage) { %>
+  <%- partial('partials/hero') %>
+<% } %>
+
+<div class="page-home">
+  <div class="content-grid">
+    <section class="content-column">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Recent posts</p>
+          <h2>最近更新</h2>
+        </div>
+        <a href="<%- url_for('/archives/') %>">查看归档 →</a>
+      </div>
+
+      <div class="post-feed">
+        <% posts.forEach(function (post) { %>
+          <%- partial('partials/post-card', { post: post }) %>
+        <% }) %>
+        <% if (!posts.length) { %>
+          <p style="color:var(--text-muted);padding:24px 0;">暂无文章，快去写第一篇吧！</p>
+        <% } %>
+      </div>
+
+      <% if (page.total && page.total > 1) { %>
+        <nav class="pagination-nav">
+          <%- paginator({
+            prev_text: '← 上一页',
+            next_text: '下一页 →',
+            end_size: 1,
+            mid_size: 2
+          }) %>
+        </nav>
+      <% } %>
+    </section>
+
+    <% if (!theme.sidebar || theme.sidebar.enable !== false) { %>
+      <%- partial('partials/sidebar') %>
+    <% } %>
+  </div>
+</div>

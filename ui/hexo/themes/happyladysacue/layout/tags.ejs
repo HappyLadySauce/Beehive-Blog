@@ -1,0 +1,25 @@
+<%
+const tags = site.tags && site.tags.toArray ? site.tags.toArray() : [];
+%>
+<div class="page-home">
+  <div class="page-header-banner">
+    <div class="page-header-banner__inner">
+      <p class="eyebrow">Tags</p>
+      <h1 class="page-header-banner__title">标签地图</h1>
+      <p class="page-header-banner__desc">通过标签交叉浏览不同文章之间的联系与上下文。</p>
+    </div>
+  </div>
+
+  <div class="taxonomy-open-grid">
+    <% if (tags.length) { %>
+      <% tags.forEach(function (tag) { %>
+        <a class="taxonomy-pill-card" href="<%- url_for(tag.path) %>">
+          <span class="taxonomy-pill-card__name"># <%= tag.name %></span>
+          <span class="taxonomy-pill-card__count"><%= tag.length %></span>
+        </a>
+      <% }) %>
+    <% } else { %>
+      <p style="color:var(--text-muted);">暂无标签。</p>
+    <% } %>
+  </div>
+</div>

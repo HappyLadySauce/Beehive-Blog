@@ -1,0 +1,19 @@
+<%
+const avatar = (theme.brand && theme.brand.avatar) || '/images/avatar-placeholder.svg';
+%>
+<div class="beehive-account-nav" id="beehive-account-wrap">
+  <button class="beehive-account-trigger" id="beehive-account-trigger" type="button" aria-expanded="false" aria-haspopup="true" title="账号">
+    <img id="beehive-nav-avatar" src="<%- url_for(avatar) %>" alt="用户头像" width="40" height="40">
+  </button>
+  <div class="beehive-account-dropdown is-hidden" id="beehive-account-dropdown" role="menu">
+    <div class="beehive-account-dropdown-panel" id="beehive-dropdown-guest">
+      <a class="beehive-account-dropdown-link" href="<%- url_for('/login/') %>">登录</a>
+      <a class="beehive-account-dropdown-link" href="<%- url_for('/register/') %>">注册</a>
+    </div>
+    <div class="beehive-account-dropdown-panel is-hidden" id="beehive-dropdown-user">
+      <div class="beehive-account-dropdown-name" id="beehive-nav-nickname"></div>
+      <a class="beehive-account-dropdown-link" href="<%- url_for('/archives/') %>">我的内容</a>
+      <button class="beehive-account-dropdown-btn" id="beehive-nav-logout" type="button">退出登录</button>
+    </div>
+  </div>
+</div>

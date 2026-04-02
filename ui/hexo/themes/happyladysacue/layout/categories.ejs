@@ -1,0 +1,27 @@
+<%
+const categories = site.categories && site.categories.toArray ? site.categories.toArray() : [];
+const catColors = ['cat-color-0','cat-color-1','cat-color-2','cat-color-3','cat-color-4','cat-color-5'];
+%>
+<div class="page-home">
+  <div class="page-header-banner">
+    <div class="page-header-banner__inner">
+      <p class="eyebrow">Categories</p>
+      <h1 class="page-header-banner__title">分类总览</h1>
+      <p class="page-header-banner__desc">按照主题聚合文章内容，快速进入对应知识分区。</p>
+    </div>
+  </div>
+
+  <div class="taxonomy-open-grid taxonomy-open-grid--categories">
+    <% if (categories.length) { %>
+      <% categories.forEach(function (category, index) { %>
+        <a class="taxonomy-cat-card" href="<%- url_for(category.path) %>">
+          <span class="taxonomy-cat-card__dot <%= catColors[index % catColors.length] %>"></span>
+          <span class="taxonomy-cat-card__name"><%= category.name %></span>
+          <span class="taxonomy-cat-card__count"><%= category.length %> 篇</span>
+        </a>
+      <% }) %>
+    <% } else { %>
+      <p style="color:var(--text-muted);">暂无分类。</p>
+    <% } %>
+  </div>
+</div>

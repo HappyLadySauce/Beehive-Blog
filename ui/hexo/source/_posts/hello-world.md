@@ -1,5 +1,11 @@
 ---
 title: Hello World
+description: Hexo 默认示例文章，用于验证 happyladysacue 主题的首页卡片、文章页和归档结构。
+categories:
+  - 建站记录
+tags:
+  - Hexo
+  - Theme
 ---
 Welcome to [Hexo](https://hexo.io/)! This is your very first post. Check [documentation](https://hexo.io/docs/) for more info. If you get any problems when using Hexo, you can find the answer in [troubleshooting](https://hexo.io/docs/troubleshooting.html) or you can ask me on [GitHub](https://github.com/hexojs/hexo/issues).
 

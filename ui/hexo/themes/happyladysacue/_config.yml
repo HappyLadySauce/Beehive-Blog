@@ -1,0 +1,78 @@
+brand:
+  name: Beehive Blog
+  short_name: Beehive
+  slogan: Build in public, write with warmth.
+  description: 以内容为中心，融合卡片式首页、轻量交互与用户账号能力的现代 Hexo 主题。
+  author: HappyLadySauce
+  email: hi@example.com
+  avatar: /images/avatar-placeholder.svg
+  since: 2026
+  social:
+    - name: GitHub
+      icon: github
+      url: https://github.com/happyladysauce
+    - name: Twitter / X
+      icon: twitter
+      url: https://twitter.com/happyladysauce
+    - name: Email
+      icon: email
+      url: mailto:hi@example.com
+
+seo:
+  keywords:
+    - Hexo
+    - Beehive
+    - Blog
+    - Pretext
+  og_image: /images/avatar-placeholder.svg
+
+beehive:
+  api_base: http://127.0.0.1:8081
+  enable_auth: true
+
+appearance:
+  default_theme: auto
+  accent: "#3b82f6"
+  accent_secondary: "#9333ea"
+  accent_tertiary: "#ec4899"
+
+hero:
+  title: Beehive Blog
+  subtitle: 用文字记录思考，以代码构建世界。
+  avatar: /images/avatar-placeholder.svg
+  social:
+    - name: GitHub
+      icon: github
+      url: https://github.com/happyladysauce
+    - name: Twitter / X
+      icon: twitter
+      url: https://twitter.com/happyladysauce
+    - name: Email
+      icon: email
+      url: mailto:hi@example.com
+
+menu:
+  首页: /
+  归档: /archives/
+  分类: /categories/
+  标签: /tags/
+  关于: /about/
+
+home:
+  feature_count: 3
+  recent_count: 6
+
+sidebar:
+  enable: true
+  popular_count: 5
+  categories: 8
+  tag_count: 14
+
+footer:
+  motto: Keep shipping beautiful pages.
+  about: 以内容为中心，融合卡片式首页与 Beehive 用户体系的现代 Hexo 主题。
+  links:
+    - name: RSS
+      url: /atom.xml
+    - name: 友情链接
+      url: /links/

@@ -1,0 +1,29 @@
+<%
+const posts = page.posts && page.posts.toArray ? page.posts.toArray() : [];
+%>
+<div class="container page-listing">
+  <section class="listing-shell">
+    <header class="listing-header">
+      <p class="eyebrow">Tag</p>
+      <h1># <%= page.tag || page.title || '标签' %></h1>
+      <p>通过标签交叉查看不同专题下的关联文章。</p>
+    </header>
+
+    <div class="post-feed">
+      <% posts.forEach(function (post) { %>
+        <%- partial('partials/post-card', { post: post }) %>
+      <% }) %>
+    </div>
+
+    <% if (page.total && page.total > 1) { %>
+      <nav class="pagination-nav">
+        <%- paginator({
+          prev_text: '上一页',
+          next_text: '下一页',
+          end_size: 1,
+          mid_size: 2
+        }) %>
+      </nav>
+    <% } %>
+  </section>
+</div>

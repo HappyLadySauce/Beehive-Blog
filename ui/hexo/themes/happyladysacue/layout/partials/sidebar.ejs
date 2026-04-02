@@ -1,0 +1,110 @@
+<%
+const sidebarCfg = theme.sidebar || {};
+const popularCount = sidebarCfg.popular_count || 5;
+const categoryCount = sidebarCfg.categories || 8;
+const tagCount = sidebarCfg.tag_count || 12;
+
+// 获取文章（按日期降序）
+const allPostsArr = site.posts && site.posts.toArray
+  ? site.posts.toArray().sort(function (a, b) { return b.date - a.date; })
+  : [];
+
+// 热门文章：有浏览量则按浏览量排序，否则用最新文章代替
+const popularPosts = allPostsArr.slice(0, popularCount);
+
+// 分类
+const categories = site.categories && site.categories.toArray
+  ? site.categories.toArray().slice(0, categoryCount)
+  : [];
+
+// 标签
+const tags = site.tags && site.tags.toArray
+  ? site.tags.toArray().slice(0, tagCount)
+  : [];
+
+// 分类颜色循环
+const catColors = ['cat-color-0','cat-color-1','cat-color-2','cat-color-3','cat-color-4','cat-color-5'];
+%>
+<div class="page-sidebar">
+
+  <%# 1. 热门文章 %>
+  <section class="sidebar-card">
+    <div class="sidebar-card__head">
+      <svg class="sidebar-card__head-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      <h3>热门文章</h3>
+    </div>
+    <% if (popularPosts.length) { %>
+      <ol class="popular-list">
+        <% popularPosts.forEach(function (post, index) { %>
+          <li class="popular-item">
+            <span class="popular-item__rank"><%= index + 1 %></span>
+            <div class="popular-item__body">
+              <a href="<%- url_for(post.path) %>">
+                <div class="popular-item__title"><%= post.title %></div>
+              </a>
+              <% if (post.views) { %>
+                <div class="popular-item__views">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12" style="display:inline;vertical-align:middle;margin-right:3px;">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  <%= post.views %>
+                </div>
+              <% } else { %>
+                <div class="popular-item__views"><%= date(post.date, 'MM-DD') %></div>
+              <% } %>
+            </div>
+          </li>
+        <% }) %>
+      </ol>
+    <% } else { %>
+      <p style="font-size:.88rem;color:var(--text-muted);">暂无文章</p>
+    <% } %>
+  </section>
+
+  <%# 2. 分类 — 彩色圆点 %>
+  <section class="sidebar-card">
+    <div class="sidebar-card__head">
+      <svg class="sidebar-card__head-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+      </svg>
+      <h3>文章分类</h3>
+    </div>
+    <% if (categories.length) { %>
+      <ul class="category-list">
+        <% categories.forEach(function (cat, index) { %>
+          <li class="category-item">
+            <a class="category-item__left" href="<%- url_for(cat.path) %>">
+              <span class="category-dot <%= catColors[index % catColors.length] %>"></span>
+              <span><%= cat.name %></span>
+            </a>
+            <span class="category-item__count"><%= cat.length %></span>
+          </li>
+        <% }) %>
+      </ul>
+    <% } else { %>
+      <p style="font-size:.88rem;color:var(--text-muted);">暂无分类</p>
+    <% } %>
+  </section>
+
+  <%# 3. 标签云 — pill 悬停渐变 %>
+  <section class="sidebar-card">
+    <div class="sidebar-card__head">
+      <svg class="sidebar-card__head-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>
+      </svg>
+      <h3>文章标签</h3>
+    </div>
+    <% if (tags.length) { %>
+      <div class="tag-cloud">
+        <% tags.forEach(function (tag) { %>
+          <a class="tag-pill" href="<%- url_for(tag.path) %>"><%= tag.name %></a>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <p style="font-size:.88rem;color:var(--text-muted);">暂无标签</p>
+    <% } %>
+  </section>
+
+</div>

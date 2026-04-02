@@ -3,17 +3,17 @@
 ## Source: https://github.com/hexojs/hexo/
 
 # Site
-title: Hexo
-subtitle: ''
-description: ''
+title: Beehive Blog
+subtitle: Hexo Pretext 风格主题实验站
+description: 一个融合卡片化首页、Pretext 摘要增强和 Beehive 用户体系的现代化 Hexo 站点。
 keywords:
-author: John Doe
-language: en
+author: HappyLadySauce
+language: zh-CN
 timezone: ''
 
 # URL
 ## Set your site url here. For example, if you use GitHub Page, set url as 'https://username.github.io/project'
-url: http://example.com
+url: http://localhost:4000
 permalink: :year/:month/:day/:title/
 permalink_defaults:
 pretty_urls:
@@ -96,7 +96,7 @@ ignore:
 # Extensions
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
-theme: 
+theme: happyladysacue
 
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment

@@ -1,0 +1,90 @@
+<%
+const brand = theme.brand || {};
+const footerCfg = theme.footer || {};
+const menuEntries = Object.entries(theme.menu || {});
+const footerSocials = footerCfg.social || brand.social || [];
+const footerAbout = footerCfg.about || brand.description || config.description || '';
+const authorName = brand.author || config.author || 'HappyLadySauce';
+const siteName = brand.name || config.title || 'Beehive Blog';
+const currentYear = new Date().getFullYear();
+const sinceYear = brand.since || currentYear;
+%>
+<footer class="site-footer">
+  <div class="footer-grid">
+
+    <%# 列 1：关于 %>
+    <div class="footer-col">
+      <h4><%= siteName %></h4>
+      <% if (footerAbout) { %>
+        <p><%= footerAbout %></p>
+      <% } %>
+      <% if (footerSocials && footerSocials.length) { %>
+        <div style="display:flex;gap:10px;margin-top:16px;">
+          <% footerSocials.forEach(function (s) { %>
+            <a href="<%= s.url %>" target="_blank" rel="noopener noreferrer" aria-label="<%= s.name %>"
+               style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.06);color:var(--text-muted);transition:background .2s,color .2s;"
+               onmouseover="this.style.background='linear-gradient(135deg,#3b82f6,#9333ea)';this.style.color='#fff';"
+               onmouseout="this.style.background='rgba(0,0,0,0.06)';this.style.color='var(--text-muted)';">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+              </svg>
+            </a>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+
+    <%# 列 2：导航链接 %>
+    <div class="footer-col">
+      <h4>导航</h4>
+      <ul>
+        <% menuEntries.forEach(function (entry) { %>
+          <li><a href="<%- url_for(entry[1]) %>"><%= entry[0] %></a></li>
+        <% }) %>
+      </ul>
+    </div>
+
+    <%# 列 3：联系 %>
+    <div class="footer-col">
+      <h4>联系</h4>
+      <ul>
+        <% if (brand.email) { %>
+          <li><a href="mailto:<%= brand.email %>"><%= brand.email %></a></li>
+        <% } %>
+        <% if (footerCfg.links) { %>
+          <% footerCfg.links.forEach(function (link) { %>
+            <li><a href="<%= link.url %>" target="_blank" rel="noopener noreferrer"><%= link.name %></a></li>
+          <% }) %>
+        <% } %>
+        <li><a href="<%- url_for('/about') %>">关于本站</a></li>
+      </ul>
+    </div>
+
+    <%# 列 4：订阅 %>
+    <div class="footer-col">
+      <h4>订阅更新</h4>
+      <p style="margin-bottom:14px;">输入邮箱，第一时间获取最新文章推送。</p>
+      <form class="footer-subscribe" onsubmit="return false;" aria-label="邮件订阅">
+        <input type="email" placeholder="your@email.com" aria-label="邮箱地址">
+        <button type="submit">订阅</button>
+      </form>
+    </div>
+
+  </div>
+
+  <%# 底部版权行 %>
+  <div class="footer-bottom">
+    <span>&copy; <%= sinceYear %><% if (sinceYear < currentYear) { %>–<%= currentYear %><% } %> <%= authorName %></span>
+    <span>·</span>
+    <span>Powered by</span>
+    <a href="https://hexo.io" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">Hexo</a>
+    <span>&amp;</span>
+    <a href="https://github.com/chenglou/pretext" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">Pretext</a>
+    <span class="footer-heart">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#ec4899">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+      </svg>
+    </span>
+  </div>
+</footer>

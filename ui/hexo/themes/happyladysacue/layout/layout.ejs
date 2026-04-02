@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="<%= Array.isArray(config.language) ? config.language[0] : (config.language || 'zh-CN') %>" data-theme="light">
+<head>
+  <%- partial('partials/head') %>
+</head>
+<body class="<%= page.layout ? 'layout-' + page.layout : 'layout-default' %>">
+  <script>
+    window.__HLS_THEME__ = {
+      defaultTheme: "<%= theme.appearance && theme.appearance.default_theme ? theme.appearance.default_theme : 'auto' %>",
+      accent: "<%= theme.appearance && theme.appearance.accent ? theme.appearance.accent : '#3b82f6' %>"
+    };
+    window.__BEEHIVE_API_BASE__ = "<%= theme.beehive && theme.beehive.api_base ? theme.beehive.api_base : '' %>";
+  </script>
+  <div class="site-shell">
+    <%- partial('partials/nav') %>
+    <main class="site-main">
+      <%- body %>
+    </main>
+    <%- partial('partials/footer') %>
+  </div>
+  <script src="<%- url_for('/js/theme.js') %>"></script>
+  <% if (theme.beehive && theme.beehive.enable_auth) { %>
+    <script src="<%- url_for('/js/beehive-auth.js') %>"></script>
+  <% } %>
+  <script type="module" src="<%- url_for('/js/pretext-enhance.js') %>"></script>
+</body>
+</html>
