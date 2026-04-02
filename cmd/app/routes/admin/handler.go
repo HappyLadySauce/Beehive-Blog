@@ -32,9 +32,6 @@ func HandlePing(c *gin.Context) {
 
 // Init registers routes under /api/v1/admin with Auth + admin role.
 func Init(svcCtx *svc.ServiceContext) {
-	if svcCtx == nil {
-		return
-	}
 	g := router.V1().Group("/admin")
 	g.Use(middlewares.Auth(svcCtx), middlewares.RequireRoles(models.UserRoleAdmin))
 	g.GET("/ping", HandlePing)
