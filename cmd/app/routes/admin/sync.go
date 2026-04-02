@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/sync"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/sync"
 	"github.com/gin-gonic/gin"
 )
 

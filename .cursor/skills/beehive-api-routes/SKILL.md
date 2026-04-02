@@ -22,8 +22,9 @@ description: >-
 
 /api/v1/auth/*：登录/注册（无需登录）
 /api/v1/articles 等：公开内容读取（无需登录，由 `routes/content` 等包承载）
+/api/v1/categories*、/api/v1/tags*：公开分类与标签（`routes/categories`、`routes/tags` 的 `Init`）。分类为**一级列表**（公开 `GET /categories` 返回 `list`，按 **slug** 读详情）；管理员对分类/标签的增删改使用路径 **`{id}`**。标签 `color` 接受 hex 与常见颜色名，服务端规范化为 `#RRGGBB`。
 /api/v1/user/*：登录用户
-/api/v1/admin/*：管理员（RequireRoles(admin)）；文章 CRUD 实现位于 `routes/archives`，在 `admin.Init` 中注册到同一分组
+/api/v1/admin/*：管理员（RequireRoles(admin)）；文章 CRUD 在 `routes/archives`；分类/标签管理在 `routes/categories`、`routes/tags` 的 `RegisterAdminRoutes`，均由 `admin.Init` 注册到同一分组
 
 ## 分层职责
 

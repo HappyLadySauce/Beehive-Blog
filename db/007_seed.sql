@@ -33,6 +33,11 @@ INSERT INTO user_levels (level, name, required_exp, required_days, required_arti
 (5, '博客达人', 1000, 180, 100, '注册满180天 或 有效阅读100篇文章'),
 (6, '资深博主', 2000, 365, 200, '注册满365天 或 有效阅读200篇文章');
 
+-- 默认分类
+INSERT INTO categories (name, slug, description, sort_order)
+VALUES ('默认分类', 'default', '系统初始化自动创建的默认分类', 0)
+ON CONFLICT (slug) DO NOTHING;
+
 -- 默认存储策略
 INSERT INTO storage_policies (name, type, is_default, base_url, upload_path, sort_order) VALUES
 ('本地存储', 'local', TRUE, '/uploads', 'uploads', 1);

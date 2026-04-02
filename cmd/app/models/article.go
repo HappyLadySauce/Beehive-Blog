@@ -17,25 +17,25 @@ const (
 
 // Article 文章模型
 type Article struct {
-	ID          int64         `json:"id" gorm:"primaryKey;autoIncrement"`
-	Title       string        `json:"title" gorm:"size:200;not null"`
-	Slug        string        `json:"slug" gorm:"uniqueIndex;size:100"`
-	Content     string        `json:"content" gorm:"type:text;not null"`
-	Summary     string        `json:"summary" gorm:"size:500"`
-	CoverImage  string        `json:"coverImage" gorm:"size:500"`
-	Status      ArticleStatus `json:"status" gorm:"size:20;default:'draft'"`
-	Password    string        `json:"-" gorm:"size:100"`
-	IsPinned    bool          `json:"isPinned" gorm:"default:false"`
-	PinOrder    int           `json:"pinOrder" gorm:"default:0"`
-	ViewCount   int64         `json:"viewCount" gorm:"default:0"`
-	LikeCount   int64         `json:"likeCount" gorm:"default:0"`
-	CommentCount int64        `json:"commentCount" gorm:"default:0"`
-	AuthorID    int64         `json:"authorId" gorm:"not null;index"`
-	CategoryID  *int64        `json:"categoryId" gorm:"index"`
-	PublishedAt *time.Time    `json:"publishedAt"`
-	CreatedAt   time.Time     `json:"createdAt" gorm:"autoCreateTime"`
-	UpdatedAt   time.Time     `json:"updatedAt" gorm:"autoUpdateTime"`
-	DeletedAt   *time.Time    `json:"-" gorm:"index"`
+	ID           int64         `json:"id" gorm:"primaryKey;autoIncrement"`
+	Title        string        `json:"title" gorm:"size:200;not null"`
+	Slug         string        `json:"slug" gorm:"uniqueIndex;size:100"`
+	Content      string        `json:"content" gorm:"type:text;not null"`
+	Summary      string        `json:"summary" gorm:"size:500"`
+	CoverImage   string        `json:"coverImage" gorm:"size:500"`
+	Status       ArticleStatus `json:"status" gorm:"size:20;default:'draft'"`
+	Password     string        `json:"-" gorm:"size:100"`
+	IsPinned     bool          `json:"isPinned" gorm:"default:false"`
+	PinOrder     int           `json:"pinOrder" gorm:"default:0"`
+	ViewCount    int64         `json:"viewCount" gorm:"default:0"`
+	LikeCount    int64         `json:"likeCount" gorm:"default:0"`
+	CommentCount int64         `json:"commentCount" gorm:"default:0"`
+	AuthorID     int64         `json:"authorId" gorm:"not null;index"`
+	CategoryID   *int64        `json:"categoryId" gorm:"index"`
+	PublishedAt  *time.Time    `json:"publishedAt"`
+	CreatedAt    time.Time     `json:"createdAt" gorm:"autoCreateTime"`
+	UpdatedAt    time.Time     `json:"updatedAt" gorm:"autoUpdateTime"`
+	DeletedAt    *time.Time    `json:"-" gorm:"index"`
 
 	// 关联关系
 	Author   User      `json:"author" gorm:"foreignKey:AuthorID"`

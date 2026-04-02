@@ -6,7 +6,7 @@ type RegisterRequest struct {
 	// 用户名 3-20位
 	Username string `json:"username" binding:"required,min=3,max=20,alphanum"`
 	// 邮箱 50位
-	Email    string `json:"email" binding:"required,email,max=50"`
+	Email string `json:"email" binding:"required,email,max=50"`
 	// 密码 6-20位
 	Password string `json:"password" binding:"required,min=6,max=20"`
 }
@@ -26,10 +26,10 @@ type MeResponse struct {
 	Avatar           string     `json:"avatar"`
 	Role             string     `json:"role"`
 	Status           string     `json:"status"`
-	Level            int `json:"level"`
-	Experience       int `json:"experience"`
-	CommentCount     int `json:"commentCount"`
-	ArticleViewCount int `json:"articleViewCount"`
+	Level            int        `json:"level"`
+	Experience       int        `json:"experience"`
+	CommentCount     int        `json:"commentCount"`
+	ArticleViewCount int        `json:"articleViewCount"`
 	LastLoginAt      *time.Time `json:"lastLoginAt"`
 	CreatedAt        time.Time  `json:"createdAt"`
 }
@@ -74,5 +74,5 @@ type NotificationItem struct {
 // NotificationListResponse paginates notifications.
 type NotificationListResponse struct {
 	Items []NotificationItem `json:"items"`
-	Total int64                `json:"total"`
+	Total int64              `json:"total"`
 }

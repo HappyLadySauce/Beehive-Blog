@@ -16,24 +16,24 @@ const (
 
 // Comment 评论模型
 type Comment struct {
-	ID        int64         `json:"id" gorm:"primaryKey;autoIncrement"`
-	Content   string        `json:"content" gorm:"type:text;not null"`
-	Status    CommentStatus `json:"status" gorm:"size:20;default:'pending'"`
-	ArticleID int64         `json:"articleId" gorm:"not null;index"`
-	UserID    *int64        `json:"userId" gorm:"index"`
-	ParentID  *int64        `json:"parentId" gorm:"index"`
-	AuthorName  string      `json:"authorName,omitempty" gorm:"size:50"`  // 游客评论时使用
-	AuthorEmail string      `json:"authorEmail,omitempty" gorm:"size:100"` // 游客评论时使用
-	AuthorIP    string      `json:"-" gorm:"size:50"`
-	LikeCount   int64       `json:"likeCount" gorm:"default:0"`
-	CreatedAt   time.Time   `json:"createdAt" gorm:"autoCreateTime"`
-	UpdatedAt   time.Time   `json:"updatedAt" gorm:"autoUpdateTime"`
+	ID          int64         `json:"id" gorm:"primaryKey;autoIncrement"`
+	Content     string        `json:"content" gorm:"type:text;not null"`
+	Status      CommentStatus `json:"status" gorm:"size:20;default:'pending'"`
+	ArticleID   int64         `json:"articleId" gorm:"not null;index"`
+	UserID      *int64        `json:"userId" gorm:"index"`
+	ParentID    *int64        `json:"parentId" gorm:"index"`
+	AuthorName  string        `json:"authorName,omitempty" gorm:"size:50"`   // 游客评论时使用
+	AuthorEmail string        `json:"authorEmail,omitempty" gorm:"size:100"` // 游客评论时使用
+	AuthorIP    string        `json:"-" gorm:"size:50"`
+	LikeCount   int64         `json:"likeCount" gorm:"default:0"`
+	CreatedAt   time.Time     `json:"createdAt" gorm:"autoCreateTime"`
+	UpdatedAt   time.Time     `json:"updatedAt" gorm:"autoUpdateTime"`
 
 	// 关联关系
-	Article  Article    `json:"article,omitempty" gorm:"foreignKey:ArticleID"`
-	User     *User      `json:"user,omitempty" gorm:"foreignKey:UserID"`
-	Parent   *Comment   `json:"parent,omitempty" gorm:"foreignKey:ParentID"`
-	Children []Comment  `json:"children,omitempty" gorm:"foreignKey:ParentID"`
+	Article  Article   `json:"article,omitempty" gorm:"foreignKey:ArticleID"`
+	User     *User     `json:"user,omitempty" gorm:"foreignKey:UserID"`
+	Parent   *Comment  `json:"parent,omitempty" gorm:"foreignKey:ParentID"`
+	Children []Comment `json:"children,omitempty" gorm:"foreignKey:ParentID"`
 }
 
 func (Comment) TableName() string {

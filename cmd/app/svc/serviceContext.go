@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
@@ -70,6 +71,11 @@ func NewServiceContext(c options.Options) (*ServiceContext, error) {
 		}
 	} else {
 		klog.Info("Database auto migration is disabled by configuration")
+	}
+
+	if err := ensureDefaultCategory(db); err != nil {
+		_ = sqlDB.Close()
+		return nil, fmt.Errorf("failed to ensure default category: %w", err)
 	}
 
 	// 初始化 Redis 连接
@@ -146,6 +152,38 @@ func autoMigrateModels(db *gorm.DB) error {
 	}
 
 	klog.InfoS("Database auto migration completed", "modelCount", len(modelsToMigrate))
+	return nil
+}
+
+const defaultCategorySlug = "default"
+
+// ensureDefaultCategory 保证存在 slug=default 的兜底分类（幂等；与 db/007_seed.sql 一致）。
+func ensureDefaultCategory(db *gorm.DB) error {
+	if db == nil {
+		return errors.New("nil db")
+	}
+	var existing models.Category
+	err := db.Where("slug = ?", defaultCategorySlug).First(&existing).Error
+	if err == nil {
+		return nil
+	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+	category := &models.Category{
+		Name:        "默认分类",
+		Slug:        defaultCategorySlug,
+		Description: "系统初始化自动创建的默认分类",
+		SortOrder:   0,
+	}
+	if err := db.Create(category).Error; err != nil {
+		low := strings.ToLower(err.Error())
+		if strings.Contains(low, "duplicate") || strings.Contains(low, "unique") {
+			return nil
+		}
+		return err
+	}
+	klog.InfoS("Default category ensured", "slug", defaultCategorySlug, "id", category.ID)
 	return nil
 }
 

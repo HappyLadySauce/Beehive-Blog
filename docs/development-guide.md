@@ -40,20 +40,31 @@ flowchart TD
   - `cmd/app/router/router.go`：Gin 路由注册、`/api/v1` 分组、Swagger/health
   - `cmd/app/routes/auth/*`：认证接口（登录/注册）
   - `cmd/app/routes/content/*`：公开内容接口（文章列表/详情等，无需登录）
+  - `cmd/app/routes/categories/*`：公开一级分类列表与按 slug 详情（`/api/v1/categories*`）；管理员 CRUD 使用路径数字 `id`，由 `categories.RegisterAdminRoutes` 挂到 `/api/v1/admin/categories*`
+  - `cmd/app/routes/tags/*`：公开标签列表/云图/按 slug 详情（`/api/v1/tags*`）；管理员 CRUD 由 `tags.RegisterAdminRoutes` 挂到 `/api/v1/admin/tags*`
   - `cmd/app/routes/user/*`：登录后接口（当前实现包含 me/profile/password/notifications/logout）
-  - `cmd/app/routes/admin/*`：管理员接口（探活、Hexo 同步等，`Init` 中委托 `archives` 注册文章路由）
+  - `cmd/app/routes/admin/*`：管理员接口（探活、Hexo 同步等，`Init` 中委托 `archives` / `categories` / `tags` 注册子路由）
   - `cmd/app/routes/archives/*`：管理员文章 CRUD（实际路径仍为 `/api/v1/admin/articles*`）
+  - `cmd/app/articlequery/*`：公开「已发布文章」列表查询与列表项映射，供 `content` 与 taxonomy 详情复用
 - 鉴权/限流/安全中间件
   - `cmd/app/middlewares/auth.go`
   - `cmd/app/middlewares/limit.go`
   - `cmd/app/middlewares/cors.go`
 - 服务上下文与资源
-  - `cmd/app/svc/serviceContext.go`：连接 PostgreSQL、Redis，并进行自动迁移
+  - `cmd/app/svc/serviceContext.go`：连接 PostgreSQL、Redis，并进行自动迁移；启动后幂等确保存在 `slug=default` 的默认分类
 - DTO 与统一响应
   - `cmd/app/types/api/v1/*`：请求/响应结构
   - `cmd/app/types/common/response.go`：`success/fail` 返回结构
 
-### 2.2 统一返回格式
+### 2.2 Taxonomy（分类 / 标签）契约
+
+- **标识约定**：公开读接口使用 **slug**（路径或 query）；管理员写操作使用资源主键 **id**。
+- **分类**：仅一级分类，DTO 与 API 均无 `parentId` / 树形结构；删除时仅校验关联文章（`force=true` 可先解除关联）。新建库见 `db/002_articles.sql`；已有库可选手动执行 `db/009_categories_flat_optional.sql` 删除 `parent_id` 列。
+- **默认分类**：业务以 `slug=default` 识别；`ensureDefaultCategory` 与 `db/007_seed.sql` 保证存在。管理员创建文章时若未传或 `categoryId<=0`，会自动归入该默认分类。
+- **标签颜色**：请求可为 `#RRGGBB`/`#RGB`、无 `#` 的十六进制，或常见英文颜色名（如 `blue`、`sky blue`），服务端以 `pkg/utils/color.NormalizeToHex` 规范为 `#RRGGBB` 入库。
+- **文章 tagIds**：须为已存在标签 id；会忽略 `<=0` 与重复项；公开列表筛选仍用 `tag` query（slug）。
+
+### 2.3 统一返回格式
 
 所有 JSON 响应使用 `cmd/app/types/common/response.go` 的 `BaseResponse`：
 
@@ -278,7 +289,7 @@ CORS 配置在 `cmd/app/middlewares/cors.go`：
 - 认证接口：`cmd/app/routes/auth`（`POST /api/v1/auth/login`、`POST /api/v1/auth/register`）
 - 公开内容：`cmd/app/routes/content`（例如 `GET /api/v1/articles` 等）
 - 已登录接口：`cmd/app/routes/user/handler.go`（目前包含 `GET /api/v1/user/me`、`PUT /api/v1/user/profile`、`PUT /api/v1/user/password`、`GET /api/v1/user/notifications`、`POST /api/v1/user/logout`）
-- 管理员接口：`cmd/app/routes/admin`（探活、Hexo 同步）；文章管理：`cmd/app/routes/archives`（挂载于 `/api/v1/admin/articles*`）
+- 管理员接口：`cmd/app/routes/admin`（探活、Hexo 同步）；文章：`cmd/app/routes/archives`（`/api/v1/admin/articles*`）；分类/标签：`cmd/app/routes/categories`、`cmd/app/routes/tags`（`/api/v1/admin/categories*`、`/api/v1/admin/tags*`）
 
 `docs/requirements.md` 中仍有大量规划接口（评论、附件、搜索等）未完全暴露。后续实现时，需要：
 

@@ -9,21 +9,21 @@ import (
 )
 
 const (
-	DefaultJWTSecret = "default_jwt_secret"
-	DefaultExpireDuration = 24 * 7 * time.Hour
+	DefaultJWTSecret                  = "default_jwt_secret"
+	DefaultExpireDuration             = 24 * 7 * time.Hour
 	DefaultRefreshTokenExpireDuration = 30 * 24 * time.Hour
 )
 
 type JWTOptions struct {
-	JWTSecret string `json:"jwtSecret" mapstructure:"jwtSecret"`
-	ExpireDuration time.Duration `json:"expireDuration" mapstructure:"expireDuration"`
+	JWTSecret                  string        `json:"jwtSecret" mapstructure:"jwtSecret"`
+	ExpireDuration             time.Duration `json:"expireDuration" mapstructure:"expireDuration"`
 	RefreshTokenExpireDuration time.Duration `json:"refreshTokenExpireDuration" mapstructure:"refreshTokenExpireDuration"`
 }
 
 func NewJWTOptions() *JWTOptions {
 	return &JWTOptions{
-		JWTSecret: DefaultJWTSecret,
-		ExpireDuration: DefaultExpireDuration,
+		JWTSecret:                  DefaultJWTSecret,
+		ExpireDuration:             DefaultExpireDuration,
 		RefreshTokenExpireDuration: DefaultRefreshTokenExpireDuration,
 	}
 }
@@ -45,7 +45,7 @@ func (i *JWTOptions) Validate() error {
 	return errors.Join(errs...)
 }
 
-func (i *JWTOptions) AddFlags(fs *pflag.FlagSet) {	
+func (i *JWTOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVarP(&i.JWTSecret, "jwtSecret", "s", i.JWTSecret, "JWT secret")
 	fs.DurationVarP(&i.ExpireDuration, "expireDuration", "e", i.ExpireDuration, "JWT expire duration in hours")
 	fs.DurationVarP(&i.RefreshTokenExpireDuration, "refreshTokenExpireDuration", "r", i.RefreshTokenExpireDuration, "JWT token expire duration in hours")

@@ -1,6 +1,5 @@
 package options
 
-
 import (
 	"encoding/json"
 

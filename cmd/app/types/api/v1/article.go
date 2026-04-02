@@ -43,21 +43,21 @@ type ArticleNavItem struct {
 
 // ArticleListItem 列表项。
 type ArticleListItem struct {
-	ID            int64                `json:"id"`
-	Title         string               `json:"title"`
-	Slug          string               `json:"slug"`
-	Summary       string               `json:"summary"`
-	CoverImage    string               `json:"coverImage"`
-	IsPinned      bool                 `json:"isPinned"`
-	PinOrder      int                  `json:"pinOrder"`
-	ViewCount     int64                `json:"viewCount"`
-	LikeCount     int64                `json:"likeCount"`
-	CommentCount  int64                `json:"commentCount"`
-	PublishedAt   string               `json:"publishedAt,omitempty"`
-	UpdatedAt     string               `json:"updatedAt"`
-	Author        ArticleAuthorItem    `json:"author"`
-	Category      *ArticleCategoryItem `json:"category,omitempty"`
-	Tags          []ArticleTagItem     `json:"tags"`
+	ID           int64                `json:"id"`
+	Title        string               `json:"title"`
+	Slug         string               `json:"slug"`
+	Summary      string               `json:"summary"`
+	CoverImage   string               `json:"coverImage"`
+	IsPinned     bool                 `json:"isPinned"`
+	PinOrder     int                  `json:"pinOrder"`
+	ViewCount    int64                `json:"viewCount"`
+	LikeCount    int64                `json:"likeCount"`
+	CommentCount int64                `json:"commentCount"`
+	PublishedAt  string               `json:"publishedAt,omitempty"`
+	UpdatedAt    string               `json:"updatedAt"`
+	Author       ArticleAuthorItem    `json:"author"`
+	Category     *ArticleCategoryItem `json:"category,omitempty"`
+	Tags         []ArticleTagItem     `json:"tags"`
 }
 
 // ArticleListResponse 分页列表。
@@ -84,14 +84,14 @@ type RecordArticleViewResponse struct {
 
 // CreateArticleRequest 创建文章（管理员）。
 type CreateArticleRequest struct {
-	Title      string   `json:"title" binding:"required,min=1,max=200"`
-	Slug       string   `json:"slug" binding:"omitempty,max=100"`
-	Content    string   `json:"content" binding:"required,min=1"`
-	Summary    string   `json:"summary" binding:"omitempty,max=500"`
-	CoverImage string   `json:"coverImage" binding:"omitempty,max=500"`
-	CategoryID *int64   `json:"categoryId"`
-	TagIDs     []int64  `json:"tagIds"`
-	Status     string   `json:"status" binding:"omitempty,oneof=draft published archived private scheduled"`
+	Title       string  `json:"title" binding:"required,min=1,max=200"`
+	Slug        string  `json:"slug" binding:"omitempty,max=100"`
+	Content     string  `json:"content" binding:"required,min=1"`
+	Summary     string  `json:"summary" binding:"omitempty,max=500"`
+	CoverImage  string  `json:"coverImage" binding:"omitempty,max=500"`
+	CategoryID  *int64  `json:"categoryId"`
+	TagIDs      []int64 `json:"tagIds"`
+	Status      string  `json:"status" binding:"omitempty,oneof=draft published archived private scheduled"`
 	PublishedAt *string `json:"publishedAt" binding:"omitempty"` // RFC3339
 }
 

@@ -89,7 +89,7 @@ func (a *ArticleAdmin) replaceTags(ctx context.Context, tx *gorm.DB, articleID i
 }
 
 func (a *ArticleAdmin) validateCategory(ctx context.Context, id *int64) error {
-	if id == nil {
+	if id == nil || *id <= 0 {
 		return nil
 	}
 	var c int64
@@ -102,7 +102,36 @@ func (a *ArticleAdmin) validateCategory(ctx context.Context, id *int64) error {
 	return nil
 }
 
+func normalizeOptionalCategoryID(id *int64) *int64 {
+	if id == nil || *id <= 0 {
+		return nil
+	}
+	v := *id
+	return &v
+}
+
+// normalizeTagIDs 去重并剔除无效 id，保证校验与写入一致。
+func normalizeTagIDs(ids []int64) []int64 {
+	if len(ids) == 0 {
+		return nil
+	}
+	seen := make(map[int64]struct{}, len(ids))
+	out := make([]int64, 0, len(ids))
+	for _, id := range ids {
+		if id <= 0 {
+			continue
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		out = append(out, id)
+	}
+	return out
+}
+
 func (a *ArticleAdmin) validateTags(ctx context.Context, ids []int64) error {
+	ids = normalizeTagIDs(ids)
 	if len(ids) == 0 {
 		return nil
 	}
@@ -114,6 +143,25 @@ func (a *ArticleAdmin) validateTags(ctx context.Context, ids []int64) error {
 		return errors.New("one or more tags not found")
 	}
 	return nil
+}
+
+const defaultCategorySlug = "default"
+
+// resolveCategoryIDForCreate 未传或 categoryId≤0 时兜底到 slug=default 的分类。
+func (a *ArticleAdmin) resolveCategoryIDForCreate(ctx context.Context, raw *int64) (*int64, error) {
+	id := normalizeOptionalCategoryID(raw)
+	if id != nil {
+		return id, nil
+	}
+	var c models.Category
+	if err := a.svc.DB.WithContext(ctx).Where("slug = ?", defaultCategorySlug).First(&c).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	cid := c.ID
+	return &cid, nil
 }
 
 func mapArticleToAdminDetail(a *models.Article) *v1.ArticleDetailResponse {
@@ -170,13 +218,18 @@ func (a *ArticleAdmin) CreateArticle(ctx context.Context, adminUserID int64, req
 	if req == nil {
 		return nil, http.StatusBadRequest, errors.New("invalid request")
 	}
-	if err := a.validateCategory(ctx, req.CategoryID); err != nil {
+	categoryID, err := a.resolveCategoryIDForCreate(ctx, req.CategoryID)
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.New("system error")
+	}
+	if err := a.validateCategory(ctx, categoryID); err != nil {
 		if err.Error() == "category not found" {
 			return nil, http.StatusBadRequest, err
 		}
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
-	if err := a.validateTags(ctx, req.TagIDs); err != nil {
+	tagIDs := normalizeTagIDs(req.TagIDs)
+	if err := a.validateTags(ctx, tagIDs); err != nil {
 		if strings.Contains(err.Error(), "not found") {
 			return nil, http.StatusBadRequest, err
 		}
@@ -228,7 +281,7 @@ func (a *ArticleAdmin) CreateArticle(ctx context.Context, adminUserID int64, req
 		CoverImage:  req.CoverImage,
 		Status:      st,
 		AuthorID:    adminUserID,
-		CategoryID:  req.CategoryID,
+		CategoryID:  categoryID,
 		PublishedAt: pubAt,
 	}
 
@@ -248,7 +301,7 @@ func (a *ArticleAdmin) CreateArticle(ctx context.Context, adminUserID int64, req
 		klog.ErrorS(err, "CreateArticle")
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
-	if err := a.replaceTags(ctx, tx, art.ID, req.TagIDs); err != nil {
+	if err := a.replaceTags(ctx, tx, art.ID, tagIDs); err != nil {
 		tx.Rollback()
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
@@ -273,17 +326,20 @@ func (a *ArticleAdmin) UpdateArticle(ctx context.Context, articleID int64, req *
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
 
-	if req.CategoryID != nil {
-		if err := a.validateCategory(ctx, req.CategoryID); err != nil {
+	categorySpecified := req.CategoryID != nil
+	categoryID := normalizeOptionalCategoryID(req.CategoryID)
+	if categorySpecified {
+		if err := a.validateCategory(ctx, categoryID); err != nil {
 			if err.Error() == "category not found" {
 				return nil, http.StatusBadRequest, err
 			}
 			return nil, http.StatusInternalServerError, errors.New("system error")
 		}
 	}
+	tagIDsNorm := normalizeTagIDs(req.TagIDs)
 	tagUpdate := len(req.TagIDs) > 0
 	if tagUpdate {
-		if err := a.validateTags(ctx, req.TagIDs); err != nil {
+		if err := a.validateTags(ctx, tagIDsNorm); err != nil {
 			if strings.Contains(err.Error(), "not found") {
 				return nil, http.StatusBadRequest, err
 			}
@@ -328,8 +384,8 @@ func (a *ArticleAdmin) UpdateArticle(ctx context.Context, articleID int64, req *
 	if pubAt != nil {
 		updates["published_at"] = pubAt
 	}
-	if req.CategoryID != nil {
-		updates["category_id"] = req.CategoryID
+	if categorySpecified {
+		updates["category_id"] = categoryID
 	}
 
 	if len(updates) == 0 && !tagUpdate {
@@ -347,7 +403,7 @@ func (a *ArticleAdmin) UpdateArticle(ctx context.Context, articleID int64, req *
 		}
 	}
 	if tagUpdate {
-		if err := a.replaceTags(ctx, tx, articleID, req.TagIDs); err != nil {
+		if err := a.replaceTags(ctx, tx, articleID, tagIDsNorm); err != nil {
 			tx.Rollback()
 			return nil, http.StatusInternalServerError, errors.New("system error")
 		}

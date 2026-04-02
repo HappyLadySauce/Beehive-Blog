@@ -56,7 +56,7 @@ func (h *HexoOptions) Validate() error {
 	return nil
 }
 
-func (h *HexoOptions) AddFlags(fs *pflag.FlagSet) {	
+func (h *HexoOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVarP(&h.PostsDir, "postsDir", "", h.PostsDir, "Hexo posts directory")
 	fs.BoolVarP(&h.AutoSync, "autoSync", "", h.AutoSync, "Auto sync posts to Hexo")
 	fs.StringVarP(&h.GenerateWorkdir, "generateWorkdir", "", h.GenerateWorkdir, "Hexo generate work directory")

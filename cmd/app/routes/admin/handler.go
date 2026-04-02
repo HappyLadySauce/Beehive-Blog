@@ -5,6 +5,8 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/router"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/archives"
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/categories"
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/tags"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 
@@ -39,4 +41,6 @@ func Init(svcCtx *svc.ServiceContext) {
 	g.POST("/sync/posts", HandleSyncPosts(svcCtx))
 	g.GET("/sync/status", HandleSyncStatus(svcCtx))
 	archives.RegisterArticleAdminRoutes(g, svcCtx)
+	categories.RegisterAdminRoutes(g, svcCtx)
+	tags.RegisterAdminRoutes(g, svcCtx)
 }

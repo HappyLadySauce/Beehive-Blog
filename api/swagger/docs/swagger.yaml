@@ -7,6 +7,19 @@ definitions:
       message:
         type: string
     type: object
+  v1.AdminCategoryListResponse:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/v1.CategoryBrief'
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
   v1.ArticleAuthorItem:
     properties:
       avatar:
@@ -143,6 +156,45 @@ definitions:
       slug:
         type: string
     type: object
+  v1.CategoryBrief:
+    properties:
+      articleCount:
+        type: integer
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      slug:
+        type: string
+      sortOrder:
+        type: integer
+    type: object
+  v1.CategoryDetailResponse:
+    properties:
+      articleCount:
+        type: integer
+      articles:
+        $ref: '#/definitions/v1.ArticleListResponse'
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      slug:
+        type: string
+      sortOrder:
+        type: integer
+    type: object
+  v1.CategoryListResponse:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/v1.CategoryBrief'
+        type: array
+    type: object
   v1.CreateArticleRequest:
     properties:
       categoryId:
@@ -182,7 +234,54 @@ definitions:
     - content
     - title
     type: object
+  v1.CreateCategoryRequest:
+    properties:
+      description:
+        maxLength: 255
+        type: string
+      name:
+        maxLength: 50
+        minLength: 1
+        type: string
+      slug:
+        maxLength: 50
+        type: string
+      sortOrder:
+        type: integer
+    required:
+    - name
+    type: object
+  v1.CreateTagRequest:
+    properties:
+      color:
+        maxLength: 40
+        type: string
+      description:
+        maxLength: 255
+        type: string
+      name:
+        maxLength: 50
+        minLength: 1
+        type: string
+      slug:
+        maxLength: 50
+        type: string
+      sortOrder:
+        type: integer
+    required:
+    - name
+    type: object
   v1.DeleteArticleResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  v1.DeleteCategoryResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  v1.DeleteTagResponse:
     properties:
       id:
         type: integer
@@ -231,6 +330,27 @@ definitions:
     - password
     - username
     type: object
+  v1.RelatedTagItem:
+    properties:
+      articleCount:
+        type: integer
+      coCount:
+        type: integer
+      color:
+        type: string
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      slug:
+        type: string
+      sortOrder:
+        type: integer
+    type: object
   v1.SyncPostsRequest:
     properties:
       rebuild:
@@ -261,6 +381,70 @@ definitions:
       pending_sync:
         type: boolean
       total_posts:
+        type: integer
+    type: object
+  v1.TagCloudResponse:
+    properties:
+      tags:
+        items:
+          $ref: '#/definitions/v1.TagListItem'
+        type: array
+    type: object
+  v1.TagDetailResponse:
+    properties:
+      articleCount:
+        type: integer
+      articles:
+        $ref: '#/definitions/v1.ArticleListResponse'
+      color:
+        type: string
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      relatedTags:
+        items:
+          $ref: '#/definitions/v1.RelatedTagItem'
+        type: array
+      slug:
+        type: string
+      sortOrder:
+        type: integer
+    type: object
+  v1.TagListItem:
+    properties:
+      articleCount:
+        type: integer
+      color:
+        type: string
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      slug:
+        type: string
+      sortOrder:
+        type: integer
+    type: object
+  v1.TagListResponse:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/v1.TagListItem'
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
         type: integer
     type: object
   v1.UpdateArticlePasswordRequest:
@@ -337,6 +521,21 @@ definitions:
     required:
     - status
     type: object
+  v1.UpdateCategoryRequest:
+    properties:
+      description:
+        maxLength: 255
+        type: string
+      name:
+        maxLength: 50
+        minLength: 1
+        type: string
+      slug:
+        maxLength: 50
+        type: string
+      sortOrder:
+        type: integer
+    type: object
   v1.UpdatePasswordRequest:
     properties:
       newPassword:
@@ -360,6 +559,24 @@ definitions:
         maxLength: 50
         type: string
     type: object
+  v1.UpdateTagRequest:
+    properties:
+      color:
+        maxLength: 40
+        type: string
+      description:
+        maxLength: 255
+        type: string
+      name:
+        maxLength: 50
+        minLength: 1
+        type: string
+      slug:
+        maxLength: 50
+        type: string
+      sortOrder:
+        type: integer
+    type: object
 info:
   contact: {}
 paths:
@@ -367,7 +584,9 @@ paths:
     post:
       consumes:
       - application/json
-      description: 需管理员；创建草稿或已发布文章，可指定 slug 或由标题生成唯一 slug
+      description: 需管理员；创建草稿或已发布文章，可指定 slug 或由标题生成唯一 slug。categoryId：省略或 ≤0 时自动归入
+        slug=default 的默认分类；传正整数必须为已存在分类主键。tagIds：已存在标签主键列表，可省略；≤0 与重复 id 会被忽略；列表内
+        id 必须全部存在否则 400。
       parameters:
       - description: 文章正文
         in: body
@@ -457,7 +676,8 @@ paths:
     put:
       consumes:
       - application/json
-      description: 需管理员；部分字段更新，含分类、标签、slug 等
+      description: 需管理员；部分字段更新。categoryId：仅当请求体包含该字段时更新；传 null/省略不改变；传 ≤0 表示置空分类；传正整数须为已存在分类。tagIds：仅当请求体包含非空
+        tagIds 数组时整表替换关联；须全部为已存在标签主键（会去重并忽略 ≤0）。
       parameters:
       - description: 文章 ID
         in: path
@@ -705,6 +925,194 @@ paths:
       summary: 更新文章发布状态
       tags:
       - admin
+  /api/v1/admin/categories:
+    get:
+      description: 需管理员；扁平分页列表
+      parameters:
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页条数
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.AdminCategoryListResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 管理员分类列表
+      tags:
+      - admin
+    post:
+      consumes:
+      - application/json
+      description: 需管理员
+      parameters:
+      - description: 分类
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.CreateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.CategoryBrief'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 创建分类
+      tags:
+      - admin
+  /api/v1/admin/categories/{id}:
+    delete:
+      description: 需管理员；有关联文章时需传 force=true（先将文章 category_id 置空后删除分类）
+      parameters:
+      - description: 分类 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 强制删除（解除文章分类关联后删除）
+        in: query
+        name: force
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.DeleteCategoryResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 删除分类
+      tags:
+      - admin
+    put:
+      consumes:
+      - application/json
+      description: 需管理员
+      parameters:
+      - description: 分类 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新字段
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.UpdateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.CategoryBrief'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 更新分类
+      tags:
+      - admin
   /api/v1/admin/ping:
     get:
       consumes:
@@ -794,6 +1202,203 @@ paths:
           schema:
             $ref: '#/definitions/common.BaseResponse'
       summary: Hexo 同步状态
+      tags:
+      - admin
+  /api/v1/admin/tags:
+    get:
+      description: 需管理员
+      parameters:
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页条数
+        in: query
+        name: pageSize
+        type: integer
+      - description: 关键词
+        in: query
+        name: keyword
+        type: string
+      - description: name|count|newest
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.TagListResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 管理员标签列表
+      tags:
+      - admin
+    post:
+      consumes:
+      - application/json
+      description: '需管理员；color 可填 #RGB/#RRGGBB、无 # 的 6 位十六进制，或常见颜色名（如 blue、sky blue）；空则默认为
+        #3B82F6'
+      parameters:
+      - description: 标签
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.CreateTagRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.TagListItem'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 创建标签
+      tags:
+      - admin
+  /api/v1/admin/tags/{id}:
+    delete:
+      description: 需管理员；有关联文章时须 force=true 并先移除 article_tags
+      parameters:
+      - description: 标签 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 强制删除
+        in: query
+        name: force
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.DeleteTagResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 删除标签
+      tags:
+      - admin
+    put:
+      consumes:
+      - application/json
+      description: '需管理员；color 规则同创建（规范化后以 #RRGGBB 存储）'
+      parameters:
+      - description: 标签 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新字段
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.UpdateTagRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.TagListItem'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 更新标签
       tags:
       - admin
   /api/v1/articles:
@@ -975,6 +1580,183 @@ paths:
       summary: 用户注册
       tags:
       - auth
+  /api/v1/categories:
+    get:
+      description: 公开；返回一级分类列表（按 sortOrder、id 排序）。公开详情见 GET /api/v1/categories/{slug}；管理员增删改使用数字
+        id。
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.CategoryListResponse'
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 分类列表
+      tags:
+      - categories
+  /api/v1/categories/{slug}:
+    get:
+      description: 公开；按 slug（非数字 id）查询分类及该分类下已发布文章分页；不含子分类（系统仅支持一级分类）
+      parameters:
+      - description: 分类 slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页条数
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.CategoryDetailResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 分类详情
+      tags:
+      - categories
+  /api/v1/tags:
+    get:
+      description: 公开；分页与 keyword、sort 筛选
+      parameters:
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页条数
+        in: query
+        name: pageSize
+        type: integer
+      - description: 名称或 slug 模糊
+        in: query
+        name: keyword
+        type: string
+      - description: name|count|newest
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.TagListResponse'
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 标签列表
+      tags:
+      - tags
+  /api/v1/tags/{slug}:
+    get:
+      description: 公开；按 slug；含文章分页与共现相关标签
+      parameters:
+      - description: 标签 slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页条数
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.TagDetailResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 标签详情
+      tags:
+      - tags
+  /api/v1/tags/cloud:
+    get:
+      description: 公开；按文章数排序截取前 limit 条
+      parameters:
+      - description: 条数上限，默认 50
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.TagCloudResponse'
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 标签云
+      tags:
+      - tags
   /api/v1/user/logout:
     post:
       consumes:

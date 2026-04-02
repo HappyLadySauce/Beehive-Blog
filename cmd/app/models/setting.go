@@ -65,13 +65,13 @@ func (OperationLog) TableName() string {
 
 // Backup 数据备份记录
 type Backup struct {
-	ID          int64     `json:"id" gorm:"primaryKey;autoIncrement"`
-	Name        string    `json:"name" gorm:"size:100;not null"`
-	FilePath    string    `json:"filePath" gorm:"size:500;not null"`
-	FileSize    int64     `json:"fileSize"`
-	Type        string    `json:"type" gorm:"size:20;default:'manual'"` // manual/auto
-	CreatedBy   int64     `json:"createdBy"`
-	CreatedAt   time.Time `json:"createdAt" gorm:"autoCreateTime"`
+	ID        int64     `json:"id" gorm:"primaryKey;autoIncrement"`
+	Name      string    `json:"name" gorm:"size:100;not null"`
+	FilePath  string    `json:"filePath" gorm:"size:500;not null"`
+	FileSize  int64     `json:"fileSize"`
+	Type      string    `json:"type" gorm:"size:20;default:'manual'"` // manual/auto
+	CreatedBy int64     `json:"createdBy"`
+	CreatedAt time.Time `json:"createdAt" gorm:"autoCreateTime"`
 }
 
 func (Backup) TableName() string {

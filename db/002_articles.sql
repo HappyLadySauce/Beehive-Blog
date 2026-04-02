@@ -8,14 +8,12 @@ CREATE TABLE IF NOT EXISTS categories (
     name VARCHAR(50) NOT NULL,
     slug VARCHAR(50) NOT NULL UNIQUE,
     description VARCHAR(255),
-    parent_id BIGINT REFERENCES categories(id) ON DELETE SET NULL,
     article_count BIGINT NOT NULL DEFAULT 0,
     sort_order INT NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_categories_parent_id ON categories(parent_id);
 CREATE INDEX idx_categories_slug ON categories(slug);
 
 COMMENT ON TABLE categories IS '分类表';

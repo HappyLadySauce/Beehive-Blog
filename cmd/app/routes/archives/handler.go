@@ -32,7 +32,7 @@ func RegisterArticleAdminRoutes(g *gin.RouterGroup, svcCtx *svc.ServiceContext) 
 // handleCreateArticle godoc
 //
 //	@Summary		管理员创建文章
-//	@Description	需管理员；创建草稿或已发布文章，可指定 slug 或由标题生成唯一 slug
+//	@Description	需管理员；创建草稿或已发布文章，可指定 slug 或由标题生成唯一 slug。categoryId：省略或 ≤0 时自动归入 slug=default 的默认分类；传正整数必须为已存在分类主键。tagIds：已存在标签主键列表，可省略；≤0 与重复 id 会被忽略；列表内 id 必须全部存在否则 400。
 //	@Tags			admin
 //	@Accept			json
 //	@Produce		json
@@ -68,7 +68,7 @@ func (h *articleHandlers) handleCreateArticle(c *gin.Context) {
 // handleUpdateArticle godoc
 //
 //	@Summary		管理员更新文章
-//	@Description	需管理员；部分字段更新，含分类、标签、slug 等
+//	@Description	需管理员；部分字段更新。categoryId：仅当请求体包含该字段时更新；传 null/省略不改变；传 ≤0 表示置空分类；传正整数须为已存在分类。tagIds：仅当请求体包含非空 tagIds 数组时整表替换关联；须全部为已存在标签主键（会去重并忽略 ≤0）。
 //	@Tags			admin
 //	@Accept			json
 //	@Produce		json
