@@ -41,6 +41,9 @@ importers:
       hexo-theme-landscape:
         specifier: ^1.0.0
         version: 1.1.0
+      hexo-util:
+        specifier: ^3.3.0
+        version: 3.3.0
 
 packages:
 
