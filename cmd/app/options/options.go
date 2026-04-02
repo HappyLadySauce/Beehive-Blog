@@ -13,20 +13,22 @@ import (
 // Options holds the options for the application
 // 应用选项
 type Options struct {
-	*options.ServerOptions          `mapstructure:"server"`
-	*options.JWTOptions             `mapstructure:"jwt"`
-	*options.DatabaseOptions          `mapstructure:"db"`
-	*options.RedisOptions           `mapstructure:"redis"`
+	*options.ServerOptions   `mapstructure:"server"`
+	*options.JWTOptions      `mapstructure:"jwt"`
+	*options.DatabaseOptions `mapstructure:"db"`
+	*options.RedisOptions    `mapstructure:"redis"`
+	*options.HexoOptions     `mapstructure:"hexo"`
 }
 
 // NewOptions creates a new Options struct
 // 创建一个新的选项结构体
 func NewOptions() *Options {
 	return &Options{
-		ServerOptions: options.NewServerOptions(),
-		JWTOptions: options.NewJWTOptions(),
+		ServerOptions:   options.NewServerOptions(),
+		JWTOptions:      options.NewJWTOptions(),
 		DatabaseOptions: options.NewDatabaseOptions(),
-		RedisOptions: options.NewRedisOptions(),
+		RedisOptions:    options.NewRedisOptions(),
+		HexoOptions:     options.NewHexoOptions(),
 	}
 }
 
@@ -51,6 +53,9 @@ func (o *Options) AddFlags(fs *pflag.FlagSet, basename string) *flag.NamedFlagSe
 
 	redisFS := nfs.FlagSet("Redis")
 	o.RedisOptions.AddFlags(redisFS)
+
+	hexoFS := nfs.FlagSet("Hexo")
+	o.HexoOptions.AddFlags(hexoFS)
 
 	// add the flags to the main Command
 	// 添加标志到主命令

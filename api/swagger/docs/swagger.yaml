@@ -46,6 +46,38 @@ definitions:
     - password
     - username
     type: object
+  v1.SyncPostsRequest:
+    properties:
+      rebuild:
+        description: Rebuild 为 true 且服务端配置了 hexo.generate_args 时，在同步后执行静态站点生成。
+        type: boolean
+    type: object
+  v1.SyncResponse:
+    properties:
+      created:
+        type: integer
+      deleted:
+        type: integer
+      files:
+        items:
+          type: string
+        type: array
+      total:
+        type: integer
+      updated:
+        type: integer
+    type: object
+  v1.SyncStatusResponse:
+    properties:
+      last_sync_time:
+        type: string
+      local_files:
+        type: integer
+      pending_sync:
+        type: boolean
+      total_posts:
+        type: integer
+    type: object
   v1.UpdatePasswordRequest:
     properties:
       newPassword:
@@ -93,6 +125,74 @@ paths:
           schema:
             $ref: '#/definitions/common.BaseResponse'
       summary: 管理员探活
+      tags:
+      - admin
+  /api/v1/admin/sync/posts:
+    post:
+      consumes:
+      - application/json
+      description: 将已发布文章写入 Hexo source/_posts，可选执行 hexo 构建命令
+      parameters:
+      - description: 选项
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/v1.SyncPostsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.SyncResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: Hexo 文章全量同步
+      tags:
+      - admin
+  /api/v1/admin/sync/status:
+    get:
+      description: 查询上次同步时间与本地 beehive 文章文件数量等
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.SyncStatusResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: Hexo 同步状态
       tags:
       - admin
   /api/v1/public/login:

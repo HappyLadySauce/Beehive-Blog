@@ -2,6 +2,28 @@
 -- 7. 初始数据
 -- ============================================
 
+-- 默认管理员账号
+-- 用户名: Beehive
+-- 密码:   Beehive
+-- 使用 pgcrypto 的 bcrypt 生成兼容应用登录校验的密码哈希。
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+INSERT INTO users (username, nickname, email, password, role, status, level)
+VALUES (
+    'Beehive',
+    'Beehive',
+    'beehive@local',
+    crypt('Beehive', gen_salt('bf', 12)),
+    'admin',
+    'active',
+    6
+)
+ON CONFLICT (username) DO UPDATE
+SET
+    password = EXCLUDED.password,
+    role = 'admin',
+    status = 'active',
+    nickname = EXCLUDED.nickname;
+
 -- 用户等级配置初始数据
 INSERT INTO user_levels (level, name, required_exp, required_days, required_articles, description) VALUES
 (1, '初来乍到', 0, 0, 0, '注册即获得'),

@@ -34,6 +34,15 @@ const articleToc = toc(page.content || '', { class: 'toc-list', list_number: fal
           </div>
         </footer>
       <% } %>
+
+      <% const beehiveId = page.beehive_id != null ? page.beehive_id : page['beehive_id']; %>
+      <% if (beehiveId != null && String(beehiveId).length) { %>
+        <div id="beehive-comments-root"
+             class="beehive-comments-root"
+             data-beehive-id="<%- String(beehiveId) %>"
+             data-api-base="<%- theme.beehive && theme.beehive.api_base ? theme.beehive.api_base : '' %>">
+        </div>
+      <% } %>
     </article>
 
     <aside class="article-aside">

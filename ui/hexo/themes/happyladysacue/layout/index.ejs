@@ -1,5 +1,17 @@
 <%
-const posts = page.posts && page.posts.toArray ? page.posts.toArray() : (site.posts && site.posts.toArray ? site.posts.toArray() : []);
+let posts = page.posts && page.posts.toArray ? page.posts.toArray() : (site.posts && site.posts.toArray ? site.posts.toArray() : []);
+posts = posts.slice().sort(function (a, b) {
+  const ap = !!(a.pin || a.top);
+  const bp = !!(b.pin || b.top);
+  if (ap && !bp) return -1;
+  if (!ap && bp) return 1;
+  if (ap && bp) {
+    const ao = (typeof a.pin_order === 'number' ? a.pin_order : (typeof a.pinOrder === 'number' ? a.pinOrder : 0));
+    const bo = (typeof b.pin_order === 'number' ? b.pin_order : (typeof b.pinOrder === 'number' ? b.pinOrder : 0));
+    return bo - ao;
+  }
+  return (b.date && a.date) ? (b.date - a.date) : 0;
+});
 const isFirstPage = !page.current || page.current === 1;
 %>
 

@@ -12,6 +12,9 @@ const views = currentPost.views || 0;
 const dateStr = date(currentPost.date, config.date_format || 'YYYY-MM-DD');
 %>
 <article class="post-card">
+  <% if (currentPost.pin || currentPost.top) { %>
+    <span class="post-card__pinned-badge" title="已置顶">置顶</span>
+  <% } %>
   <%# 封面图或渐变占位 %>
   <% if (cover) { %>
     <a class="post-card__cover" href="<%- url_for(currentPost.path) %>" aria-hidden="true" tabindex="-1">

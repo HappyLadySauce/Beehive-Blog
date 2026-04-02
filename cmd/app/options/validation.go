@@ -1,6 +1,8 @@
 package options
 
-import "errors"
+import (
+	"errors"
+)
 
 // Validate validates the options
 // 验证选项
@@ -11,6 +13,7 @@ func (o *Options) Validate() error {
 	errs = append(errs, o.JWTOptions.Validate())
 	errs = append(errs, o.DatabaseOptions.Validate())
 	errs = append(errs, o.RedisOptions.Validate())
+	errs = append(errs, o.HexoOptions.Validate())
 
 	return errors.Join(errs...)
 }

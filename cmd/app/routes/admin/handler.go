@@ -35,4 +35,6 @@ func Init(svcCtx *svc.ServiceContext) {
 	g := router.V1().Group("/admin")
 	g.Use(middlewares.Auth(svcCtx), middlewares.RequireRoles(models.UserRoleAdmin))
 	g.GET("/ping", HandlePing)
+	g.POST("/sync/posts", HandleSyncPosts(svcCtx))
+	g.GET("/sync/status", HandleSyncStatus(svcCtx))
 }

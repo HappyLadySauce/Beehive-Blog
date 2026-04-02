@@ -16,7 +16,7 @@ const (
 	DefaultDatabaseTimeZone              = "Asia/Shanghai"
 	DefaultDatabaseSSLMode               = "disable"
 	DefaultDatabaseConnectTimeoutSeconds = 5
-	DefaultDatabaseAutoMigrate           = true
+	DefaultDatabaseAutoMigrate           = false
 )
 
 type DatabaseOptions struct {

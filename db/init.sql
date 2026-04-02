@@ -7,15 +7,15 @@
 \echo 'Beehive-Blog 数据库初始化开始'
 \echo '========================================'
 
--- 加载各模块SQL
-\i 001_users.sql
-\i 002_articles.sql
-\i 003_comments.sql
-\i 004_attachments.sql
-\i 005_settings.sql
-\i 006_notifications.sql
-\i 007_seed.sql
-\i 008_triggers.sql
+-- 加载各模块SQL（\ir 按当前脚本目录解析）
+\ir 001_users.sql
+\ir 002_articles.sql
+\ir 003_comments.sql
+\ir 004_attachments.sql
+\ir 005_settings.sql
+\ir 006_notifications.sql
+\ir 007_seed.sql
+\ir 008_triggers.sql
 
 \echo '========================================'
 \echo 'Beehive-Blog 数据库初始化完成'
