@@ -1,22 +1,18 @@
-package admin
+package archives
 
 import (
 	"context"
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middlewares"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/passwd"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/slug"
-	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"k8s.io/klog/v2"
 )
@@ -464,159 +460,4 @@ func (a *ArticleAdmin) UpdateArticlePin(ctx context.Context, articleID int64, re
 	}
 	maybeHexoSyncSingle(a.svc, articleID)
 	return a.loadArticleDetail(ctx, articleID)
-}
-
-// --- Handlers ---
-
-func registerArticleAdminRoutes(g *gin.RouterGroup, svcCtx *svc.ServiceContext) {
-	s := newArticleAdmin(svcCtx)
-	g.POST("/articles", s.handleCreateArticle)
-	g.PUT("/articles/:id", s.handleUpdateArticle)
-	g.DELETE("/articles/:id", s.handleDeleteArticle)
-	g.PUT("/articles/:id/status", s.handleUpdateArticleStatus)
-	g.PUT("/articles/:id/slug", s.handleUpdateArticleSlug)
-	g.PUT("/articles/:id/password", s.handleUpdateArticlePassword)
-	g.PUT("/articles/:id/pin", s.handleUpdateArticlePin)
-}
-
-func (s *ArticleAdmin) handleCreateArticle(c *gin.Context) {
-	uid, ok := middlewares.GetCurrentUserID(c)
-	if !ok || uid <= 0 {
-		common.FailMessage(c, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	var req v1.CreateArticleRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		common.Fail(c, http.StatusBadRequest, err)
-		return
-	}
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 15*time.Second)
-	defer cancel()
-	resp, code, err := s.CreateArticle(ctx, uid, &req, c.Request)
-	if err != nil {
-		common.Fail(c, code, err)
-		return
-	}
-	common.Success(c, resp)
-}
-
-func (s *ArticleAdmin) handleUpdateArticle(c *gin.Context) {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil || id <= 0 {
-		common.FailMessage(c, http.StatusBadRequest, "invalid article id")
-		return
-	}
-	var req v1.UpdateArticleRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		common.Fail(c, http.StatusBadRequest, err)
-		return
-	}
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 15*time.Second)
-	defer cancel()
-	resp, code, err := s.UpdateArticle(ctx, id, &req, c.Request)
-	if err != nil {
-		common.Fail(c, code, err)
-		return
-	}
-	common.Success(c, resp)
-}
-
-func (s *ArticleAdmin) handleDeleteArticle(c *gin.Context) {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil || id <= 0 {
-		common.FailMessage(c, http.StatusBadRequest, "invalid article id")
-		return
-	}
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
-	defer cancel()
-	resp, code, err := s.DeleteArticle(ctx, id, c.Request)
-	if err != nil {
-		common.Fail(c, code, err)
-		return
-	}
-	common.Success(c, resp)
-}
-
-func (s *ArticleAdmin) handleUpdateArticleStatus(c *gin.Context) {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil || id <= 0 {
-		common.FailMessage(c, http.StatusBadRequest, "invalid article id")
-		return
-	}
-	var req v1.UpdateArticleStatusRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		common.Fail(c, http.StatusBadRequest, err)
-		return
-	}
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
-	defer cancel()
-	resp, code, err := s.UpdateArticleStatus(ctx, id, &req, c.Request)
-	if err != nil {
-		common.Fail(c, code, err)
-		return
-	}
-	common.Success(c, resp)
-}
-
-func (s *ArticleAdmin) handleUpdateArticleSlug(c *gin.Context) {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil || id <= 0 {
-		common.FailMessage(c, http.StatusBadRequest, "invalid article id")
-		return
-	}
-	var req v1.UpdateArticleSlugRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		common.Fail(c, http.StatusBadRequest, err)
-		return
-	}
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
-	defer cancel()
-	resp, code, err := s.UpdateArticleSlug(ctx, id, &req, c.Request)
-	if err != nil {
-		common.Fail(c, code, err)
-		return
-	}
-	common.Success(c, resp)
-}
-
-func (s *ArticleAdmin) handleUpdateArticlePassword(c *gin.Context) {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil || id <= 0 {
-		common.FailMessage(c, http.StatusBadRequest, "invalid article id")
-		return
-	}
-	var req v1.UpdateArticlePasswordRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		common.Fail(c, http.StatusBadRequest, err)
-		return
-	}
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
-	defer cancel()
-	resp, code, err := s.UpdateArticlePassword(ctx, id, &req, c.Request)
-	if err != nil {
-		common.Fail(c, code, err)
-		return
-	}
-	common.Success(c, resp)
-}
-
-func (s *ArticleAdmin) handleUpdateArticlePin(c *gin.Context) {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil || id <= 0 {
-		common.FailMessage(c, http.StatusBadRequest, "invalid article id")
-		return
-	}
-	var req v1.UpdateArticlePinRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		common.Fail(c, http.StatusBadRequest, err)
-		return
-	}
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
-	defer cancel()
-	resp, code, err := s.UpdateArticlePin(ctx, id, &req, c.Request)
-	if err != nil {
-		common.Fail(c, code, err)
-		return
-	}
-	common.Success(c, resp)
 }

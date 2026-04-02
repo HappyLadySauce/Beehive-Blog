@@ -41,7 +41,8 @@ flowchart TD
   - `cmd/app/routes/auth/*`：认证接口（登录/注册）
   - `cmd/app/routes/content/*`：公开内容接口（文章列表/详情等，无需登录）
   - `cmd/app/routes/user/*`：登录后接口（当前实现包含 me/profile/password/notifications/logout）
-  - `cmd/app/routes/admin/*`：管理员接口（当前实现包含 `/api/v1/admin/ping`）
+  - `cmd/app/routes/admin/*`：管理员接口（探活、Hexo 同步等，`Init` 中委托 `archives` 注册文章路由）
+  - `cmd/app/routes/archives/*`：管理员文章 CRUD（实际路径仍为 `/api/v1/admin/articles*`）
 - 鉴权/限流/安全中间件
   - `cmd/app/middlewares/auth.go`
   - `cmd/app/middlewares/limit.go`
@@ -277,7 +278,7 @@ CORS 配置在 `cmd/app/middlewares/cors.go`：
 - 认证接口：`cmd/app/routes/auth`（`POST /api/v1/auth/login`、`POST /api/v1/auth/register`）
 - 公开内容：`cmd/app/routes/content`（例如 `GET /api/v1/articles` 等）
 - 已登录接口：`cmd/app/routes/user/handler.go`（目前包含 `GET /api/v1/user/me`、`PUT /api/v1/user/profile`、`PUT /api/v1/user/password`、`GET /api/v1/user/notifications`、`POST /api/v1/user/logout`）
-- 管理员接口：`cmd/app/routes/admin/handler.go`（探活、Hexo 同步、文章管理等）
+- 管理员接口：`cmd/app/routes/admin`（探活、Hexo 同步）；文章管理：`cmd/app/routes/archives`（挂载于 `/api/v1/admin/articles*`）
 
 `docs/requirements.md` 中仍有大量规划接口（评论、附件、搜索等）未完全暴露。后续实现时，需要：
 
@@ -296,7 +297,7 @@ CORS 配置在 `cmd/app/middlewares/cors.go`：
 - 需要登录的接口（例如 `POST /comments`）
   - 放在 `cmd/app/routes/user`，并挂载 `middlewares.Auth(svcCtx)`
 - 仅管理员接口（例如文章增删改、评论审核、附件管理、策略/分组/批量/搜索等）
-  - 放在 `cmd/app/routes/admin`，并挂载 `middlewares.Auth(svcCtx)` + `middlewares.RequireRoles(models.UserRoleAdmin)`
+  - 文章归档 CRUD 放在 `cmd/app/routes/archives`，由 `admin.Init` 在已鉴权的管理员分组下调用 `archives.RegisterArticleAdminRoutes`；其余管理员接口放在 `cmd/app/routes/admin`，并挂载 `middlewares.Auth(svcCtx)` + `middlewares.RequireRoles(models.UserRoleAdmin)`
 
 > 备注：该映射只用于落点指导；具体字段校验、分页策略、限流策略等仍应以 `docs/requirements.md` 的业务规则为准，并在 handler/service 内实现完整的边界检查与错误处理。
 

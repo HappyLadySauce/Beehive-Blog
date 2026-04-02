@@ -127,6 +127,11 @@ definitions:
       title:
         type: string
     type: object
+  v1.ArticleSecurityResponse:
+    properties:
+      protected:
+        type: boolean
+    type: object
   v1.ArticleTagItem:
     properties:
       color:
@@ -137,6 +142,50 @@ definitions:
         type: string
       slug:
         type: string
+    type: object
+  v1.CreateArticleRequest:
+    properties:
+      categoryId:
+        type: integer
+      content:
+        minLength: 1
+        type: string
+      coverImage:
+        maxLength: 500
+        type: string
+      publishedAt:
+        description: RFC3339
+        type: string
+      slug:
+        maxLength: 100
+        type: string
+      status:
+        enum:
+        - draft
+        - published
+        - archived
+        - private
+        - scheduled
+        type: string
+      summary:
+        maxLength: 500
+        type: string
+      tagIds:
+        items:
+          type: integer
+        type: array
+      title:
+        maxLength: 200
+        minLength: 1
+        type: string
+    required:
+    - content
+    - title
+    type: object
+  v1.DeleteArticleResponse:
+    properties:
+      id:
+        type: integer
     type: object
   v1.LoginRequest:
     properties:
@@ -214,6 +263,80 @@ definitions:
       total_posts:
         type: integer
     type: object
+  v1.UpdateArticlePasswordRequest:
+    properties:
+      password:
+        maxLength: 100
+        type: string
+    type: object
+  v1.UpdateArticlePinRequest:
+    properties:
+      isPinned:
+        type: boolean
+      pinOrder:
+        maximum: 1000000
+        minimum: 0
+        type: integer
+    type: object
+  v1.UpdateArticleRequest:
+    properties:
+      categoryId:
+        type: integer
+      content:
+        minLength: 1
+        type: string
+      coverImage:
+        maxLength: 500
+        type: string
+      publishedAt:
+        type: string
+      slug:
+        maxLength: 100
+        type: string
+      status:
+        enum:
+        - draft
+        - published
+        - archived
+        - private
+        - scheduled
+        type: string
+      summary:
+        maxLength: 500
+        type: string
+      tagIds:
+        items:
+          type: integer
+        type: array
+      title:
+        maxLength: 200
+        minLength: 1
+        type: string
+    type: object
+  v1.UpdateArticleSlugRequest:
+    properties:
+      slug:
+        maxLength: 100
+        minLength: 1
+        type: string
+    required:
+    - slug
+    type: object
+  v1.UpdateArticleStatusRequest:
+    properties:
+      publishedAt:
+        type: string
+      status:
+        enum:
+        - draft
+        - published
+        - archived
+        - private
+        - scheduled
+        type: string
+    required:
+    - status
+    type: object
   v1.UpdatePasswordRequest:
     properties:
       newPassword:
@@ -240,6 +363,348 @@ definitions:
 info:
   contact: {}
 paths:
+  /api/v1/admin/articles:
+    post:
+      consumes:
+      - application/json
+      description: 需管理员；创建草稿或已发布文章，可指定 slug 或由标题生成唯一 slug
+      parameters:
+      - description: 文章正文
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.CreateArticleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.ArticleDetailResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 管理员创建文章
+      tags:
+      - admin
+  /api/v1/admin/articles/{id}:
+    delete:
+      description: 需管理员；软删除文章并清理关联标签；开启 Hexo auto_sync 时异步删 md
+      parameters:
+      - description: 文章 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.DeleteArticleResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 管理员删除文章
+      tags:
+      - admin
+    put:
+      consumes:
+      - application/json
+      description: 需管理员；部分字段更新，含分类、标签、slug 等
+      parameters:
+      - description: 文章 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新字段
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.UpdateArticleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.ArticleDetailResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 管理员更新文章
+      tags:
+      - admin
+  /api/v1/admin/articles/{id}/password:
+    put:
+      consumes:
+      - application/json
+      description: 需管理员；非空密码长度 4–20；空字符串表示清除密码
+      parameters:
+      - description: 文章 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 密码（可空）
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.UpdateArticlePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.ArticleSecurityResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 设置或清除文章访问密码
+      tags:
+      - admin
+  /api/v1/admin/articles/{id}/pin:
+    put:
+      consumes:
+      - application/json
+      description: 需管理员；取消置顶时 pin_order 归零
+      parameters:
+      - description: 文章 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 置顶与排序
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.UpdateArticlePinRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.ArticleDetailResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 更新文章置顶
+      tags:
+      - admin
+  /api/v1/admin/articles/{id}/slug:
+    put:
+      consumes:
+      - application/json
+      description: 需管理员；slug 须全局唯一
+      parameters:
+      - description: 文章 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 新 slug
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.UpdateArticleSlugRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.ArticleDetailResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 更新文章 slug
+      tags:
+      - admin
+  /api/v1/admin/articles/{id}/status:
+    put:
+      consumes:
+      - application/json
+      description: 需管理员；如发布且未传 publishedAt 则使用当前时间
+      parameters:
+      - description: 文章 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 状态
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.UpdateArticleStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.ArticleDetailResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 更新文章发布状态
+      tags:
+      - admin
   /api/v1/admin/ping:
     get:
       consumes:

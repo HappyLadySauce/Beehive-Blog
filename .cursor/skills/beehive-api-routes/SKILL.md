@@ -23,7 +23,7 @@ description: >-
 /api/v1/auth/*：登录/注册（无需登录）
 /api/v1/articles 等：公开内容读取（无需登录，由 `routes/content` 等包承载）
 /api/v1/user/*：登录用户
-/api/v1/admin/*：管理员（RequireRoles(admin)）
+/api/v1/admin/*：管理员（RequireRoles(admin)）；文章 CRUD 实现位于 `routes/archives`，在 `admin.Init` 中注册到同一分组
 
 ## 分层职责
 
