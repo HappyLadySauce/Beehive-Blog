@@ -117,26 +117,64 @@
   /* ---------- 入场动画 ---------- */
 
   /**
-   * 对 `.post-card`、`.sidebar-card` 等区块应用 IntersectionObserver
-   * 触发 CSS `@keyframes fade-up` 入场动效，改善视觉层次感。
+   * 对所有卡片类元素应用 IntersectionObserver 渐进入场动效。
+   *
+   * 策略：
+   *  1. 为每个目标元素添加 CSS class `will-reveal`，隐藏初始状态。
+   *  2. 同一父容器内的卡片按 DOM 顺序错开 80ms 延迟（最多 480ms），
+   *     通过 CSS 自定义属性 `--reveal-delay` 传递，形成瀑布式出现效果。
+   *  3. 进入视口后添加 `is-revealed` class 触发 CSS transition。
+   *  4. transition 结束后移除 `will-reveal`，恢复元素正常的 hover 行为
+   *     （避免入场 transition 覆盖 hover transform）。
+   *  5. 若 IntersectionObserver 不可用则跳过（渐进降级，正常显示）。
    */
   function bindScrollReveal() {
     if (!window.IntersectionObserver) return;
 
-    var targets = document.querySelectorAll('.post-card, .sidebar-card, .taxonomy-card');
+    var CARD_SELECTOR = [
+      '.post-card',
+      '.sidebar-card',
+      '.taxonomy-pill-card',
+      '.taxonomy-cat-card',
+      '.taxonomy-card',
+      '.page-header-banner__inner',
+    ].join(', ');
+
+    var targets = document.querySelectorAll(CARD_SELECTOR);
     if (!targets.length) return;
+
+    // 按父容器分组，计算组内索引用于错开延迟
+    var indexMap = new Map();
+
+    targets.forEach(function (el) {
+      var parent = el.parentElement;
+      var idx = indexMap.has(parent) ? indexMap.get(parent) : 0;
+      indexMap.set(parent, idx + 1);
+
+      var delay = Math.min(idx * 80, 480);
+      el.style.setProperty('--reveal-delay', delay + 'ms');
+      el.classList.add('will-reveal');
+    });
 
     var observer = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          entry.target.style.animation = 'fade-up 0.5s ease both';
-          observer.unobserve(entry.target);
-        }
+        if (!entry.isIntersecting) return;
+
+        var el = entry.target;
+        el.classList.add('is-revealed');
+        observer.unobserve(el);
+
+        // transition 结束后清理入场 class，让 hover CSS 完整接管
+        el.addEventListener('transitionend', function cleanup(e) {
+          if (e.propertyName !== 'opacity') return;
+          el.classList.remove('will-reveal', 'is-revealed');
+          el.style.removeProperty('--reveal-delay');
+          el.removeEventListener('transitionend', cleanup);
+        });
       });
-    }, { threshold: 0.08 });
+    }, { threshold: 0.06, rootMargin: '0px 0px -20px 0px' });
 
     targets.forEach(function (el) {
-      el.style.opacity = '0';
       observer.observe(el);
     });
   }

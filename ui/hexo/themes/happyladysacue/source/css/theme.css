@@ -590,7 +590,7 @@ html.dark .hero-bg {
   border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
   position: relative;
 }
 
@@ -1661,4 +1661,23 @@ html.dark .taxonomy-pill-card__count {
   .taxonomy-open-grid--categories {
     grid-template-columns: 1fr;
   }
+}
+
+/* =============================================
+   卡片入场动画 — JS class 驱动
+   .will-reveal  : JS 注入，隐藏初始状态
+   .is-revealed  : IntersectionObserver 触发后加入
+   transitionend 后 JS 移除 will-reveal，恢复正常 hover
+   ============================================= */
+.will-reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.5s ease var(--reveal-delay, 0ms),
+    transform 0.5s cubic-bezier(0.22, 1, 0.36, 1) var(--reveal-delay, 0ms);
+}
+
+.will-reveal.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
 }
