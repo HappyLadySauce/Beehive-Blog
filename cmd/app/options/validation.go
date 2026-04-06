@@ -14,6 +14,7 @@ func (o *Options) Validate() error {
 	errs = append(errs, o.DatabaseOptions.Validate())
 	errs = append(errs, o.RedisOptions.Validate())
 	errs = append(errs, o.HexoOptions.Validate())
+	// StorageOptions has no hard validation failures; defaults are always valid.
 
 	return errors.Join(errs...)
 }

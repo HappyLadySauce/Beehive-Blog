@@ -18,3 +18,15 @@ type LogoutRequest struct{}
 type LogoutResponse struct {
 	Message string `json:"message"`
 }
+
+// RefreshTokenRequest holds the refresh token for renewal.
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refreshToken" binding:"required"`
+}
+
+// RefreshTokenResponse returns a new token pair on successful refresh.
+type RefreshTokenResponse struct {
+	Token        string `json:"token"`
+	RefreshToken string `json:"refreshToken"`
+	ExpiresIn    int64  `json:"expiresIn"`
+}

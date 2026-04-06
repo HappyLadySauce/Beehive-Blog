@@ -95,3 +95,21 @@ func ValidateToken(secret, tokenString string) bool {
 	_, err := ParseToken(secret, tokenString)
 	return err == nil
 }
+
+// ParseRefreshToken 解析 Refresh Token（签发时仅含 RegisteredClaims，无 CustomClaims 字段）。
+// 验证签名方法、签名有效性与 ExpiresAt；返回 RegisteredClaims 供调用方读取 Subject（userID）。
+func ParseRefreshToken(secret, tokenString string) (*jwt.RegisteredClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(secret), nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse refresh token: %w", err)
+	}
+	if claims, ok := token.Claims.(*jwt.RegisteredClaims); ok && token.Valid {
+		return claims, nil
+	}
+	return nil, fmt.Errorf("invalid refresh token")
+}

@@ -89,6 +89,7 @@ func serve(ctx context.Context, svcCtx *svc.ServiceContext) error {
 	srv := router.NewServer(address)
 
 	router.EnableRateLimit()
+	router.SetupStatic(svcCtx.Config.StorageOptions.UploadDir)
 
 	auth.Init(svcCtx)
 	categories.Init(svcCtx)

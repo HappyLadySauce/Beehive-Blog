@@ -250,6 +250,8 @@ CORS 配置在 `cmd/app/middlewares/cors.go`：
 
 #### 3.8.3 附件管理模块（规划接口契约）
 
+**已实现（本地存储 MVP）**：管理员附件上传/列表/删除及编辑器图片上传的设计与路径说明见 `docs/refresh-token-attachments-design.md`（实际路由为 `/api/v1/admin/attachments*`、`/api/v1/admin/upload-image`，静态访问 `/uploads/*`）。下表仍为 `docs/requirements.md` 中的长期规划契约，可能与当前 MVP 路径或能力不完全一致。
+
 - 管理端（仅管理员）
   - `GET /attachments`（附件列表）
     - 支持按类型、时间筛选；展示文件大小、上传时间
@@ -286,12 +288,12 @@ CORS 配置在 `cmd/app/middlewares/cors.go`：
 
 当前 Gin 路由主要分组：
 
-- 认证接口：`cmd/app/routes/auth`（`POST /api/v1/auth/login`、`POST /api/v1/auth/register`）
+- 认证接口：`cmd/app/routes/auth`（`POST /api/v1/auth/login`、`POST /api/v1/auth/register`、`POST /api/v1/auth/refresh`）
 - 公开内容：`cmd/app/routes/content`（例如 `GET /api/v1/articles` 等）
-- 已登录接口：`cmd/app/routes/user/handler.go`（目前包含 `GET /api/v1/user/me`、`PUT /api/v1/user/profile`、`PUT /api/v1/user/password`、`GET /api/v1/user/notifications`、`POST /api/v1/user/logout`）
-- 管理员接口：`cmd/app/routes/admin`（探活、Hexo 同步）；文章：`cmd/app/routes/archives`（`/api/v1/admin/articles*`）；分类/标签：`cmd/app/routes/categories`、`cmd/app/routes/tags`（`/api/v1/admin/categories*`、`/api/v1/admin/tags*`）
+- 已登录接口：`cmd/app/routes/user/handler.go`（目前包含 `GET /api/v1/user/me`、`PUT /api/v1/user/profile`、`PUT /api/v1/user/password`、`GET /api/v1/user/notifications`、`POST /api/v1/user/logout` 等）；评论：`cmd/app/routes/comments`（公开列表、登录发评、管理员审核等）
+- 管理员接口：`cmd/app/routes/admin`（探活、Hexo 同步）；文章：`cmd/app/routes/archives`（`/api/v1/admin/articles*`）；分类/标签：`cmd/app/routes/categories`、`cmd/app/routes/tags`（`/api/v1/admin/categories*`、`/api/v1/admin/tags*`）；附件：`cmd/app/routes/attachments`（`/api/v1/admin/attachments*`、`/api/v1/admin/upload-image`，见 `docs/refresh-token-attachments-design.md`）
 
-`docs/requirements.md` 中仍有大量规划接口（评论、附件、搜索等）未完全暴露。后续实现时，需要：
+`docs/requirements.md` 中仍有部分规划接口（例如附件策略/分组批量、搜索等）未完全暴露。后续实现时，需要：
 
 1. 在对应分组（public/user/admin）新增路由注册
 2. 为 handler 添加 swaggo 注释，保证 Swagger 可生成
@@ -392,7 +394,7 @@ pnpm run clean
   - `POST /api/v1/user/logout`
   - 成功后清空 localStorage，并把导航状态切回访客态
 
-> 说明：当前后端路由未实现“刷新 token 接口”，因此前端目前不会真正使用 `refreshToken` 做刷新；它的存在主要用于未来扩展或兼容返回字段。
+> 说明：后端已提供 `POST /api/v1/auth/refresh`（请求体 `{ "refreshToken": "..." }`），返回新的 `token` / `refreshToken` / `expiresIn`。设计说明见 `docs/refresh-token-attachments-design.md`。Hexo 主题内 `beehive-auth.js` 是否自动刷新可随前端迭代接入。
 
 ### 4.5 Pretext 与渐进卡片动画
 

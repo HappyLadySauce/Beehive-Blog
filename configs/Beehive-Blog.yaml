@@ -29,6 +29,12 @@ redis:
     enableTLS: false            # 是否启用 Redis TLS（生产建议开启）
     insecureSkipVerify: false   # 是否跳过 Redis 证书校验（仅调试场景）
 
+# 文件存储配置
+storage:
+    uploadDir: uploads                         # 上传文件根目录（相对或绝对路径）
+    baseUrl: http://localhost:8081/uploads     # 文件访问 URL 前缀
+    maxFileSize: 104857600                     # 单文件最大字节，默认 100MB
+
 # Hexo 同步：数据库已发布文章 → ui/hexo/source/_posts/*.md
 hexo:
     posts_dir: ui/hexo/source/_posts

@@ -76,6 +76,15 @@ func EnableRateLimit() {
 	v1.Use(middlewares.RateLimit())
 }
 
+// SetupStatic registers a local-disk static file route for uploaded files.
+// uploadDir is the filesystem directory; it is served under the /uploads URL prefix.
+func SetupStatic(uploadDir string) {
+	if uploadDir == "" {
+		uploadDir = "uploads"
+	}
+	router.Static("/uploads", uploadDir)
+}
+
 // NewServer creates an http.Server with the given address using the Gin router.
 // This allows for graceful shutdown.
 func NewServer(addr string) *http.Server {

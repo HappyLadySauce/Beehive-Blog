@@ -78,10 +78,42 @@ func (s *Service) HandleRegister(c *gin.Context) {
 	common.Success(c, response)
 }
 
+// HandleRefresh godoc
+//
+//	@Summary		刷新访问令牌
+//	@Description	使用有效的 refresh token 换取新的 token pair；旧 access token 在其 JWT TTL 内仍有效
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		v1.RefreshTokenRequest	true	"refresh token"
+//	@Success		200		{object}	common.BaseResponse
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		403		{object}	common.BaseResponse
+//	@Failure		500		{object}	common.BaseResponse
+//	@Router			/api/v1/auth/refresh [post]
+func (s *Service) HandleRefresh(c *gin.Context) {
+	req := v1.RefreshTokenRequest{}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		klog.ErrorS(err, "Could not read refresh token request")
+		common.Fail(c, http.StatusBadRequest, err)
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+	response, statusCode, err := s.Refresh(ctx, &req)
+	if err != nil {
+		common.Fail(c, statusCode, err)
+		return
+	}
+	common.Success(c, response)
+}
+
 // Init registers routes under /api/v1/auth.
 func Init(svcCtx *svc.ServiceContext) {
 	g := router.V1().Group("/auth")
 	svc := NewService(svcCtx)
 	g.POST("/login", middlewares.LoginAttemptLimit(), svc.HandleLogin)
 	g.POST("/register", svc.HandleRegister)
+	g.POST("/refresh", svc.HandleRefresh)
 }

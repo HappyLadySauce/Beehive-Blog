@@ -17,6 +17,7 @@ type Options struct {
 	*options.DatabaseOptions `mapstructure:"db"`
 	*options.RedisOptions    `mapstructure:"redis"`
 	*options.HexoOptions     `mapstructure:"hexo"`
+	*options.StorageOptions  `mapstructure:"storage"`
 }
 
 // NewOptions creates a new Options struct
@@ -28,6 +29,7 @@ func NewOptions() *Options {
 		DatabaseOptions: options.NewDatabaseOptions(),
 		RedisOptions:    options.NewRedisOptions(),
 		HexoOptions:     options.NewHexoOptions(),
+		StorageOptions:  options.NewStorageOptions(),
 	}
 }
 
@@ -55,6 +57,9 @@ func (o *Options) AddFlags(fs *pflag.FlagSet, basename string) *flag.NamedFlagSe
 
 	hexoFS := nfs.FlagSet("Hexo")
 	o.HexoOptions.AddFlags(hexoFS)
+
+	storageFS := nfs.FlagSet("Storage")
+	o.StorageOptions.AddFlags(storageFS)
 
 	// add the flags to the main Command
 	// 添加标志到主命令

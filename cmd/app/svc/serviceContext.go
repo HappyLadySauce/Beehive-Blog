@@ -78,6 +78,11 @@ func NewServiceContext(c options.Options) (*ServiceContext, error) {
 		return nil, fmt.Errorf("failed to ensure default category: %w", err)
 	}
 
+	if err := ensureDefaultStoragePolicy(db, c.StorageOptions.UploadDir); err != nil {
+		_ = sqlDB.Close()
+		return nil, fmt.Errorf("failed to ensure default storage policy: %w", err)
+	}
+
 	// 初始化 Redis 连接
 	redisOptions := &redis.Options{
 		Addr:         c.RedisOptions.RedisHost,
@@ -156,6 +161,40 @@ func autoMigrateModels(db *gorm.DB) error {
 }
 
 const defaultCategorySlug = "default"
+
+// ensureDefaultStoragePolicy 保证存在一条 type=local、is_default=true 的本地存储策略（幂等）。
+func ensureDefaultStoragePolicy(db *gorm.DB, uploadPath string) error {
+	if db == nil {
+		return errors.New("nil db")
+	}
+	var existing models.StoragePolicy
+	err := db.Where("type = ? AND is_default = true", models.StoragePolicyLocal).First(&existing).Error
+	if err == nil {
+		return nil
+	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+	if uploadPath == "" {
+		uploadPath = "uploads"
+	}
+	policy := &models.StoragePolicy{
+		Name:       "本地存储",
+		Type:       models.StoragePolicyLocal,
+		IsDefault:  true,
+		UploadPath: uploadPath,
+		SortOrder:  0,
+	}
+	if err := db.Create(policy).Error; err != nil {
+		low := strings.ToLower(err.Error())
+		if strings.Contains(low, "duplicate") || strings.Contains(low, "unique") {
+			return nil
+		}
+		return err
+	}
+	klog.InfoS("Default storage policy ensured", "id", policy.ID, "uploadPath", uploadPath)
+	return nil
+}
 
 // ensureDefaultCategory 保证存在 slug=default 的兜底分类（幂等；与 db/007_seed.sql 一致）。
 func ensureDefaultCategory(db *gorm.DB) error {
