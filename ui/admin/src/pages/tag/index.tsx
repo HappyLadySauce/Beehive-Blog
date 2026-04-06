@@ -7,7 +7,9 @@ import {
   TagListItem,
 } from '../../api/taxonomy';
 import { toast } from 'sonner';
-import { Tag as TagIcon, Edit, Trash2, X } from 'lucide-react';
+import { Tag as TagIcon, Edit, Trash2 } from 'lucide-react';
+import AdminModal from '../../components/AdminModal';
+import { TextField, TextareaField, ColorField } from '../../components/FormField';
 
 interface TagForm {
   name: string;
@@ -82,12 +84,10 @@ export default function Tags() {
         color: form.color || undefined,
         description: form.description.trim() || undefined,
       };
-      let res;
-      if (editTarget) {
-        res = await updateTag(editTarget.id, payload);
-      } else {
-        res = await createTag(payload);
-      }
+      const res = editTarget
+        ? await updateTag(editTarget.id, payload)
+        : await createTag(payload);
+
       if (res.code === 200) {
         toast.success(editTarget ? '更新成功' : '创建成功');
         closeModal();
@@ -146,9 +146,17 @@ export default function Tags() {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {loading ? (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">加载中...</td></tr>
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                  加载中...
+                </td>
+              </tr>
             ) : tags.length === 0 ? (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">暂无标签</td></tr>
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                  暂无标签
+                </td>
+              </tr>
             ) : (
               tags.map((tag) => (
                 <tr key={tag.id} className="hover:bg-gray-50">
@@ -189,87 +197,40 @@ export default function Tags() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-              <h3 className="text-base font-medium text-gray-900">
-                {editTarget ? '编辑标签' : '新建标签'}
-              </h3>
-              <button onClick={closeModal} className="p-1 text-gray-400 hover:text-gray-600 rounded">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="px-6 py-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  名称 <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
-                  placeholder="标签名称"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  别名 (Slug) <span className="text-gray-400 font-normal">可选，留空自动生成</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.slug}
-                  onChange={(e) => setForm(f => ({ ...f, slug: e.target.value }))}
-                  placeholder="url-friendly-slug"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">颜色</label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="color"
-                    value={form.color}
-                    onChange={(e) => setForm(f => ({ ...f, color: e.target.value }))}
-                    className="w-10 h-10 rounded border border-gray-300 cursor-pointer p-0.5"
-                  />
-                  <input
-                    type="text"
-                    value={form.color}
-                    onChange={(e) => setForm(f => ({ ...f, color: e.target.value }))}
-                    placeholder="#3B82F6"
-                    className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">描述</label>
-                <textarea
-                  value={form.description}
-                  onChange={(e) => setForm(f => ({ ...f, description: e.target.value }))}
-                  placeholder="可选"
-                  rows={3}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
-              <button
-                onClick={closeModal}
-                className="px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors"
-              >
-                取消
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50"
-              >
-                {submitting ? '提交中...' : (editTarget ? '保存' : '创建')}
-              </button>
-            </div>
-          </div>
-        </div>
+        <AdminModal
+          title={editTarget ? '编辑标签' : '新建标签'}
+          onClose={closeModal}
+          onConfirm={handleSubmit}
+          confirmLabel={editTarget ? '保存' : '创建'}
+          loading={submitting}
+          maxWidth="md"
+        >
+          <TextField
+            label="名称"
+            value={form.name}
+            onChange={(v) => setForm((f) => ({ ...f, name: v }))}
+            placeholder="标签名称"
+            required
+          />
+          <TextField
+            label="别名 (Slug)"
+            hint="可选，留空自动生成"
+            value={form.slug}
+            onChange={(v) => setForm((f) => ({ ...f, slug: v }))}
+            placeholder="url-friendly-slug"
+          />
+          <ColorField
+            label="颜色"
+            value={form.color}
+            onChange={(v) => setForm((f) => ({ ...f, color: v }))}
+          />
+          <TextareaField
+            label="描述"
+            value={form.description}
+            onChange={(v) => setForm((f) => ({ ...f, description: v }))}
+            placeholder="可选"
+          />
+        </AdminModal>
       )}
     </div>
   );

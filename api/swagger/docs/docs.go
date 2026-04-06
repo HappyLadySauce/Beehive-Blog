@@ -81,13 +81,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.AdminArticleListResponse"
+                                            "$ref": "#/definitions/v1.AdminArticleListResponse"
                                         }
                                     }
                                 }
@@ -97,25 +97,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -139,7 +139,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CreateArticleRequest"
+                            "$ref": "#/definitions/v1.CreateArticleRequest"
                         }
                     }
                 ],
@@ -149,13 +149,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleDetailResponse"
+                                            "$ref": "#/definitions/v1.ArticleDetailResponse"
                                         }
                                     }
                                 }
@@ -165,31 +165,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -215,7 +215,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.BatchArticleRequest"
+                            "$ref": "#/definitions/v1.BatchArticleRequest"
                         }
                     }
                 ],
@@ -225,13 +225,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.BatchArticleResponse"
+                                            "$ref": "#/definitions/v1.BatchArticleResponse"
                                         }
                                     }
                                 }
@@ -241,31 +241,100 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
             }
         },
         "/api/v1/admin/articles/{id}": {
+            "get": {
+                "description": "需管理员；返回文章详情（含草稿、私密等所有状态）",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "管理员获取单篇文章",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文章 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/v1.ArticleDetailResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            },
             "put": {
                 "description": "需管理员；部分字段更新。categoryId：仅当请求体包含该字段时更新；传 null/省略不改变；传 ≤0 表示置空分类；传正整数须为已存在分类。tagIds：仅当请求体包含非空 tagIds 数组时整表替换关联；须全部为已存在标签主键（会去重并忽略 ≤0）。",
                 "consumes": [
@@ -292,7 +361,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateArticleRequest"
+                            "$ref": "#/definitions/v1.UpdateArticleRequest"
                         }
                     }
                 ],
@@ -302,13 +371,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleDetailResponse"
+                                            "$ref": "#/definitions/v1.ArticleDetailResponse"
                                         }
                                     }
                                 }
@@ -318,37 +387,37 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -377,13 +446,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.DeleteArticleResponse"
+                                            "$ref": "#/definitions/v1.DeleteArticleResponse"
                                         }
                                     }
                                 }
@@ -393,31 +462,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -458,31 +527,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "501": {
                         "description": "Not Implemented",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -515,7 +584,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateArticlePasswordRequest"
+                            "$ref": "#/definitions/v1.UpdateArticlePasswordRequest"
                         }
                     }
                 ],
@@ -525,13 +594,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleSecurityResponse"
+                                            "$ref": "#/definitions/v1.ArticleSecurityResponse"
                                         }
                                     }
                                 }
@@ -541,25 +610,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -592,7 +661,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateArticlePinRequest"
+                            "$ref": "#/definitions/v1.UpdateArticlePinRequest"
                         }
                     }
                 ],
@@ -602,13 +671,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleDetailResponse"
+                                            "$ref": "#/definitions/v1.ArticleDetailResponse"
                                         }
                                     }
                                 }
@@ -618,25 +687,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -669,7 +738,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateArticleSlugRequest"
+                            "$ref": "#/definitions/v1.UpdateArticleSlugRequest"
                         }
                     }
                 ],
@@ -679,13 +748,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleDetailResponse"
+                                            "$ref": "#/definitions/v1.ArticleDetailResponse"
                                         }
                                     }
                                 }
@@ -695,31 +764,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -752,7 +821,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateArticleStatusRequest"
+                            "$ref": "#/definitions/v1.UpdateArticleStatusRequest"
                         }
                     }
                 ],
@@ -762,13 +831,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleDetailResponse"
+                                            "$ref": "#/definitions/v1.ArticleDetailResponse"
                                         }
                                     }
                                 }
@@ -778,25 +847,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -827,13 +896,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleVersionListResponse"
+                                            "$ref": "#/definitions/v1.ArticleVersionListResponse"
                                         }
                                     }
                                 }
@@ -843,31 +912,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -905,13 +974,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleDetailResponse"
+                                            "$ref": "#/definitions/v1.ArticleDetailResponse"
                                         }
                                     }
                                 }
@@ -921,31 +990,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -1005,31 +1074,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -1072,31 +1141,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -1133,37 +1202,37 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -1199,13 +1268,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.AdminCategoryListResponse"
+                                            "$ref": "#/definitions/v1.AdminCategoryListResponse"
                                         }
                                     }
                                 }
@@ -1215,19 +1284,19 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -1251,7 +1320,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CreateCategoryRequest"
+                            "$ref": "#/definitions/v1.CreateCategoryRequest"
                         }
                     }
                 ],
@@ -1261,13 +1330,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CategoryBrief"
+                                            "$ref": "#/definitions/v1.CategoryBrief"
                                         }
                                     }
                                 }
@@ -1277,31 +1346,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -1334,7 +1403,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateCategoryRequest"
+                            "$ref": "#/definitions/v1.UpdateCategoryRequest"
                         }
                     }
                 ],
@@ -1344,13 +1413,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CategoryBrief"
+                                            "$ref": "#/definitions/v1.CategoryBrief"
                                         }
                                     }
                                 }
@@ -1360,37 +1429,37 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -1425,13 +1494,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.DeleteCategoryResponse"
+                                            "$ref": "#/definitions/v1.DeleteCategoryResponse"
                                         }
                                     }
                                 }
@@ -1441,31 +1510,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -1519,13 +1588,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.AdminCommentListResponse"
+                                            "$ref": "#/definitions/v1.AdminCommentListResponse"
                                         }
                                     }
                                 }
@@ -1535,19 +1604,19 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -1580,7 +1649,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateCommentStatusRequest"
+                            "$ref": "#/definitions/v1.UpdateCommentStatusRequest"
                         }
                     }
                 ],
@@ -1590,13 +1659,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateCommentStatusResponse"
+                                            "$ref": "#/definitions/v1.UpdateCommentStatusResponse"
                                         }
                                     }
                                 }
@@ -1606,31 +1675,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -1653,19 +1722,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -1696,7 +1765,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.TestSMTPRequest"
+                            "$ref": "#/definitions/v1.TestSMTPRequest"
                         }
                     }
                 ],
@@ -1704,37 +1773,37 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "502": {
                         "description": "Bad Gateway",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -1770,13 +1839,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.SettingsResponse"
+                                            "$ref": "#/definitions/v1.SettingsResponse"
                                         }
                                     }
                                 }
@@ -1786,25 +1855,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -1840,7 +1909,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateSettingsRequest"
+                            "$ref": "#/definitions/v1.UpdateSettingsRequest"
                         }
                     }
                 ],
@@ -1850,13 +1919,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.SettingsResponse"
+                                            "$ref": "#/definitions/v1.SettingsResponse"
                                         }
                                     }
                                 }
@@ -1866,25 +1935,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -1911,13 +1980,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.SiteStatsResponse"
+                                            "$ref": "#/definitions/v1.SiteStatsResponse"
                                         }
                                     }
                                 }
@@ -1927,19 +1996,19 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -1964,7 +2033,7 @@ const docTemplate = `{
                         "name": "request",
                         "in": "body",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.SyncPostsRequest"
+                            "$ref": "#/definitions/v1.SyncPostsRequest"
                         }
                     }
                 ],
@@ -1974,13 +2043,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.SyncResponse"
+                                            "$ref": "#/definitions/v1.SyncResponse"
                                         }
                                     }
                                 }
@@ -1990,19 +2059,19 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -2024,13 +2093,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.SyncStatusResponse"
+                                            "$ref": "#/definitions/v1.SyncStatusResponse"
                                         }
                                     }
                                 }
@@ -2040,19 +2109,19 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -2100,13 +2169,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.TagListResponse"
+                                            "$ref": "#/definitions/v1.TagListResponse"
                                         }
                                     }
                                 }
@@ -2116,19 +2185,19 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -2152,7 +2221,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CreateTagRequest"
+                            "$ref": "#/definitions/v1.CreateTagRequest"
                         }
                     }
                 ],
@@ -2162,13 +2231,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.TagListItem"
+                                            "$ref": "#/definitions/v1.TagListItem"
                                         }
                                     }
                                 }
@@ -2178,31 +2247,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -2235,7 +2304,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateTagRequest"
+                            "$ref": "#/definitions/v1.UpdateTagRequest"
                         }
                     }
                 ],
@@ -2245,13 +2314,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.TagListItem"
+                                            "$ref": "#/definitions/v1.TagListItem"
                                         }
                                     }
                                 }
@@ -2261,37 +2330,37 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -2326,13 +2395,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.DeleteTagResponse"
+                                            "$ref": "#/definitions/v1.DeleteTagResponse"
                                         }
                                     }
                                 }
@@ -2342,31 +2411,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -2403,31 +2472,586 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/users": {
+            "get": {
+                "description": "需管理员；支持分页与关键词/角色/状态筛选",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "管理员用户列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "页码",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "每页条数",
+                        "name": "pageSize",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "用户名/昵称/邮箱关键词",
+                        "name": "keyword",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "角色 guest|user|admin",
+                        "name": "role",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "状态 active|inactive|disabled|deleted",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/v1.AdminUserListResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "需管理员；支持设置用户基本信息、角色与状态",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "管理员新建用户",
+                "parameters": [
+                    {
+                        "description": "新建用户",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.AdminCreateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/v1.AdminUserItem"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/users/{id}": {
+            "get": {
+                "description": "需管理员",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "管理员获取用户详情",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "用户 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/v1.AdminUserItem"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "需管理员；可更新昵称、邮箱、头像与角色",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "管理员更新用户资料",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "用户 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新字段",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.AdminUpdateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/v1.AdminUserItem"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "需管理员；执行软删除，禁止删除自己与最后一个管理员",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "管理员删除用户",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "用户 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/v1.AdminDeleteUserResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/users/{id}/password/reset": {
+            "put": {
+                "description": "需管理员；直接设置新密码并使目标用户会话失效",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "管理员重置用户密码",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "用户 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "新密码",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.AdminResetUserPasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/v1.AdminResetUserPasswordResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/users/{id}/status": {
+            "put": {
+                "description": "需管理员；支持 active/inactive/disabled",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "管理员更新用户状态",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "用户 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "状态",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.AdminUpdateUserStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/v1.AdminUserItem"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -2493,13 +3117,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleListResponse"
+                                            "$ref": "#/definitions/v1.ArticleListResponse"
                                         }
                                     }
                                 }
@@ -2509,7 +3133,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -2540,13 +3164,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleDetailResponse"
+                                            "$ref": "#/definitions/v1.ArticleDetailResponse"
                                         }
                                     }
                                 }
@@ -2556,7 +3180,7 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -2599,13 +3223,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CommentListResponse"
+                                            "$ref": "#/definitions/v1.CommentListResponse"
                                         }
                                     }
                                 }
@@ -2615,13 +3239,13 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -2652,7 +3276,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CreateCommentRequest"
+                            "$ref": "#/definitions/v1.CreateCommentRequest"
                         }
                     }
                 ],
@@ -2662,13 +3286,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CreateCommentResponse"
+                                            "$ref": "#/definitions/v1.CreateCommentResponse"
                                         }
                                     }
                                 }
@@ -2678,25 +3302,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -2727,13 +3351,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.RecordArticleViewResponse"
+                                            "$ref": "#/definitions/v1.RecordArticleViewResponse"
                                         }
                                     }
                                 }
@@ -2743,7 +3367,7 @@ const docTemplate = `{
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -2769,7 +3393,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.LoginRequest"
+                            "$ref": "#/definitions/v1.LoginRequest"
                         }
                     }
                 ],
@@ -2777,31 +3401,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -2827,7 +3451,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.RefreshTokenRequest"
+                            "$ref": "#/definitions/v1.RefreshTokenRequest"
                         }
                     }
                 ],
@@ -2835,31 +3459,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -2885,7 +3509,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.RegisterRequest"
+                            "$ref": "#/definitions/v1.RegisterRequest"
                         }
                     }
                 ],
@@ -2893,25 +3517,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -2933,13 +3557,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CategoryListResponse"
+                                            "$ref": "#/definitions/v1.CategoryListResponse"
                                         }
                                     }
                                 }
@@ -2949,7 +3573,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -2992,13 +3616,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CategoryDetailResponse"
+                                            "$ref": "#/definitions/v1.CategoryDetailResponse"
                                         }
                                     }
                                 }
@@ -3008,19 +3632,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -3068,13 +3692,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.TagListResponse"
+                                            "$ref": "#/definitions/v1.TagListResponse"
                                         }
                                     }
                                 }
@@ -3084,7 +3708,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -3114,13 +3738,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.TagCloudResponse"
+                                            "$ref": "#/definitions/v1.TagCloudResponse"
                                         }
                                     }
                                 }
@@ -3130,7 +3754,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -3173,13 +3797,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.TagDetailResponse"
+                                            "$ref": "#/definitions/v1.TagDetailResponse"
                                         }
                                     }
                                 }
@@ -3189,19 +3813,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -3235,37 +3859,37 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -3297,31 +3921,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -3346,7 +3970,7 @@ const docTemplate = `{
                         "name": "request",
                         "in": "body",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.LogoutRequest"
+                            "$ref": "#/definitions/v1.LogoutRequest"
                         }
                     }
                 ],
@@ -3354,19 +3978,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -3389,25 +4013,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -3450,19 +4074,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -3493,13 +4117,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.DeleteNotificationResponse"
+                                            "$ref": "#/definitions/v1.DeleteNotificationResponse"
                                         }
                                     }
                                 }
@@ -3509,19 +4133,19 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -3552,13 +4176,13 @@ const docTemplate = `{
                         "schema": {
                             "allOf": [
                                 {
-                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                    "$ref": "#/definitions/common.BaseResponse"
                                 },
                                 {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.MarkNotificationReadResponse"
+                                            "$ref": "#/definitions/v1.MarkNotificationReadResponse"
                                         }
                                     }
                                 }
@@ -3568,19 +4192,19 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -3606,7 +4230,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdatePasswordRequest"
+                            "$ref": "#/definitions/v1.UpdatePasswordRequest"
                         }
                     }
                 ],
@@ -3614,31 +4238,31 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -3664,7 +4288,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateProfileRequest"
+                            "$ref": "#/definitions/v1.UpdateProfileRequest"
                         }
                     }
                 ],
@@ -3672,25 +4296,25 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     }
                 }
@@ -3744,14 +4368,26 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.AdminArticleListItem": {
+        "common.BaseResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {},
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.AdminArticleListItem": {
             "type": "object",
             "properties": {
                 "author": {
-                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleAuthorItem"
+                    "$ref": "#/definitions/v1.ArticleAuthorItem"
                 },
                 "category": {
-                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleCategoryItem"
+                    "$ref": "#/definitions/v1.ArticleCategoryItem"
                 },
                 "commentCount": {
                     "type": "integer"
@@ -3786,7 +4422,7 @@ const docTemplate = `{
                 "tags": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleTagItem"
+                        "$ref": "#/definitions/v1.ArticleTagItem"
                     }
                 },
                 "title": {
@@ -3800,13 +4436,13 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.AdminArticleListResponse": {
+        "v1.AdminArticleListResponse": {
             "type": "object",
             "properties": {
                 "list": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.AdminArticleListItem"
+                        "$ref": "#/definitions/v1.AdminArticleListItem"
                     }
                 },
                 "page": {
@@ -3820,13 +4456,13 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.AdminCategoryListResponse": {
+        "v1.AdminCategoryListResponse": {
             "type": "object",
             "properties": {
                 "list": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CategoryBrief"
+                        "$ref": "#/definitions/v1.CategoryBrief"
                     }
                 },
                 "page": {
@@ -3840,14 +4476,14 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.AdminCommentItem": {
+        "v1.AdminCommentItem": {
             "type": "object",
             "properties": {
                 "articleId": {
                     "type": "integer"
                 },
                 "author": {
-                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CommentAuthorItem"
+                    "$ref": "#/definitions/v1.CommentAuthorItem"
                 },
                 "content": {
                     "type": "string"
@@ -3872,13 +4508,13 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.AdminCommentListResponse": {
+        "v1.AdminCommentListResponse": {
             "type": "object",
             "properties": {
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.AdminCommentItem"
+                        "$ref": "#/definitions/v1.AdminCommentItem"
                     }
                 },
                 "page": {
@@ -3892,7 +4528,183 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleAuthorItem": {
+        "v1.AdminCreateUserRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password",
+                "username"
+            ],
+            "properties": {
+                "avatar": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "email": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "nickname": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 20,
+                    "minLength": 6
+                },
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "guest",
+                        "user",
+                        "admin"
+                    ]
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "inactive",
+                        "disabled"
+                    ]
+                },
+                "username": {
+                    "type": "string",
+                    "maxLength": 20,
+                    "minLength": 3
+                }
+            }
+        },
+        "v1.AdminDeleteUserResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "v1.AdminResetUserPasswordRequest": {
+            "type": "object",
+            "required": [
+                "newPassword"
+            ],
+            "properties": {
+                "newPassword": {
+                    "type": "string",
+                    "maxLength": 20,
+                    "minLength": 6
+                }
+            }
+        },
+        "v1.AdminResetUserPasswordResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.AdminUpdateUserRequest": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string",
+                    "maxLength": 500
+                },
+                "email": {
+                    "type": "string",
+                    "maxLength": 100
+                },
+                "nickname": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "guest",
+                        "user",
+                        "admin"
+                    ]
+                }
+            }
+        },
+        "v1.AdminUpdateUserStatusRequest": {
+            "type": "object",
+            "required": [
+                "status"
+            ],
+            "properties": {
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "inactive",
+                        "disabled"
+                    ]
+                }
+            }
+        },
+        "v1.AdminUserItem": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lastLoginAt": {
+                    "type": "string"
+                },
+                "nickname": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.AdminUserListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.AdminUserItem"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "v1.ArticleAuthorItem": {
             "type": "object",
             "properties": {
                 "avatar": {
@@ -3909,7 +4721,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleCategoryItem": {
+        "v1.ArticleCategoryItem": {
             "type": "object",
             "properties": {
                 "id": {
@@ -3923,14 +4735,14 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleDetailResponse": {
+        "v1.ArticleDetailResponse": {
             "type": "object",
             "properties": {
                 "author": {
-                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleAuthorItem"
+                    "$ref": "#/definitions/v1.ArticleAuthorItem"
                 },
                 "category": {
-                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleCategoryItem"
+                    "$ref": "#/definitions/v1.ArticleCategoryItem"
                 },
                 "commentCount": {
                     "type": "integer"
@@ -3951,13 +4763,13 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "next": {
-                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleNavItem"
+                    "$ref": "#/definitions/v1.ArticleNavItem"
                 },
                 "pinOrder": {
                     "type": "integer"
                 },
                 "previous": {
-                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleNavItem"
+                    "$ref": "#/definitions/v1.ArticleNavItem"
                 },
                 "protected": {
                     "type": "boolean"
@@ -3974,7 +4786,7 @@ const docTemplate = `{
                 "tags": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleTagItem"
+                        "$ref": "#/definitions/v1.ArticleTagItem"
                     }
                 },
                 "title": {
@@ -3988,14 +4800,14 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleListItem": {
+        "v1.ArticleListItem": {
             "type": "object",
             "properties": {
                 "author": {
-                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleAuthorItem"
+                    "$ref": "#/definitions/v1.ArticleAuthorItem"
                 },
                 "category": {
-                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleCategoryItem"
+                    "$ref": "#/definitions/v1.ArticleCategoryItem"
                 },
                 "commentCount": {
                     "type": "integer"
@@ -4027,7 +4839,7 @@ const docTemplate = `{
                 "tags": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleTagItem"
+                        "$ref": "#/definitions/v1.ArticleTagItem"
                     }
                 },
                 "title": {
@@ -4041,13 +4853,13 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleListResponse": {
+        "v1.ArticleListResponse": {
             "type": "object",
             "properties": {
                 "list": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleListItem"
+                        "$ref": "#/definitions/v1.ArticleListItem"
                     }
                 },
                 "page": {
@@ -4061,7 +4873,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleNavItem": {
+        "v1.ArticleNavItem": {
             "type": "object",
             "properties": {
                 "id": {
@@ -4075,7 +4887,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleSecurityResponse": {
+        "v1.ArticleSecurityResponse": {
             "type": "object",
             "properties": {
                 "protected": {
@@ -4083,7 +4895,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleStatItem": {
+        "v1.ArticleStatItem": {
             "type": "object",
             "properties": {
                 "id": {
@@ -4100,7 +4912,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleTagItem": {
+        "v1.ArticleTagItem": {
             "type": "object",
             "properties": {
                 "color": {
@@ -4117,7 +4929,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleVersionItem": {
+        "v1.ArticleVersionItem": {
             "type": "object",
             "properties": {
                 "articleId": {
@@ -4140,13 +4952,13 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleVersionListResponse": {
+        "v1.ArticleVersionListResponse": {
             "type": "object",
             "properties": {
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleVersionItem"
+                        "$ref": "#/definitions/v1.ArticleVersionItem"
                     }
                 },
                 "total": {
@@ -4154,7 +4966,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.BatchArticlePayload": {
+        "v1.BatchArticlePayload": {
             "type": "object",
             "properties": {
                 "categoryId": {
@@ -4171,7 +4983,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.BatchArticleRequest": {
+        "v1.BatchArticleRequest": {
             "type": "object",
             "required": [
                 "action",
@@ -4195,11 +5007,11 @@ const docTemplate = `{
                     }
                 },
                 "payload": {
-                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.BatchArticlePayload"
+                    "$ref": "#/definitions/v1.BatchArticlePayload"
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.BatchArticleResponse": {
+        "v1.BatchArticleResponse": {
             "type": "object",
             "properties": {
                 "affected": {
@@ -4207,7 +5019,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CategoryBrief": {
+        "v1.CategoryBrief": {
             "type": "object",
             "properties": {
                 "articleCount": {
@@ -4230,14 +5042,14 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CategoryDetailResponse": {
+        "v1.CategoryDetailResponse": {
             "type": "object",
             "properties": {
                 "articleCount": {
                     "type": "integer"
                 },
                 "articles": {
-                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleListResponse"
+                    "$ref": "#/definitions/v1.ArticleListResponse"
                 },
                 "description": {
                     "type": "string"
@@ -4256,18 +5068,18 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CategoryListResponse": {
+        "v1.CategoryListResponse": {
             "type": "object",
             "properties": {
                 "list": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CategoryBrief"
+                        "$ref": "#/definitions/v1.CategoryBrief"
                     }
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CommentAuthorItem": {
+        "v1.CommentAuthorItem": {
             "type": "object",
             "properties": {
                 "avatar": {
@@ -4284,11 +5096,11 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CommentItem": {
+        "v1.CommentItem": {
             "type": "object",
             "properties": {
                 "author": {
-                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CommentAuthorItem"
+                    "$ref": "#/definitions/v1.CommentAuthorItem"
                 },
                 "content": {
                     "type": "string"
@@ -4304,13 +5116,13 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CommentListResponse": {
+        "v1.CommentListResponse": {
             "type": "object",
             "properties": {
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CommentItem"
+                        "$ref": "#/definitions/v1.CommentItem"
                     }
                 },
                 "page": {
@@ -4324,7 +5136,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CreateArticleRequest": {
+        "v1.CreateArticleRequest": {
             "type": "object",
             "required": [
                 "content",
@@ -4377,7 +5189,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CreateCategoryRequest": {
+        "v1.CreateCategoryRequest": {
             "type": "object",
             "required": [
                 "name"
@@ -4401,7 +5213,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CreateCommentRequest": {
+        "v1.CreateCommentRequest": {
             "type": "object",
             "required": [
                 "content"
@@ -4417,7 +5229,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CreateCommentResponse": {
+        "v1.CreateCommentResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -4425,7 +5237,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CreateTagRequest": {
+        "v1.CreateTagRequest": {
             "type": "object",
             "required": [
                 "name"
@@ -4453,7 +5265,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.DeleteArticleResponse": {
+        "v1.DeleteArticleResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -4461,7 +5273,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.DeleteCategoryResponse": {
+        "v1.DeleteCategoryResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -4469,7 +5281,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.DeleteNotificationResponse": {
+        "v1.DeleteNotificationResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -4477,7 +5289,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.DeleteTagResponse": {
+        "v1.DeleteTagResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -4485,7 +5297,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.LoginRequest": {
+        "v1.LoginRequest": {
             "type": "object",
             "required": [
                 "account",
@@ -4506,10 +5318,10 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.LogoutRequest": {
+        "v1.LogoutRequest": {
             "type": "object"
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.MarkNotificationReadResponse": {
+        "v1.MarkNotificationReadResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -4520,7 +5332,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.RecordArticleViewResponse": {
+        "v1.RecordArticleViewResponse": {
             "type": "object",
             "properties": {
                 "viewCount": {
@@ -4528,7 +5340,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.RefreshTokenRequest": {
+        "v1.RefreshTokenRequest": {
             "type": "object",
             "required": [
                 "refreshToken"
@@ -4539,7 +5351,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.RegisterRequest": {
+        "v1.RegisterRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -4566,7 +5378,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.RelatedTagItem": {
+        "v1.RelatedTagItem": {
             "type": "object",
             "properties": {
                 "articleCount": {
@@ -4598,7 +5410,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.SettingsResponse": {
+        "v1.SettingsResponse": {
             "type": "object",
             "properties": {
                 "group": {
@@ -4612,7 +5424,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.SiteStatsResponse": {
+        "v1.SiteStatsResponse": {
             "type": "object",
             "properties": {
                 "articleCount": {
@@ -4627,7 +5439,7 @@ const docTemplate = `{
                 "topArticles": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleStatItem"
+                        "$ref": "#/definitions/v1.ArticleStatItem"
                     }
                 },
                 "userCount": {
@@ -4635,7 +5447,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.SyncPostsRequest": {
+        "v1.SyncPostsRequest": {
             "type": "object",
             "properties": {
                 "rebuild": {
@@ -4644,7 +5456,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.SyncResponse": {
+        "v1.SyncResponse": {
             "type": "object",
             "properties": {
                 "created": {
@@ -4667,7 +5479,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.SyncStatusResponse": {
+        "v1.SyncStatusResponse": {
             "type": "object",
             "properties": {
                 "last_sync_time": {
@@ -4684,25 +5496,25 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.TagCloudResponse": {
+        "v1.TagCloudResponse": {
             "type": "object",
             "properties": {
                 "tags": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.TagListItem"
+                        "$ref": "#/definitions/v1.TagListItem"
                     }
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.TagDetailResponse": {
+        "v1.TagDetailResponse": {
             "type": "object",
             "properties": {
                 "articleCount": {
                     "type": "integer"
                 },
                 "articles": {
-                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleListResponse"
+                    "$ref": "#/definitions/v1.ArticleListResponse"
                 },
                 "color": {
                     "type": "string"
@@ -4722,7 +5534,7 @@ const docTemplate = `{
                 "relatedTags": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.RelatedTagItem"
+                        "$ref": "#/definitions/v1.RelatedTagItem"
                     }
                 },
                 "slug": {
@@ -4733,7 +5545,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.TagListItem": {
+        "v1.TagListItem": {
             "type": "object",
             "properties": {
                 "articleCount": {
@@ -4762,13 +5574,13 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.TagListResponse": {
+        "v1.TagListResponse": {
             "type": "object",
             "properties": {
                 "list": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.TagListItem"
+                        "$ref": "#/definitions/v1.TagListItem"
                     }
                 },
                 "page": {
@@ -4782,7 +5594,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.TestSMTPRequest": {
+        "v1.TestSMTPRequest": {
             "type": "object",
             "required": [
                 "to"
@@ -4793,7 +5605,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateArticlePasswordRequest": {
+        "v1.UpdateArticlePasswordRequest": {
             "type": "object",
             "properties": {
                 "password": {
@@ -4802,7 +5614,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateArticlePinRequest": {
+        "v1.UpdateArticlePinRequest": {
             "type": "object",
             "properties": {
                 "isPinned": {
@@ -4815,7 +5627,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateArticleRequest": {
+        "v1.UpdateArticleRequest": {
             "type": "object",
             "properties": {
                 "categoryId": {
@@ -4863,7 +5675,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateArticleSlugRequest": {
+        "v1.UpdateArticleSlugRequest": {
             "type": "object",
             "required": [
                 "slug"
@@ -4876,7 +5688,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateArticleStatusRequest": {
+        "v1.UpdateArticleStatusRequest": {
             "type": "object",
             "required": [
                 "status"
@@ -4897,7 +5709,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateCategoryRequest": {
+        "v1.UpdateCategoryRequest": {
             "type": "object",
             "properties": {
                 "description": {
@@ -4918,7 +5730,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateCommentStatusRequest": {
+        "v1.UpdateCommentStatusRequest": {
             "type": "object",
             "required": [
                 "status"
@@ -4935,7 +5747,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateCommentStatusResponse": {
+        "v1.UpdateCommentStatusResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -4946,7 +5758,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdatePasswordRequest": {
+        "v1.UpdatePasswordRequest": {
             "type": "object",
             "required": [
                 "newPassword",
@@ -4965,7 +5777,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateProfileRequest": {
+        "v1.UpdateProfileRequest": {
             "type": "object",
             "properties": {
                 "avatar": {
@@ -4978,7 +5790,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateSettingsRequest": {
+        "v1.UpdateSettingsRequest": {
             "type": "object",
             "required": [
                 "settings"
@@ -4992,7 +5804,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateTagRequest": {
+        "v1.UpdateTagRequest": {
             "type": "object",
             "properties": {
                 "color": {
@@ -5014,18 +5826,6 @@ const docTemplate = `{
                 },
                 "sortOrder": {
                     "type": "integer"
-                }
-            }
-        },
-        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {},
-                "message": {
-                    "type": "string"
                 }
             }
         }

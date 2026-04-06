@@ -10,6 +10,7 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/comments"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/site"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/tags"
+	userroute "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/user"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 
@@ -49,4 +50,5 @@ func Init(svcCtx *svc.ServiceContext) {
 	comments.RegisterAdminRoutes(g, svcCtx)
 	attachments.RegisterAdminRoutes(g, svcCtx)
 	site.RegisterAdminRoutes(g, svcCtx)
+	userroute.RegisterAdminRoutes(g, svcCtx)
 }
