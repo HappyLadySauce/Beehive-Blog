@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Eye, Lock, Search, Trash2, UserCog } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -20,10 +20,10 @@ import AdminModal from '../../components/AdminModal';
 import {
   TextField,
   PasswordField,
-  TextareaField,
   SelectField,
 } from '../../components/FormField';
 import Pagination from '../../components/Pagination';
+import CustomSelect from '../../components/CustomSelect';
 
 // ─── 常量映射 ────────────────────────────────────────────────────────────────
 
@@ -61,6 +61,9 @@ const statusOptions = [
   { value: 'inactive', label: '未激活' },
   { value: 'disabled', label: '禁用' },
 ];
+
+const roleFilterOptions = [{ value: '', label: '全部角色' }, ...roleOptions];
+const statusFilterOptions = [{ value: '', label: '全部状态' }, ...statusOptions];
 
 // ─── 表单数据结构 ────────────────────────────────────────────────────────────
 
@@ -439,36 +442,26 @@ export default function Users() {
               className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-          <select
+          <CustomSelect
             value={role}
-            onChange={(e) => {
-              setRole(e.target.value);
+            options={roleFilterOptions}
+            onChange={(v) => {
+              setRole(v);
               setPage(1);
             }}
-            className="px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">全部角色</option>
-            {roleOptions.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          <select
+            className="w-[132px]"
+            ariaLabel="角色筛选"
+          />
+          <CustomSelect
             value={status}
-            onChange={(e) => {
-              setStatus(e.target.value);
+            options={statusFilterOptions}
+            onChange={(v) => {
+              setStatus(v);
               setPage(1);
             }}
-            className="px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">全部状态</option>
-            {statusOptions.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+            className="w-[132px]"
+            ariaLabel="状态筛选"
+          />
         </div>
 
         {/* 表格 */}
@@ -553,22 +546,19 @@ export default function Users() {
                         </button>
                       </div>
                       <div className="mt-2">
-                        <select
+                        <CustomSelect
                           value={item.status}
-                          onChange={(e) =>
+                          onChange={(v) =>
                             handleStatusChange(
                               item,
-                              e.target.value as Exclude<UserStatus, 'deleted'>,
+                              v as Exclude<UserStatus, 'deleted'>,
                             )
                           }
-                          className="px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          {statusOptions.map((o) => (
-                            <option key={o.value} value={o.value}>
-                              {o.label}
-                            </option>
-                          ))}
-                        </select>
+                          options={statusOptions}
+                          size="sm"
+                          className="w-[92px]"
+                          ariaLabel="用户状态快捷切换"
+                        />
                       </div>
                     </td>
                   </tr>

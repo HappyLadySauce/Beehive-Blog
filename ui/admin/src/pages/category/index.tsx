@@ -163,14 +163,14 @@ export default function Categories() {
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => openEdit(cat)}
-                      className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
+                      className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
                       title="编辑"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(cat)}
-                      className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                      className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
                       title="删除"
                     >
                       <Trash2 className="w-4 h-4" />

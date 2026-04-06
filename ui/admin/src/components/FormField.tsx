@@ -1,4 +1,5 @@
-import { ChangeEvent } from 'react';
+import React, { ChangeEvent } from 'react';
+import CustomSelect from './CustomSelect';
 
 // ─── 公共类型 ────────────────────────────────────────────────────────────────
 
@@ -188,18 +189,14 @@ export function SelectField({
   return (
     <div className={className}>
       <FieldLabel label={label} hint={hint} required={required} />
-      <select
+      <CustomSelect
         value={value}
-        onChange={(e: ChangeEvent<HTMLSelectElement>) => onChange(e.target.value)}
+        onChange={onChange}
         disabled={disabled}
-        className={inputBase}
-      >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
+        options={options}
+        className="w-full"
+        ariaLabel={label}
+      />
     </div>
   );
 }

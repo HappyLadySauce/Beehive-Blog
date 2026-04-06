@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit, Trash2, Eye, FileText } from 'lucide-react';
+import Pagination from '../../components/Pagination';
+import CustomSelect from '../../components/CustomSelect';
 import { getArticles, deleteArticle, batchOperateArticles, AdminArticleListItem, ArticleListQuery } from '../../api/article';
 import { getCategories, getTags, CategoryBrief, TagListItem } from '../../api/taxonomy';
 import { toast } from 'sonner';
@@ -137,6 +139,28 @@ export default function ArticleManagement() {
     );
   };
 
+  const statusFilterOptions = [
+    { value: 'all', label: '全部' },
+    { value: 'published', label: '已发布' },
+    { value: 'draft', label: '草稿' },
+    { value: 'scheduled', label: '定时发布' },
+    { value: 'archived', label: '已归档' },
+    { value: 'private', label: '私密' },
+  ];
+  const categoryFilterOptions = [
+    { value: 'all', label: '全部' },
+    ...categories.map((cat) => ({ value: cat.slug, label: cat.name })),
+  ];
+  const tagFilterOptions = [
+    { value: 'all', label: '全部' },
+    ...tags.map((tag) => ({ value: tag.slug, label: tag.name })),
+  ];
+  const sortFilterOptions = [
+    { value: 'newest', label: '最新发布' },
+    { value: 'oldest', label: '最早发布' },
+    { value: 'popular', label: '最受欢迎' },
+  ];
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -178,60 +202,47 @@ export default function ArticleManagement() {
 
         <div className="p-4 flex items-center gap-3 flex-wrap border-b border-gray-200">
           <span className="text-sm text-gray-600">状态:</span>
-          <select
+          <CustomSelect
             value={selectedStatus}
-            onChange={(e) => { setSelectedStatus(e.target.value); setPage(1); }}
-            className="px-3 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="all">全部</option>
-            <option value="published">已发布</option>
-            <option value="draft">草稿</option>
-            <option value="scheduled">定时发布</option>
-            <option value="archived">已归档</option>
-            <option value="private">私密</option>
-          </select>
+            onChange={(v) => { setSelectedStatus(v); setPage(1); }}
+            options={statusFilterOptions}
+            className="w-[132px]"
+            ariaLabel="文章状态筛选"
+          />
 
           <span className="text-sm text-gray-600 ml-3">分类:</span>
-          <select
+          <CustomSelect
             value={selectedCategory}
-            onChange={(e) => { setSelectedCategory(e.target.value); setPage(1); }}
-            className="px-3 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="all">全部</option>
-            {categories.map((cat) => (
-              <option key={cat.id} value={cat.slug}>{cat.name}</option>
-            ))}
-          </select>
+            onChange={(v) => { setSelectedCategory(v); setPage(1); }}
+            options={categoryFilterOptions}
+            className="w-[132px]"
+            ariaLabel="文章分类筛选"
+          />
 
           <span className="text-sm text-gray-600 ml-3">标签:</span>
-          <select
+          <CustomSelect
             value={selectedTag}
-            onChange={(e) => { setSelectedTag(e.target.value); setPage(1); }}
-            className="px-3 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="all">全部</option>
-            {tags.map((tag) => (
-              <option key={tag.id} value={tag.slug}>{tag.name}</option>
-            ))}
-          </select>
+            onChange={(v) => { setSelectedTag(v); setPage(1); }}
+            options={tagFilterOptions}
+            className="w-[132px]"
+            ariaLabel="文章标签筛选"
+          />
 
           <span className="text-sm text-gray-600 ml-3">排序:</span>
-          <select
+          <CustomSelect
             value={selectedSort}
-            onChange={(e) => { setSelectedSort(e.target.value); setPage(1); }}
-            className="px-3 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="newest">最新发布</option>
-            <option value="oldest">最早发布</option>
-            <option value="popular">最受欢迎</option>
-          </select>
+            onChange={(v) => { setSelectedSort(v); setPage(1); }}
+            options={sortFilterOptions}
+            className="w-[132px]"
+            ariaLabel="文章排序"
+          />
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="px-4 py-3 text-left">
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <th className="px-4 py-3">
                   <input
                     type="checkbox"
                     checked={articles.length > 0 && selectedArticles.length === articles.length}
@@ -239,16 +250,16 @@ export default function ArticleManagement() {
                     className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">标题</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">分类 / 标签</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">状态</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">作者</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">浏览 / 评论</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-600">发布时间</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-600">操作</th>
+                <th className="px-4 py-3 text-sm font-medium text-gray-600">标题</th>
+                <th className="px-4 py-3 text-sm font-medium text-gray-600">分类 / 标签</th>
+                <th className="px-4 py-3 text-sm font-medium text-gray-600">状态</th>
+                <th className="px-4 py-3 text-sm font-medium text-gray-600">作者</th>
+                <th className="px-4 py-3 text-sm font-medium text-gray-600">浏览 / 评论</th>
+                <th className="px-4 py-3 text-sm font-medium text-gray-600">发布时间</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">操作</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-200">
               {loading ? (
                 <tr>
                   <td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-500">加载中...</td>
@@ -259,7 +270,7 @@ export default function ArticleManagement() {
                 </tr>
               ) : (
                 articles.map((article) => (
-                  <tr key={article.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                  <tr key={article.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3">
                       <input
                         type="checkbox"
@@ -325,26 +336,7 @@ export default function ArticleManagement() {
           </table>
         </div>
 
-        <div className="p-4 flex items-center justify-between border-t border-gray-200">
-          <div className="text-sm text-gray-600">共 {total} 项结果</div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
-              上一页
-            </button>
-            <button className="px-3 py-1 text-sm bg-blue-600 text-white rounded">{page}</button>
-            <button
-              onClick={() => setPage(p => p + 1)}
-              disabled={page * 10 >= total}
-              className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
-              下一页
-            </button>
-          </div>
-        </div>
+        <Pagination total={total} page={page} pageSize={10} onPageChange={setPage} unit="项结果" />
       </div>
     </div>
   );

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { getComments, updateCommentStatus, AdminCommentItem, AdminCommentListQuery } from '../../api/comment';
 import { toast } from 'sonner';
 import { MessageSquare, Check, X, ShieldAlert, Search } from 'lucide-react';
+import Pagination from '../../components/Pagination';
+import CustomSelect from '../../components/CustomSelect';
 
 const statusColors: Record<string, string> = {
   approved: 'bg-green-100 text-green-800',
@@ -16,6 +18,14 @@ const statusLabels: Record<string, string> = {
   rejected: '已拒绝',
   spam: '垃圾',
 };
+
+const commentFilterOptions = [
+  { value: '', label: '全部状态' },
+  { value: 'pending', label: '待审核' },
+  { value: 'approved', label: '已通过' },
+  { value: 'rejected', label: '已拒绝' },
+  { value: 'spam', label: '垃圾' },
+];
 
 export default function Comments() {
   const [comments, setComments] = useState<AdminCommentItem[]>([]);
@@ -77,7 +87,7 @@ export default function Comments() {
 
       <div className="bg-white border border-gray-200 rounded">
         <div className="p-4 border-b border-gray-200 flex items-center gap-3 flex-wrap">
-          <div className="relative flex-1 min-w-48">
+          <div className="relative flex-1 min-w-52">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
@@ -87,17 +97,13 @@ export default function Comments() {
               className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
-          <select
+          <CustomSelect
             value={filterStatus}
-            onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
-            className="px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">全部状态</option>
-            <option value="pending">待审核</option>
-            <option value="approved">已通过</option>
-            <option value="rejected">已拒绝</option>
-            <option value="spam">垃圾</option>
-          </select>
+            onChange={(v) => { setFilterStatus(v); setPage(1); }}
+            options={commentFilterOptions}
+            className="w-[132px]"
+            ariaLabel="评论状态筛选"
+          />
         </div>
 
         <div className="overflow-x-auto">
@@ -177,26 +183,7 @@ export default function Comments() {
           </table>
         </div>
 
-        <div className="p-4 flex items-center justify-between border-t border-gray-200">
-          <div className="text-sm text-gray-600">共 {total} 条评论</div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
-              上一页
-            </button>
-            <button className="px-3 py-1 text-sm bg-blue-600 text-white rounded">{page}</button>
-            <button
-              onClick={() => setPage(p => p + 1)}
-              disabled={page * 20 >= total}
-              className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50"
-            >
-              下一页
-            </button>
-          </div>
-        </div>
+        <Pagination total={total} page={page} pageSize={20} onPageChange={setPage} unit="条评论" />
       </div>
     </div>
   );

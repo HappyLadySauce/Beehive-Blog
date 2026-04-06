@@ -143,7 +143,7 @@ export default function Settings() {
                       type="text"
                       value={settings['site_name'] || ''}
                       onChange={(e) => handleChange('site_name', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     />
                   </div>
                   <div>
@@ -153,7 +153,7 @@ export default function Settings() {
                       value={settings['site_url'] || ''}
                       onChange={(e) => handleChange('site_url', e.target.value)}
                       placeholder="https://example.com"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     />
                   </div>
                   <div>
@@ -162,7 +162,7 @@ export default function Settings() {
                       value={settings['site_description'] || ''}
                       onChange={(e) => handleChange('site_description', e.target.value)}
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     />
                   </div>
                 </>
@@ -177,7 +177,7 @@ export default function Settings() {
                       value={settings['seo_title'] || ''}
                       onChange={(e) => handleChange('seo_title', e.target.value)}
                       placeholder="默认使用站点名称"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     />
                   </div>
                   <div>
@@ -187,7 +187,7 @@ export default function Settings() {
                       onChange={(e) => handleChange('seo_description', e.target.value)}
                       rows={3}
                       placeholder="默认使用站点描述"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     />
                   </div>
                   <div>
@@ -197,7 +197,7 @@ export default function Settings() {
                       value={settings['site_keywords'] || ''}
                       onChange={(e) => handleChange('site_keywords', e.target.value)}
                       placeholder="多个关键词用英文逗号分隔"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     />
                   </div>
                   <div>
@@ -207,7 +207,7 @@ export default function Settings() {
                       value={settings['site_og_image'] || ''}
                       onChange={(e) => handleChange('site_og_image', e.target.value)}
                       placeholder="https://example.com/og-image.png"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     />
                   </div>
                 </>
@@ -221,7 +221,7 @@ export default function Settings() {
                       type="text"
                       value={settings['smtp_host'] || ''}
                       onChange={(e) => handleChange('smtp_host', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     />
                   </div>
                   <div>
@@ -230,7 +230,7 @@ export default function Settings() {
                       type="text"
                       value={settings['smtp_port'] || ''}
                       onChange={(e) => handleChange('smtp_port', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     />
                   </div>
                   <div>
@@ -239,7 +239,7 @@ export default function Settings() {
                       type="email"
                       value={settings['smtp_user'] || ''}
                       onChange={(e) => handleChange('smtp_user', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     />
                   </div>
                   <div>
@@ -249,7 +249,7 @@ export default function Settings() {
                       value={settings['smtp_pass'] || ''}
                       onChange={(e) => handleChange('smtp_pass', e.target.value)}
                       placeholder="留空表示不修改"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     />
                   </div>
 
@@ -261,11 +261,11 @@ export default function Settings() {
                         value={testEmail}
                         onChange={(e) => setTestEmail(e.target.value)}
                         placeholder="接收测试邮件的邮箱地址"
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                       />
                       <button
                         onClick={handleTestSmtp}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors flex items-center gap-2 text-sm font-medium"
+                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors flex items-center gap-2 text-sm font-medium"
                       >
                         <Mail className="w-4 h-4" />
                         测试发送
@@ -291,7 +291,7 @@ export default function Settings() {
 
                   <button
                     onClick={handleSyncHexo}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium"
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium"
                   >
                     <RefreshCw className="w-4 h-4" />
                     手动触发全量同步
@@ -304,7 +304,7 @@ export default function Settings() {
                   <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50"
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50"
                   >
                     <Save className="w-4 h-4" />
                     {saving ? '保存中...' : '保存设置'}
