@@ -133,7 +133,17 @@ func (a *ArticleAdmin) batchSetTags(ctx context.Context, ids []int64, tagIDs []i
 		}
 	}()
 
-	for _, articleID := range ids {
+	// 与 batchDelete / batchSetStatus / batchSetCategory 一致：仅处理未软删文章，Affected 为实际条数。
+	var activeIDs []int64
+	if err := tx.WithContext(ctx).Model(&models.Article{}).
+		Where("id IN ? AND deleted_at IS NULL", ids).
+		Pluck("id", &activeIDs).Error; err != nil {
+		tx.Rollback()
+		klog.ErrorS(err, "batchSetTags: list active articles")
+		return nil, http.StatusInternalServerError, errors.New("system error")
+	}
+
+	for _, articleID := range activeIDs {
 		if err := a.replaceTags(ctx, tx, articleID, tagIDsNorm); err != nil {
 			tx.Rollback()
 			klog.ErrorS(err, "batchSetTags: replaceTags", "articleID", articleID)
@@ -143,5 +153,5 @@ func (a *ArticleAdmin) batchSetTags(ctx context.Context, ids []int64, tagIDs []i
 	if err := tx.Commit().Error; err != nil {
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
-	return &v1.BatchArticleResponse{Affected: int64(len(ids))}, http.StatusOK, nil
+	return &v1.BatchArticleResponse{Affected: int64(len(activeIDs))}, http.StatusOK, nil
 }

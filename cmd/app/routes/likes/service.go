@@ -51,7 +51,10 @@ func (s *Service) LikeArticle(ctx context.Context, articleID, userID int64) (*v1
 
 	// 重新读取最新 like_count（触发器已更新）
 	var updated models.Article
-	_ = s.svc.DB.WithContext(ctx).Select("like_count").Where("id = ?", articleID).First(&updated).Error
+	if err := s.svc.DB.WithContext(ctx).Select("like_count").Where("id = ?", articleID).First(&updated).Error; err != nil {
+		klog.ErrorS(err, "LikeArticle: reload like_count", "articleID", articleID)
+		return nil, http.StatusInternalServerError, errors.New("system error")
+	}
 
 	// 异步发邮件通知文章作者（不阻塞请求）
 	if art.AuthorID != userID {
@@ -79,7 +82,10 @@ func (s *Service) UnlikeArticle(ctx context.Context, articleID, userID int64) (*
 	}
 
 	var updated models.Article
-	_ = s.svc.DB.WithContext(ctx).Select("like_count").Where("id = ?", articleID).First(&updated).Error
+	if err := s.svc.DB.WithContext(ctx).Select("like_count").Where("id = ?", articleID).First(&updated).Error; err != nil {
+		klog.ErrorS(err, "UnlikeArticle: reload like_count", "articleID", articleID)
+		return nil, http.StatusInternalServerError, errors.New("system error")
+	}
 
 	return &v1.UnlikeArticleResponse{ArticleID: articleID, LikeCount: updated.LikeCount}, http.StatusOK, nil
 }
