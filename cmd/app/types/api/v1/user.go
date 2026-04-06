@@ -76,3 +76,14 @@ type NotificationListResponse struct {
 	Items []NotificationItem `json:"items"`
 	Total int64              `json:"total"`
 }
+
+// MarkNotificationReadResponse confirms a notification was marked read.
+type MarkNotificationReadResponse struct {
+	ID     int64 `json:"id"`
+	IsRead bool  `json:"isRead"`
+}
+
+// DeleteNotificationResponse confirms deletion.
+type DeleteNotificationResponse struct {
+	ID int64 `json:"id"`
+}

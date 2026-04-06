@@ -20,6 +20,7 @@ type articleHandlers struct {
 // RegisterArticleAdminRoutes 在已挂载管理员鉴权的 RouterGroup 上注册文章管理路由（路径前缀为 /api/v1/admin）。
 func RegisterArticleAdminRoutes(g *gin.RouterGroup, svcCtx *svc.ServiceContext) {
 	h := &articleHandlers{svc: newArticleAdmin(svcCtx)}
+	g.GET("/articles", h.handleListArticles)
 	g.POST("/articles", h.handleCreateArticle)
 	g.PUT("/articles/:id", h.handleUpdateArticle)
 	g.DELETE("/articles/:id", h.handleDeleteArticle)
@@ -27,6 +28,42 @@ func RegisterArticleAdminRoutes(g *gin.RouterGroup, svcCtx *svc.ServiceContext) 
 	g.PUT("/articles/:id/slug", h.handleUpdateArticleSlug)
 	g.PUT("/articles/:id/password", h.handleUpdateArticlePassword)
 	g.PUT("/articles/:id/pin", h.handleUpdateArticlePin)
+}
+
+// handleListArticles godoc
+//
+//	@Summary		管理员文章列表
+//	@Description	需管理员；分页列出未软删文章，支持 keyword/category slug/tag/author 筛选；status 为逗号分隔多状态，省略则不限状态（含草稿）
+//	@Tags			admin
+//	@Produce		json
+//	@Param			page		query	int		false	"页码"
+//	@Param			pageSize	query	int		false	"每页条数"
+//	@Param			keyword		query	string	false	"关键词"
+//	@Param			category	query	string	false	"分类 slug"
+//	@Param			tag			query	string	false	"标签 slug，逗号分隔多标签交集"
+//	@Param			author		query	string	false	"作者用户名"
+//	@Param			status		query	string	false	"状态，逗号分隔 draft,published,archived,private,scheduled"
+//	@Param			sort		query	string	false	"排序 newest|oldest|popular"
+//	@Success		200	{object}	common.BaseResponse{data=v1.AdminArticleListResponse}
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		403	{object}	common.BaseResponse
+//	@Failure		500	{object}	common.BaseResponse
+//	@Router			/api/v1/admin/articles [get]
+func (h *articleHandlers) handleListArticles(c *gin.Context) {
+	var req v1.AdminArticleListRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		common.Fail(c, http.StatusBadRequest, err)
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 15*time.Second)
+	defer cancel()
+	resp, code, err := h.svc.AdminListArticles(ctx, &req)
+	if err != nil {
+		common.Fail(c, code, err)
+		return
+	}
+	common.Success(c, resp)
 }
 
 // handleCreateArticle godoc

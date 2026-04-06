@@ -16,6 +16,7 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/admin"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/auth"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/categories"
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/comments"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/content"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/tags"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/user"
@@ -93,6 +94,7 @@ func serve(ctx context.Context, svcCtx *svc.ServiceContext) error {
 	categories.Init(svcCtx)
 	tags.Init(svcCtx)
 	content.Init(svcCtx)
+	comments.Init(svcCtx)
 	user.Init(svcCtx)
 	admin.Init(svcCtx)
 

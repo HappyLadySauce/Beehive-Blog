@@ -68,6 +68,32 @@ type ArticleListResponse struct {
 	PageSize int               `json:"pageSize"`
 }
 
+// AdminArticleListRequest 管理员文章列表查询（含草稿等）。
+type AdminArticleListRequest struct {
+	Page     int    `form:"page" binding:"omitempty,min=1"`
+	PageSize int    `form:"pageSize" binding:"omitempty,min=1,max=100"`
+	Keyword  string `form:"keyword" binding:"omitempty,max=200"`
+	Category string `form:"category" binding:"omitempty,max=50"`
+	Tag      string `form:"tag" binding:"omitempty,max=500"`
+	Author   string `form:"author" binding:"omitempty,max=50"`
+	Status   string `form:"status" binding:"omitempty,max=200"` // comma-separated: draft,published,...
+	Sort     string `form:"sort" binding:"omitempty,oneof=newest oldest popular"`
+}
+
+// AdminArticleListItem 管理员列表项（含状态）。
+type AdminArticleListItem struct {
+	ArticleListItem
+	Status string `json:"status"`
+}
+
+// AdminArticleListResponse 管理员分页列表。
+type AdminArticleListResponse struct {
+	List     []AdminArticleListItem `json:"list"`
+	Total    int64                  `json:"total"`
+	Page     int                    `json:"page"`
+	PageSize int                    `json:"pageSize"`
+}
+
 // ArticleDetailResponse 详情。
 type ArticleDetailResponse struct {
 	ArticleListItem

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middlewares"
@@ -25,6 +26,14 @@ func NewUserService(svc *svc.ServiceContext) *UserService {
 	return &UserService{
 		svc: svc,
 	}
+}
+
+func parseIDParam(s string) (int64, error) {
+	id, err := strconv.ParseInt(s, 10, 64)
+	if err != nil || id <= 0 {
+		return 0, err
+	}
+	return id, nil
 }
 
 // HandleLogout godoc
@@ -196,6 +205,72 @@ func (s *UserService) HandleListNotifications(c *gin.Context) {
 	common.Success(c, resp)
 }
 
+// HandleMarkNotificationRead godoc
+//
+//	@Summary		标记通知已读
+//	@Description	将单条通知标记为已读
+//	@Tags			user
+//	@Produce		json
+//	@Param			id	path		int	true	"通知 ID"
+//	@Success		200	{object}	common.BaseResponse{data=v1.MarkNotificationReadResponse}
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		404	{object}	common.BaseResponse
+//	@Failure		500	{object}	common.BaseResponse
+//	@Router			/api/v1/user/notifications/{id}/read [put]
+func (s *UserService) HandleMarkNotificationRead(c *gin.Context) {
+	userID, ok := middlewares.GetCurrentUserID(c)
+	if !ok || userID <= 0 {
+		common.FailMessage(c, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	id, err := parseIDParam(c.Param("id"))
+	if err != nil {
+		common.FailMessage(c, http.StatusBadRequest, "invalid notification id")
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+	resp, statusCode, err := s.MarkNotificationRead(ctx, userID, id)
+	if err != nil {
+		common.Fail(c, statusCode, err)
+		return
+	}
+	common.Success(c, resp)
+}
+
+// HandleDeleteNotification godoc
+//
+//	@Summary		删除通知
+//	@Description	删除当前用户的一条通知
+//	@Tags			user
+//	@Produce		json
+//	@Param			id	path		int	true	"通知 ID"
+//	@Success		200	{object}	common.BaseResponse{data=v1.DeleteNotificationResponse}
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		404	{object}	common.BaseResponse
+//	@Failure		500	{object}	common.BaseResponse
+//	@Router			/api/v1/user/notifications/{id} [delete]
+func (s *UserService) HandleDeleteNotification(c *gin.Context) {
+	userID, ok := middlewares.GetCurrentUserID(c)
+	if !ok || userID <= 0 {
+		common.FailMessage(c, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	id, err := parseIDParam(c.Param("id"))
+	if err != nil {
+		common.FailMessage(c, http.StatusBadRequest, "invalid notification id")
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+	resp, statusCode, err := s.DeleteNotification(ctx, userID, id)
+	if err != nil {
+		common.Fail(c, statusCode, err)
+		return
+	}
+	common.Success(c, resp)
+}
+
 // Init registers authenticated routes under /api/v1/user.
 func Init(svcCtx *svc.ServiceContext) {
 	userSvc := NewUserService(svcCtx)
@@ -205,5 +280,7 @@ func Init(svcCtx *svc.ServiceContext) {
 	ug.GET("/me", userSvc.HandleMe)
 	ug.PUT("/profile", userSvc.HandleUpdateProfile)
 	ug.PUT("/password", userSvc.HandleUpdatePassword)
+	ug.PUT("/notifications/:id/read", userSvc.HandleMarkNotificationRead)
+	ug.DELETE("/notifications/:id", userSvc.HandleDeleteNotification)
 	ug.GET("/notifications", userSvc.HandleListNotifications)
 }
