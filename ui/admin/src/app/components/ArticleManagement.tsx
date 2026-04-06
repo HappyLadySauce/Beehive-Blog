@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, Plus, MoreVertical, Edit, Trash2, Eye, FileText, ChevronDown } from 'lucide-react';
-import { getArticles, batchOperateArticles, ArticleItem, ArticleListQuery } from '../../api/article';
+import { Search, Plus, Edit, Trash2, Eye, FileText } from 'lucide-react';
+import { getArticles, deleteArticle, batchOperateArticles, AdminArticleListItem, ArticleListQuery } from '../../api/article';
+import { getCategories, getTags, CategoryBrief, TagListItem } from '../../api/taxonomy';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
@@ -12,10 +13,12 @@ export default function ArticleManagement() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedTag, setSelectedTag] = useState('all');
   const [selectedArticles, setSelectedArticles] = useState<number[]>([]);
-  const [articles, setArticles] = useState<ArticleItem[]>([]);
+  const [articles, setArticles] = useState<AdminArticleListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<CategoryBrief[]>([]);
+  const [tags, setTags] = useState<TagListItem[]>([]);
 
   const fetchArticles = async () => {
     setLoading(true);
@@ -31,7 +34,7 @@ export default function ArticleManagement() {
       };
       const res = await getArticles(query);
       if (res.code === 200) {
-        setArticles(res.data.items || []);
+        setArticles(res.data.list || []);
         setTotal(res.data.total || 0);
       } else {
         toast.error(res.message || '获取文章列表失败');
@@ -43,6 +46,23 @@ export default function ArticleManagement() {
     }
   };
 
+  const fetchFilters = async () => {
+    try {
+      const [catRes, tagRes] = await Promise.all([
+        getCategories({ pageSize: 200 }),
+        getTags({ pageSize: 200 }),
+      ]);
+      if (catRes.code === 200) setCategories(catRes.data.list || []);
+      if (tagRes.code === 200) setTags(tagRes.data.list || []);
+    } catch {
+      // 筛选器加载失败不阻断主流程
+    }
+  };
+
+  useEffect(() => {
+    fetchFilters();
+  }, []);
+
   useEffect(() => {
     fetchArticles();
   }, [page, searchQuery, selectedStatus, selectedSort, selectedCategory, selectedTag]);
@@ -53,7 +73,7 @@ export default function ArticleManagement() {
       return;
     }
     if (!window.confirm(`确定要删除选中的 ${selectedArticles.length} 篇文章吗？`)) return;
-    
+
     try {
       const res = await batchOperateArticles({
         action: 'delete',
@@ -71,10 +91,23 @@ export default function ArticleManagement() {
     }
   };
 
-  const categories = ['前端开发', '后端开发', '编程语言', '网络安全', 'DevOps'];
-  const tags = ['React', 'JavaScript', 'TypeScript', 'CSS', 'Tailwind', 'Node.js', 'Performance', 'Security', 'Web', 'Docker', 'Container'];
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('确定要删除该文章吗？')) return;
+    try {
+      const res = await deleteArticle(id);
+      if (res.code === 200) {
+        toast.success('删除成功');
+        setSelectedArticles(prev => prev.filter(a => a !== id));
+        fetchArticles();
+      } else {
+        toast.error(res.message || '删除失败');
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || '删除请求失败');
+    }
+  };
 
-  const statusColors = {
+  const statusColors: Record<string, string> = {
     published: 'bg-green-100 text-green-800',
     draft: 'bg-gray-100 text-gray-800',
     scheduled: 'bg-blue-100 text-blue-800',
@@ -82,7 +115,7 @@ export default function ArticleManagement() {
     private: 'bg-purple-100 text-purple-800',
   };
 
-  const statusLabels = {
+  const statusLabels: Record<string, string> = {
     published: '已发布',
     draft: '草稿',
     scheduled: '定时发布',
@@ -91,7 +124,7 @@ export default function ArticleManagement() {
   };
 
   const toggleSelectAll = () => {
-    if (selectedArticles.length === articles.length) {
+    if (selectedArticles.length === articles.length && articles.length > 0) {
       setSelectedArticles([]);
     } else {
       setSelectedArticles(articles.map(a => a.id));
@@ -106,21 +139,20 @@ export default function ArticleManagement() {
 
   return (
     <div className="space-y-4">
-      {/* 页面标题 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <FileText className="w-5 h-5 text-gray-600" />
           <h2 className="text-lg font-medium text-gray-900">文章</h2>
         </div>
         <div className="flex items-center gap-2">
-          <button 
+          <button
             onClick={handleBatchDelete}
             disabled={selectedArticles.length === 0}
             className="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors disabled:opacity-50"
           >
             批量删除
           </button>
-          <button 
+          <button
             onClick={() => navigate('/articles/create')}
             className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-1.5"
           >
@@ -130,7 +162,6 @@ export default function ArticleManagement() {
         </div>
       </div>
 
-      {/* 搜索和筛选栏 */}
       <div className="bg-white border border-gray-200 rounded">
         <div className="p-4 border-b border-gray-200">
           <div className="relative">
@@ -139,7 +170,7 @@ export default function ArticleManagement() {
               type="text"
               placeholder="输入文章标题搜索"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
               className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -149,7 +180,7 @@ export default function ArticleManagement() {
           <span className="text-sm text-gray-600">状态:</span>
           <select
             value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
+            onChange={(e) => { setSelectedStatus(e.target.value); setPage(1); }}
             className="px-3 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="all">全部</option>
@@ -163,31 +194,31 @@ export default function ArticleManagement() {
           <span className="text-sm text-gray-600 ml-3">分类:</span>
           <select
             value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
+            onChange={(e) => { setSelectedCategory(e.target.value); setPage(1); }}
             className="px-3 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="all">全部</option>
             {categories.map((cat) => (
-              <option key={cat} value={cat}>{cat}</option>
+              <option key={cat.id} value={cat.slug}>{cat.name}</option>
             ))}
           </select>
 
           <span className="text-sm text-gray-600 ml-3">标签:</span>
           <select
             value={selectedTag}
-            onChange={(e) => setSelectedTag(e.target.value)}
+            onChange={(e) => { setSelectedTag(e.target.value); setPage(1); }}
             className="px-3 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="all">全部</option>
             {tags.map((tag) => (
-              <option key={tag} value={tag}>{tag}</option>
+              <option key={tag.id} value={tag.slug}>{tag.name}</option>
             ))}
           </select>
 
           <span className="text-sm text-gray-600 ml-3">排序:</span>
           <select
             value={selectedSort}
-            onChange={(e) => setSelectedSort(e.target.value)}
+            onChange={(e) => { setSelectedSort(e.target.value); setPage(1); }}
             className="px-3 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="newest">最新发布</option>
@@ -196,7 +227,6 @@ export default function ArticleManagement() {
           </select>
         </div>
 
-        {/* 文章表格 */}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -204,7 +234,7 @@ export default function ArticleManagement() {
                 <th className="px-4 py-3 text-left">
                   <input
                     type="checkbox"
-                    checked={selectedArticles.length === articles.length}
+                    checked={articles.length > 0 && selectedArticles.length === articles.length}
                     onChange={toggleSelectAll}
                     className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
@@ -221,15 +251,11 @@ export default function ArticleManagement() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-500">
-                    加载中...
-                  </td>
+                  <td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-500">加载中...</td>
                 </tr>
               ) : articles.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-500">
-                    暂无文章
-                  </td>
+                  <td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-500">暂无文章</td>
                 </tr>
               ) : (
                 articles.map((article) => (
@@ -258,31 +284,37 @@ export default function ArticleManagement() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded text-xs ${statusColors[article.status as keyof typeof statusColors] || 'bg-gray-100 text-gray-800'}`}>
-                        {statusLabels[article.status as keyof typeof statusLabels] || article.status}
+                      <span className={`px-2 py-1 rounded text-xs ${statusColors[article.status] || 'bg-gray-100 text-gray-800'}`}>
+                        {statusLabels[article.status] || article.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{article.author?.nickname || article.author?.username}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {article.author?.nickname || article.author?.username}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col text-xs text-gray-600">
                         <span>{article.viewCount} 浏览</span>
                         <span>{article.commentCount} 评论</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">{new Date(article.publishedAt || article.createdAt).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">
+                      {article.publishedAt ? new Date(article.publishedAt).toLocaleString() : '-'}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
-                        <button className="p-1.5 text-gray-600 hover:bg-gray-100 rounded transition-colors" title="查看">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button 
+                        <button
                           onClick={() => navigate(`/articles/edit/${article.id}`)}
-                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors" title="编辑"
+                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                          title="编辑"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
-                        <button className="p-1.5 text-gray-600 hover:bg-gray-100 rounded transition-colors" title="更多">
-                          <MoreVertical className="w-4 h-4" />
+                        <button
+                          onClick={() => handleDelete(article.id)}
+                          className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                          title="删除"
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
@@ -293,13 +325,10 @@ export default function ArticleManagement() {
           </table>
         </div>
 
-        {/* 分页 */}
         <div className="p-4 flex items-center justify-between border-t border-gray-200">
-          <div className="text-sm text-gray-600">
-            共 {total} 项结果
-          </div>
+          <div className="text-sm text-gray-600">共 {total} 项结果</div>
           <div className="flex items-center gap-1">
-            <button 
+            <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
               className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50"
@@ -307,7 +336,7 @@ export default function ArticleManagement() {
               上一页
             </button>
             <button className="px-3 py-1 text-sm bg-blue-600 text-white rounded">{page}</button>
-            <button 
+            <button
               onClick={() => setPage(p => p + 1)}
               disabled={page * 10 >= total}
               className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50"

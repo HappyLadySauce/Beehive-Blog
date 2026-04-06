@@ -1,23 +1,43 @@
 import request from '../utils/request';
 
-export interface Comment {
-  id: number;
-  articleId: number;
-  articleTitle: string;
-  author: {
-    id: number;
-    nickname: string;
-    username: string;
-  };
-  content: string;
-  status: string;
-  createdAt: string;
+export interface CommentAuthorItem {
+  id?: number;
+  username?: string;
+  nickname?: string;
+  avatar?: string;
 }
 
-export const getComments = (params?: any) => {
-  return request.get<any, { code: number; message: string; data: { items: Comment[], total: number } }>('/api/v1/admin/comments', { params });
-};
+export interface AdminCommentItem {
+  id: number;
+  content: string;
+  status: string;
+  articleId: number;
+  userId?: number;
+  parentId?: number;
+  createdAt: string;
+  updatedAt: string;
+  author: CommentAuthorItem;
+}
 
-export const updateCommentStatus = (id: number, status: string) => {
-  return request.put<any, any>(`/api/v1/admin/comments/${id}/status`, { status });
-};
+export interface AdminCommentListQuery {
+  page?: number;
+  pageSize?: number;
+  articleId?: number;
+  status?: string;
+  keyword?: string;
+}
+
+export interface AdminCommentListResponse {
+  items: AdminCommentItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+type ApiResponse<T> = { code: number; message: string; data: T };
+
+export const getComments = (params?: AdminCommentListQuery) =>
+  request.get<any, ApiResponse<AdminCommentListResponse>>('/api/v1/admin/comments', { params });
+
+export const updateCommentStatus = (id: number, status: string) =>
+  request.put<any, ApiResponse<{ id: number; status: string }>>(`/api/v1/admin/comments/${id}/status`, { status });

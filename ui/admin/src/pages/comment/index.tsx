@@ -1,18 +1,43 @@
 import { useState, useEffect } from 'react';
-import { getComments, updateCommentStatus, Comment } from '../../api/comment';
+import { getComments, updateCommentStatus, AdminCommentItem, AdminCommentListQuery } from '../../api/comment';
 import { toast } from 'sonner';
-import { MessageSquare, Check, X, ShieldAlert, Trash2 } from 'lucide-react';
+import { MessageSquare, Check, X, ShieldAlert, Search } from 'lucide-react';
+
+const statusColors: Record<string, string> = {
+  approved: 'bg-green-100 text-green-800',
+  pending: 'bg-yellow-100 text-yellow-800',
+  rejected: 'bg-red-100 text-red-800',
+  spam: 'bg-orange-100 text-orange-800',
+};
+
+const statusLabels: Record<string, string> = {
+  approved: '已通过',
+  pending: '待审核',
+  rejected: '已拒绝',
+  spam: '垃圾',
+};
 
 export default function Comments() {
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [comments, setComments] = useState<AdminCommentItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [filterStatus, setFilterStatus] = useState('');
+  const [keyword, setKeyword] = useState('');
 
   const fetchComments = async () => {
     setLoading(true);
     try {
-      const res = await getComments();
+      const query: AdminCommentListQuery = {
+        page,
+        pageSize: 20,
+        status: filterStatus || undefined,
+        keyword: keyword || undefined,
+      };
+      const res = await getComments(query);
       if (res.code === 200) {
         setComments(res.data.items || []);
+        setTotal(res.data.total || 0);
       } else {
         toast.error(res.message || '获取评论失败');
       }
@@ -25,7 +50,7 @@ export default function Comments() {
 
   useEffect(() => {
     fetchComments();
-  }, []);
+  }, [page, filterStatus, keyword]);
 
   const handleStatusChange = async (id: number, status: string) => {
     try {
@@ -50,58 +75,128 @@ export default function Comments() {
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-4 py-3 text-sm font-medium text-gray-600">ID</th>
-              <th className="px-4 py-3 text-sm font-medium text-gray-600">文章</th>
-              <th className="px-4 py-3 text-sm font-medium text-gray-600">作者</th>
-              <th className="px-4 py-3 text-sm font-medium text-gray-600">内容</th>
-              <th className="px-4 py-3 text-sm font-medium text-gray-600">状态</th>
-              <th className="px-4 py-3 text-sm font-medium text-gray-600">时间</th>
-              <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">操作</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {loading ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-500">加载中...</td></tr>
-            ) : comments.length === 0 ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-500">暂无评论</td></tr>
-            ) : (
-              comments.map((comment) => (
-                <tr key={comment.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-sm text-gray-600">{comment.id}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900 truncate max-w-[150px]">{comment.articleTitle}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{comment.author?.nickname || comment.author?.username}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">{comment.content}</td>
-                  <td className="px-4 py-3 text-sm">
-                    <span className={`px-2 py-1 rounded text-xs ${
-                      comment.status === 'approved' ? 'bg-green-100 text-green-800' :
-                      comment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                      comment.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {comment.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{new Date(comment.createdAt).toLocaleString()}</td>
-                  <td className="px-4 py-3 text-right">
-                    {comment.status !== 'approved' && (
-                      <button onClick={() => handleStatusChange(comment.id, 'approved')} className="p-1.5 text-green-600 hover:bg-green-50 rounded" title="通过"><Check className="w-4 h-4" /></button>
-                    )}
-                    {comment.status !== 'rejected' && (
-                      <button onClick={() => handleStatusChange(comment.id, 'rejected')} className="p-1.5 text-red-600 hover:bg-red-50 rounded" title="拒绝"><X className="w-4 h-4" /></button>
-                    )}
-                    {comment.status !== 'spam' && (
-                      <button onClick={() => handleStatusChange(comment.id, 'spam')} className="p-1.5 text-orange-600 hover:bg-orange-50 rounded" title="标记为垃圾"><ShieldAlert className="w-4 h-4" /></button>
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+      <div className="bg-white border border-gray-200 rounded">
+        <div className="p-4 border-b border-gray-200 flex items-center gap-3 flex-wrap">
+          <div className="relative flex-1 min-w-48">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="搜索评论内容..."
+              value={keyword}
+              onChange={(e) => { setKeyword(e.target.value); setPage(1); }}
+              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+          <select
+            value={filterStatus}
+            onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
+            className="px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="">全部状态</option>
+            <option value="pending">待审核</option>
+            <option value="approved">已通过</option>
+            <option value="rejected">已拒绝</option>
+            <option value="spam">垃圾</option>
+          </select>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-200">
+                <th className="px-4 py-3 text-sm font-medium text-gray-600">ID</th>
+                <th className="px-4 py-3 text-sm font-medium text-gray-600">文章</th>
+                <th className="px-4 py-3 text-sm font-medium text-gray-600">作者</th>
+                <th className="px-4 py-3 text-sm font-medium text-gray-600">内容</th>
+                <th className="px-4 py-3 text-sm font-medium text-gray-600">状态</th>
+                <th className="px-4 py-3 text-sm font-medium text-gray-600">时间</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">操作</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {loading ? (
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-500">加载中...</td></tr>
+              ) : comments.length === 0 ? (
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-500">暂无评论</td></tr>
+              ) : (
+                comments.map((comment) => (
+                  <tr key={comment.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 text-sm text-gray-600">{comment.id}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      文章 #{comment.articleId}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {comment.author?.nickname || comment.author?.username || '匿名'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
+                      {comment.content}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <span className={`px-2 py-1 rounded text-xs ${statusColors[comment.status] || 'bg-gray-100 text-gray-800'}`}>
+                        {statusLabels[comment.status] || comment.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">
+                      {new Date(comment.createdAt).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        {comment.status !== 'approved' && (
+                          <button
+                            onClick={() => handleStatusChange(comment.id, 'approved')}
+                            className="p-1.5 text-green-600 hover:bg-green-50 rounded"
+                            title="通过"
+                          >
+                            <Check className="w-4 h-4" />
+                          </button>
+                        )}
+                        {comment.status !== 'rejected' && (
+                          <button
+                            onClick={() => handleStatusChange(comment.id, 'rejected')}
+                            className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                            title="拒绝"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
+                        {comment.status !== 'spam' && (
+                          <button
+                            onClick={() => handleStatusChange(comment.id, 'spam')}
+                            className="p-1.5 text-orange-600 hover:bg-orange-50 rounded"
+                            title="标记为垃圾"
+                          >
+                            <ShieldAlert className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="p-4 flex items-center justify-between border-t border-gray-200">
+          <div className="text-sm text-gray-600">共 {total} 条评论</div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              上一页
+            </button>
+            <button className="px-3 py-1 text-sm bg-blue-600 text-white rounded">{page}</button>
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={page * 20 >= total}
+              className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              下一页
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

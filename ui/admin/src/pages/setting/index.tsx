@@ -3,6 +3,13 @@ import { getSettings, updateSettings, testSmtp, syncHexoPosts, getHexoSyncStatus
 import { toast } from 'sonner';
 import { Settings as SettingsIcon, RefreshCw, Mail, Save } from 'lucide-react';
 
+const tabs = [
+  { id: 'general', label: '基础设置' },
+  { id: 'seo', label: 'SEO 设置' },
+  { id: 'smtp', label: '邮件服务 (SMTP)' },
+  { id: 'hexo', label: 'Hexo 同步' },
+];
+
 export default function Settings() {
   const [activeTab, setActiveTab] = useState('general');
   const [settings, setSettings] = useState<Record<string, string>>({});
@@ -33,14 +40,15 @@ export default function Settings() {
       if (res.code === 200) {
         setSyncStatus(res.data);
       }
-    } catch (error) {
-      console.error('Failed to fetch sync status', error);
+    } catch {
+      // 静默失败
     }
   };
 
   useEffect(() => {
-    fetchSettings(activeTab);
-    if (activeTab === 'hexo') {
+    if (activeTab !== 'hexo') {
+      fetchSettings(activeTab);
+    } else {
       fetchSyncStatus();
     }
   }, [activeTab]);
@@ -104,22 +112,16 @@ export default function Settings() {
       </div>
 
       <div className="flex flex-col md:flex-row gap-6">
-        {/* Tabs */}
         <div className="w-full md:w-48 flex-shrink-0">
           <nav className="flex flex-col space-y-1">
-            {[
-              { id: 'general', label: '基础设置' },
-              { id: 'seo', label: 'SEO 设置' },
-              { id: 'smtp', label: '邮件服务 (SMTP)' },
-              { id: 'hexo', label: 'Hexo 同步' },
-            ].map((tab) => (
+            {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-3 py-2 text-sm font-medium rounded-md text-left transition-colors ${
                   activeTab === tab.id
                     ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-900 hover:bg-gray-50 hover:text-gray-900'
+                    : 'text-gray-900 hover:bg-gray-50'
                 }`}
               >
                 {tab.label}
@@ -128,7 +130,6 @@ export default function Settings() {
           </nav>
         </div>
 
-        {/* Content */}
         <div className="flex-1 bg-white border border-gray-200 rounded-lg p-6">
           {loading ? (
             <div className="py-12 text-center text-gray-500">加载中...</div>
@@ -146,11 +147,66 @@ export default function Settings() {
                     />
                   </div>
                   <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">站点 URL</label>
+                    <input
+                      type="url"
+                      value={settings['site_url'] || ''}
+                      onChange={(e) => handleChange('site_url', e.target.value)}
+                      placeholder="https://example.com"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    />
+                  </div>
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">站点描述</label>
                     <textarea
                       value={settings['site_description'] || ''}
                       onChange={(e) => handleChange('site_description', e.target.value)}
                       rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    />
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'seo' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">SEO 标题</label>
+                    <input
+                      type="text"
+                      value={settings['seo_title'] || ''}
+                      onChange={(e) => handleChange('seo_title', e.target.value)}
+                      placeholder="默认使用站点名称"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">SEO 描述</label>
+                    <textarea
+                      value={settings['seo_description'] || ''}
+                      onChange={(e) => handleChange('seo_description', e.target.value)}
+                      rows={3}
+                      placeholder="默认使用站点描述"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">关键词</label>
+                    <input
+                      type="text"
+                      value={settings['site_keywords'] || ''}
+                      onChange={(e) => handleChange('site_keywords', e.target.value)}
+                      placeholder="多个关键词用英文逗号分隔"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">OG 图片 URL</label>
+                    <input
+                      type="url"
+                      value={settings['site_og_image'] || ''}
+                      onChange={(e) => handleChange('site_og_image', e.target.value)}
+                      placeholder="https://example.com/og-image.png"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     />
                   </div>
@@ -196,7 +252,7 @@ export default function Settings() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     />
                   </div>
-                  
+
                   <div className="pt-4 border-t border-gray-200 mt-6">
                     <h4 className="text-sm font-medium text-gray-900 mb-3">发送测试邮件</h4>
                     <div className="flex gap-3">
@@ -225,14 +281,14 @@ export default function Settings() {
                     <h4 className="text-sm font-medium text-blue-800 mb-2">Hexo 同步状态</h4>
                     <div className="text-sm text-blue-700 space-y-1">
                       <p>上次同步时间: {syncStatus?.last_sync_time ? new Date(syncStatus.last_sync_time).toLocaleString() : '从未同步'}</p>
-                      <p>数据库发布文章数: {syncStatus?.total_posts || 0}</p>
-                      <p>本地 Markdown 文件数: {syncStatus?.local_files || 0}</p>
+                      <p>数据库发布文章数: {syncStatus?.total_posts ?? 0}</p>
+                      <p>本地 Markdown 文件数: {syncStatus?.local_files ?? 0}</p>
                       {syncStatus?.pending_sync && (
                         <p className="text-orange-600 font-medium mt-2">提示：有待同步的变更</p>
                       )}
                     </div>
                   </div>
-                  
+
                   <button
                     onClick={handleSyncHexo}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-medium"
