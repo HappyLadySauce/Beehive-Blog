@@ -165,3 +165,38 @@ type DeleteArticleResponse struct {
 type ArticleSecurityResponse struct {
 	Protected bool `json:"protected"`
 }
+
+// ArticleVersionItem 单个版本摘要。
+type ArticleVersionItem struct {
+	ID        int64  `json:"id"`
+	ArticleID int64  `json:"articleId"`
+	Title     string `json:"title"`
+	Version   int    `json:"version"`
+	CreatedBy int64  `json:"createdBy"`
+	CreatedAt string `json:"createdAt"`
+}
+
+// ArticleVersionListResponse 版本列表。
+type ArticleVersionListResponse struct {
+	Items []ArticleVersionItem `json:"items"`
+	Total int                  `json:"total"`
+}
+
+// BatchArticlePayload 批量操作的附加参数。
+type BatchArticlePayload struct {
+	Status     string  `json:"status"`
+	CategoryID *int64  `json:"categoryId"`
+	TagIDs     []int64 `json:"tagIds"`
+}
+
+// BatchArticleRequest 批量操作请求。
+type BatchArticleRequest struct {
+	IDs     []int64             `json:"ids" binding:"required,min=1"`
+	Action  string              `json:"action" binding:"required,oneof=delete set_status set_category set_tags"`
+	Payload BatchArticlePayload `json:"payload"`
+}
+
+// BatchArticleResponse 批量操作结果。
+type BatchArticleResponse struct {
+	Affected int64 `json:"affected"`
+}

@@ -396,6 +396,22 @@ func (a *ArticleAdmin) UpdateArticle(ctx context.Context, articleID int64, req *
 	if tx.Error != nil {
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			panic(r)
+		}
+	}()
+
+	// 内容有实质变更时，先将当前版本存入历史（operatorID 暂用 art.AuthorID 占位，handler 层可传入）
+	if _, titleChanged := updates["title"]; titleChanged || updates["content"] != nil {
+		if err := a.saveVersion(ctx, tx, &art, art.AuthorID); err != nil {
+			tx.Rollback()
+			klog.ErrorS(err, "UpdateArticle: saveVersion", "articleID", articleID)
+			return nil, http.StatusInternalServerError, errors.New("system error")
+		}
+	}
+
 	if len(updates) > 0 {
 		if err := tx.Model(&models.Article{}).Where("id = ?", articleID).Updates(updates).Error; err != nil {
 			tx.Rollback()

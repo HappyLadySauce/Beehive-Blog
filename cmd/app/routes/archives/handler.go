@@ -20,6 +20,8 @@ type articleHandlers struct {
 // RegisterArticleAdminRoutes 在已挂载管理员鉴权的 RouterGroup 上注册文章管理路由（路径前缀为 /api/v1/admin）。
 func RegisterArticleAdminRoutes(g *gin.RouterGroup, svcCtx *svc.ServiceContext) {
 	h := &articleHandlers{svc: newArticleAdmin(svcCtx)}
+	// 批量操作须在 /:id 参数路由之前注册，避免路径冲突
+	g.POST("/articles/batch", h.handleBatchArticles)
 	g.GET("/articles", h.handleListArticles)
 	g.POST("/articles", h.handleCreateArticle)
 	g.PUT("/articles/:id", h.handleUpdateArticle)
@@ -28,6 +30,9 @@ func RegisterArticleAdminRoutes(g *gin.RouterGroup, svcCtx *svc.ServiceContext) 
 	g.PUT("/articles/:id/slug", h.handleUpdateArticleSlug)
 	g.PUT("/articles/:id/password", h.handleUpdateArticlePassword)
 	g.PUT("/articles/:id/pin", h.handleUpdateArticlePin)
+	g.GET("/articles/:id/versions", h.handleListVersions)
+	g.POST("/articles/:id/versions/:versionId/restore", h.handleRestoreVersion)
+	g.GET("/articles/:id/export", h.handleExportArticle)
 }
 
 // handleListArticles godoc
@@ -308,6 +313,144 @@ func (h *articleHandlers) handleUpdateArticlePin(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
 	defer cancel()
 	resp, code, err := h.svc.UpdateArticlePin(ctx, id, &req, c.Request)
+	if err != nil {
+		common.Fail(c, code, err)
+		return
+	}
+	common.Success(c, resp)
+}
+
+// handleBatchArticles godoc
+//
+//	@Summary		文章批量操作
+//	@Description	需管理员；支持 delete/set_status/set_category/set_tags
+//	@Tags			admin
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		v1.BatchArticleRequest	true	"批量操作参数"
+//	@Success		200		{object}	common.BaseResponse{data=v1.BatchArticleResponse}
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		403		{object}	common.BaseResponse
+//	@Failure		500		{object}	common.BaseResponse
+//	@Router			/api/v1/admin/articles/batch [post]
+func (h *articleHandlers) handleBatchArticles(c *gin.Context) {
+	var req v1.BatchArticleRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.Fail(c, http.StatusBadRequest, err)
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	defer cancel()
+	resp, code, err := h.svc.BatchArticles(ctx, &req)
+	if err != nil {
+		common.Fail(c, code, err)
+		return
+	}
+	common.Success(c, resp)
+}
+
+// handleExportArticle godoc
+//
+//	@Summary		导出文章
+//	@Description	需管理员；format=markdown 返回原始 Markdown，format=html 返回 HTML 包装，format=pdf 返回 501
+//	@Tags			admin
+//	@Produce		application/octet-stream
+//	@Param			id		path	int		true	"文章 ID"
+//	@Param			format	query	string	false	"导出格式 markdown|html|pdf，默认 markdown"
+//	@Success		200		{file}	binary
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		403		{object}	common.BaseResponse
+//	@Failure		404		{object}	common.BaseResponse
+//	@Failure		501		{object}	common.BaseResponse
+//	@Router			/api/v1/admin/articles/{id}/export [get]
+func (h *articleHandlers) handleExportArticle(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || id <= 0 {
+		common.FailMessage(c, http.StatusBadRequest, "invalid article id")
+		return
+	}
+	format := c.DefaultQuery("format", "markdown")
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 15*time.Second)
+	defer cancel()
+	data, contentType, code, err := h.svc.ExportArticle(ctx, id, format)
+	if err != nil {
+		common.Fail(c, code, err)
+		return
+	}
+	ext := ".md"
+	if format == "html" {
+		ext = ".html"
+	}
+	c.Header("Content-Disposition", "attachment; filename=\"article-"+strconv.FormatInt(id, 10)+ext+"\"")
+	c.Data(http.StatusOK, contentType, data)
+}
+
+// handleListVersions godoc
+//
+//	@Summary		文章版本历史列表
+//	@Description	需管理员；列出指定文章的历史版本（最多 50 条，按版本号倒序）
+//	@Tags			admin
+//	@Produce		json
+//	@Param			id	path		int	true	"文章 ID"
+//	@Success		200	{object}	common.BaseResponse{data=v1.ArticleVersionListResponse}
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		403	{object}	common.BaseResponse
+//	@Failure		404	{object}	common.BaseResponse
+//	@Failure		500	{object}	common.BaseResponse
+//	@Router			/api/v1/admin/articles/{id}/versions [get]
+func (h *articleHandlers) handleListVersions(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || id <= 0 {
+		common.FailMessage(c, http.StatusBadRequest, "invalid article id")
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+	resp, code, err := h.svc.ListVersions(ctx, id)
+	if err != nil {
+		common.Fail(c, code, err)
+		return
+	}
+	common.Success(c, resp)
+}
+
+// handleRestoreVersion godoc
+//
+//	@Summary		恢复文章版本
+//	@Description	需管理员；将文章内容恢复到指定历史版本，当前内容自动保存为新版本
+//	@Tags			admin
+//	@Produce		json
+//	@Param			id			path	int	true	"文章 ID"
+//	@Param			versionId	path	int	true	"版本 ID"
+//	@Success		200	{object}	common.BaseResponse{data=v1.ArticleDetailResponse}
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		403	{object}	common.BaseResponse
+//	@Failure		404	{object}	common.BaseResponse
+//	@Failure		500	{object}	common.BaseResponse
+//	@Router			/api/v1/admin/articles/{id}/versions/{versionId}/restore [post]
+func (h *articleHandlers) handleRestoreVersion(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || id <= 0 {
+		common.FailMessage(c, http.StatusBadRequest, "invalid article id")
+		return
+	}
+	versionID, err := strconv.ParseInt(c.Param("versionId"), 10, 64)
+	if err != nil || versionID <= 0 {
+		common.FailMessage(c, http.StatusBadRequest, "invalid version id")
+		return
+	}
+	operatorID, ok := middlewares.GetCurrentUserID(c)
+	if !ok {
+		common.FailMessage(c, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 15*time.Second)
+	defer cancel()
+	resp, code, err := h.svc.RestoreVersion(ctx, id, versionID, operatorID)
 	if err != nil {
 		common.Fail(c, code, err)
 		return

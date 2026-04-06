@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/mailer"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -22,6 +23,8 @@ type ServiceContext struct {
 	Config options.Options
 	DB     *gorm.DB
 	Redis  *redis.Client
+	// Mailer 为 nil 时表示 SMTP 未配置，调用方应跳过邮件发送。
+	Mailer *mailer.SMTPMailer
 }
 
 // NewServiceContext creates a new ServiceContext
@@ -111,11 +114,59 @@ func NewServiceContext(c options.Options) (*ServiceContext, error) {
 		return nil, fmt.Errorf("failed to connect to Redis: %w", err)
 	}
 
-	return &ServiceContext{
+	svcCtx := &ServiceContext{
 		Config: c,
 		DB:     db,
 		Redis:  client,
-	}, nil
+	}
+
+	// 尝试从 settings 表加载 SMTP 配置并初始化 Mailer；失败时仅记录警告，不阻断启动。
+	if m, err := loadMailerFromDB(db); err != nil {
+		klog.Warningf("SMTP mailer init skipped: %v", err)
+	} else {
+		svcCtx.Mailer = m
+	}
+
+	return svcCtx, nil
+}
+
+// RebuildMailer 从 settings 表重新加载 SMTP 配置并替换 Mailer（设置更新后调用）。
+func (s *ServiceContext) RebuildMailer() {
+	m, err := loadMailerFromDB(s.DB)
+	if err != nil {
+		klog.Warningf("RebuildMailer: %v", err)
+		s.Mailer = nil
+		return
+	}
+	s.Mailer = m
+	klog.InfoS("SMTP mailer rebuilt successfully")
+}
+
+// loadMailerFromDB 从 settings 表 group=smtp 读取配置并构建 SMTPMailer。
+func loadMailerFromDB(db *gorm.DB) (*mailer.SMTPMailer, error) {
+	if db == nil {
+		return nil, errors.New("nil db")
+	}
+	var rows []models.Setting
+	if err := db.Where(`"group" = ?`, models.SettingGroupSMTP).Find(&rows).Error; err != nil {
+		return nil, fmt.Errorf("query smtp settings: %w", err)
+	}
+	kv := make(map[string]string, len(rows))
+	for _, r := range rows {
+		kv[r.Key] = r.Value
+	}
+	cfg := mailer.Config{
+		Host:       kv["smtp.host"],
+		Port:       kv["smtp.port"],
+		Username:   kv["smtp.username"],
+		Password:   kv["smtp.password"],
+		FromName:   kv["smtp.fromName"],
+		Encryption: kv["smtp.encryption"],
+	}
+	if !cfg.IsValid() {
+		return nil, errors.New("smtp settings not fully configured")
+	}
+	return mailer.New(cfg)
 }
 
 func autoMigrateModels(db *gorm.DB) error {

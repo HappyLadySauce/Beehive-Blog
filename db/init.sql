@@ -17,6 +17,7 @@
 \ir 007_seed.sql
 \ir 008_triggers.sql
 \ir 010_comment_counts_approved_only.sql
+\ir 011_article_versions_index.sql
 
 \echo '========================================'
 \echo 'Beehive-Blog 数据库初始化完成'

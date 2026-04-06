@@ -195,6 +195,76 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/admin/articles/batch": {
+            "post": {
+                "description": "需管理员；支持 delete/set_status/set_category/set_tags",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "文章批量操作",
+                "parameters": [
+                    {
+                        "description": "批量操作参数",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.BatchArticleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.BatchArticleResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/admin/articles/{id}": {
             "put": {
                 "description": "需管理员；部分字段更新。categoryId：仅当请求体包含该字段时更新；传 null/省略不改变；传 ≤0 表示置空分类；传正整数须为已存在分类。tagIds：仅当请求体包含非空 tagIds 数组时整表替换关联；须全部为已存在标签主键（会去重并忽略 ≤0）。",
@@ -346,6 +416,71 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/articles/{id}/export": {
+            "get": {
+                "description": "需管理员；format=markdown 返回原始 Markdown，format=html 返回 HTML 包装，format=pdf 返回 501",
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "导出文章",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文章 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "导出格式 markdown|html|pdf，默认 markdown",
+                        "name": "format",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "501": {
+                        "description": "Not Implemented",
                         "schema": {
                             "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
                         }
@@ -654,6 +789,155 @@ const docTemplate = `{
                     },
                     "403": {
                         "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/articles/{id}/versions": {
+            "get": {
+                "description": "需管理员；列出指定文章的历史版本（最多 50 条，按版本号倒序）",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "文章版本历史列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文章 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleVersionListResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/articles/{id}/versions/{versionId}/restore": {
+            "post": {
+                "description": "需管理员；将文章内容恢复到指定历史版本，当前内容自动保存为新版本",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "恢复文章版本",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文章 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "版本 ID",
+                        "name": "versionId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleDetailResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
                         "schema": {
                             "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
                         }
@@ -1380,6 +1664,280 @@ const docTemplate = `{
                     },
                     "403": {
                         "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/settings/smtp/test": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "需管理员；使用当前数据库中的 SMTP 配置向指定邮箱发送测试邮件，不写库",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "测试 SMTP 邮件发送",
+                "parameters": [
+                    {
+                        "description": "收件人邮箱",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.TestSMTPRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/settings/{group}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "需管理员；按 group 读取设置键值对（SMTP 密码脱敏）；group 可为 general/seo/smtp/comment/security",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "读取站点设置",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "设置分组",
+                        "name": "group",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.SettingsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "需管理员；批量 upsert 指定 group 的设置；SMTP 密码传 \"***\" 表示不修改",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "更新站点设置",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "设置分组",
+                        "name": "group",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "设置键值对",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateSettingsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.SettingsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/stats": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "需管理员；返回文章/用户/评论总数、今日访问量及热门文章 Top 10",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "站点统计数据",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.SiteStatsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
                         }
@@ -2649,6 +3207,126 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/user/articles/{id}/like": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "登录用户对文章点赞；同一文章只能点赞一次，重复点赞返回 409",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "文章点赞",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文章 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "登录用户取消对文章的点赞；未点赞时返回 404",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "取消文章点赞",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文章 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/user/logout": {
             "post": {
                 "description": "使当前访问令牌立即失效",
@@ -3405,6 +4083,23 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleStatItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "likeCount": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "viewCount": {
+                    "type": "integer"
+                }
+            }
+        },
         "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleTagItem": {
             "type": "object",
             "properties": {
@@ -3419,6 +4114,96 @@ const docTemplate = `{
                 },
                 "slug": {
                     "type": "string"
+                }
+            }
+        },
+        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleVersionItem": {
+            "type": "object",
+            "properties": {
+                "articleId": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleVersionListResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleVersionItem"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.BatchArticlePayload": {
+            "type": "object",
+            "properties": {
+                "categoryId": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "tagIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.BatchArticleRequest": {
+            "type": "object",
+            "required": [
+                "action",
+                "ids"
+            ],
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "enum": [
+                        "delete",
+                        "set_status",
+                        "set_category",
+                        "set_tags"
+                    ]
+                },
+                "ids": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "payload": {
+                    "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.BatchArticlePayload"
+                }
+            }
+        },
+        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.BatchArticleResponse": {
+            "type": "object",
+            "properties": {
+                "affected": {
+                    "type": "integer"
                 }
             }
         },
@@ -3813,6 +4598,43 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.SettingsResponse": {
+            "type": "object",
+            "properties": {
+                "group": {
+                    "type": "string"
+                },
+                "settings": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.SiteStatsResponse": {
+            "type": "object",
+            "properties": {
+                "articleCount": {
+                    "type": "integer"
+                },
+                "commentCount": {
+                    "type": "integer"
+                },
+                "todayViews": {
+                    "type": "integer"
+                },
+                "topArticles": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleStatItem"
+                    }
+                },
+                "userCount": {
+                    "type": "integer"
+                }
+            }
+        },
         "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.SyncPostsRequest": {
             "type": "object",
             "properties": {
@@ -3957,6 +4779,17 @@ const docTemplate = `{
                 },
                 "total": {
                     "type": "integer"
+                }
+            }
+        },
+        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.TestSMTPRequest": {
+            "type": "object",
+            "required": [
+                "to"
+            ],
+            "properties": {
+                "to": {
+                    "type": "string"
                 }
             }
         },
@@ -4142,6 +4975,20 @@ const docTemplate = `{
                 "nickname": {
                     "type": "string",
                     "maxLength": 50
+                }
+            }
+        },
+        "github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateSettingsRequest": {
+            "type": "object",
+            "required": [
+                "settings"
+            ],
+            "properties": {
+                "settings": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
                 }
             }
         },

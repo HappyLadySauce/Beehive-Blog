@@ -221,6 +221,17 @@ definitions:
       protected:
         type: boolean
     type: object
+  github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleStatItem:
+    properties:
+      id:
+        type: integer
+      likeCount:
+        type: integer
+      title:
+        type: string
+      viewCount:
+        type: integer
+    type: object
   github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleTagItem:
     properties:
       color:
@@ -231,6 +242,66 @@ definitions:
         type: string
       slug:
         type: string
+    type: object
+  github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleVersionItem:
+    properties:
+      articleId:
+        type: integer
+      createdAt:
+        type: string
+      createdBy:
+        type: integer
+      id:
+        type: integer
+      title:
+        type: string
+      version:
+        type: integer
+    type: object
+  github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleVersionListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleVersionItem'
+        type: array
+      total:
+        type: integer
+    type: object
+  github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.BatchArticlePayload:
+    properties:
+      categoryId:
+        type: integer
+      status:
+        type: string
+      tagIds:
+        items:
+          type: integer
+        type: array
+    type: object
+  github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.BatchArticleRequest:
+    properties:
+      action:
+        enum:
+        - delete
+        - set_status
+        - set_category
+        - set_tags
+        type: string
+      ids:
+        items:
+          type: integer
+        minItems: 1
+        type: array
+      payload:
+        $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.BatchArticlePayload'
+    required:
+    - action
+    - ids
+    type: object
+  github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.BatchArticleResponse:
+    properties:
+      affected:
+        type: integer
     type: object
   github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.CategoryBrief:
     properties:
@@ -499,6 +570,30 @@ definitions:
       sortOrder:
         type: integer
     type: object
+  github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.SettingsResponse:
+    properties:
+      group:
+        type: string
+      settings:
+        additionalProperties:
+          type: string
+        type: object
+    type: object
+  github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.SiteStatsResponse:
+    properties:
+      articleCount:
+        type: integer
+      commentCount:
+        type: integer
+      todayViews:
+        type: integer
+      topArticles:
+        items:
+          $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleStatItem'
+        type: array
+      userCount:
+        type: integer
+    type: object
   github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.SyncPostsRequest:
     properties:
       rebuild:
@@ -594,6 +689,13 @@ definitions:
         type: integer
       total:
         type: integer
+    type: object
+  github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.TestSMTPRequest:
+    properties:
+      to:
+        type: string
+    required:
+    - to
     type: object
   github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateArticlePasswordRequest:
     properties:
@@ -725,6 +827,15 @@ definitions:
       nickname:
         maxLength: 50
         type: string
+    type: object
+  github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateSettingsRequest:
+    properties:
+      settings:
+        additionalProperties:
+          type: string
+        type: object
+    required:
+    - settings
     type: object
   github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateTagRequest:
     properties:
@@ -970,6 +1081,50 @@ paths:
       summary: 管理员更新文章
       tags:
       - admin
+  /api/v1/admin/articles/{id}/export:
+    get:
+      description: 需管理员；format=markdown 返回原始 Markdown，format=html 返回 HTML 包装，format=pdf
+        返回 501
+      parameters:
+      - description: 文章 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 导出格式 markdown|html|pdf，默认 markdown
+        in: query
+        name: format
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "501":
+          description: Not Implemented
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+      summary: 导出文章
+      tags:
+      - admin
   /api/v1/admin/articles/{id}/password:
     put:
       consumes:
@@ -1164,6 +1319,142 @@ paths:
           schema:
             $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
       summary: 更新文章发布状态
+      tags:
+      - admin
+  /api/v1/admin/articles/{id}/versions:
+    get:
+      description: 需管理员；列出指定文章的历史版本（最多 50 条，按版本号倒序）
+      parameters:
+      - description: 文章 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleVersionListResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+      summary: 文章版本历史列表
+      tags:
+      - admin
+  /api/v1/admin/articles/{id}/versions/{versionId}/restore:
+    post:
+      description: 需管理员；将文章内容恢复到指定历史版本，当前内容自动保存为新版本
+      parameters:
+      - description: 文章 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 版本 ID
+        in: path
+        name: versionId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.ArticleDetailResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+      summary: 恢复文章版本
+      tags:
+      - admin
+  /api/v1/admin/articles/batch:
+    post:
+      consumes:
+      - application/json
+      description: 需管理员；支持 delete/set_status/set_category/set_tags
+      parameters:
+      - description: 批量操作参数
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.BatchArticleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.BatchArticleResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+      summary: 文章批量操作
       tags:
       - admin
   /api/v1/admin/attachments:
@@ -1618,6 +1909,173 @@ paths:
           schema:
             $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
       summary: 管理员探活
+      tags:
+      - admin
+  /api/v1/admin/settings/{group}:
+    get:
+      description: 需管理员；按 group 读取设置键值对（SMTP 密码脱敏）；group 可为 general/seo/smtp/comment/security
+      parameters:
+      - description: 设置分组
+        in: path
+        name: group
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.SettingsResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: 读取站点设置
+      tags:
+      - admin
+    put:
+      consumes:
+      - application/json
+      description: 需管理员；批量 upsert 指定 group 的设置；SMTP 密码传 "***" 表示不修改
+      parameters:
+      - description: 设置分组
+        in: path
+        name: group
+        required: true
+        type: string
+      - description: 设置键值对
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.UpdateSettingsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.SettingsResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: 更新站点设置
+      tags:
+      - admin
+  /api/v1/admin/settings/smtp/test:
+    post:
+      consumes:
+      - application/json
+      description: 需管理员；使用当前数据库中的 SMTP 配置向指定邮箱发送测试邮件，不写库
+      parameters:
+      - description: 收件人邮箱
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.TestSMTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "502":
+          description: Bad Gateway
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: 测试 SMTP 邮件发送
+      tags:
+      - admin
+  /api/v1/admin/stats:
+    get:
+      description: 需管理员；返回文章/用户/评论总数、今日访问量及热门文章 Top 10
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_api_v1.SiteStatsResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: 站点统计数据
       tags:
       - admin
   /api/v1/admin/sync/posts:
@@ -2405,6 +2863,83 @@ paths:
       summary: 标签云
       tags:
       - tags
+  /api/v1/user/articles/{id}/like:
+    delete:
+      description: 登录用户取消对文章的点赞；未点赞时返回 404
+      parameters:
+      - description: 文章 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: 取消文章点赞
+      tags:
+      - user
+    post:
+      description: 登录用户对文章点赞；同一文章只能点赞一次，重复点赞返回 409
+      parameters:
+      - description: 文章 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_HappyLadySauce_Beehive-Blog_cmd_app_types_common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: 文章点赞
+      tags:
+      - user
   /api/v1/user/logout:
     post:
       consumes:
