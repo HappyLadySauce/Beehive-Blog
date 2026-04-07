@@ -6,10 +6,8 @@ import { toast } from 'sonner';
 
 export default function Dashboard() {
   const [statsData, setStatsData] = useState<SiteStatsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
 
   const fetchStats = async () => {
-    setLoading(true);
     try {
       const res = await getSiteStats();
       if (res.code === 200) {
@@ -19,8 +17,6 @@ export default function Dashboard() {
       }
     } catch (error: any) {
       toast.error(error.response?.data?.message || '请求统计数据失败');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -37,18 +33,9 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <LayoutDashboard className="w-5 h-5 text-gray-600" />
-          <h2 className="text-lg font-medium text-gray-900">控制台概览</h2>
-        </div>
-        <button
-          onClick={fetchStats}
-          disabled={loading}
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50"
-        >
-          {loading ? '刷新中...' : '刷新'}
-        </button>
+      <div className="flex items-center gap-3">
+        <LayoutDashboard className="w-5 h-5 text-gray-600" />
+        <h2 className="text-lg font-medium text-gray-900">控制台概览</h2>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
