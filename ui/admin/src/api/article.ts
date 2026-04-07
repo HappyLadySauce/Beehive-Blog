@@ -94,7 +94,8 @@ export interface BatchArticleRequest {
   ids: number[];
   payload?: {
     status?: string;
-    categoryId?: number;
+    /** 传 null 表示清除分类 */
+    categoryId?: number | null;
     tagIds?: number[];
   };
 }

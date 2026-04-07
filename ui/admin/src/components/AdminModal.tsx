@@ -48,10 +48,10 @@ export default function AdminModal({
 }: AdminModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className={`bg-card rounded-lg border border-border shadow-xl w-full ${maxWidthClass[maxWidth]} mx-4 admin-card`}>
+      <div className={`bg-popover text-popover-foreground rounded-lg border border-border shadow-xl w-full ${maxWidthClass[maxWidth]} mx-4 admin-card`}>
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-[clamp(1rem,0.6vw+0.7rem,1.5rem)] py-[clamp(0.8rem,0.4vw+0.65rem,1rem)]">
-          <h3 className="text-[clamp(0.98rem,0.2vw+0.9rem,1.12rem)] font-medium text-foreground">{title}</h3>
+          <h3 className="text-[clamp(0.98rem,0.2vw+0.9rem,1.12rem)] font-medium">{title}</h3>
           <button
             onClick={onClose}
             className="admin-control-sm rounded p-1 text-muted-foreground hover:text-foreground"

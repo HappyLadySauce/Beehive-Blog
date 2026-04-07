@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Edit, Trash2 } from 'lucide-react';
 import Pagination from '../../components/Pagination';
 import CustomSelect from '../../components/CustomSelect';
 import ConfirmModal from '../../components/ConfirmModal';
+import AdminModal from '../../components/AdminModal';
 import { getArticles, deleteArticle, batchOperateArticles, AdminArticleListItem, ArticleListQuery } from '../../api/article';
 import { getCategories, getTags, CategoryBrief, TagListItem } from '../../api/taxonomy';
 import { toast } from 'sonner';
@@ -22,6 +23,11 @@ export default function ArticleManagement() {
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<CategoryBrief[]>([]);
   const [tags, setTags] = useState<TagListItem[]>([]);
+
+  const [batchSettingsOpen, setBatchSettingsOpen] = useState(false);
+  const [batchCategoryId, setBatchCategoryId] = useState<number | null>(null);
+  const [batchTagIds, setBatchTagIds] = useState<number[]>([]);
+  const [batchSubmitting, setBatchSubmitting] = useState(false);
 
   const [confirmState, setConfirmState] = useState<{
     open: boolean;
@@ -126,6 +132,114 @@ export default function ArticleManagement() {
     });
   };
 
+  const runBatchPublish = async () => {
+    if (!selectedArticles.length) {
+      toast.warning('请先选择文章');
+      return;
+    }
+    try {
+      const res = await batchOperateArticles({
+        action: 'set_status',
+        ids: selectedArticles,
+        payload: { status: 'published' },
+      });
+      if (res.code === 200) {
+        toast.success(`已发布 ${res.data.affected} 篇文章`);
+        setSelectedArticles([]);
+        fetchArticles();
+      } else {
+        toast.error(res.message || '批量发布失败');
+      }
+    } catch (error: unknown) {
+      const msg =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      toast.error(msg || '批量发布请求失败');
+    }
+  };
+
+  const runBatchUnpublish = async () => {
+    if (!selectedArticles.length) {
+      toast.warning('请先选择文章');
+      return;
+    }
+    try {
+      const res = await batchOperateArticles({
+        action: 'set_status',
+        ids: selectedArticles,
+        payload: { status: 'draft' },
+      });
+      if (res.code === 200) {
+        toast.success(`已取消发布 ${res.data.affected} 篇文章`);
+        setSelectedArticles([]);
+        fetchArticles();
+      } else {
+        toast.error(res.message || '批量取消发布失败');
+      }
+    } catch (error: unknown) {
+      const msg =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      toast.error(msg || '批量取消发布请求失败');
+    }
+  };
+
+  const openBatchSettings = () => {
+    if (!selectedArticles.length) {
+      toast.warning('请先选择文章');
+      return;
+    }
+    setBatchCategoryId(null);
+    setBatchTagIds([]);
+    setBatchSettingsOpen(true);
+  };
+
+  const toggleBatchTag = (tagId: number) => {
+    setBatchTagIds((prev) =>
+      prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId],
+    );
+  };
+
+  const submitBatchSettings = async () => {
+    if (!selectedArticles.length) return;
+    setBatchSubmitting(true);
+    try {
+      const ids = selectedArticles;
+      const catRes = await batchOperateArticles({
+        action: 'set_category',
+        ids,
+        payload: { categoryId: batchCategoryId },
+      });
+      if (catRes.code !== 200) {
+        toast.error(catRes.message || '批量设置分类失败');
+        return;
+      }
+      const tagRes = await batchOperateArticles({
+        action: 'set_tags',
+        ids,
+        payload: { tagIds: batchTagIds },
+      });
+      if (tagRes.code !== 200) {
+        toast.error(tagRes.message || '批量设置标签失败');
+        return;
+      }
+      toast.success('批量设置已保存');
+      setBatchSettingsOpen(false);
+      setSelectedArticles([]);
+      fetchArticles();
+    } catch (error: unknown) {
+      const msg =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      toast.error(msg || '批量设置请求失败');
+    } finally {
+      setBatchSubmitting(false);
+    }
+  };
+
   const runDeleteArticle = async (id: number) => {
     try {
       const res = await deleteArticle(id);
@@ -206,19 +320,19 @@ export default function ArticleManagement() {
     { value: 'popular', label: '最受欢迎' },
   ];
 
+  const batchCategorySelectOptions = useMemo(
+    () => [
+      { value: '', label: '无分类' },
+      ...categories.map((c) => ({ value: String(c.id), label: c.name })),
+    ],
+    [categories],
+  );
+
+  const batchToolbarBtnClass =
+    'rounded border border-border bg-background px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-accent';
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={handleBatchDelete}
-          disabled={selectedArticles.length === 0}
-          className="rounded border border-border bg-background px-3 py-1.5 text-sm transition-colors hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-600 disabled:opacity-50"
-        >
-          批量删除
-        </button>
-      </div>
-
       <div className="admin-card admin-card-glass rounded border">
         <div className="p-4 border-b border-border">
           <div className="relative">
@@ -233,42 +347,80 @@ export default function ArticleManagement() {
           </div>
         </div>
 
-        <div className="p-4 flex items-center gap-3 flex-wrap border-b border-border">
-          <span className="text-sm text-muted-foreground">状态:</span>
-          <CustomSelect
-            value={selectedStatus}
-            onChange={(v) => { setSelectedStatus(v); setPage(1); }}
-            options={statusFilterOptions}
-            className="w-[132px]"
-            ariaLabel="文章状态筛选"
-          />
+        <div
+          className={`flex flex-wrap items-center gap-3 border-b border-border p-4 ${
+            selectedArticles.length > 0 ? 'justify-between' : ''
+          }`}
+        >
+          {selectedArticles.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" className={batchToolbarBtnClass} onClick={() => void runBatchPublish()}>
+                发布
+              </button>
+              <button type="button" className={batchToolbarBtnClass} onClick={() => void runBatchUnpublish()}>
+                取消发布
+              </button>
+              <button type="button" className={batchToolbarBtnClass} onClick={openBatchSettings}>
+                批量设置
+              </button>
+              <button
+                type="button"
+                className="rounded bg-red-600 px-3 py-1.5 text-sm text-white transition-colors hover:bg-red-700"
+                onClick={handleBatchDelete}
+              >
+                删除
+              </button>
+            </div>
+          )}
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-sm text-muted-foreground">状态:</span>
+            <CustomSelect
+              value={selectedStatus}
+              onChange={(v) => {
+                setSelectedStatus(v);
+                setPage(1);
+              }}
+              options={statusFilterOptions}
+              className="w-[132px]"
+              ariaLabel="文章状态筛选"
+            />
 
-          <span className="text-sm text-muted-foreground ml-3">分类:</span>
-          <CustomSelect
-            value={selectedCategory}
-            onChange={(v) => { setSelectedCategory(v); setPage(1); }}
-            options={categoryFilterOptions}
-            className="w-[132px]"
-            ariaLabel="文章分类筛选"
-          />
+            <span className="ml-3 text-sm text-muted-foreground">分类:</span>
+            <CustomSelect
+              value={selectedCategory}
+              onChange={(v) => {
+                setSelectedCategory(v);
+                setPage(1);
+              }}
+              options={categoryFilterOptions}
+              className="w-[132px]"
+              ariaLabel="文章分类筛选"
+            />
 
-          <span className="text-sm text-muted-foreground ml-3">标签:</span>
-          <CustomSelect
-            value={selectedTag}
-            onChange={(v) => { setSelectedTag(v); setPage(1); }}
-            options={tagFilterOptions}
-            className="w-[132px]"
-            ariaLabel="文章标签筛选"
-          />
+            <span className="ml-3 text-sm text-muted-foreground">标签:</span>
+            <CustomSelect
+              value={selectedTag}
+              onChange={(v) => {
+                setSelectedTag(v);
+                setPage(1);
+              }}
+              options={tagFilterOptions}
+              className="w-[132px]"
+              ariaLabel="文章标签筛选"
+            />
 
-          <span className="text-sm text-muted-foreground ml-3">排序:</span>
-          <CustomSelect
-            value={selectedSort}
-            onChange={(v) => { setSelectedSort(v); setPage(1); }}
-            options={sortFilterOptions}
-            className="w-[132px]"
-            ariaLabel="文章排序"
-          />
+            <span className="ml-3 text-sm text-muted-foreground">排序:</span>
+            <CustomSelect
+              value={selectedSort}
+              onChange={(v) => {
+                setSelectedSort(v);
+                setPage(1);
+              }}
+              options={sortFilterOptions}
+              className="w-[132px]"
+              ariaLabel="文章排序"
+            />
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -372,6 +524,54 @@ export default function ArticleManagement() {
 
         <Pagination total={total} page={page} pageSize={10} onPageChange={setPage} unit="项结果" />
       </div>
+
+      {batchSettingsOpen && (
+        <AdminModal
+          title="文章批量设置"
+          onClose={() => setBatchSettingsOpen(false)}
+          onConfirm={() => void submitBatchSettings()}
+          confirmLabel="保存"
+          loading={batchSubmitting}
+          maxWidth="md"
+        >
+          <p className="text-sm text-muted-foreground">
+            将应用到已选中的 {selectedArticles.length} 篇文章：统一设置分类（替换）与标签（整表替换）；不选标签则清空标签。
+          </p>
+          <div className="space-y-2">
+            <span className="text-sm font-medium text-foreground">分类</span>
+            <CustomSelect
+              value={batchCategoryId === null ? '' : String(batchCategoryId)}
+              onChange={(v) => setBatchCategoryId(v === '' ? null : parseInt(v, 10))}
+              options={batchCategorySelectOptions}
+              className="w-full"
+              size="sm"
+              ariaLabel="批量设置分类"
+            />
+          </div>
+          <div className="space-y-2">
+            <span className="text-sm font-medium text-foreground">标签</span>
+            <div className="flex max-h-48 flex-wrap gap-2 overflow-y-auto rounded border border-border p-2">
+              {tags.map((tag) => (
+                <button
+                  key={tag.id}
+                  type="button"
+                  onClick={() => toggleBatchTag(tag.id)}
+                  className={`rounded border px-2 py-1 text-xs transition-colors ${
+                    batchTagIds.includes(tag.id)
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border bg-card text-foreground hover:border-primary/50'
+                  }`}
+                >
+                  {tag.name}
+                </button>
+              ))}
+              {tags.length === 0 && (
+                <span className="text-xs text-muted-foreground">暂无标签</span>
+              )}
+            </div>
+          </div>
+        </AdminModal>
+      )}
 
       <ConfirmModal
         open={confirmState.open}
