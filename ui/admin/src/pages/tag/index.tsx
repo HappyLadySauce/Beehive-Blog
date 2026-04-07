@@ -7,7 +7,7 @@ import {
   TagListItem,
 } from '../../api/taxonomy';
 import { toast } from 'sonner';
-import { Tag as TagIcon, Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
 import AdminModal from '../../components/AdminModal';
 import ConfirmModal from '../../components/ConfirmModal';
 import { TextField, TextareaField, ColorField } from '../../components/FormField';
@@ -149,14 +149,11 @@ export default function Tags() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <TagIcon className="w-5 h-5 text-muted-foreground" />
-          <h2 className="text-lg font-medium text-foreground">标签管理</h2>
-        </div>
+      <div className="flex justify-end">
         <button
+          type="button"
           onClick={openCreate}
-          className="px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
+          className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground transition-colors hover:bg-primary/90"
         >
           新建标签
         </button>

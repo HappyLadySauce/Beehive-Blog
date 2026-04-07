@@ -1,10 +1,12 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import AdminLayout from '../layouts/AdminLayout';
 import AuthLayout from '../layouts/AuthLayout';
+import ArticleSectionLayout from '../layouts/ArticleSectionLayout';
 import Login from '../pages/login';
 import Dashboard from '../pages/dashboard';
-import Articles from '../pages/article';
+import ArticleManagement from '../app/components/ArticleManagement';
 import ArticleEdit from '../pages/article/edit';
+import ArticleTrash from '../pages/article/trash';
 import Categories from '../pages/category';
 import Tags from '../pages/tag';
 import Comments from '../pages/comment';
@@ -32,10 +34,6 @@ const router = createBrowserRouter([
         element: <Dashboard />,
       },
       {
-        path: 'articles',
-        element: <Articles />,
-      },
-      {
         path: 'articles/create',
         element: <ArticleEdit />,
       },
@@ -44,12 +42,34 @@ const router = createBrowserRouter([
         element: <ArticleEdit />,
       },
       {
+        path: 'articles',
+        element: <ArticleSectionLayout />,
+        children: [
+          {
+            index: true,
+            element: <ArticleManagement />,
+          },
+          {
+            path: 'categories',
+            element: <Categories />,
+          },
+          {
+            path: 'tags',
+            element: <Tags />,
+          },
+          {
+            path: 'trash',
+            element: <ArticleTrash />,
+          },
+        ],
+      },
+      {
         path: 'categories',
-        element: <Categories />,
+        element: <Navigate to="/articles/categories" replace />,
       },
       {
         path: 'tags',
-        element: <Tags />,
+        element: <Navigate to="/articles/tags" replace />,
       },
       {
         path: 'comments',

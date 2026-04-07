@@ -1338,6 +1338,50 @@ paths:
       summary: 设置或清除文章访问密码
       tags:
       - admin
+  /api/v1/admin/articles/{id}/permanent:
+    delete:
+      description: 需管理员；仅当文章在回收站（已软删）时硬删；开启 Hexo auto_sync 时异步删 md
+      parameters:
+      - description: 文章 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.DeleteArticleResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 永久删除回收站文章
+      tags:
+      - admin
   /api/v1/admin/articles/{id}/pin:
     put:
       consumes:
@@ -1384,6 +1428,50 @@ paths:
           schema:
             $ref: '#/definitions/common.BaseResponse'
       summary: 更新文章置顶
+      tags:
+      - admin
+  /api/v1/admin/articles/{id}/restore:
+    post:
+      description: 需管理员；清除 deleted_at，文章回到正常列表；开启 Hexo auto_sync 时异步同步
+      parameters:
+      - description: 文章 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.DeleteArticleResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 从回收站恢复文章
       tags:
       - admin
   /api/v1/admin/articles/{id}/slug:
@@ -1620,6 +1708,57 @@ paths:
           schema:
             $ref: '#/definitions/common.BaseResponse'
       summary: 文章批量操作
+      tags:
+      - admin
+  /api/v1/admin/articles/trash:
+    get:
+      description: 需管理员；分页列出已软删文章，支持 keyword 与 sort（newest|oldest|popular）
+      parameters:
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页条数
+        in: query
+        name: pageSize
+        type: integer
+      - description: 关键词（标题/摘要）
+        in: query
+        name: keyword
+        type: string
+      - description: 排序 newest|oldest|popular
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.AdminArticleListResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 管理员回收站文章列表
       tags:
       - admin
   /api/v1/admin/attachments:

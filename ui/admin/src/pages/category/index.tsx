@@ -7,7 +7,7 @@ import {
   CategoryBrief,
 } from '../../api/taxonomy';
 import { toast } from 'sonner';
-import { FolderOpen, Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2 } from 'lucide-react';
 import AdminModal from '../../components/AdminModal';
 import ConfirmModal from '../../components/ConfirmModal';
 import { TextField, TextareaField } from '../../components/FormField';
@@ -142,14 +142,11 @@ export default function Categories() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <FolderOpen className="w-5 h-5 text-muted-foreground" />
-          <h2 className="text-lg font-medium text-foreground">分类管理</h2>
-        </div>
+      <div className="flex justify-end">
         <button
+          type="button"
           onClick={openCreate}
-          className="px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
+          className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground transition-colors hover:bg-primary/90"
         >
           新建分类
         </button>

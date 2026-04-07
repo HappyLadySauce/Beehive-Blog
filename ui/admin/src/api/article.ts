@@ -118,3 +118,13 @@ export const deleteArticle = (id: number) =>
 
 export const batchOperateArticles = (data: BatchArticleRequest) =>
   request.post<any, ApiResponse<{ affected: number }>>('/api/v1/admin/articles/batch', data);
+
+/** 回收站：仅已软删文章，参数与管理员列表一致（keyword、sort、分页） */
+export const getTrashedArticles = (params: ArticleListQuery) =>
+  request.get<any, ApiResponse<AdminArticleListResponse>>('/api/v1/admin/articles/trash', { params });
+
+export const restoreArticle = (id: number) =>
+  request.post<any, ApiResponse<{ id: number }>>(`/api/v1/admin/articles/${id}/restore`);
+
+export const permanentDeleteArticle = (id: number) =>
+  request.delete<any, ApiResponse<{ id: number }>>(`/api/v1/admin/articles/${id}/permanent`);

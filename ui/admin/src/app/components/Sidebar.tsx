@@ -1,4 +1,4 @@
-import { LayoutDashboard, FileText, FolderOpen, Tag, MessageSquare, Image, Settings, Users, X } from 'lucide-react';
+import { LayoutDashboard, FileText, MessageSquare, Image, Settings, Users, X } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import ThemeToggle from '../../components/ThemeToggle';
@@ -23,8 +23,6 @@ export default function Sidebar({
     { id: 'articles', path: '/articles', label: '文章', icon: FileText },
     { id: 'comments', path: '/comments', label: '评论', icon: MessageSquare },
     { id: 'attachments', path: '/attachments', label: '附件', icon: Image },
-    { id: 'categories', path: '/categories', label: '分类', icon: FolderOpen },
-    { id: 'tags', path: '/tags', label: '标签', icon: Tag },
     { id: 'users', path: '/users', label: '用户', icon: Users },
     { id: 'settings', path: '/settings', label: '设置', icon: Settings },
   ];
@@ -63,7 +61,11 @@ export default function Sidebar({
       <nav className="flex-1 overflow-y-auto py-2">
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
+          const isActive =
+            item.id === 'articles'
+              ? location.pathname === '/articles' || location.pathname.startsWith('/articles/')
+              : location.pathname === item.path ||
+                (item.path !== '/' && location.pathname.startsWith(item.path));
 
           return (
             <button

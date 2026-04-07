@@ -24,8 +24,12 @@ func RegisterArticleAdminRoutes(g *gin.RouterGroup, svcCtx *svc.ServiceContext) 
 	g.POST("/articles/batch", h.handleBatchArticles)
 	g.GET("/articles", h.handleListArticles)
 	g.POST("/articles", h.handleCreateArticle)
+	// /articles/trash 须在 GET /articles/:id 之前注册，否则 "trash" 会被解析为 id
+	g.GET("/articles/trash", h.handleListTrashedArticles)
 	g.GET("/articles/:id", h.handleGetArticle)
 	g.PUT("/articles/:id", h.handleUpdateArticle)
+	g.POST("/articles/:id/restore", h.handleRestoreArticle)
+	g.DELETE("/articles/:id/permanent", h.handlePermanentDeleteArticle)
 	g.DELETE("/articles/:id", h.handleDeleteArticle)
 	g.PUT("/articles/:id/status", h.handleUpdateArticleStatus)
 	g.PUT("/articles/:id/slug", h.handleUpdateArticleSlug)
@@ -65,6 +69,98 @@ func (h *articleHandlers) handleListArticles(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 15*time.Second)
 	defer cancel()
 	resp, code, err := h.svc.AdminListArticles(ctx, &req)
+	if err != nil {
+		common.Fail(c, code, err)
+		return
+	}
+	common.Success(c, resp)
+}
+
+// handleListTrashedArticles godoc
+//
+//	@Summary		管理员回收站文章列表
+//	@Description	需管理员；分页列出已软删文章，支持 keyword 与 sort（newest|oldest|popular）
+//	@Tags			admin
+//	@Produce		json
+//	@Param			page		query	int		false	"页码"
+//	@Param			pageSize	query	int		false	"每页条数"
+//	@Param			keyword		query	string	false	"关键词（标题/摘要）"
+//	@Param			sort		query	string	false	"排序 newest|oldest|popular"
+//	@Success		200	{object}	common.BaseResponse{data=v1.AdminArticleListResponse}
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		403	{object}	common.BaseResponse
+//	@Failure		500	{object}	common.BaseResponse
+//	@Router			/api/v1/admin/articles/trash [get]
+func (h *articleHandlers) handleListTrashedArticles(c *gin.Context) {
+	var req v1.AdminArticleListRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		common.Fail(c, http.StatusBadRequest, err)
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 15*time.Second)
+	defer cancel()
+	resp, code, err := h.svc.ListTrashedArticles(ctx, &req)
+	if err != nil {
+		common.Fail(c, code, err)
+		return
+	}
+	common.Success(c, resp)
+}
+
+// handleRestoreArticle godoc
+//
+//	@Summary		从回收站恢复文章
+//	@Description	需管理员；清除 deleted_at，文章回到正常列表；开启 Hexo auto_sync 时异步同步
+//	@Tags			admin
+//	@Produce		json
+//	@Param			id	path	int	true	"文章 ID"
+//	@Success		200	{object}	common.BaseResponse{data=v1.DeleteArticleResponse}
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		403	{object}	common.BaseResponse
+//	@Failure		404	{object}	common.BaseResponse
+//	@Failure		500	{object}	common.BaseResponse
+//	@Router			/api/v1/admin/articles/{id}/restore [post]
+func (h *articleHandlers) handleRestoreArticle(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || id <= 0 {
+		common.FailMessage(c, http.StatusBadRequest, "invalid article id")
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+	resp, code, err := h.svc.RestoreArticle(ctx, id)
+	if err != nil {
+		common.Fail(c, code, err)
+		return
+	}
+	common.Success(c, resp)
+}
+
+// handlePermanentDeleteArticle godoc
+//
+//	@Summary		永久删除回收站文章
+//	@Description	需管理员；仅当文章在回收站（已软删）时硬删；开启 Hexo auto_sync 时异步删 md
+//	@Tags			admin
+//	@Produce		json
+//	@Param			id	path	int	true	"文章 ID"
+//	@Success		200	{object}	common.BaseResponse{data=v1.DeleteArticleResponse}
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		403	{object}	common.BaseResponse
+//	@Failure		404	{object}	common.BaseResponse
+//	@Failure		500	{object}	common.BaseResponse
+//	@Router			/api/v1/admin/articles/{id}/permanent [delete]
+func (h *articleHandlers) handlePermanentDeleteArticle(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || id <= 0 {
+		common.FailMessage(c, http.StatusBadRequest, "invalid article id")
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+	resp, code, err := h.svc.PermanentDeleteArticle(ctx, id)
 	if err != nil {
 		common.Fail(c, code, err)
 		return

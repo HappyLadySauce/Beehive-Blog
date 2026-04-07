@@ -15,22 +15,31 @@ export default function AdminLayout() {
     return <Navigate to="/login" replace />;
   }
 
-  const pageTitleMap: Record<string, string> = {
-    '/': '概览',
-    '/articles': '文章',
-    '/comments': '评论',
-    '/attachments': '附件',
-    '/categories': '分类',
-    '/tags': '标签',
-    '/users': '用户',
-    '/settings': '设置',
-  };
-  const pageTitle =
-    Object.entries(pageTitleMap).find(([path]) =>
-      path === '/'
-        ? location.pathname === '/'
-        : location.pathname.startsWith(path),
-    )?.[1] ?? '管理后台';
+  const path = location.pathname;
+  let pageTitle = '管理后台';
+  if (path === '/') {
+    pageTitle = '概览';
+  } else if (path.startsWith('/articles/edit/')) {
+    pageTitle = '编辑文章';
+  } else if (path.startsWith('/articles/categories')) {
+    pageTitle = '文章分类';
+  } else if (path.startsWith('/articles/tags')) {
+    pageTitle = '文章标签';
+  } else if (path.startsWith('/articles/trash')) {
+    pageTitle = '文章回收站';
+  } else if (path.startsWith('/articles/create')) {
+    pageTitle = '新建文章';
+  } else if (path.startsWith('/articles')) {
+    pageTitle = '文章';
+  } else if (path.startsWith('/comments')) {
+    pageTitle = '评论';
+  } else if (path.startsWith('/attachments')) {
+    pageTitle = '附件';
+  } else if (path.startsWith('/users')) {
+    pageTitle = '用户';
+  } else if (path.startsWith('/settings')) {
+    pageTitle = '设置';
+  }
 
   return (
     <div className="admin-shell flex h-screen overflow-hidden">

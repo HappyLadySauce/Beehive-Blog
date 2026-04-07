@@ -54,6 +54,17 @@ func AdminArticleQuery(db *gorm.DB, keyword, categorySlug, author, tagComma stri
 	return q
 }
 
+// TrashedArticleQuery 构建「仅软删」文章查询（需 Unscoped），可选标题/摘要关键词。
+func TrashedArticleQuery(db *gorm.DB, keyword string) *gorm.DB {
+	q := db.Unscoped().Model(&models.Article{}).
+		Where("articles.deleted_at IS NOT NULL")
+	if kw := strings.TrimSpace(keyword); kw != "" {
+		pat := "%" + kw + "%"
+		q = q.Where("(articles.title ILIKE ? OR articles.summary ILIKE ?)", pat, pat)
+	}
+	return q
+}
+
 // ListAdminPage 在已构造好的管理员查询链上分页列出文章。
 func ListAdminPage(ctx context.Context, db *gorm.DB, q *gorm.DB, page, pageSize int, sort string) ([]models.Article, int64, error) {
 	if page < 1 {

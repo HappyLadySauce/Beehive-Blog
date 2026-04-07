@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Editor } from '@bytemd/react';
 import gfm from '@bytemd/plugin-gfm';
@@ -8,6 +8,7 @@ import { getCategories, getTags, CategoryBrief, TagListItem } from '../../api/ta
 import request from '../../utils/request';
 import { toast } from 'sonner';
 import { ArrowLeft, Save } from 'lucide-react';
+import CustomSelect from '../../components/CustomSelect';
 
 const plugins = [gfm()];
 
@@ -133,6 +134,25 @@ export default function ArticleEdit() {
     );
   };
 
+  const statusOptions = useMemo(
+    () => [
+      { value: 'draft', label: '草稿' },
+      { value: 'published', label: '发布' },
+      { value: 'scheduled', label: '定时发布' },
+      { value: 'private', label: '私密' },
+      { value: 'archived', label: '归档' },
+    ],
+    [],
+  );
+
+  const categoryOptions = useMemo(
+    () => [
+      { value: '', label: '无分类' },
+      ...categories.map((c) => ({ value: String(c.id), label: c.name })),
+    ],
+    [categories],
+  );
+
   return (
     <div className="h-full flex flex-col space-y-4">
       <div className="flex items-center justify-between">
@@ -146,16 +166,14 @@ export default function ArticleEdit() {
           <h2 className="text-lg font-medium text-foreground">{articleId ? '编辑文章' : '新建文章'}</h2>
         </div>
         <div className="flex items-center gap-3">
-          <select
+          <CustomSelect
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="px-3 py-1.5 text-sm border border-border rounded bg-input-background text-foreground focus:ring-2 focus:ring-ring focus:border-transparent"
-          >
-            <option value="draft">草稿</option>
-            <option value="published">发布</option>
-            <option value="private">私密</option>
-            <option value="archived">归档</option>
-          </select>
+            onChange={(v) => setStatus(v)}
+            options={statusOptions}
+            className="w-[132px]"
+            size="sm"
+            ariaLabel="文章状态"
+          />
           <button
             onClick={handleSave}
             disabled={loading}
@@ -190,16 +208,14 @@ export default function ArticleEdit() {
         <div className="w-64 flex-shrink-0 space-y-4">
           <div className="bg-card border border-border rounded p-4 space-y-3">
             <h3 className="text-sm font-medium text-foreground">分类</h3>
-            <select
-              value={categoryId ?? ''}
-              onChange={(e) => setCategoryId(e.target.value ? parseInt(e.target.value, 10) : null)}
-              className="w-full px-3 py-2 text-sm border border-border rounded bg-input-background text-foreground focus:ring-2 focus:ring-ring focus:border-transparent"
-            >
-              <option value="">无分类</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
-              ))}
-            </select>
+            <CustomSelect
+              value={categoryId === null ? '' : String(categoryId)}
+              onChange={(v) => setCategoryId(v === '' ? null : parseInt(v, 10))}
+              options={categoryOptions}
+              className="w-full"
+              size="sm"
+              ariaLabel="文章分类"
+            />
           </div>
 
           <div className="bg-card border border-border rounded p-4 space-y-3">

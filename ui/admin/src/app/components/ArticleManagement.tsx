@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Edit, Trash2, Eye, FileText } from 'lucide-react';
+import { Search, Edit, Trash2 } from 'lucide-react';
 import Pagination from '../../components/Pagination';
 import CustomSelect from '../../components/CustomSelect';
 import ConfirmModal from '../../components/ConfirmModal';
@@ -208,27 +208,15 @@ export default function ArticleManagement() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <FileText className="w-5 h-5 text-muted-foreground" />
-          <h2 className="text-lg font-medium text-foreground">文章</h2>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleBatchDelete}
-            disabled={selectedArticles.length === 0}
-            className="px-3 py-1.5 text-sm border border-border rounded bg-background hover:bg-red-500/10 hover:text-red-600 hover:border-red-500/40 transition-colors disabled:opacity-50"
-          >
-            批量删除
-          </button>
-          <button
-            onClick={() => navigate('/articles/create')}
-            className="px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors flex items-center gap-1.5"
-          >
-            <Plus className="w-4 h-4" />
-            新建
-          </button>
-        </div>
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={handleBatchDelete}
+          disabled={selectedArticles.length === 0}
+          className="rounded border border-border bg-background px-3 py-1.5 text-sm transition-colors hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-600 disabled:opacity-50"
+        >
+          批量删除
+        </button>
       </div>
 
       <div className="admin-card admin-card-glass rounded border">
