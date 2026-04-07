@@ -87,6 +87,7 @@ CREATE TABLE IF NOT EXISTS article_versions (
     title VARCHAR(200) NOT NULL,
     content TEXT NOT NULL,
     version INT NOT NULL,
+    is_autosave BOOLEAN NOT NULL DEFAULT FALSE,
     created_by BIGINT REFERENCES users(id),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

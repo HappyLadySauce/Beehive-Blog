@@ -403,11 +403,22 @@ func (a *ArticleAdmin) UpdateArticle(ctx context.Context, articleID int64, req *
 		}
 	}()
 
-	// 内容有实质变更时，先将当前版本存入历史（operatorID 暂用 art.AuthorID 占位，handler 层可传入）
+	// 内容有实质变更时：手动保存递增版本；自动保存仅覆盖单槽快照。
 	if _, titleChanged := updates["title"]; titleChanged || updates["content"] != nil {
-		if err := a.saveVersion(ctx, tx, &art, art.AuthorID); err != nil {
+		autoSave := req.AutoSave != nil && *req.AutoSave
+		var err error
+		if autoSave {
+			err = a.saveOrReplaceAutosaveSnapshot(ctx, tx, &art, art.AuthorID)
+		} else {
+			err = a.saveVersion(ctx, tx, &art, art.AuthorID)
+		}
+		if err != nil {
 			tx.Rollback()
-			klog.ErrorS(err, "UpdateArticle: saveVersion", "articleID", articleID)
+			if autoSave {
+				klog.ErrorS(err, "UpdateArticle: saveOrReplaceAutosaveSnapshot", "articleID", articleID)
+			} else {
+				klog.ErrorS(err, "UpdateArticle: saveVersion", "articleID", articleID)
+			}
 			return nil, http.StatusInternalServerError, errors.New("system error")
 		}
 	}

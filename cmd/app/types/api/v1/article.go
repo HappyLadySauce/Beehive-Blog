@@ -132,6 +132,8 @@ type UpdateArticleRequest struct {
 	TagIDs      []int64 `json:"tagIds"`
 	Status      *string `json:"status" binding:"omitempty,oneof=draft published archived private scheduled"`
 	PublishedAt *string `json:"publishedAt" binding:"omitempty"`
+	// AutoSave 为 true 时，内容变更写入「自动保存」单槽（覆盖同文唯一一条），不递增手动版本号。
+	AutoSave *bool `json:"autoSave"`
 }
 
 // UpdateArticleStatusRequest 状态变更。
@@ -168,18 +170,29 @@ type ArticleSecurityResponse struct {
 
 // ArticleVersionItem 单个版本摘要。
 type ArticleVersionItem struct {
-	ID        int64  `json:"id"`
-	ArticleID int64  `json:"articleId"`
-	Title     string `json:"title"`
-	Version   int    `json:"version"`
-	CreatedBy int64  `json:"createdBy"`
-	CreatedAt string `json:"createdAt"`
+	ID         int64  `json:"id"`
+	ArticleID  int64  `json:"articleId"`
+	Title      string `json:"title"`
+	Version    int    `json:"version"`
+	IsAutosave bool   `json:"isAutosave"`
+	CreatedBy  int64  `json:"createdBy"`
+	CreatedAt  string `json:"createdAt"`
 }
 
 // ArticleVersionListResponse 版本列表。
 type ArticleVersionListResponse struct {
 	Items []ArticleVersionItem `json:"items"`
 	Total int                  `json:"total"`
+}
+
+// UpdateArticleVersionRequest 修改版本快照显示名称（仅更新 article_versions.title）。
+type UpdateArticleVersionRequest struct {
+	Title string `json:"title" binding:"required,min=1,max=200"`
+}
+
+// DeleteArticleVersionResponse 删除版本记录结果。
+type DeleteArticleVersionResponse struct {
+	ID int64 `json:"id"`
 }
 
 // BatchArticlePayload 批量操作的附加参数。

@@ -36,6 +36,8 @@ func RegisterArticleAdminRoutes(g *gin.RouterGroup, svcCtx *svc.ServiceContext) 
 	g.PUT("/articles/:id/password", h.handleUpdateArticlePassword)
 	g.PUT("/articles/:id/pin", h.handleUpdateArticlePin)
 	g.GET("/articles/:id/versions", h.handleListVersions)
+	g.PATCH("/articles/:id/versions/:versionId", h.handleUpdateArticleVersion)
+	g.DELETE("/articles/:id/versions/:versionId", h.handleDeleteArticleVersion)
 	g.POST("/articles/:id/versions/:versionId/restore", h.handleRestoreVersion)
 	g.GET("/articles/:id/export", h.handleExportArticle)
 }
@@ -237,7 +239,7 @@ func (h *articleHandlers) handleGetArticle(c *gin.Context) {
 // handleUpdateArticle godoc
 //
 //	@Summary		管理员更新文章
-//	@Description	需管理员；部分字段更新。categoryId：仅当请求体包含该字段时更新；传 null/省略不改变；传 ≤0 表示置空分类；传正整数须为已存在分类。tagIds：仅当请求体包含非空 tagIds 数组时整表替换关联；须全部为已存在标签主键（会去重并忽略 ≤0）。
+//	@Description	需管理员；部分字段更新。categoryId：仅当请求体包含该字段时更新；传 null/省略不改变；传 ≤0 表示置空分类；传正整数须为已存在分类。tagIds：仅当请求体包含非空 tagIds 数组时整表替换关联；须全部为已存在标签主键（会去重并忽略 ≤0）。autoSave：为 true 时标题/正文变更写入自动保存单槽（同文覆盖一条），不递增手动版本号。
 //	@Tags			admin
 //	@Accept			json
 //	@Produce		json
@@ -517,7 +519,7 @@ func (h *articleHandlers) handleExportArticle(c *gin.Context) {
 // handleListVersions godoc
 //
 //	@Summary		文章版本历史列表
-//	@Description	需管理员；列出指定文章的历史版本（最多 50 条，按版本号倒序）
+//	@Description	需管理员；列出指定文章的历史版本（手动版本最多 50 条，另可有至多一条自动保存快照；手动在前、自动保存在后）
 //	@Tags			admin
 //	@Produce		json
 //	@Param			id	path		int	true	"文章 ID"
@@ -544,10 +546,89 @@ func (h *articleHandlers) handleListVersions(c *gin.Context) {
 	common.Success(c, resp)
 }
 
+// handleUpdateArticleVersion godoc
+//
+//	@Summary		修改版本显示名称
+//	@Description	需管理员；更新指定版本记录的 title 字段（不影响正文快照 content）
+//	@Tags			admin
+//	@Accept			json
+//	@Produce		json
+//	@Param			id			path	int								true	"文章 ID"
+//	@Param			versionId	path	int								true	"版本记录 ID"
+//	@Param			request		body	v1.UpdateArticleVersionRequest	true	"新标题"
+//	@Success		200	{object}	common.BaseResponse{data=v1.ArticleVersionItem}
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		403	{object}	common.BaseResponse
+//	@Failure		404	{object}	common.BaseResponse
+//	@Failure		500	{object}	common.BaseResponse
+//	@Router			/api/v1/admin/articles/{id}/versions/{versionId} [patch]
+func (h *articleHandlers) handleUpdateArticleVersion(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || id <= 0 {
+		common.FailMessage(c, http.StatusBadRequest, "invalid article id")
+		return
+	}
+	versionID, err := strconv.ParseInt(c.Param("versionId"), 10, 64)
+	if err != nil || versionID <= 0 {
+		common.FailMessage(c, http.StatusBadRequest, "invalid version id")
+		return
+	}
+	var req v1.UpdateArticleVersionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.Fail(c, http.StatusBadRequest, err)
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+	resp, code, err := h.svc.UpdateArticleVersion(ctx, id, versionID, &req)
+	if err != nil {
+		common.Fail(c, code, err)
+		return
+	}
+	common.Success(c, resp)
+}
+
+// handleDeleteArticleVersion godoc
+//
+//	@Summary		删除版本记录
+//	@Description	需管理员；硬删除指定 article_versions 行
+//	@Tags			admin
+//	@Produce		json
+//	@Param			id			path	int	true	"文章 ID"
+//	@Param			versionId	path	int	true	"版本记录 ID"
+//	@Success		200	{object}	common.BaseResponse{data=v1.DeleteArticleVersionResponse}
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		403	{object}	common.BaseResponse
+//	@Failure		404	{object}	common.BaseResponse
+//	@Failure		500	{object}	common.BaseResponse
+//	@Router			/api/v1/admin/articles/{id}/versions/{versionId} [delete]
+func (h *articleHandlers) handleDeleteArticleVersion(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || id <= 0 {
+		common.FailMessage(c, http.StatusBadRequest, "invalid article id")
+		return
+	}
+	versionID, err := strconv.ParseInt(c.Param("versionId"), 10, 64)
+	if err != nil || versionID <= 0 {
+		common.FailMessage(c, http.StatusBadRequest, "invalid version id")
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+	resp, code, err := h.svc.DeleteArticleVersion(ctx, id, versionID)
+	if err != nil {
+		common.Fail(c, code, err)
+		return
+	}
+	common.Success(c, resp)
+}
+
 // handleRestoreVersion godoc
 //
 //	@Summary		恢复文章版本
-//	@Description	需管理员；将文章内容恢复到指定历史版本，当前内容自动保存为新版本
+//	@Description	需管理员；将文章标题与正文恢复为所选历史版本内容（恢复前不额外生成新版本快照）
 //	@Tags			admin
 //	@Produce		json
 //	@Param			id			path	int	true	"文章 ID"

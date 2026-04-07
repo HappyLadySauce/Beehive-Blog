@@ -418,7 +418,7 @@ const docTemplate = `{
                 }
             },
             "put": {
-                "description": "需管理员；部分字段更新。categoryId：仅当请求体包含该字段时更新；传 null/省略不改变；传 ≤0 表示置空分类；传正整数须为已存在分类。tagIds：仅当请求体包含非空 tagIds 数组时整表替换关联；须全部为已存在标签主键（会去重并忽略 ≤0）。",
+                "description": "需管理员；部分字段更新。categoryId：仅当请求体包含该字段时更新；传 null/省略不改变；传 ≤0 表示置空分类；传正整数须为已存在分类。tagIds：仅当请求体包含非空 tagIds 数组时整表替换关联；须全部为已存在标签主键（会去重并忽略 ≤0）。autoSave：为 true 时标题/正文变更写入自动保存单槽（同文覆盖一条），不递增手动版本号。",
                 "consumes": [
                     "application/json"
                 ],
@@ -1097,7 +1097,7 @@ const docTemplate = `{
         },
         "/api/v1/admin/articles/{id}/versions": {
             "get": {
-                "description": "需管理员；列出指定文章的历史版本（最多 50 条，按版本号倒序）",
+                "description": "需管理员；列出指定文章的历史版本（手动版本最多 50 条，另可有至多一条自动保存快照；手动在前、自动保存在后）",
                 "produces": [
                     "application/json"
                 ],
@@ -1166,9 +1166,175 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/admin/articles/{id}/versions/{versionId}": {
+            "delete": {
+                "description": "需管理员；硬删除指定 article_versions 行",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "删除版本记录",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文章 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "版本记录 ID",
+                        "name": "versionId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/v1.DeleteArticleVersionResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "description": "需管理员；更新指定版本记录的 title 字段（不影响正文快照 content）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "修改版本显示名称",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "文章 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "版本记录 ID",
+                        "name": "versionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "新标题",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.UpdateArticleVersionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/v1.ArticleVersionItem"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/admin/articles/{id}/versions/{versionId}/restore": {
             "post": {
-                "description": "需管理员；将文章内容恢复到指定历史版本，当前内容自动保存为新版本",
+                "description": "需管理员；将文章标题与正文恢复为所选历史版本内容（恢复前不额外生成新版本快照）",
                 "produces": [
                     "application/json"
                 ],
@@ -5168,6 +5334,9 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "isAutosave": {
+                    "type": "boolean"
+                },
                 "title": {
                     "type": "string"
                 },
@@ -5490,6 +5659,14 @@ const docTemplate = `{
             }
         },
         "v1.DeleteArticleResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "v1.DeleteArticleVersionResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -5854,6 +6031,10 @@ const docTemplate = `{
         "v1.UpdateArticleRequest": {
             "type": "object",
             "properties": {
+                "autoSave": {
+                    "description": "AutoSave 为 true 时，内容变更写入「自动保存」单槽（覆盖同文唯一一条），不递增手动版本号。",
+                    "type": "boolean"
+                },
                 "categoryId": {
                     "type": "integer"
                 },
@@ -5930,6 +6111,19 @@ const docTemplate = `{
                         "private",
                         "scheduled"
                     ]
+                }
+            }
+        },
+        "v1.UpdateArticleVersionRequest": {
+            "type": "object",
+            "required": [
+                "title"
+            ],
+            "properties": {
+                "title": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "minLength": 1
                 }
             }
         },

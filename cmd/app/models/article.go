@@ -59,13 +59,14 @@ func (a *Article) IsProtected() bool {
 
 // ArticleVersion 文章版本历史
 type ArticleVersion struct {
-	ID        int64     `json:"id" gorm:"primaryKey;autoIncrement"`
-	ArticleID int64     `json:"articleId" gorm:"not null;index"`
-	Title     string    `json:"title" gorm:"size:200;not null"`
-	Content   string    `json:"content" gorm:"type:text;not null"`
-	Version   int       `json:"version" gorm:"not null"`
-	CreatedBy int64     `json:"createdBy"`
-	CreatedAt time.Time `json:"createdAt" gorm:"autoCreateTime"`
+	ID         int64     `json:"id" gorm:"primaryKey;autoIncrement"`
+	ArticleID  int64     `json:"articleId" gorm:"not null;index"`
+	Title      string    `json:"title" gorm:"size:200;not null"`
+	Content    string    `json:"content" gorm:"type:text;not null"`
+	Version    int       `json:"version" gorm:"not null"`
+	IsAutosave bool      `json:"isAutosave" gorm:"column:is_autosave;not null;default:false"`
+	CreatedBy  int64     `json:"createdBy"`
+	CreatedAt  time.Time `json:"createdAt" gorm:"autoCreateTime"`
 }
 
 func (ArticleVersion) TableName() string {
