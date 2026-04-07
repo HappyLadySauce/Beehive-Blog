@@ -17,6 +17,7 @@ import {
   updateAdminUserStatus,
 } from '../../api/user';
 import AdminModal from '../../components/AdminModal';
+import ConfirmModal from '../../components/ConfirmModal';
 import {
   TextField,
   PasswordField,
@@ -48,6 +49,12 @@ const statusColorMap: Record<UserStatus, string> = {
   inactive: 'bg-yellow-100 text-yellow-800',
   disabled: 'bg-red-100 text-red-800',
   deleted: 'bg-gray-100 text-gray-800',
+};
+
+const roleBadgeClass: Record<UserRole, string> = {
+  guest: 'bg-gray-100 text-gray-800',
+  user: 'bg-blue-100 text-blue-800',
+  admin: 'bg-purple-100 text-purple-800',
 };
 
 const roleOptions = [
@@ -211,6 +218,27 @@ export default function Users() {
   const [formData, setFormData] = useState<UserFormData>(defaultFormData);
   const [newPassword, setNewPassword] = useState('');
 
+  const [confirmState, setConfirmState] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    confirmLabel: string;
+    confirmVariant: 'danger' | 'warning' | 'primary';
+    onConfirm: () => void;
+  }>({
+    open: false,
+    title: '',
+    message: '',
+    confirmLabel: '确认',
+    confirmVariant: 'primary',
+    onConfirm: () => {},
+  });
+
+  const showConfirm = (
+    opts: Omit<typeof confirmState, 'open'>,
+  ) => setConfirmState({ open: true, ...opts });
+  const hideConfirm = () => setConfirmState((s) => ({ ...s, open: false }));
+
   const query = useMemo<AdminUserListQuery>(
     () => ({
       page,
@@ -355,27 +383,30 @@ export default function Users() {
     }
   };
 
-  const handleStatusChange = async (
+  const handleStatusChange = (
     user: AdminUserItem,
     nextStatus: Exclude<UserStatus, 'deleted'>,
   ) => {
-    if (
-      !window.confirm(
-        `确认将用户 ${user.username} 状态设置为 ${statusLabelMap[nextStatus]} 吗？`,
-      )
-    )
-      return;
-    try {
-      const res = await updateAdminUserStatus(user.id, { status: nextStatus });
-      if (res.code === 200) {
-        toast.success('状态更新成功');
-        fetchUsers();
-      } else {
-        toast.error(res.message || '状态更新失败');
-      }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || '状态更新请求失败');
-    }
+    showConfirm({
+      title: '变更用户状态',
+      message: `确认将用户 ${user.username} 的状态设置为「${statusLabelMap[nextStatus]}」吗？`,
+      confirmLabel: '确认变更',
+      confirmVariant: 'warning',
+      onConfirm: async () => {
+        hideConfirm();
+        try {
+          const res = await updateAdminUserStatus(user.id, { status: nextStatus });
+          if (res.code === 200) {
+            toast.success('状态更新成功');
+            fetchUsers();
+          } else {
+            toast.error(res.message || '状态更新失败');
+          }
+        } catch (error: any) {
+          toast.error(error.response?.data?.message || '状态更新请求失败');
+        }
+      },
+    });
   };
 
   const handleResetPassword = async () => {
@@ -400,19 +431,27 @@ export default function Users() {
     }
   };
 
-  const handleDelete = async (user: AdminUserItem) => {
-    if (!window.confirm(`确认软删除用户 ${user.username} 吗？该操作不可直接恢复。`)) return;
-    try {
-      const res = await deleteAdminUser(user.id);
-      if (res.code === 200) {
-        toast.success('用户已删除');
-        fetchUsers();
-      } else {
-        toast.error(res.message || '删除失败');
-      }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || '删除请求失败');
-    }
+  const handleDelete = (user: AdminUserItem) => {
+    showConfirm({
+      title: '删除用户',
+      message: `确认软删除用户 ${user.username} 吗？该操作不可直接恢复。`,
+      confirmLabel: '删除',
+      confirmVariant: 'danger',
+      onConfirm: async () => {
+        hideConfirm();
+        try {
+          const res = await deleteAdminUser(user.id);
+          if (res.code === 200) {
+            toast.success('用户已删除');
+            fetchUsers();
+          } else {
+            toast.error(res.message || '删除失败');
+          }
+        } catch (error: any) {
+          toast.error(error.response?.data?.message || '删除请求失败');
+        }
+      },
+    });
   };
 
   return (
@@ -469,38 +508,58 @@ export default function Users() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-4 py-3 text-sm font-medium text-gray-600">ID</th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-600">用户名</th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-600">昵称</th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-600">邮箱</th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-600">角色</th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-600">状态</th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-600">最后登录</th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">操作</th>
+                <th className="px-4 py-3 text-sm font-medium text-gray-600 min-w-[200px]">用户</th>
+                <th className="px-4 py-3 text-sm font-medium text-gray-600 w-24">角色</th>
+                <th className="px-4 py-3 text-sm font-medium text-gray-600 w-28">状态</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 whitespace-nowrap">
+                  最后登录
+                </th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 w-[200px]">操作</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
                     加载中...
                   </td>
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
                     暂无用户
                   </td>
                 </tr>
               ) : (
-                items.map((item) => (
+                items.map((item) => {
+                  const displayName = item.nickname?.trim() || item.username;
+                  const initial = (displayName || '?').charAt(0).toUpperCase();
+                  return (
                   <tr key={item.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-600">{item.id}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{item.username}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{item.nickname || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{item.email}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {roleLabelMap[item.role]}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span
+                          className="shrink-0 flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-800"
+                          aria-hidden
+                        >
+                          {initial}
+                        </span>
+                        <div className="min-w-0">
+                          <div className="text-sm font-semibold text-gray-900 truncate">
+                            {displayName}
+                          </div>
+                          <div className="text-xs text-gray-500 truncate">
+                            {item.email || '—'}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <span
+                        className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${roleBadgeClass[item.role]}`}
+                      >
+                        {roleLabelMap[item.role]}
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-sm">
                       <span
@@ -509,7 +568,7 @@ export default function Users() {
                         {statusLabelMap[item.status] || item.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">
+                    <td className="px-4 py-3 text-sm text-gray-500 text-right whitespace-nowrap">
                       {item.lastLoginAt
                         ? new Date(item.lastLoginAt).toLocaleString()
                         : '-'}
@@ -562,7 +621,8 @@ export default function Users() {
                       </div>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -656,6 +716,16 @@ export default function Users() {
           </div>
         </AdminModal>
       )}
+
+      <ConfirmModal
+        open={confirmState.open}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmLabel={confirmState.confirmLabel}
+        confirmVariant={confirmState.confirmVariant}
+        onCancel={hideConfirm}
+        onConfirm={() => confirmState.onConfirm()}
+      />
     </div>
   );
 }

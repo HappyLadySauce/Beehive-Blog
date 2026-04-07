@@ -149,7 +149,11 @@ func (s *Service) GetStats(ctx context.Context) (*v1.SiteStatsResponse, int, err
 		klog.ErrorS(err, "GetStats: articleCount")
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
-	if err := s.svc.DB.WithContext(ctx).Model(&models.User{}).Count(&userCount).Error; err != nil {
+	if err := s.svc.DB.WithContext(ctx).
+		Model(&models.User{}).
+		Where("deleted_at IS NULL").
+		Where("status <> ?", models.UserStatusDeleted).
+		Count(&userCount).Error; err != nil {
 		klog.ErrorS(err, "GetStats: userCount")
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}

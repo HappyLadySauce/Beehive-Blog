@@ -9,6 +9,7 @@ import {
 import { toast } from 'sonner';
 import { FolderOpen, Edit, Trash2 } from 'lucide-react';
 import AdminModal from '../../components/AdminModal';
+import ConfirmModal from '../../components/ConfirmModal';
 import { TextField, TextareaField } from '../../components/FormField';
 
 interface CategoryForm {
@@ -26,6 +27,27 @@ export default function Categories() {
   const [editTarget, setEditTarget] = useState<CategoryBrief | null>(null);
   const [form, setForm] = useState<CategoryForm>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
+
+  const [confirmState, setConfirmState] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    confirmLabel: string;
+    confirmVariant: 'danger' | 'warning' | 'primary';
+    onConfirm: () => void;
+  }>({
+    open: false,
+    title: '',
+    message: '',
+    confirmLabel: '确认',
+    confirmVariant: 'danger',
+    onConfirm: () => {},
+  });
+
+  const showConfirm = (
+    opts: Omit<typeof confirmState, 'open'>,
+  ) => setConfirmState({ open: true, ...opts });
+  const hideConfirm = () => setConfirmState((s) => ({ ...s, open: false }));
 
   const fetchCategories = async () => {
     setLoading(true);
@@ -95,19 +117,27 @@ export default function Categories() {
     }
   };
 
-  const handleDelete = async (cat: CategoryBrief) => {
-    if (!window.confirm(`确定要删除分类「${cat.name}」吗？`)) return;
-    try {
-      const res = await deleteCategory(cat.id);
-      if (res.code === 200) {
-        toast.success('删除成功');
-        fetchCategories();
-      } else {
-        toast.error(res.message || '删除失败');
-      }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || '删除请求失败');
-    }
+  const handleDelete = (cat: CategoryBrief) => {
+    showConfirm({
+      title: '删除分类',
+      message: `确定要删除分类「${cat.name}」吗？`,
+      confirmLabel: '删除',
+      confirmVariant: 'danger',
+      onConfirm: async () => {
+        hideConfirm();
+        try {
+          const res = await deleteCategory(cat.id);
+          if (res.code === 200) {
+            toast.success('删除成功');
+            fetchCategories();
+          } else {
+            toast.error(res.message || '删除失败');
+          }
+        } catch (error: any) {
+          toast.error(error.response?.data?.message || '删除请求失败');
+        }
+      },
+    });
   };
 
   return (
@@ -129,37 +159,40 @@ export default function Categories() {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-4 py-3 text-sm font-medium text-gray-600">ID</th>
-              <th className="px-4 py-3 text-sm font-medium text-gray-600">名称</th>
-              <th className="px-4 py-3 text-sm font-medium text-gray-600">别名 (Slug)</th>
+              <th className="px-4 py-3 text-sm font-medium text-gray-600 min-w-[180px]">名称</th>
               <th className="px-4 py-3 text-sm font-medium text-gray-600">描述</th>
-              <th className="px-4 py-3 text-sm font-medium text-gray-600">文章数</th>
+              <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 whitespace-nowrap">
+                文章数
+              </th>
               <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">操作</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
                   加载中...
                 </td>
               </tr>
             ) : categories.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
                   暂无分类
                 </td>
               </tr>
             ) : (
               categories.map((cat) => (
                 <tr key={cat.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-sm text-gray-600">{cat.id}</td>
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900">{cat.name}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{cat.slug}</td>
+                  <td className="px-4 py-3">
+                    <div className="text-sm font-semibold text-gray-900">{cat.name}</div>
+                    <div className="text-xs text-gray-500 mt-0.5 font-mono">{cat.slug}</div>
+                  </td>
                   <td className="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">
                     {cat.description || '-'}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{cat.articleCount}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600 text-right tabular-nums">
+                    {cat.articleCount}
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => openEdit(cat)}
@@ -214,6 +247,16 @@ export default function Categories() {
           />
         </AdminModal>
       )}
+
+      <ConfirmModal
+        open={confirmState.open}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmLabel={confirmState.confirmLabel}
+        confirmVariant={confirmState.confirmVariant}
+        onCancel={hideConfirm}
+        onConfirm={() => confirmState.onConfirm()}
+      />
     </div>
   );
 }

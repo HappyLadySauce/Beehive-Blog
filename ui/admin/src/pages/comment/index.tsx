@@ -110,39 +110,39 @@ export default function Comments() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-4 py-3 text-sm font-medium text-gray-600">ID</th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-600">文章</th>
+                <th className="px-4 py-3 text-sm font-medium text-gray-600 min-w-[200px]">内容</th>
+                <th className="px-4 py-3 text-sm font-medium text-gray-600 whitespace-nowrap">文章</th>
                 <th className="px-4 py-3 text-sm font-medium text-gray-600">作者</th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-600">内容</th>
                 <th className="px-4 py-3 text-sm font-medium text-gray-600">状态</th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-600">时间</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 whitespace-nowrap">
+                  时间
+                </th>
                 <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">操作</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {loading ? (
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-500">加载中...</td></tr>
+                <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">加载中...</td></tr>
               ) : comments.length === 0 ? (
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-500">暂无评论</td></tr>
+                <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">暂无评论</td></tr>
               ) : (
                 comments.map((comment) => (
                   <tr key={comment.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-600">{comment.id}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
+                    <td className="px-4 py-3 text-sm text-gray-700 max-w-md truncate">
+                      {comment.content}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-gray-600 tabular-nums whitespace-nowrap">
                       文章 #{comment.articleId}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
                       {comment.author?.nickname || comment.author?.username || '匿名'}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
-                      {comment.content}
                     </td>
                     <td className="px-4 py-3 text-sm">
                       <span className={`px-2 py-1 rounded text-xs ${statusColors[comment.status] || 'bg-gray-100 text-gray-800'}`}>
                         {statusLabels[comment.status] || comment.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">
+                    <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap text-right">
                       {new Date(comment.createdAt).toLocaleString()}
                     </td>
                     <td className="px-4 py-3 text-right">

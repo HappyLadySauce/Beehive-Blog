@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit, Trash2, Eye, FileText } from 'lucide-react';
 import Pagination from '../../components/Pagination';
 import CustomSelect from '../../components/CustomSelect';
+import ConfirmModal from '../../components/ConfirmModal';
 import { getArticles, deleteArticle, batchOperateArticles, AdminArticleListItem, ArticleListQuery } from '../../api/article';
 import { getCategories, getTags, CategoryBrief, TagListItem } from '../../api/taxonomy';
 import { toast } from 'sonner';
@@ -21,6 +22,27 @@ export default function ArticleManagement() {
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<CategoryBrief[]>([]);
   const [tags, setTags] = useState<TagListItem[]>([]);
+
+  const [confirmState, setConfirmState] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    confirmLabel: string;
+    confirmVariant: 'danger' | 'warning' | 'primary';
+    onConfirm: () => void;
+  }>({
+    open: false,
+    title: '',
+    message: '',
+    confirmLabel: '确认',
+    confirmVariant: 'danger',
+    onConfirm: () => {},
+  });
+
+  const showConfirm = (
+    opts: Omit<typeof confirmState, 'open'>,
+  ) => setConfirmState({ open: true, ...opts });
+  const hideConfirm = () => setConfirmState((s) => ({ ...s, open: false }));
 
   const fetchArticles = async () => {
     setLoading(true);
@@ -69,13 +91,7 @@ export default function ArticleManagement() {
     fetchArticles();
   }, [page, searchQuery, selectedStatus, selectedSort, selectedCategory, selectedTag]);
 
-  const handleBatchDelete = async () => {
-    if (!selectedArticles.length) {
-      toast.warning('请先选择要删除的文章');
-      return;
-    }
-    if (!window.confirm(`确定要删除选中的 ${selectedArticles.length} 篇文章吗？`)) return;
-
+  const runBatchDelete = async () => {
     try {
       const res = await batchOperateArticles({
         action: 'delete',
@@ -93,13 +109,29 @@ export default function ArticleManagement() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('确定要删除该文章吗？')) return;
+  const handleBatchDelete = () => {
+    if (!selectedArticles.length) {
+      toast.warning('请先选择要删除的文章');
+      return;
+    }
+    showConfirm({
+      title: '批量删除文章',
+      message: `确定要删除选中的 ${selectedArticles.length} 篇文章吗？`,
+      confirmLabel: '删除',
+      confirmVariant: 'danger',
+      onConfirm: () => {
+        hideConfirm();
+        void runBatchDelete();
+      },
+    });
+  };
+
+  const runDeleteArticle = async (id: number) => {
     try {
       const res = await deleteArticle(id);
       if (res.code === 200) {
         toast.success('删除成功');
-        setSelectedArticles(prev => prev.filter(a => a !== id));
+        setSelectedArticles((prev) => prev.filter((a) => a !== id));
         fetchArticles();
       } else {
         toast.error(res.message || '删除失败');
@@ -107,6 +139,19 @@ export default function ArticleManagement() {
     } catch (error: any) {
       toast.error(error.response?.data?.message || '删除请求失败');
     }
+  };
+
+  const handleDelete = (id: number) => {
+    showConfirm({
+      title: '删除文章',
+      message: '确定要删除该文章吗？',
+      confirmLabel: '删除',
+      confirmVariant: 'danger',
+      onConfirm: () => {
+        hideConfirm();
+        void runDeleteArticle(id);
+      },
+    });
   };
 
   const statusColors: Record<string, string> = {
@@ -321,6 +366,7 @@ export default function ArticleManagement() {
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
+                          type="button"
                           onClick={() => handleDelete(article.id)}
                           className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
                           title="删除"
@@ -338,6 +384,16 @@ export default function ArticleManagement() {
 
         <Pagination total={total} page={page} pageSize={10} onPageChange={setPage} unit="项结果" />
       </div>
+
+      <ConfirmModal
+        open={confirmState.open}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmLabel={confirmState.confirmLabel}
+        confirmVariant={confirmState.confirmVariant}
+        onCancel={hideConfirm}
+        onConfirm={() => confirmState.onConfirm()}
+      />
     </div>
   );
 }

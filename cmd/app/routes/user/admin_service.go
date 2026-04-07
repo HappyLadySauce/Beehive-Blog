@@ -82,6 +82,20 @@ func (s *UserService) getActiveUserByID(ctx context.Context, id int64) (*models.
 	return &u, http.StatusOK, nil
 }
 
+func (s *UserService) syncUserAuthSnapshot(ctx context.Context, userID int64) (int, error) {
+	if err := authutil.SyncUserAuthSnapshot(
+		ctx,
+		s.svc.Redis,
+		s.svc.DB,
+		s.svc.Config.JWTOptions.ExpireDuration,
+		userID,
+	); err != nil {
+		klog.ErrorS(err, "sync user auth snapshot failed", "userID", userID)
+		return http.StatusInternalServerError, errors.New("auth service unavailable")
+	}
+	return http.StatusOK, nil
+}
+
 // AdminCreateUser 管理员创建用户。
 func (s *UserService) AdminCreateUser(ctx context.Context, req *v1.AdminCreateUserRequest) (*v1.AdminUserItem, int, error) {
 	if req == nil {
@@ -247,6 +261,9 @@ func (s *UserService) AdminUpdateUser(ctx context.Context, userID int64, req *v1
 			klog.ErrorS(err, "update user failed", "userID", userID)
 			return nil, http.StatusInternalServerError, errors.New("system error")
 		}
+		if code, err := s.syncUserAuthSnapshot(ctx, userID); err != nil {
+			return nil, code, err
+		}
 	}
 
 	return s.AdminGetUser(ctx, userID)
@@ -265,6 +282,9 @@ func (s *UserService) AdminUpdateUserStatus(ctx context.Context, userID int64, r
 	if err := s.svc.DB.WithContext(ctx).Model(&models.User{}).Where("id = ?", userID).Update("status", req.Status).Error; err != nil {
 		klog.ErrorS(err, "update user status failed", "userID", userID)
 		return nil, http.StatusInternalServerError, errors.New("system error")
+	}
+	if code, err := s.syncUserAuthSnapshot(ctx, userID); err != nil {
+		return nil, code, err
 	}
 	return s.AdminGetUser(ctx, userID)
 }
@@ -330,6 +350,9 @@ func (s *UserService) AdminDeleteUser(ctx context.Context, operatorID, userID in
 	if err := s.svc.DB.WithContext(ctx).Model(&models.User{}).Where("id = ? AND deleted_at IS NULL", userID).Updates(updates).Error; err != nil {
 		klog.ErrorS(err, "soft delete user failed", "userID", userID)
 		return nil, http.StatusInternalServerError, errors.New("system error")
+	}
+	if code, err := s.syncUserAuthSnapshot(ctx, userID); err != nil {
+		return nil, code, err
 	}
 	return &v1.AdminDeleteUserResponse{ID: userID}, http.StatusOK, nil
 }

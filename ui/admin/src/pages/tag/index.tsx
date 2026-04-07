@@ -9,6 +9,7 @@ import {
 import { toast } from 'sonner';
 import { Tag as TagIcon, Edit, Trash2 } from 'lucide-react';
 import AdminModal from '../../components/AdminModal';
+import ConfirmModal from '../../components/ConfirmModal';
 import { TextField, TextareaField, ColorField } from '../../components/FormField';
 
 interface TagForm {
@@ -27,6 +28,27 @@ export default function Tags() {
   const [editTarget, setEditTarget] = useState<TagListItem | null>(null);
   const [form, setForm] = useState<TagForm>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
+
+  const [confirmState, setConfirmState] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    confirmLabel: string;
+    confirmVariant: 'danger' | 'warning' | 'primary';
+    onConfirm: () => void;
+  }>({
+    open: false,
+    title: '',
+    message: '',
+    confirmLabel: '确认',
+    confirmVariant: 'danger',
+    onConfirm: () => {},
+  });
+
+  const showConfirm = (
+    opts: Omit<typeof confirmState, 'open'>,
+  ) => setConfirmState({ open: true, ...opts });
+  const hideConfirm = () => setConfirmState((s) => ({ ...s, open: false }));
 
   const fetchTags = async () => {
     setLoading(true);
@@ -102,19 +124,27 @@ export default function Tags() {
     }
   };
 
-  const handleDelete = async (tag: TagListItem) => {
-    if (!window.confirm(`确定要删除标签「${tag.name}」吗？`)) return;
-    try {
-      const res = await deleteTag(tag.id, true);
-      if (res.code === 200) {
-        toast.success('删除成功');
-        fetchTags();
-      } else {
-        toast.error(res.message || '删除失败');
-      }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || '删除请求失败');
-    }
+  const handleDelete = (tag: TagListItem) => {
+    showConfirm({
+      title: '删除标签',
+      message: `确定要删除标签「${tag.name}」吗？`,
+      confirmLabel: '删除',
+      confirmVariant: 'danger',
+      onConfirm: async () => {
+        hideConfirm();
+        try {
+          const res = await deleteTag(tag.id, true);
+          if (res.code === 200) {
+            toast.success('删除成功');
+            fetchTags();
+          } else {
+            toast.error(res.message || '删除失败');
+          }
+        } catch (error: any) {
+          toast.error(error.response?.data?.message || '删除请求失败');
+        }
+      },
+    });
   };
 
   return (
@@ -136,43 +166,55 @@ export default function Tags() {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-4 py-3 text-sm font-medium text-gray-600">ID</th>
-              <th className="px-4 py-3 text-sm font-medium text-gray-600">名称</th>
-              <th className="px-4 py-3 text-sm font-medium text-gray-600">别名 (Slug)</th>
+              <th className="px-4 py-3 text-sm font-medium text-gray-600 min-w-[200px]">名称</th>
               <th className="px-4 py-3 text-sm font-medium text-gray-600">颜色</th>
-              <th className="px-4 py-3 text-sm font-medium text-gray-600">文章数</th>
+              <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 whitespace-nowrap">
+                文章数
+              </th>
               <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">操作</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
                   加载中...
                 </td>
               </tr>
             ) : tags.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
                   暂无标签
                 </td>
               </tr>
             ) : (
               tags.map((tag) => (
                 <tr key={tag.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-sm text-gray-600">{tag.id}</td>
-                  <td className="px-4 py-3 text-sm font-medium text-gray-900">{tag.name}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{tag.slug}</td>
-                  <td className="px-4 py-3 text-sm text-gray-500">
-                    <div className="flex items-center gap-2">
+                  <td className="px-4 py-3">
+                    <div className="flex items-start gap-2 min-w-0">
                       <span
-                        className="inline-block w-4 h-4 rounded-full border border-gray-200"
+                        className="mt-1.5 shrink-0 inline-block w-2.5 h-2.5 rounded-full border border-gray-200"
                         style={{ backgroundColor: tag.color || '#ccc' }}
+                        aria-hidden
                       />
-                      <span>{tag.color || '-'}</span>
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-gray-900 truncate">{tag.name}</div>
+                        <div className="text-xs text-gray-500 mt-0.5 font-mono truncate">{tag.slug}</div>
+                      </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{tag.articleCount}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="inline-block w-5 h-5 rounded border border-gray-200 shrink-0"
+                        style={{ backgroundColor: tag.color || '#ccc' }}
+                      />
+                      <span className="font-mono text-xs">{tag.color || '-'}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm text-gray-600 text-right tabular-nums">
+                    {tag.articleCount}
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => openEdit(tag)}
@@ -232,6 +274,16 @@ export default function Tags() {
           />
         </AdminModal>
       )}
+
+      <ConfirmModal
+        open={confirmState.open}
+        title={confirmState.title}
+        message={confirmState.message}
+        confirmLabel={confirmState.confirmLabel}
+        confirmVariant={confirmState.confirmVariant}
+        onCancel={hideConfirm}
+        onConfirm={() => confirmState.onConfirm()}
+      />
     </div>
   );
 }
