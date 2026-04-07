@@ -92,9 +92,7 @@ export default function Sidebar({
 
       {/* Theme + User */}
       <div className="border-t border-border p-4 space-y-3">
-        <div className="flex justify-center">
-          <ThemeToggle />
-        </div>
+        <ThemeToggle variant="sidebar" />
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-purple-600 text-xs font-medium text-primary-foreground">
             {user?.nickname?.[0] || user?.username?.[0] || 'A'}
