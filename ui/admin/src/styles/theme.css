@@ -179,3 +179,86 @@
     line-height: 1.5;
   }
 }
+
+/* Admin shell adaptive tokens */
+.admin-shell {
+  --admin-font-base: clamp(14px, 0.35vw + 12px, 17px);
+  --admin-space-1: clamp(0.25rem, 0.15vw + 0.2rem, 0.5rem);
+  --admin-space-2: clamp(0.5rem, 0.25vw + 0.35rem, 0.75rem);
+  --admin-space-3: clamp(0.75rem, 0.3vw + 0.55rem, 1rem);
+  --admin-space-4: clamp(1rem, 0.4vw + 0.75rem, 1.25rem);
+  --admin-space-5: clamp(1.25rem, 0.5vw + 0.95rem, 1.5rem);
+  --admin-space-6: clamp(1.5rem, 0.7vw + 1.1rem, 2rem);
+  --admin-control-sm: clamp(2rem, 0.25vw + 1.9rem, 2.2rem);
+  --admin-control-md: clamp(2.35rem, 0.3vw + 2.2rem, 2.55rem);
+  --admin-control-lg: clamp(2.6rem, 0.35vw + 2.45rem, 2.85rem);
+  --admin-table-font: clamp(0.86rem, 0.16vw + 0.8rem, 0.97rem);
+  --admin-table-cell-x: clamp(0.75rem, 0.25vw + 0.55rem, 1rem);
+  --admin-table-cell-y: clamp(0.62rem, 0.2vw + 0.5rem, 0.85rem);
+  --admin-sidebar-width-desktop: clamp(14rem, 15vw, 16rem);
+  --admin-sidebar-width-drawer: min(84vw, 19rem);
+  --admin-sidebar-font-label: clamp(0.92rem, 0.14vw + 0.88rem, 1.02rem);
+  --admin-sidebar-font-meta: clamp(0.78rem, 0.1vw + 0.75rem, 0.86rem);
+  --admin-sidebar-icon: clamp(1rem, 0.14vw + 0.95rem, 1.14rem);
+  --admin-sidebar-item-height: clamp(2.25rem, 0.3vw + 2.1rem, 2.6rem);
+  --admin-mobile-header-height: clamp(3rem, 0.4vw + 2.8rem, 3.4rem);
+  font-size: var(--admin-font-base);
+}
+
+.admin-shell .admin-card {
+  border-radius: 0.65rem;
+}
+
+.admin-shell .admin-muted {
+  color: #6b7280;
+  font-size: clamp(0.82rem, 0.12vw + 0.78rem, 0.92rem);
+}
+
+.admin-shell .admin-control-sm {
+  min-height: var(--admin-control-sm);
+}
+
+.admin-shell .admin-control-md {
+  min-height: var(--admin-control-md);
+}
+
+.admin-shell .admin-control-lg {
+  min-height: var(--admin-control-lg);
+}
+
+.admin-shell .admin-table thead th {
+  font-size: var(--admin-table-font);
+  padding: var(--admin-table-cell-y) var(--admin-table-cell-x);
+  line-height: 1.45;
+}
+
+.admin-shell .admin-table tbody td {
+  font-size: var(--admin-table-font);
+  padding: var(--admin-table-cell-y) var(--admin-table-cell-x);
+  line-height: 1.5;
+  vertical-align: top;
+}
+
+.admin-shell button:focus-visible,
+.admin-shell input:focus-visible,
+.admin-shell textarea:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(59 130 246 / 0.45);
+}
+
+.admin-shell .admin-sidebar-label {
+  font-size: var(--admin-sidebar-font-label);
+}
+
+.admin-shell .admin-sidebar-meta {
+  font-size: var(--admin-sidebar-font-meta);
+}
+
+.admin-shell .admin-sidebar-icon {
+  width: var(--admin-sidebar-icon);
+  height: var(--admin-sidebar-icon);
+}
+
+.admin-shell .admin-sidebar-item {
+  min-height: var(--admin-sidebar-item-height);
+}

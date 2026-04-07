@@ -24,25 +24,25 @@ export default function Pagination({
   const hasNext = page * pageSize < total;
 
   return (
-    <div className="p-4 flex items-center justify-between border-t border-gray-200">
-      <div className="text-sm text-gray-600">
+    <div className="flex items-center justify-between border-t border-gray-200 p-[clamp(0.75rem,0.4vw+0.6rem,1rem)]">
+      <div className="text-[clamp(0.86rem,0.12vw+0.82rem,0.95rem)] text-gray-600">
         共 {total} {unit}
       </div>
       <div className="flex items-center gap-1">
         <button
           onClick={() => onPageChange(Math.max(1, page - 1))}
           disabled={!hasPrev}
-          className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50"
+          className="admin-control-sm rounded border border-gray-300 px-3 text-[clamp(0.84rem,0.1vw+0.8rem,0.92rem)] hover:bg-gray-50 transition-colors disabled:opacity-50"
         >
           上一页
         </button>
-        <button className="px-3 py-1 text-sm bg-blue-600 text-white rounded cursor-default">
+        <button className="admin-control-sm cursor-default rounded bg-blue-600 px-3 text-[clamp(0.84rem,0.1vw+0.8rem,0.92rem)] text-white">
           {page}
         </button>
         <button
           onClick={() => onPageChange(page + 1)}
           disabled={!hasNext}
-          className="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50"
+          className="admin-control-sm rounded border border-gray-300 px-3 text-[clamp(0.84rem,0.1vw+0.8rem,0.92rem)] hover:bg-gray-50 transition-colors disabled:opacity-50"
         >
           下一页
         </button>

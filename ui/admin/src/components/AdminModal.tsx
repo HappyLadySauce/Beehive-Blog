@@ -48,13 +48,13 @@ export default function AdminModal({
 }: AdminModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className={`bg-white rounded-lg shadow-xl w-full ${maxWidthClass[maxWidth]} mx-4`}>
+      <div className={`bg-white rounded-lg shadow-xl w-full ${maxWidthClass[maxWidth]} mx-4 admin-card`}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h3 className="text-base font-medium text-gray-900">{title}</h3>
+        <div className="flex items-center justify-between border-b border-gray-200 px-[clamp(1rem,0.6vw+0.7rem,1.5rem)] py-[clamp(0.8rem,0.4vw+0.65rem,1rem)]">
+          <h3 className="text-[clamp(0.98rem,0.2vw+0.9rem,1.12rem)] font-medium text-gray-900">{title}</h3>
           <button
             onClick={onClose}
-            className="p-1 text-gray-400 hover:text-gray-600 rounded"
+            className="admin-control-sm rounded p-1 text-gray-400 hover:text-gray-600"
             aria-label="关闭"
           >
             <X className="w-5 h-5" />
@@ -62,13 +62,13 @@ export default function AdminModal({
         </div>
 
         {/* Body */}
-        <div className="px-6 py-4 space-y-4">{children}</div>
+        <div className="space-y-4 px-[clamp(1rem,0.6vw+0.7rem,1.5rem)] py-[clamp(0.8rem,0.45vw+0.65rem,1rem)]">{children}</div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
+        <div className="flex justify-end gap-3 border-t border-gray-200 px-[clamp(1rem,0.6vw+0.7rem,1.5rem)] py-[clamp(0.8rem,0.45vw+0.65rem,1rem)]">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+            className="admin-control-md rounded border border-gray-300 px-4 text-[clamp(0.86rem,0.13vw+0.82rem,0.96rem)] hover:bg-gray-50 transition-colors"
           >
             取消
           </button>
@@ -76,7 +76,7 @@ export default function AdminModal({
             <button
               onClick={onConfirm}
               disabled={loading}
-              className={`px-4 py-2 text-sm rounded transition-colors disabled:opacity-50 ${confirmVariantClass[confirmVariant]}`}
+              className={`admin-control-md rounded px-4 text-[clamp(0.86rem,0.13vw+0.82rem,0.96rem)] transition-colors disabled:opacity-50 ${confirmVariantClass[confirmVariant]}`}
             >
               {loading ? '提交中...' : confirmLabel}
             </button>

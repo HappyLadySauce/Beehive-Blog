@@ -85,7 +85,7 @@ export default function Comments() {
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded">
+      <div className="admin-card rounded bg-white border border-gray-200">
         <div className="p-4 border-b border-gray-200 flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 min-w-52">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -107,7 +107,7 @@ export default function Comments() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="admin-table w-full border-collapse text-left">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
                 <th className="px-4 py-3 text-sm font-medium text-gray-600 min-w-[200px]">内容</th>

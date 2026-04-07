@@ -231,7 +231,7 @@ export default function ArticleManagement() {
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded">
+      <div className="admin-card rounded bg-white border border-gray-200">
         <div className="p-4 border-b border-gray-200">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -284,7 +284,7 @@ export default function ArticleManagement() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="admin-table w-full border-collapse text-left">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
                 <th className="px-4 py-3">

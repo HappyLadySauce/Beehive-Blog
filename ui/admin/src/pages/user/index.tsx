@@ -466,7 +466,7 @@ export default function Users() {
         </button>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded">
+      <div className="admin-card rounded bg-white border border-gray-200">
         {/* 搜索/筛选栏 */}
         <div className="p-4 border-b border-gray-200 flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 min-w-52">
@@ -505,16 +505,16 @@ export default function Users() {
 
         {/* 表格 */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="admin-table w-full border-collapse text-left">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-4 py-3 text-sm font-medium text-gray-600 min-w-[200px]">用户</th>
+                <th className="px-4 py-3 text-sm font-medium text-gray-600 min-w-[170px]">用户</th>
                 <th className="px-4 py-3 text-sm font-medium text-gray-600 w-24">角色</th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-600 w-28">状态</th>
                 <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 whitespace-nowrap">
                   最后登录
                 </th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 w-[200px]">操作</th>
+                <th className="px-4 py-3 text-sm font-medium text-gray-600 w-[120px]">用户状态</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 w-[160px]">操作</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -561,63 +561,56 @@ export default function Users() {
                         {roleLabelMap[item.role]}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm">
-                      <span
-                        className={`px-2 py-1 rounded text-xs ${statusColorMap[item.status] || 'bg-gray-100 text-gray-800'}`}
-                      >
-                        {statusLabelMap[item.status] || item.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-500 text-right whitespace-nowrap">
+                    <td className="px-4 py-3 align-top text-sm text-gray-500 text-right whitespace-nowrap">
                       {item.lastLoginAt
                         ? new Date(item.lastLoginAt).toLocaleString()
                         : '-'}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-4 py-3 align-top">
+                      <CustomSelect
+                        value={item.status}
+                        onChange={(v) =>
+                          handleStatusChange(
+                            item,
+                            v as Exclude<UserStatus, 'deleted'>,
+                          )
+                        }
+                        options={statusOptions}
+                        size="sm"
+                        className="w-[100px]"
+                        ariaLabel="用户状态快捷切换"
+                      />
+                    </td>
+                    <td className="px-4 py-3 align-top text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button
-                          className="p-1.5 text-gray-600 hover:bg-gray-100 rounded"
+                          className="flex h-8 w-8 items-center justify-center rounded text-gray-600 hover:bg-gray-100"
                           title="详情"
                           onClick={() => openDetail(item.id)}
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
-                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
+                          className="flex h-8 w-8 items-center justify-center rounded text-blue-600 hover:bg-blue-50"
                           title="编辑"
                           onClick={() => openEdit(item)}
                         >
                           <UserCog className="w-4 h-4" />
                         </button>
                         <button
-                          className="p-1.5 text-orange-600 hover:bg-orange-50 rounded"
+                          className="flex h-8 w-8 items-center justify-center rounded text-orange-600 hover:bg-orange-50"
                           title="重置密码"
                           onClick={() => openPassword(item)}
                         >
                           <Lock className="w-4 h-4" />
                         </button>
                         <button
-                          className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                          className="flex h-8 w-8 items-center justify-center rounded text-red-600 hover:bg-red-50"
                           title="删除"
                           onClick={() => handleDelete(item)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
-                      </div>
-                      <div className="mt-2">
-                        <CustomSelect
-                          value={item.status}
-                          onChange={(v) =>
-                            handleStatusChange(
-                              item,
-                              v as Exclude<UserStatus, 'deleted'>,
-                            )
-                          }
-                          options={statusOptions}
-                          size="sm"
-                          className="w-[92px]"
-                          ariaLabel="用户状态快捷切换"
-                        />
                       </div>
                     </td>
                   </tr>

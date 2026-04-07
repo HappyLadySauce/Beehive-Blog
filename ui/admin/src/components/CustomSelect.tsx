@@ -30,8 +30,8 @@ interface CustomSelectProps {
 }
 
 const triggerSizeClass: Record<'sm' | 'md', string> = {
-  sm: 'h-8 text-sm px-2.5',
-  md: 'h-10 text-sm px-3',
+  sm: 'h-[var(--admin-control-sm)] text-[clamp(0.83rem,0.12vw+0.79rem,0.92rem)] px-2.5',
+  md: 'h-[var(--admin-control-md)] text-[clamp(0.86rem,0.14vw+0.82rem,0.98rem)] px-3',
 };
 
 const MENU_MAX_PX = 256; // tailwind max-h-64
@@ -208,7 +208,7 @@ export default function CustomSelect({
           zIndex: 9999,
           maxHeight: MENU_MAX_PX,
         }}
-        className={`overflow-auto rounded-md border border-gray-200 bg-white shadow-lg py-1 ${menuClassName}`}
+        className={`overflow-auto rounded-md border border-gray-200 bg-white shadow-lg py-1 text-[clamp(0.84rem,0.12vw+0.8rem,0.95rem)] ${menuClassName}`}
       >
         {options.map((opt, index) => {
           const isSelected = opt.value === value;
@@ -219,7 +219,7 @@ export default function CustomSelect({
                 type="button"
                 onMouseEnter={() => setActiveIndex(index)}
                 onClick={() => commitAt(index)}
-                className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+                className={`w-full text-left px-3 py-2 transition-colors ${
                   isSelected
                     ? 'bg-blue-50 text-blue-700'
                     : isActive
