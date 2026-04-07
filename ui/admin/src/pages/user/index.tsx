@@ -45,16 +45,16 @@ const statusLabelMap: Record<UserStatus, string> = {
 };
 
 const statusColorMap: Record<UserStatus, string> = {
-  active: 'bg-green-100 text-green-800',
-  inactive: 'bg-yellow-100 text-yellow-800',
-  disabled: 'bg-red-100 text-red-800',
-  deleted: 'bg-gray-100 text-gray-800',
+  active: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
+  inactive: 'bg-yellow-500/15 text-yellow-800 dark:text-yellow-400',
+  disabled: 'bg-red-500/15 text-red-700 dark:text-red-400',
+  deleted: 'bg-muted text-muted-foreground',
 };
 
 const roleBadgeClass: Record<UserRole, string> = {
-  guest: 'bg-gray-100 text-gray-800',
-  user: 'bg-blue-100 text-blue-800',
-  admin: 'bg-purple-100 text-purple-800',
+  guest: 'bg-muted text-foreground',
+  user: 'bg-primary/15 text-primary',
+  admin: 'bg-purple-500/15 text-purple-800 dark:text-purple-300',
 };
 
 const roleOptions = [
@@ -457,20 +457,20 @@ export default function Users() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-medium text-gray-900">用户管理</h2>
+        <h2 className="text-lg font-medium text-foreground">用户管理</h2>
         <button
           onClick={openCreate}
-          className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+          className="px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
         >
           新建用户
         </button>
       </div>
 
-      <div className="admin-card rounded bg-white border border-gray-200">
+      <div className="admin-card admin-card-glass rounded border">
         {/* 搜索/筛选栏 */}
-        <div className="p-4 border-b border-gray-200 flex items-center gap-3 flex-wrap">
+        <div className="p-4 border-b border-border flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 min-w-52">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               value={keyword}
               onChange={(e) => {
@@ -478,7 +478,7 @@ export default function Users() {
                 setPage(1);
               }}
               placeholder="搜索用户名/昵称/邮箱"
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded bg-input-background text-foreground focus:ring-2 focus:ring-ring focus:border-transparent"
             />
           </div>
           <CustomSelect
@@ -507,26 +507,26 @@ export default function Users() {
         <div className="overflow-x-auto">
           <table className="admin-table w-full border-collapse text-left">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-4 py-3 text-sm font-medium text-gray-600 min-w-[170px]">用户</th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-600 w-24">角色</th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 whitespace-nowrap">
+              <tr className="bg-muted/50 border-b border-border">
+                <th className="px-4 py-3 text-sm font-medium text-muted-foreground min-w-[170px]">用户</th>
+                <th className="px-4 py-3 text-sm font-medium text-muted-foreground w-24">角色</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground whitespace-nowrap">
                   最后登录
                 </th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-600 w-[120px]">用户状态</th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 w-[160px]">操作</th>
+                <th className="px-4 py-3 text-sm font-medium text-muted-foreground w-[120px]">用户状态</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground w-[160px]">操作</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-border">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                     加载中...
                   </td>
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                     暂无用户
                   </td>
                 </tr>
@@ -535,20 +535,20 @@ export default function Users() {
                   const displayName = item.nickname?.trim() || item.username;
                   const initial = (displayName || '?').charAt(0).toUpperCase();
                   return (
-                  <tr key={item.id} className="hover:bg-gray-50">
+                  <tr key={item.id} className="hover:bg-muted/50">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3 min-w-0">
                         <span
-                          className="shrink-0 flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-800"
+                          className="shrink-0 flex h-9 w-9 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary"
                           aria-hidden
                         >
                           {initial}
                         </span>
                         <div className="min-w-0">
-                          <div className="text-sm font-semibold text-gray-900 truncate">
+                          <div className="text-sm font-semibold text-foreground truncate">
                             {displayName}
                           </div>
-                          <div className="text-xs text-gray-500 truncate">
+                          <div className="text-xs text-muted-foreground truncate">
                             {item.email || '—'}
                           </div>
                         </div>
@@ -561,7 +561,7 @@ export default function Users() {
                         {roleLabelMap[item.role]}
                       </span>
                     </td>
-                    <td className="px-4 py-3 align-top text-sm text-gray-500 text-right whitespace-nowrap">
+                    <td className="px-4 py-3 align-top text-sm text-muted-foreground text-right whitespace-nowrap">
                       {item.lastLoginAt
                         ? new Date(item.lastLoginAt).toLocaleString()
                         : '-'}
@@ -584,14 +584,14 @@ export default function Users() {
                     <td className="px-4 py-3 align-top text-right">
                       <div className="flex items-center justify-end gap-1">
                         <button
-                          className="flex h-8 w-8 items-center justify-center rounded text-gray-600 hover:bg-gray-100"
+                          className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground hover:bg-accent"
                           title="详情"
                           onClick={() => openDetail(item.id)}
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
-                          className="flex h-8 w-8 items-center justify-center rounded text-blue-600 hover:bg-blue-50"
+                          className="flex h-8 w-8 items-center justify-center rounded text-primary hover:bg-primary/10"
                           title="编辑"
                           onClick={() => openEdit(item)}
                         >
@@ -647,35 +647,35 @@ export default function Users() {
         <AdminModal title="用户详情" onClose={closeModal} maxWidth="md">
           <div className="space-y-2 text-sm">
             <p>
-              <span className="text-gray-500">ID：</span>
+              <span className="text-muted-foreground">ID：</span>
               {currentUser.id}
             </p>
             <p>
-              <span className="text-gray-500">用户名：</span>
+              <span className="text-muted-foreground">用户名：</span>
               {currentUser.username}
             </p>
             <p>
-              <span className="text-gray-500">昵称：</span>
+              <span className="text-muted-foreground">昵称：</span>
               {currentUser.nickname || '-'}
             </p>
             <p>
-              <span className="text-gray-500">邮箱：</span>
+              <span className="text-muted-foreground">邮箱：</span>
               {currentUser.email}
             </p>
             <p>
-              <span className="text-gray-500">角色：</span>
+              <span className="text-muted-foreground">角色：</span>
               {roleLabelMap[currentUser.role]}
             </p>
             <p>
-              <span className="text-gray-500">状态：</span>
+              <span className="text-muted-foreground">状态：</span>
               {statusLabelMap[currentUser.status]}
             </p>
             <p>
-              <span className="text-gray-500">创建时间：</span>
+              <span className="text-muted-foreground">创建时间：</span>
               {new Date(currentUser.createdAt).toLocaleString()}
             </p>
             <p>
-              <span className="text-gray-500">最后登录：</span>
+              <span className="text-muted-foreground">最后登录：</span>
               {currentUser.lastLoginAt
                 ? new Date(currentUser.lastLoginAt).toLocaleString()
                 : '-'}
@@ -696,7 +696,7 @@ export default function Users() {
           maxWidth="md"
         >
           <div className="space-y-3">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               为用户 <span className="font-medium">{currentUser.username}</span> 设置新密码：
             </p>
             <PasswordField

@@ -208,7 +208,7 @@ export default function CustomSelect({
           zIndex: 9999,
           maxHeight: MENU_MAX_PX,
         }}
-        className={`overflow-auto rounded-md border border-gray-200 bg-white shadow-lg py-1 text-[clamp(0.84rem,0.12vw+0.8rem,0.95rem)] ${menuClassName}`}
+        className={`overflow-auto rounded-md border border-border bg-popover text-popover-foreground shadow-lg py-1 text-[clamp(0.84rem,0.12vw+0.8rem,0.95rem)] ${menuClassName}`}
       >
         {options.map((opt, index) => {
           const isSelected = opt.value === value;
@@ -221,10 +221,10 @@ export default function CustomSelect({
                 onClick={() => commitAt(index)}
                 className={`w-full text-left px-3 py-2 transition-colors ${
                   isSelected
-                    ? 'bg-blue-50 text-blue-700'
+                    ? 'bg-primary/15 text-primary'
                     : isActive
-                      ? 'bg-gray-50 text-gray-900'
-                      : 'text-gray-700'
+                      ? 'bg-muted text-foreground'
+                      : 'text-foreground'
                 }`}
               >
                 {opt.label}
@@ -247,11 +247,11 @@ export default function CustomSelect({
         aria-controls={listId}
         onClick={() => !disabled && setOpen((v) => !v)}
         onKeyDown={onTriggerKeyDown}
-        className={`w-full inline-flex items-center justify-between rounded-md border border-gray-300 bg-white text-gray-900 ${triggerSizeClass[size]} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-transparent disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors ${triggerClassName}`}
+        className={`w-full inline-flex items-center justify-between rounded-md border border-border bg-input-background text-foreground ${triggerSizeClass[size]} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed transition-colors ${triggerClassName}`}
       >
         <span className="truncate">{selected?.label || placeholder}</span>
         <ChevronDown
-          className={`w-4 h-4 text-gray-500 transition-transform shrink-0 ${open ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-muted-foreground transition-transform shrink-0 ${open ? 'rotate-180' : ''}`}
         />
       </button>
 

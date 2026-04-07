@@ -1,81 +1,104 @@
 @custom-variant dark (&:is(.dark *));
 
+/* 触手生春风格：浅色 pastel 渐变 + 薰衣草紫强调；深色炭灰底 + 玻璃与光斑（见 docs/qq-chushou-shengchun） */
 :root {
+  color-scheme: light;
   --font-size: 16px;
-  --background: #ffffff;
-  --foreground: oklch(0.145 0 0);
-  --card: #ffffff;
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: #030213;
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.95 0.0058 264.53);
-  --secondary-foreground: #030213;
-  --muted: #ececf0;
-  --muted-foreground: #717182;
-  --accent: #e9ebef;
-  --accent-foreground: #030213;
+  --admin-app-bg: linear-gradient(
+    135deg,
+    #f8e1ec 0%,
+    #fff3d4 38%,
+    #e8f5e9 72%,
+    #e3f2fd 100%
+  );
+  --admin-bloom-light-1: rgba(245, 184, 200, 0.42);
+  --admin-bloom-light-2: rgba(200, 230, 201, 0.38);
+  --background: rgba(255, 255, 255, 0.35);
+  --foreground: #2c2c2e;
+  --card: rgba(255, 255, 255, 0.55);
+  --card-foreground: #2c2c2e;
+  --popover: rgba(255, 255, 255, 0.92);
+  --popover-foreground: #2c2c2e;
+  --primary: #a594d3;
+  --primary-foreground: #ffffff;
+  --secondary: rgba(165, 148, 211, 0.12);
+  --secondary-foreground: #2c2c2e;
+  --muted: rgba(255, 255, 255, 0.45);
+  --muted-foreground: rgba(44, 44, 46, 0.55);
+  --accent: rgba(165, 148, 211, 0.15);
+  --accent-foreground: #2c2c2e;
   --destructive: #d4183d;
   --destructive-foreground: #ffffff;
-  --border: rgba(0, 0, 0, 0.1);
-  --input: transparent;
-  --input-background: #f3f3f5;
+  --border: rgba(0, 0, 0, 0.08);
+  --input: rgba(0, 0, 0, 0.1);
+  --input-background: rgba(255, 255, 255, 0.72);
   --switch-background: #cbced4;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: oklch(0.708 0 0);
+  --ring: #a594d3;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: #030213;
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: rgba(255, 255, 255, 0.42);
+  --sidebar-foreground: #2c2c2e;
+  --sidebar-primary: #a594d3;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(165, 148, 211, 0.12);
+  --sidebar-accent-foreground: #2c2c2e;
+  --sidebar-border: rgba(0, 0, 0, 0.08);
+  --sidebar-ring: #a594d3;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.396 0.141 25.723);
-  --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
-  --font-weight-medium: 500;
-  --font-weight-normal: 400;
+  color-scheme: dark;
+  --admin-app-bg: #1c1c1e;
+  --admin-bloom-dark-1: rgba(192, 128, 128, 0.35);
+  --admin-bloom-dark-2: rgba(144, 128, 160, 0.32);
+  --background: #1c1c1e;
+  --foreground: rgba(255, 255, 255, 0.92);
+  --card: rgba(30, 30, 32, 0.78);
+  --card-foreground: rgba(255, 255, 255, 0.92);
+  --popover: rgba(36, 36, 38, 0.96);
+  --popover-foreground: rgba(255, 255, 255, 0.92);
+  --primary: #9b92d1;
+  --primary-foreground: #ffffff;
+  --secondary: rgba(155, 146, 209, 0.18);
+  --secondary-foreground: rgba(255, 255, 255, 0.92);
+  --muted: rgba(255, 255, 255, 0.08);
+  --muted-foreground: rgba(255, 255, 255, 0.48);
+  --accent: rgba(155, 146, 209, 0.15);
+  --accent-foreground: rgba(255, 255, 255, 0.92);
+  --destructive: oklch(0.55 0.18 25);
+  --destructive-foreground: #ffffff;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.12);
+  --input-background: rgba(44, 44, 46, 0.85);
+  --switch-background: oklch(0.35 0 0);
+  --ring: #9b92d1;
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+  --sidebar: rgba(30, 30, 32, 0.85);
+  --sidebar-foreground: rgba(255, 255, 255, 0.92);
+  --sidebar-primary: #9b92d1;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(255, 255, 255, 0.08);
+  --sidebar-accent-foreground: rgba(255, 255, 255, 0.92);
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: #9b92d1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
 }
 
 @theme inline {
@@ -128,11 +151,6 @@
     @apply bg-background text-foreground;
   }
 
-  /**
-  * Default typography styles for HTML elements (h1-h4, p, label, button, input).
-  * These are in @layer base, so Tailwind utility classes (like text-sm, text-lg) automatically override them.
-  */
-
   html {
     font-size: var(--font-size);
   }
@@ -180,7 +198,7 @@
   }
 }
 
-/* Admin shell adaptive tokens */
+/* Admin shell：渐变底 + 浅色光斑；深色为纯色底 + 伪元素光斑（pointer-events: none） */
 .admin-shell {
   --admin-font-base: clamp(14px, 0.35vw + 12px, 17px);
   --admin-space-1: clamp(0.25rem, 0.15vw + 0.2rem, 0.5rem);
@@ -202,15 +220,84 @@
   --admin-sidebar-icon: clamp(1rem, 0.14vw + 0.95rem, 1.14rem);
   --admin-sidebar-item-height: clamp(2.25rem, 0.3vw + 2.1rem, 2.6rem);
   --admin-mobile-header-height: clamp(3rem, 0.4vw + 2.8rem, 3.4rem);
+  position: relative;
+  isolation: isolate;
+  background: var(--admin-app-bg);
+  background-attachment: fixed;
   font-size: var(--admin-font-base);
+}
+
+.admin-shell::before,
+.admin-shell::after {
+  content: "";
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* 浅色：柔和光斑 */
+:root:not(.dark) .admin-shell::before {
+  width: min(420px, 90vw);
+  height: min(420px, 90vw);
+  top: -120px;
+  left: -80px;
+  filter: blur(80px);
+  opacity: 0.4;
+  background: var(--admin-bloom-light-1);
+}
+
+:root:not(.dark) .admin-shell::after {
+  width: min(380px, 85vw);
+  height: min(380px, 85vw);
+  bottom: -100px;
+  right: -60px;
+  filter: blur(80px);
+  opacity: 0.38;
+  background: var(--admin-bloom-light-2);
+}
+
+.dark .admin-shell::before {
+  width: min(480px, 95vw);
+  height: min(480px, 95vw);
+  top: -140px;
+  left: -100px;
+  filter: blur(100px);
+  opacity: 0.45;
+  background: var(--admin-bloom-dark-1);
+}
+
+.dark .admin-shell::after {
+  width: min(420px, 90vw);
+  height: min(420px, 90vw);
+  bottom: -120px;
+  right: -80px;
+  filter: blur(100px);
+  opacity: 0.42;
+  background: var(--admin-bloom-dark-2);
+}
+
+/* 无 backdrop-filter 支持时仍保留渐变/底色 */
+@supports not (backdrop-filter: blur(1px)) {
+  .admin-shell .admin-card-glass {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 }
 
 .admin-shell .admin-card {
   border-radius: 0.65rem;
 }
 
+.admin-shell .admin-card-glass {
+  background: var(--card);
+  border: 1px solid var(--border);
+  backdrop-filter: saturate(140%) blur(18px);
+  -webkit-backdrop-filter: saturate(140%) blur(18px);
+}
+
 .admin-shell .admin-muted {
-  color: #6b7280;
+  color: var(--muted-foreground);
   font-size: clamp(0.82rem, 0.12vw + 0.78rem, 0.92rem);
 }
 
@@ -243,7 +330,7 @@
 .admin-shell input:focus-visible,
 .admin-shell textarea:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px rgb(59 130 246 / 0.45);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 45%, transparent);
 }
 
 .admin-shell .admin-sidebar-label {
@@ -261,4 +348,10 @@
 
 .admin-shell .admin-sidebar-item {
   min-height: var(--admin-sidebar-item-height);
+}
+
+/* 主内容叠在装饰层之上 */
+.admin-shell > * {
+  position: relative;
+  z-index: 1;
 }

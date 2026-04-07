@@ -144,59 +144,59 @@ export default function Categories() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <FolderOpen className="w-5 h-5 text-gray-600" />
-          <h2 className="text-lg font-medium text-gray-900">分类管理</h2>
+          <FolderOpen className="w-5 h-5 text-muted-foreground" />
+          <h2 className="text-lg font-medium text-foreground">分类管理</h2>
         </div>
         <button
           onClick={openCreate}
-          className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+          className="px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
         >
           新建分类
         </button>
       </div>
 
-      <div className="admin-card overflow-hidden rounded bg-white border border-gray-200">
+      <div className="admin-card admin-card-glass overflow-hidden rounded border">
         <table className="admin-table w-full border-collapse text-left">
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-4 py-3 text-sm font-medium text-gray-600 min-w-[180px]">名称</th>
-              <th className="px-4 py-3 text-sm font-medium text-gray-600">描述</th>
-              <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 whitespace-nowrap">
+            <tr className="bg-muted/50 border-b border-border">
+              <th className="px-4 py-3 text-sm font-medium text-muted-foreground min-w-[180px]">名称</th>
+              <th className="px-4 py-3 text-sm font-medium text-muted-foreground">描述</th>
+              <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground whitespace-nowrap">
                 文章数
               </th>
-              <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">操作</th>
+              <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">操作</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-border">
             {loading ? (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
                   加载中...
                 </td>
               </tr>
             ) : categories.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
                   暂无分类
                 </td>
               </tr>
             ) : (
               categories.map((cat) => (
-                <tr key={cat.id} className="hover:bg-gray-50">
+                <tr key={cat.id} className="hover:bg-muted/50">
                   <td className="px-4 py-3">
-                    <div className="text-sm font-semibold text-gray-900">{cat.name}</div>
-                    <div className="text-xs text-gray-500 mt-0.5 font-mono">{cat.slug}</div>
+                    <div className="text-sm font-semibold text-foreground">{cat.name}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5 font-mono">{cat.slug}</div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-500 max-w-xs truncate">
+                  <td className="px-4 py-3 text-sm text-muted-foreground max-w-xs truncate">
                     {cat.description || '-'}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-600 text-right tabular-nums">
+                  <td className="px-4 py-3 text-sm text-muted-foreground text-right tabular-nums">
                     {cat.articleCount}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => openEdit(cat)}
-                      className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      className="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors"
                       title="编辑"
                     >
                       <Edit className="w-4 h-4" />

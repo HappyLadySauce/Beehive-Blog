@@ -21,9 +21,9 @@ export default function App() {
       case 'settings':
       case 'quickcreate':
         return (
-          <div className="bg-white border border-gray-200 rounded p-8 text-center">
-            <div className="text-gray-400 text-lg mb-2">功能开发中...</div>
-            <div className="text-gray-500 text-sm">该功能即将上线</div>
+          <div className="bg-card border border-border rounded p-8 text-center">
+            <div className="text-muted-foreground text-lg mb-2">功能开发中...</div>
+            <div className="text-muted-foreground text-sm">该功能即将上线</div>
           </div>
         );
       default:
@@ -32,7 +32,7 @@ export default function App() {
   };
 
   return (
-    <div className="size-full flex bg-gray-50">
+    <div className="size-full flex bg-background">
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
       <main className="flex-1 overflow-auto">
         <div className="p-6">

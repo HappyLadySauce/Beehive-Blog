@@ -14,7 +14,7 @@ interface BaseFieldProps {
 }
 
 const inputBase =
-  'w-full px-3 text-[clamp(0.86rem,0.14vw+0.82rem,0.98rem)] border border-gray-300 rounded admin-control-md focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-500';
+  'w-full px-3 text-[clamp(0.86rem,0.14vw+0.82rem,0.98rem)] border border-border rounded bg-input-background text-foreground admin-control-md focus:ring-2 focus:ring-ring focus:border-transparent disabled:bg-muted disabled:text-muted-foreground';
 
 function FieldLabel({
   label,
@@ -22,10 +22,10 @@ function FieldLabel({
   required,
 }: Pick<BaseFieldProps, 'label' | 'hint' | 'required'>) {
   return (
-    <label className="mb-1 block text-[clamp(0.86rem,0.13vw+0.82rem,0.96rem)] font-medium text-gray-700">
+    <label className="mb-1 block text-[clamp(0.86rem,0.13vw+0.82rem,0.96rem)] font-medium text-foreground">
       {label}
       {required && <span className="text-red-500 ml-0.5">*</span>}
-      {hint && <span className="text-gray-400 font-normal ml-1">{hint}</span>}
+      {hint && <span className="text-muted-foreground font-normal ml-1">{hint}</span>}
     </label>
   );
 }
@@ -232,7 +232,7 @@ export function ColorField({
           value={value}
           onChange={(e: ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
           disabled={disabled}
-          className="h-[var(--admin-control-md)] w-[var(--admin-control-md)] rounded border border-gray-300 cursor-pointer p-0.5 disabled:cursor-not-allowed"
+          className="h-[var(--admin-control-md)] w-[var(--admin-control-md)] rounded border border-border cursor-pointer p-0.5 disabled:cursor-not-allowed"
         />
         <input
           type="text"

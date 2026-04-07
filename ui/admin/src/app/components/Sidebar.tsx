@@ -1,6 +1,7 @@
 import { LayoutDashboard, FileText, FolderOpen, Tag, MessageSquare, Image, Settings, Users, X } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
+import ThemeToggle from '../../components/ThemeToggle';
 
 interface SidebarProps {
   mode?: 'desktop' | 'drawer';
@@ -32,25 +33,25 @@ export default function Sidebar({
 
   return (
     <aside
-      className={`shrink-0 border-r border-gray-200 bg-white flex flex-col ${
+      className={`shrink-0 border-r border-border bg-card/90 flex flex-col backdrop-blur-md ${
         isDrawer
           ? 'h-full w-[var(--admin-sidebar-width-drawer)]'
           : 'h-screen w-[var(--admin-sidebar-width-desktop)]'
       }`}
     >
       {/* Logo */}
-      <div className="border-b border-gray-200 px-5 py-4 lg:px-6 lg:py-5">
+      <div className="border-b border-border px-5 py-4 lg:px-6 lg:py-5">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded bg-blue-600 text-white admin-sidebar-label font-semibold">
+          <div className="flex h-8 w-8 items-center justify-center rounded bg-primary text-primary-foreground admin-sidebar-label font-semibold">
             B
           </div>
-          <span className="admin-sidebar-label font-medium text-gray-900">Beehive</span>
+          <span className="admin-sidebar-label font-medium text-foreground">Beehive</span>
           {isDrawer && (
             <button
               type="button"
               onClick={onClose}
               aria-label="关闭导航菜单"
-              className="ml-auto flex h-9 w-9 items-center justify-center rounded text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              className="ml-auto flex h-9 w-9 items-center justify-center rounded text-muted-foreground hover:bg-accent hover:text-foreground"
             >
               <X className="h-5 w-5" />
             </button>
@@ -71,10 +72,10 @@ export default function Sidebar({
                 navigate(item.path);
                 onNavigate?.();
               }}
-              className={`admin-sidebar-item w-full px-4 lg:px-5 py-2.5 flex items-center justify-between gap-3 admin-sidebar-label transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 ${
+              className={`admin-sidebar-item w-full px-4 lg:px-5 py-2.5 flex items-center justify-between gap-3 admin-sidebar-label transition-colors focus-visible:ring-2 focus-visible:ring-ring ${
                 isActive
-                  ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600'
-                  : 'text-gray-700 hover:bg-gray-50'
+                  ? 'bg-primary/10 text-primary border-r-2 border-primary'
+                  : 'text-foreground hover:bg-accent'
               }`}
             >
               <div className="flex items-center gap-2.5">
@@ -82,24 +83,27 @@ export default function Sidebar({
                 <span className="truncate">{item.label}</span>
               </div>
               {item.shortcut && (
-                <span className="admin-sidebar-meta text-gray-400">{item.shortcut}</span>
+                <span className="admin-sidebar-meta text-muted-foreground">{item.shortcut}</span>
               )}
             </button>
           );
         })}
       </nav>
 
-      {/* User Info */}
-      <div className="border-t border-gray-200 p-4">
+      {/* Theme + User */}
+      <div className="border-t border-border p-4 space-y-3">
+        <div className="flex justify-center">
+          <ThemeToggle />
+        </div>
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-purple-600 text-xs font-medium text-primary-foreground">
             {user?.nickname?.[0] || user?.username?.[0] || 'A'}
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="admin-sidebar-label font-medium text-gray-900 truncate">
+          <div className="min-w-0 flex-1">
+            <div className="admin-sidebar-label font-medium text-foreground truncate">
               {user?.nickname || user?.username || 'Admin'}
             </div>
-            <div className="admin-sidebar-meta text-gray-500 truncate">管理员</div>
+            <div className="admin-sidebar-meta text-muted-foreground truncate">管理员</div>
           </div>
         </div>
       </div>

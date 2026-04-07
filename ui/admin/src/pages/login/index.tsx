@@ -47,14 +47,14 @@ export default function Login() {
   };
 
   return (
-    <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+    <div className="bg-card border border-border py-8 px-4 shadow sm:rounded-lg sm:px-10">
       <div className="sm:mx-auto sm:w-full sm:max-w-md mb-6">
         <div className="flex justify-center">
-          <div className="w-12 h-12 bg-blue-600 rounded flex items-center justify-center text-white text-xl font-bold">
+          <div className="w-12 h-12 bg-primary rounded flex items-center justify-center text-primary-foreground text-xl font-bold">
             B
           </div>
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-foreground">
           Beehive Blog Admin
         </h2>
       </div>
@@ -95,7 +95,7 @@ export default function Login() {
         <div>
           <Button
             type="submit"
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring"
             disabled={loading}
           >
             {loading ? '登录中...' : '登录'}

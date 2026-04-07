@@ -155,11 +155,11 @@ export default function ArticleManagement() {
   };
 
   const statusColors: Record<string, string> = {
-    published: 'bg-green-100 text-green-800',
-    draft: 'bg-gray-100 text-gray-800',
-    scheduled: 'bg-blue-100 text-blue-800',
-    archived: 'bg-yellow-100 text-yellow-800',
-    private: 'bg-purple-100 text-purple-800',
+    published: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
+    draft: 'bg-muted text-foreground',
+    scheduled: 'bg-primary/15 text-primary',
+    archived: 'bg-yellow-500/15 text-yellow-800 dark:text-yellow-400',
+    private: 'bg-purple-500/15 text-purple-800 dark:text-purple-300',
   };
 
   const statusLabels: Record<string, string> = {
@@ -210,20 +210,20 @@ export default function ArticleManagement() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <FileText className="w-5 h-5 text-gray-600" />
-          <h2 className="text-lg font-medium text-gray-900">文章</h2>
+          <FileText className="w-5 h-5 text-muted-foreground" />
+          <h2 className="text-lg font-medium text-foreground">文章</h2>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={handleBatchDelete}
             disabled={selectedArticles.length === 0}
-            className="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-red-50 hover:text-red-600 hover:border-red-300 transition-colors disabled:opacity-50"
+            className="px-3 py-1.5 text-sm border border-border rounded bg-background hover:bg-red-500/10 hover:text-red-600 hover:border-red-500/40 transition-colors disabled:opacity-50"
           >
             批量删除
           </button>
           <button
             onClick={() => navigate('/articles/create')}
-            className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-1.5"
+            className="px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors flex items-center gap-1.5"
           >
             <Plus className="w-4 h-4" />
             新建
@@ -231,22 +231,22 @@ export default function ArticleManagement() {
         </div>
       </div>
 
-      <div className="admin-card rounded bg-white border border-gray-200">
-        <div className="p-4 border-b border-gray-200">
+      <div className="admin-card admin-card-glass rounded border">
+        <div className="p-4 border-b border-border">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
               placeholder="输入文章标题搜索"
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded bg-input-background text-foreground focus:ring-2 focus:ring-ring focus:border-transparent"
             />
           </div>
         </div>
 
-        <div className="p-4 flex items-center gap-3 flex-wrap border-b border-gray-200">
-          <span className="text-sm text-gray-600">状态:</span>
+        <div className="p-4 flex items-center gap-3 flex-wrap border-b border-border">
+          <span className="text-sm text-muted-foreground">状态:</span>
           <CustomSelect
             value={selectedStatus}
             onChange={(v) => { setSelectedStatus(v); setPage(1); }}
@@ -255,7 +255,7 @@ export default function ArticleManagement() {
             ariaLabel="文章状态筛选"
           />
 
-          <span className="text-sm text-gray-600 ml-3">分类:</span>
+          <span className="text-sm text-muted-foreground ml-3">分类:</span>
           <CustomSelect
             value={selectedCategory}
             onChange={(v) => { setSelectedCategory(v); setPage(1); }}
@@ -264,7 +264,7 @@ export default function ArticleManagement() {
             ariaLabel="文章分类筛选"
           />
 
-          <span className="text-sm text-gray-600 ml-3">标签:</span>
+          <span className="text-sm text-muted-foreground ml-3">标签:</span>
           <CustomSelect
             value={selectedTag}
             onChange={(v) => { setSelectedTag(v); setPage(1); }}
@@ -273,7 +273,7 @@ export default function ArticleManagement() {
             ariaLabel="文章标签筛选"
           />
 
-          <span className="text-sm text-gray-600 ml-3">排序:</span>
+          <span className="text-sm text-muted-foreground ml-3">排序:</span>
           <CustomSelect
             value={selectedSort}
             onChange={(v) => { setSelectedSort(v); setPage(1); }}
@@ -286,53 +286,53 @@ export default function ArticleManagement() {
         <div className="overflow-x-auto">
           <table className="admin-table w-full border-collapse text-left">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
+              <tr className="bg-muted/50 border-b border-border">
                 <th className="px-4 py-3">
                   <input
                     type="checkbox"
                     checked={articles.length > 0 && selectedArticles.length === articles.length}
                     onChange={toggleSelectAll}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    className="w-4 h-4 text-primary border-border rounded focus:ring-ring"
                   />
                 </th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-600">标题</th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-600">分类 / 标签</th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-600">状态</th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-600">作者</th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-600">浏览 / 评论</th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-600">发布时间</th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">操作</th>
+                <th className="px-4 py-3 text-sm font-medium text-muted-foreground">标题</th>
+                <th className="px-4 py-3 text-sm font-medium text-muted-foreground">分类 / 标签</th>
+                <th className="px-4 py-3 text-sm font-medium text-muted-foreground">状态</th>
+                <th className="px-4 py-3 text-sm font-medium text-muted-foreground">作者</th>
+                <th className="px-4 py-3 text-sm font-medium text-muted-foreground">浏览 / 评论</th>
+                <th className="px-4 py-3 text-sm font-medium text-muted-foreground">发布时间</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">操作</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-border">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-500">加载中...</td>
+                  <td colSpan={8} className="px-4 py-8 text-center text-sm text-muted-foreground">加载中...</td>
                 </tr>
               ) : articles.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-sm text-gray-500">暂无文章</td>
+                  <td colSpan={8} className="px-4 py-8 text-center text-sm text-muted-foreground">暂无文章</td>
                 </tr>
               ) : (
                 articles.map((article) => (
-                  <tr key={article.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={article.id} className="hover:bg-muted/50 transition-colors">
                     <td className="px-4 py-3">
                       <input
                         type="checkbox"
                         checked={selectedArticles.includes(article.id)}
                         onChange={() => toggleSelectArticle(article.id)}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        className="w-4 h-4 text-primary border-border rounded focus:ring-ring"
                       />
                     </td>
                     <td className="px-4 py-3">
-                      <div className="text-sm text-gray-900 font-medium max-w-md truncate">{article.title}</div>
+                      <div className="text-sm text-foreground font-medium max-w-md truncate">{article.title}</div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-1">
-                        <span className="text-xs text-gray-600">{article.category?.name || '-'}</span>
+                        <span className="text-xs text-muted-foreground">{article.category?.name || '-'}</span>
                         <div className="flex gap-1 flex-wrap">
                           {article.tags?.map((tag) => (
-                            <span key={tag.id} className="px-1.5 py-0.5 bg-gray-100 text-gray-600 text-xs rounded">
+                            <span key={tag.id} className="px-1.5 py-0.5 bg-muted text-muted-foreground text-xs rounded">
                               {tag.name}
                             </span>
                           ))}
@@ -340,27 +340,27 @@ export default function ArticleManagement() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded text-xs ${statusColors[article.status] || 'bg-gray-100 text-gray-800'}`}>
+                      <span className={`px-2 py-1 rounded text-xs ${statusColors[article.status] || 'bg-muted text-foreground'}`}>
                         {statusLabels[article.status] || article.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
+                    <td className="px-4 py-3 text-sm text-muted-foreground">
                       {article.author?.nickname || article.author?.username}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex flex-col text-xs text-gray-600">
+                      <div className="flex flex-col text-xs text-muted-foreground">
                         <span>{article.viewCount} 浏览</span>
                         <span>{article.commentCount} 评论</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">
+                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
                       {article.publishedAt ? new Date(article.publishedAt).toLocaleString() : '-'}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => navigate(`/articles/edit/${article.id}`)}
-                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                          className="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors"
                           title="编辑"
                         >
                           <Edit className="w-4 h-4" />

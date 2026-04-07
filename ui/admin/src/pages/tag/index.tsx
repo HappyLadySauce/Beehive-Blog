@@ -151,74 +151,74 @@ export default function Tags() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <TagIcon className="w-5 h-5 text-gray-600" />
-          <h2 className="text-lg font-medium text-gray-900">标签管理</h2>
+          <TagIcon className="w-5 h-5 text-muted-foreground" />
+          <h2 className="text-lg font-medium text-foreground">标签管理</h2>
         </div>
         <button
           onClick={openCreate}
-          className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+          className="px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"
         >
           新建标签
         </button>
       </div>
 
-      <div className="admin-card overflow-hidden rounded bg-white border border-gray-200">
+      <div className="admin-card admin-card-glass overflow-hidden rounded border">
         <table className="admin-table w-full border-collapse text-left">
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-4 py-3 text-sm font-medium text-gray-600 min-w-[200px]">名称</th>
-              <th className="px-4 py-3 text-sm font-medium text-gray-600">颜色</th>
-              <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 whitespace-nowrap">
+            <tr className="bg-muted/50 border-b border-border">
+              <th className="px-4 py-3 text-sm font-medium text-muted-foreground min-w-[200px]">名称</th>
+              <th className="px-4 py-3 text-sm font-medium text-muted-foreground">颜色</th>
+              <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground whitespace-nowrap">
                 文章数
               </th>
-              <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">操作</th>
+              <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">操作</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-border">
             {loading ? (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
                   加载中...
                 </td>
               </tr>
             ) : tags.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
                   暂无标签
                 </td>
               </tr>
             ) : (
               tags.map((tag) => (
-                <tr key={tag.id} className="hover:bg-gray-50">
+                <tr key={tag.id} className="hover:bg-muted/50">
                   <td className="px-4 py-3">
                     <div className="flex items-start gap-2 min-w-0">
                       <span
-                        className="mt-1.5 shrink-0 inline-block w-2.5 h-2.5 rounded-full border border-gray-200"
+                        className="mt-1.5 shrink-0 inline-block w-2.5 h-2.5 rounded-full border border-border"
                         style={{ backgroundColor: tag.color || '#ccc' }}
                         aria-hidden
                       />
                       <div className="min-w-0">
-                        <div className="text-sm font-semibold text-gray-900 truncate">{tag.name}</div>
-                        <div className="text-xs text-gray-500 mt-0.5 font-mono truncate">{tag.slug}</div>
+                        <div className="text-sm font-semibold text-foreground truncate">{tag.name}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5 font-mono truncate">{tag.slug}</div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-600">
+                  <td className="px-4 py-3 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <span
-                        className="inline-block w-5 h-5 rounded border border-gray-200 shrink-0"
+                        className="inline-block w-5 h-5 rounded border border-border shrink-0"
                         style={{ backgroundColor: tag.color || '#ccc' }}
                       />
                       <span className="font-mono text-xs">{tag.color || '-'}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-600 text-right tabular-nums">
+                  <td className="px-4 py-3 text-sm text-muted-foreground text-right tabular-nums">
                     {tag.articleCount}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => openEdit(tag)}
-                      className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      className="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors"
                       title="编辑"
                     >
                       <Edit className="w-4 h-4" />

@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>设计预览：QQ 触手生春（深色）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-base: #1c1c1e;
+    --bg-elevated: #2c2c2e;
+    --accent-lavender: #9B92D1;
+    --accent-lavender-glow: rgba(155, 146, 209, 0.35);
+    --surface-glass: rgba(30, 30, 32, 0.75);
+    --surface-glass-strong: rgba(44, 44, 46, 0.82);
+    --bubble-incoming: rgba(58, 58, 62, 0.92);
+    --bubble-outgoing: rgba(155, 146, 209, 0.92);
+    --text-primary: rgba(255, 255, 255, 0.92);
+    --text-secondary: rgba(255, 255, 255, 0.48);
+    --text-on-accent: #ffffff;
+    --system-chip: rgba(72, 72, 78, 0.95);
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --shadow-window: 0 28px 100px rgba(0, 0, 0, 0.55);
+    --blur-glass: blur(22px);
+    --radius-window: 20px;
+    --radius-bubble: 16px;
+    --radius-panel: 14px;
+    --font: "Noto Sans SC", "PingFang SC", "Microsoft YaHei UI", system-ui, sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    background: var(--bg-base);
+    padding: 28px 16px 48px;
+    position: relative;
+  }
+
+  /* 深色渐变光斑 */
+  body::before,
+  body::after {
+    content: "";
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.5;
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::before {
+    width: 480px;
+    height: 480px;
+    background: rgba(192, 128, 128, 0.55);
+    top: -140px;
+    left: -100px;
+  }
+  body::after {
+    width: 420px;
+    height: 420px;
+    background: rgba(144, 128, 160, 0.45);
+    bottom: -120px;
+    right: -80px;
+  }
+
+  .page-wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 1040px;
+    margin: 0 auto;
+  }
+
+  .page-title {
+    text-align: center;
+    margin-bottom: 20px;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    color: var(--text-primary);
+  }
+  .page-title span { color: var(--accent-lavender); }
+
+  .app {
+    display: flex;
+    width: 100%;
+    min-height: 520px;
+    border-radius: var(--radius-window);
+    overflow: hidden;
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-window);
+    background: var(--surface-glass);
+    backdrop-filter: saturate(140%) var(--blur-glass);
+    -webkit-backdrop-filter: saturate(140%) var(--blur-glass);
+  }
+
+  .rail {
+    width: 56px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 0;
+    background: rgba(0, 0, 0, 0.2);
+    border-right: 1px solid var(--border-subtle);
+  }
+  .rail-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: none;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary);
+    cursor: default;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, color 0.2s;
+  }
+  .rail-btn.is-active {
+    background: var(--accent-lavender-glow);
+    color: var(--text-primary);
+  }
+
+  .list-pane {
+    width: 260px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border-subtle);
+    background: rgba(0, 0, 0, 0.15);
+  }
+  .list-header {
+    padding: 12px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .list-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+  }
+  .conv {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    border-radius: var(--radius-panel);
+    cursor: default;
+    margin-bottom: 4px;
+  }
+  .conv.is-active {
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 0 0 1px rgba(155, 146, 209, 0.25);
+  }
+  .conv-avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #5c5c60, #3a3a3e);
+    flex-shrink: 0;
+  }
+  .conv-meta { min-width: 0; flex: 1; }
+  .conv-name {
+    font-weight: 500;
+    font-size: 14px;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .conv-snippet {
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .chat-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: rgba(0, 0, 0, 0.12);
+  }
+  .chat-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--surface-glass-strong);
+    border-bottom: 1px solid var(--border-subtle);
+    backdrop-filter: blur(12px);
+  }
+  .chat-peer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .chat-peer-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #6d6d72, #48484a);
+  }
+  .chat-peer-name { font-weight: 600; font-size: 15px; }
+  .chat-tools { display: flex; gap: 12px; color: var(--text-secondary); font-size: 16px; }
+
+  .chat-body {
+    flex: 1;
+    position: relative;
+    overflow-y: auto;
+    padding: 16px 18px 12px;
+  }
+  .chat-body::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.07;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cpath fill='%239B92D1' d='M100 20c8 24 32 40 58 38-18 20-28 48-26 78-26-8-54-8-80 0 2-30-8-58-26-78 26 2 50-14 58-38z'/%3E%3Cpath fill='%23668877' d='M40 140c12-8 28-10 42-4-14 14-22 34-22 56h-40c0-20 8-38 20-52z'/%3E%3C/svg%3E");
+    background-size: 180px;
+  }
+
+  .msg-system {
+    text-align: center;
+    margin: 12px 0;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .msg-system span {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--system-chip);
+    color: rgba(255, 255, 255, 0.75);
+  }
+
+  .row { display: flex; margin-bottom: 14px; align-items: flex-end; gap: 8px; }
+  .row--in { justify-content: flex-start; }
+  .row--out { justify-content: flex-end; }
+
+  .bubble {
+    max-width: 72%;
+    padding: 10px 14px;
+    border-radius: var(--radius-bubble);
+    font-size: 14px;
+    line-height: 1.55;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.25);
+  }
+  .bubble--in {
+    background: var(--bubble-incoming);
+    color: var(--text-primary);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .bubble--out {
+    background: var(--bubble-outgoing);
+    color: var(--text-on-accent);
+  }
+  .mini-av {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: linear-gradient(145deg, #7e57c2, #5e35b1);
+  }
+  .mini-av--right { background: linear-gradient(145deg, #9B92D1, #6a5aae); }
+
+  .composer {
+    padding: 8px 12px 12px;
+    background: var(--surface-glass-strong);
+    border-top: 1px solid var(--border-subtle);
+    backdrop-filter: blur(12px);
+  }
+  .composer-tools {
+    display: flex;
+    gap: 14px;
+    padding: 4px 4px 8px;
+    color: var(--text-secondary);
+    font-size: 17px;
+  }
+  .composer-input {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+  }
+  .composer-input textarea {
+    flex: 1;
+    min-height: 40px;
+    max-height: 100px;
+    resize: none;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 14px;
+    background: rgba(0, 0, 0, 0.25);
+    color: var(--text-primary);
+    outline: none;
+  }
+  .composer-input textarea::placeholder {
+    color: var(--text-secondary);
+  }
+  .btn-send {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: default;
+    background: var(--accent-lavender);
+    color: var(--text-on-accent);
+    box-shadow: 0 4px 20px rgba(155, 146, 209, 0.35);
+  }
+  .btn-close {
+    padding: 10px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 13px;
+    margin-right: 6px;
+  }
+
+  .tokens {
+    margin-top: 32px;
+    padding: 24px;
+    border-radius: var(--radius-window);
+    background: var(--surface-glass);
+    border: 1px solid var(--border-subtle);
+    backdrop-filter: blur(16px);
+  }
+  .tokens h2 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 16px;
+  }
+  .token-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
+  .swatch {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border-subtle);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  }
+  .swatch-color { height: 52px; }
+  .swatch-info {
+    padding: 8px 10px;
+    background: rgba(0, 0, 0, 0.35);
+    font-size: 11px;
+    color: var(--text-primary);
+  }
+  .swatch-name { font-weight: 600; margin-bottom: 2px; }
+  .swatch-hex { font-family: ui-monospace, monospace; color: var(--text-secondary); font-size: 10px; }
+
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .meta-row code {
+    background: rgba(155, 146, 209, 0.2);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--text-primary);
+  }
+
+  @media (max-width: 820px) {
+    .list-pane { display: none; }
+    .rail { width: 48px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-wrap">
+  <p class="page-title">QQ 主题 <span>触手生春</span> · 深色 · 静态预览</p>
+
+  <div class="app" role="application" aria-label="触手生春深色界面示意">
+    <aside class="rail" aria-hidden="true">
+      <button type="button" class="rail-btn is-active" title="消息">💬</button>
+      <button type="button" class="rail-btn" title="联系人">👤</button>
+      <button type="button" class="rail-btn" title="空间">🌐</button>
+      <button type="button" class="rail-btn" title="设置">⚙</button>
+    </aside>
+
+    <section class="list-pane">
+      <div class="list-header">会话</div>
+      <div class="list-scroll">
+        <div class="conv is-active">
+          <div class="conv-avatar" aria-hidden="true"></div>
+          <div class="conv-meta">
+            <div class="conv-name">春日部互助组</div>
+            <div class="conv-snippet">管理员：今晚八点集合～</div>
+          </div>
+        </div>
+        <div class="conv">
+          <div class="conv-avatar" style="background:linear-gradient(145deg,#6d4c41,#5d4037)" aria-hidden="true"></div>
+          <div class="conv-meta">
+            <div class="conv-name">文件传输助手</div>
+            <div class="conv-snippet">已接收图片</div>
+          </div>
+        </div>
+        <div class="conv">
+          <div class="conv-avatar" style="background:linear-gradient(145deg,#37474f,#263238)" aria-hidden="true"></div>
+          <div class="conv-meta">
+            <div class="conv-name">小春</div>
+            <div class="conv-snippet">好的，明天见</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="chat-pane">
+      <header class="chat-top">
+        <div class="chat-peer">
+          <div class="chat-peer-avatar" aria-hidden="true"></div>
+          <div class="chat-peer-name">春日部互助组</div>
+        </div>
+        <div class="chat-tools" aria-hidden="true">🔍 📞 ⋮</div>
+      </header>
+
+      <div class="chat-body">
+        <div class="msg-system"><span>今天 14:12</span></div>
+        <div class="row row--in">
+          <div class="mini-av" aria-hidden="true"></div>
+          <div class="bubble bubble--in">深色底上用压低饱和的粉紫光斑，花卉纹样同样压低透明度。</div>
+        </div>
+        <div class="row row--out">
+          <div class="bubble bubble--out">己方气泡保持浅薰衣草填充，与浅色模式同一色相关系。</div>
+          <div class="mini-av mini-av--right" aria-hidden="true"></div>
+        </div>
+        <div class="msg-system"><span>16:35</span></div>
+        <div class="row row--out">
+          <div class="bubble bubble--out">系统时间条用深灰胶囊，避免抢主内容。</div>
+          <div class="mini-av mini-av--right" aria-hidden="true"></div>
+        </div>
+      </div>
+
+      <footer class="composer">
+        <div class="composer-tools" aria-hidden="true">😊 ✂ 📎 🖼</div>
+        <div class="composer-input">
+          <textarea rows="1" placeholder="输入消息…" readonly aria-readonly="true"></textarea>
+          <div>
+            <button type="button" class="btn-close">关闭</button>
+            <button type="button" class="btn-send">发送</button>
+          </div>
+        </div>
+      </footer>
+    </section>
+  </div>
+
+  <section class="tokens" id="tokens">
+    <h2>Design tokens（深色摘录）</h2>
+    <div class="token-grid">
+      <div class="swatch">
+        <div class="swatch-color" style="background:#1c1c1e"></div>
+        <div class="swatch-info"><div class="swatch-name">背景基色</div><div class="swatch-hex">#1c1c1e</div></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#2c2c2e"></div>
+        <div class="swatch-info"><div class="swatch-name">抬升表面</div><div class="swatch-hex">#2c2c2e</div></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:#9B92D1"></div>
+        <div class="swatch-info"><div class="swatch-name">薰衣草强调</div><div class="swatch-hex">#9B92D1</div></div>
+      </div>
+      <div class="swatch">
+        <div class="swatch-color" style="background:linear-gradient(135deg,#c08080,#9080a0)"></div>
+        <div class="swatch-info"><div class="swatch-name">光斑（示意）</div><div class="swatch-hex">粉 / 紫</div></div>
+      </div>
+    </div>
+    <div class="meta-row">
+      <span><code>--bg-base</code> / <code>--surface-glass</code> 见 DESIGN.md</span>
+      <span><code>backdrop-filter</code> saturate(140%) blur(22px)</span>
+    </div>
+  </section>
+</div>
+
+</body>
+</html>

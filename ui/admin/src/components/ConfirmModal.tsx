@@ -36,7 +36,7 @@ export default function ConfirmModal({
       loading={loading}
       maxWidth="sm"
     >
-      <p className="text-sm text-gray-600">{message}</p>
+      <p className="text-sm text-muted-foreground">{message}</p>
     </AdminModal>
   );
 }

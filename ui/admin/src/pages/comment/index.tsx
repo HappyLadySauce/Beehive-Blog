@@ -6,10 +6,10 @@ import Pagination from '../../components/Pagination';
 import CustomSelect from '../../components/CustomSelect';
 
 const statusColors: Record<string, string> = {
-  approved: 'bg-green-100 text-green-800',
-  pending: 'bg-yellow-100 text-yellow-800',
-  rejected: 'bg-red-100 text-red-800',
-  spam: 'bg-orange-100 text-orange-800',
+  approved: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
+  pending: 'bg-yellow-500/15 text-yellow-800 dark:text-yellow-400',
+  rejected: 'bg-red-500/15 text-red-700 dark:text-red-400',
+  spam: 'bg-orange-500/15 text-orange-800 dark:text-orange-400',
 };
 
 const statusLabels: Record<string, string> = {
@@ -80,21 +80,21 @@ export default function Comments() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <MessageSquare className="w-5 h-5 text-gray-600" />
-          <h2 className="text-lg font-medium text-gray-900">评论管理</h2>
+          <MessageSquare className="w-5 h-5 text-muted-foreground" />
+          <h2 className="text-lg font-medium text-foreground">评论管理</h2>
         </div>
       </div>
 
-      <div className="admin-card rounded bg-white border border-gray-200">
-        <div className="p-4 border-b border-gray-200 flex items-center gap-3 flex-wrap">
+      <div className="admin-card admin-card-glass rounded border">
+        <div className="p-4 border-b border-border flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 min-w-52">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
               type="text"
               placeholder="搜索评论内容..."
               value={keyword}
               onChange={(e) => { setKeyword(e.target.value); setPage(1); }}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-border rounded bg-input-background text-foreground focus:ring-2 focus:ring-ring focus:border-transparent"
             />
           </div>
           <CustomSelect
@@ -109,40 +109,40 @@ export default function Comments() {
         <div className="overflow-x-auto">
           <table className="admin-table w-full border-collapse text-left">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-4 py-3 text-sm font-medium text-gray-600 min-w-[200px]">内容</th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-600 whitespace-nowrap">文章</th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-600">作者</th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-600">状态</th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-gray-600 whitespace-nowrap">
+              <tr className="bg-muted/50 border-b border-border">
+                <th className="px-4 py-3 text-sm font-medium text-muted-foreground min-w-[200px]">内容</th>
+                <th className="px-4 py-3 text-sm font-medium text-muted-foreground whitespace-nowrap">文章</th>
+                <th className="px-4 py-3 text-sm font-medium text-muted-foreground">作者</th>
+                <th className="px-4 py-3 text-sm font-medium text-muted-foreground">状态</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground whitespace-nowrap">
                   时间
                 </th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">操作</th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">操作</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-border">
               {loading ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">加载中...</td></tr>
+                <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">加载中...</td></tr>
               ) : comments.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">暂无评论</td></tr>
+                <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">暂无评论</td></tr>
               ) : (
                 comments.map((comment) => (
-                  <tr key={comment.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-700 max-w-md truncate">
+                  <tr key={comment.id} className="hover:bg-muted/50">
+                    <td className="px-4 py-3 text-sm text-foreground max-w-md truncate">
                       {comment.content}
                     </td>
-                    <td className="px-4 py-3 text-xs text-gray-600 tabular-nums whitespace-nowrap">
+                    <td className="px-4 py-3 text-xs text-muted-foreground tabular-nums whitespace-nowrap">
                       文章 #{comment.articleId}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">
+                    <td className="px-4 py-3 text-sm text-foreground">
                       {comment.author?.nickname || comment.author?.username || '匿名'}
                     </td>
                     <td className="px-4 py-3 text-sm">
-                      <span className={`px-2 py-1 rounded text-xs ${statusColors[comment.status] || 'bg-gray-100 text-gray-800'}`}>
+                      <span className={`px-2 py-1 rounded text-xs ${statusColors[comment.status] || 'bg-muted text-foreground'}`}>
                         {statusLabels[comment.status] || comment.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap text-right">
+                    <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap text-right">
                       {new Date(comment.createdAt).toLocaleString()}
                     </td>
                     <td className="px-4 py-3 text-right">

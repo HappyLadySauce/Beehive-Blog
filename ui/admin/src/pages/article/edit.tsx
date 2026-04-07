@@ -139,17 +139,17 @@ export default function ArticleEdit() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/articles')}
-            className="p-1.5 text-gray-600 hover:bg-gray-100 rounded transition-colors"
+            className="p-1.5 text-muted-foreground hover:bg-accent rounded transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h2 className="text-lg font-medium text-gray-900">{articleId ? '编辑文章' : '新建文章'}</h2>
+          <h2 className="text-lg font-medium text-foreground">{articleId ? '编辑文章' : '新建文章'}</h2>
         </div>
         <div className="flex items-center gap-3">
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="px-3 py-1.5 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-3 py-1.5 text-sm border border-border rounded bg-input-background text-foreground focus:ring-2 focus:ring-ring focus:border-transparent"
           >
             <option value="draft">草稿</option>
             <option value="published">发布</option>
@@ -159,7 +159,7 @@ export default function ArticleEdit() {
           <button
             onClick={handleSave}
             disabled={loading}
-            className="px-4 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-1.5 disabled:opacity-50"
+            className="px-4 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors flex items-center gap-1.5 disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
             {loading ? '保存中...' : '保存'}
@@ -167,18 +167,18 @@ export default function ArticleEdit() {
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded p-4">
+      <div className="bg-card border border-border rounded p-4">
         <input
           type="text"
           placeholder="输入文章标题..."
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full text-2xl font-medium border-none focus:ring-0 p-0 placeholder-gray-300 outline-none"
+          className="w-full text-2xl font-medium border-none focus:ring-0 p-0 bg-transparent text-foreground placeholder:text-muted-foreground outline-none"
         />
       </div>
 
       <div className="flex gap-4">
-        <div className="flex-1 bg-white border border-gray-200 rounded overflow-hidden editor-container">
+        <div className="flex-1 bg-card border border-border rounded overflow-hidden editor-container">
           <Editor
             value={content}
             plugins={plugins}
@@ -188,12 +188,12 @@ export default function ArticleEdit() {
         </div>
 
         <div className="w-64 flex-shrink-0 space-y-4">
-          <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
-            <h3 className="text-sm font-medium text-gray-900">分类</h3>
+          <div className="bg-card border border-border rounded p-4 space-y-3">
+            <h3 className="text-sm font-medium text-foreground">分类</h3>
             <select
               value={categoryId ?? ''}
               onChange={(e) => setCategoryId(e.target.value ? parseInt(e.target.value, 10) : null)}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 text-sm border border-border rounded bg-input-background text-foreground focus:ring-2 focus:ring-ring focus:border-transparent"
             >
               <option value="">无分类</option>
               {categories.map((cat) => (
@@ -202,8 +202,8 @@ export default function ArticleEdit() {
             </select>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
-            <h3 className="text-sm font-medium text-gray-900">标签</h3>
+          <div className="bg-card border border-border rounded p-4 space-y-3">
+            <h3 className="text-sm font-medium text-foreground">标签</h3>
             <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
               {tags.map((tag) => (
                 <button
@@ -212,27 +212,27 @@ export default function ArticleEdit() {
                   onClick={() => toggleTag(tag.id)}
                   className={`px-2 py-1 text-xs rounded border transition-colors ${
                     selectedTagIds.includes(tag.id)
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-card text-foreground border-border hover:border-primary/50'
                   }`}
                 >
                   {tag.name}
                 </button>
               ))}
               {tags.length === 0 && (
-                <span className="text-xs text-gray-400">暂无标签</span>
+                <span className="text-xs text-muted-foreground">暂无标签</span>
               )}
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded p-4 space-y-3">
-            <h3 className="text-sm font-medium text-gray-900">摘要</h3>
+          <div className="bg-card border border-border rounded p-4 space-y-3">
+            <h3 className="text-sm font-medium text-foreground">摘要</h3>
             <textarea
               value={summary}
               onChange={(e) => setSummary(e.target.value)}
               placeholder="可选，留空则自动截取正文..."
               rows={4}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 text-sm border border-border rounded bg-input-background text-foreground focus:ring-2 focus:ring-ring focus:border-transparent resize-none"
             />
           </div>
         </div>
