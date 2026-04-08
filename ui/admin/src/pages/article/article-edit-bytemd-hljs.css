@@ -2,7 +2,7 @@
 .article-edit-bytemd .markdown-body pre code.hljs {
   display: block;
   overflow-x: auto;
-  padding: 1em;
+  padding: 12px 16px;
   background: transparent;
 }
 .article-edit-bytemd .markdown-body code.hljs {
@@ -88,7 +88,7 @@
 .dark .article-edit-bytemd .markdown-body pre code.hljs {
   display: block;
   overflow-x: auto;
-  padding: 1em;
+  padding: 12px 16px;
   background: transparent;
 }
 .dark .article-edit-bytemd .markdown-body code.hljs {

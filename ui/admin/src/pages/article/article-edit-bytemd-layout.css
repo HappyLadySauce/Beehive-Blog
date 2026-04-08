@@ -149,14 +149,15 @@ html.dark .article-edit-bytemd .cm-s-default .cm-link {
 /* ---------- 代码块语言角标（rehype-pre-language → pre[data-language]） ---------- */
 .article-edit-bytemd .markdown-body pre[data-language] {
   position: relative;
-  padding-top: 1.85rem;
+  /* 为角标留一行，避免与 hljs 内边距叠加过大（对齐 VS Code 紧凑感） */
+  padding-top: 0.875rem;
 }
 
 .article-edit-bytemd .markdown-body pre[data-language]::before {
   content: attr(data-language);
   position: absolute;
-  top: 0.45rem;
-  right: 0.75rem;
+  top: 0.3rem;
+  right: 0.65rem;
   font-size: 12px;
   line-height: 1;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
@@ -181,4 +182,17 @@ html:not(.dark) .article-edit-bytemd .markdown-body pre {
 html.dark .article-edit-bytemd .markdown-body pre {
   border: 1px solid #30363d;
   border-radius: 6px;
+}
+
+/* ---------- 垂直节奏：接近 VS Code Markdown（略紧于 github-markdown 默认 1rem） ---------- */
+.article-edit-bytemd .markdown-body p,
+.article-edit-bytemd .markdown-body pre,
+.article-edit-bytemd .markdown-body blockquote,
+.article-edit-bytemd .markdown-body ul,
+.article-edit-bytemd .markdown-body ol,
+.article-edit-bytemd .markdown-body dl,
+.article-edit-bytemd .markdown-body table,
+.article-edit-bytemd .markdown-body details {
+  margin-top: 0;
+  margin-bottom: 0.75rem;
 }
