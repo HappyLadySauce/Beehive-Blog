@@ -97,6 +97,8 @@ type AdminArticleListResponse struct {
 // ArticleDetailResponse 详情。
 type ArticleDetailResponse struct {
 	ArticleListItem
+	// Status 管理员接口返回文章状态；公开接口不设置，JSON omitempty。
+	Status    string          `json:"status,omitempty"`
 	Content   string          `json:"content"`
 	Protected bool            `json:"protected"`
 	Previous  *ArticleNavItem `json:"previous,omitempty"`

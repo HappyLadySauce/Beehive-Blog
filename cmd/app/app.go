@@ -14,6 +14,7 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/options"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/router"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/admin"
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/archives"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/auth"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/categories"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/comments"
@@ -22,6 +23,7 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/tags"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/user"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/scheduler"
 )
 
 func NewAPICommand(ctx context.Context, basename string) *cobra.Command {
@@ -100,6 +102,10 @@ func serve(ctx context.Context, svcCtx *svc.ServiceContext) error {
 	user.Init(svcCtx)
 	likes.Init(svcCtx)
 	admin.Init(svcCtx)
+
+	jobRunner := scheduler.NewRunner(time.Minute)
+	archives.RegisterScheduledPublishJob(jobRunner, svcCtx)
+	jobRunner.StartAsync(ctx)
 
 	// 在 goroutine 中启动服务器
 	go func() {

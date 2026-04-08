@@ -21,16 +21,22 @@ import {
 import { getCategories, getTags, CategoryBrief, TagListItem } from '../../api/taxonomy';
 import request from '../../utils/request';
 import { toast } from 'sonner';
-import { ArrowLeft, Save, History, Settings, Timer, Pencil, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, History, Settings, Timer, Pencil, Trash2, Clock } from 'lucide-react';
 import CustomSelect from '../../components/CustomSelect';
 import AdminModal from '../../components/AdminModal';
 
+/** 本地日期时间输入（datetime-local）格式，用于定时发布弹窗 */
+function formatLocalDatetime(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 function stableArticlePayloadSnapshot(p: {
   title: string;
   content: string;
   summary: string;
   status: string;
+  publishedAt: string;
   categoryId: number | null;
   tagIds: number[];
 }) {
@@ -39,6 +45,7 @@ function stableArticlePayloadSnapshot(p: {
     content: p.content,
     summary: p.summary.trim(),
     status: p.status,
+    publishedAt: p.publishedAt,
     categoryId: p.categoryId,
     tagIds: [...p.tagIds].sort((a, b) => a - b),
   });
@@ -51,6 +58,7 @@ function applyDetailToState(
     setContent: (v: string) => void;
     setSummary: (v: string) => void;
     setStatus: (v: string) => void;
+    setPublishedAt: (v: string) => void;
     setCategoryId: (v: number | null) => void;
     setSelectedTagIds: (v: number[]) => void;
   },
@@ -59,6 +67,7 @@ function applyDetailToState(
   setters.setContent(data.content);
   setters.setSummary(data.summary || '');
   setters.setStatus(data.status);
+  setters.setPublishedAt(data.publishedAt || '');
   setters.setCategoryId(data.category?.id ?? null);
   setters.setSelectedTagIds(data.tags?.map((t) => t.id) || []);
 }
@@ -72,6 +81,10 @@ export default function ArticleEdit() {
   const [content, setContent] = useState('');
   const [summary, setSummary] = useState('');
   const [status, setStatus] = useState('draft');
+  /** RFC3339，定时发布必填 */
+  const [publishedAt, setPublishedAt] = useState('');
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+  const [scheduleLocalInput, setScheduleLocalInput] = useState('');
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
@@ -95,6 +108,7 @@ export default function ArticleEdit() {
     content,
     summary,
     status,
+    publishedAt,
     categoryId,
     selectedTagIds,
   });
@@ -108,10 +122,11 @@ export default function ArticleEdit() {
       content,
       summary,
       status,
+      publishedAt,
       categoryId,
       selectedTagIds,
     };
-  }, [title, content, summary, status, categoryId, selectedTagIds]);
+  }, [title, content, summary, status, publishedAt, categoryId, selectedTagIds]);
 
   useEffect(() => {
     loadingRef.current = loading;
@@ -144,6 +159,7 @@ export default function ArticleEdit() {
             setContent,
             setSummary,
             setStatus,
+            setPublishedAt,
             setCategoryId,
             setSelectedTagIds,
           });
@@ -152,6 +168,7 @@ export default function ArticleEdit() {
             content: res.data.content,
             summary: res.data.summary || '',
             status: res.data.status,
+            publishedAt: res.data.publishedAt || '',
             categoryId: res.data.category?.id ?? null,
             tagIds: res.data.tags?.map((t) => t.id) || [],
           });
@@ -203,11 +220,13 @@ export default function ArticleEdit() {
         if (loadingRef.current || savingRef.current) return;
         const s = stateRef.current;
         if (!s.title.trim() || !s.content.trim()) return;
+        if (s.status === 'scheduled' && !s.publishedAt.trim()) return;
         const snap = stableArticlePayloadSnapshot({
           title: s.title,
           content: s.content,
           summary: s.summary,
           status: s.status,
+          publishedAt: s.publishedAt,
           categoryId: s.categoryId,
           tagIds: s.selectedTagIds,
         });
@@ -219,6 +238,7 @@ export default function ArticleEdit() {
             content: s.content,
             summary: s.summary.trim() || undefined,
             status: s.status,
+            publishedAt: s.publishedAt.trim() || undefined,
             categoryId: s.categoryId ?? undefined,
             tagIds: s.selectedTagIds.length > 0 ? s.selectedTagIds : undefined,
             autoSave: true,
@@ -252,6 +272,19 @@ export default function ArticleEdit() {
       toast.error('请输入文章内容');
       return;
     }
+    if (status === 'scheduled') {
+      const t = publishedAt.trim();
+      if (!t) {
+        setScheduleModalOpen(true);
+        toast.error('请先设置定时发布时间');
+        return;
+      }
+      if (new Date(t).getTime() <= Date.now()) {
+        toast.error('定时发布时间须晚于当前时间');
+        setScheduleModalOpen(true);
+        return;
+      }
+    }
 
     setLoading(true);
     try {
@@ -260,6 +293,7 @@ export default function ArticleEdit() {
         content,
         summary: summary.trim() || undefined,
         status,
+        publishedAt: publishedAt.trim() || undefined,
         categoryId: categoryId ?? undefined,
         tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
       };
@@ -282,6 +316,7 @@ export default function ArticleEdit() {
             content,
             summary,
             status,
+            publishedAt,
             categoryId,
             tagIds: selectedTagIds,
           });
@@ -418,6 +453,7 @@ export default function ArticleEdit() {
           setContent,
           setSummary,
           setStatus,
+          setPublishedAt,
           setCategoryId,
           setSelectedTagIds,
         });
@@ -426,6 +462,7 @@ export default function ArticleEdit() {
           content: res.data.content,
           summary: res.data.summary || '',
           status: res.data.status,
+          publishedAt: res.data.publishedAt || '',
           categoryId: res.data.category?.id ?? null,
           tagIds: res.data.tags?.map((t) => t.id) || [],
         });
@@ -443,6 +480,48 @@ export default function ArticleEdit() {
       setRestoringId(null);
     }
   };
+
+  const openScheduleModal = useCallback(() => {
+    let base: Date;
+    if (publishedAt.trim()) {
+      const p = new Date(publishedAt);
+      base = Number.isNaN(p.getTime()) ? new Date(Date.now() + 60 * 60 * 1000) : p;
+    } else {
+      base = new Date(Date.now() + 60 * 60 * 1000);
+    }
+    base.setSeconds(0, 0);
+    setScheduleLocalInput(formatLocalDatetime(base));
+    setScheduleModalOpen(true);
+  }, [publishedAt]);
+
+  const handleConfirmSchedule = useCallback(() => {
+    const d = new Date(scheduleLocalInput);
+    if (Number.isNaN(d.getTime())) {
+      toast.error('请选择有效的日期与时间');
+      return;
+    }
+    if (d.getTime() <= Date.now()) {
+      toast.error('定时发布时间须晚于当前时间');
+      return;
+    }
+    setPublishedAt(d.toISOString());
+    setStatus('scheduled');
+    setScheduleModalOpen(false);
+  }, [scheduleLocalInput]);
+
+  const handleStatusSelect = useCallback(
+    (v: string) => {
+      if (v === 'scheduled') {
+        openScheduleModal();
+        return;
+      }
+      if (status === 'scheduled' && v !== 'scheduled') {
+        setPublishedAt('');
+      }
+      setStatus(v);
+    },
+    [status, openScheduleModal],
+  );
 
   const statusOptions = useMemo(
     () => [
@@ -513,12 +592,23 @@ export default function ArticleEdit() {
           </button>
           <CustomSelect
             value={status}
-            onChange={(v) => setStatus(v)}
+            onChange={handleStatusSelect}
             options={statusOptions}
             className="w-[132px]"
             size="sm"
             ariaLabel="文章状态"
           />
+          {status === 'scheduled' && (
+            <button
+              type="button"
+              onClick={() => openScheduleModal()}
+              className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1.5 text-sm text-foreground hover:bg-accent"
+              title="修改计划发布时间"
+            >
+              <Clock className="h-4 w-4" />
+              计划时间
+            </button>
+          )}
           <button
             type="button"
             onClick={() => void handleSave()}
@@ -539,6 +629,32 @@ export default function ArticleEdit() {
           uploadImages={uploadImages}
         />
       </div>
+
+      {scheduleModalOpen && (
+        <AdminModal
+          title="定时发布"
+          onClose={() => setScheduleModalOpen(false)}
+          onConfirm={handleConfirmSchedule}
+          confirmLabel="确认定时"
+          maxWidth="md"
+        >
+          <p className="text-sm text-muted-foreground">
+            请选择文章自动转为「发布」状态的日期与时间（使用本机时区）。
+          </p>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground" htmlFor="article-schedule-at">
+              发布时间
+            </label>
+            <input
+              id="article-schedule-at"
+              type="datetime-local"
+              value={scheduleLocalInput}
+              onChange={(e) => setScheduleLocalInput(e.target.value)}
+              className="w-full rounded-md border border-border bg-input-background px-3 py-2 text-sm text-foreground focus:border-transparent focus:ring-2 focus:ring-ring"
+            />
+          </div>
+        </AdminModal>
+      )}
 
       {settingsOpen && (
         <AdminModal

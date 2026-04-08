@@ -41,6 +41,20 @@ func parseRFC3339Ptr(s *string) (*time.Time, error) {
 	return &parsed, nil
 }
 
+// validateScheduledArticleStatus 定时发布须带未来 publishedAt。
+func validateScheduledArticleStatus(st models.ArticleStatus, pubAt *time.Time, now time.Time) error {
+	if st != models.ArticleStatusScheduled {
+		return nil
+	}
+	if pubAt == nil {
+		return errors.New("scheduled status requires publishedAt")
+	}
+	if !pubAt.After(now) {
+		return errors.New("scheduled publishedAt must be in the future")
+	}
+	return nil
+}
+
 func (a *ArticleAdmin) slugTaken(ctx context.Context, s string, excludeID int64) (bool, error) {
 	q := a.svc.DB.WithContext(ctx).Model(&models.Article{}).Where("slug = ? AND deleted_at IS NULL", s)
 	if excludeID > 0 {
@@ -196,6 +210,7 @@ func mapArticleToAdminDetail(a *models.Article) *v1.ArticleDetailResponse {
 	}
 	return &v1.ArticleDetailResponse{
 		ArticleListItem: item,
+		Status:          string(a.Status),
 		Content:         a.Content,
 		Protected:       a.Password != "",
 	}
@@ -272,6 +287,9 @@ func (a *ArticleAdmin) CreateArticle(ctx context.Context, adminUserID int64, req
 		now := time.Now()
 		pubAt = &now
 	}
+	if err := validateScheduledArticleStatus(st, pubAt, time.Now()); err != nil {
+		return nil, http.StatusBadRequest, err
+	}
 
 	art := &models.Article{
 		Title:       req.Title,
@@ -347,6 +365,26 @@ func (a *ArticleAdmin) UpdateArticle(ctx context.Context, articleID int64, req *
 		}
 	}
 
+	pubAt, err := parseRFC3339Ptr(req.PublishedAt)
+	if err != nil {
+		return nil, http.StatusBadRequest, err
+	}
+	if req.Status != nil && models.ArticleStatus(*req.Status) == models.ArticleStatusPublished && pubAt == nil && art.PublishedAt == nil {
+		t := time.Now()
+		pubAt = &t
+	}
+	newSt := art.Status
+	if req.Status != nil {
+		newSt = models.ArticleStatus(*req.Status)
+	}
+	effPub := art.PublishedAt
+	if pubAt != nil {
+		effPub = pubAt
+	}
+	if err := validateScheduledArticleStatus(newSt, effPub, time.Now()); err != nil {
+		return nil, http.StatusBadRequest, err
+	}
+
 	updates := map[string]interface{}{}
 	if req.Title != nil {
 		updates["title"] = *req.Title
@@ -376,10 +414,6 @@ func (a *ArticleAdmin) UpdateArticle(ctx context.Context, articleID int64, req *
 	}
 	if req.Status != nil {
 		updates["status"] = *req.Status
-	}
-	pubAt, err := parseRFC3339Ptr(req.PublishedAt)
-	if err != nil {
-		return nil, http.StatusBadRequest, err
 	}
 	if pubAt != nil {
 		updates["published_at"] = pubAt
@@ -462,8 +496,23 @@ func (a *ArticleAdmin) UpdateArticleStatus(ctx context.Context, articleID int64,
 	if req == nil {
 		return nil, http.StatusBadRequest, errors.New("invalid request")
 	}
+	var art models.Article
+	if err := a.svc.DB.WithContext(ctx).Where("id = ? AND deleted_at IS NULL", articleID).First(&art).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, http.StatusNotFound, errors.New("article not found")
+		}
+		return nil, http.StatusInternalServerError, errors.New("system error")
+	}
 	pubAt, err := parseRFC3339Ptr(req.PublishedAt)
 	if err != nil {
+		return nil, http.StatusBadRequest, err
+	}
+	st := models.ArticleStatus(req.Status)
+	effPub := art.PublishedAt
+	if pubAt != nil {
+		effPub = pubAt
+	}
+	if err := validateScheduledArticleStatus(st, effPub, time.Now()); err != nil {
 		return nil, http.StatusBadRequest, err
 	}
 	updates := map[string]interface{}{"status": req.Status}
