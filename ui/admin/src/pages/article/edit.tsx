@@ -84,7 +84,8 @@ export default function ArticleEdit() {
   const [editingVersionId, setEditingVersionId] = useState<number | null>(null);
   const [editingVersionTitle, setEditingVersionTitle] = useState('');
   const [savingVersionTitle, setSavingVersionTitle] = useState(false);
-  const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
+  /** 编辑已存在文章（URL 含 id）时默认开启自动保存；新建（/articles/create）默认关闭 */
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(() => Boolean(id));
 
   const stateRef = useRef({
     title,
@@ -269,6 +270,7 @@ export default function ArticleEdit() {
 
       if (res.code === 200) {
         toast.success(articleId ? '更新成功' : '创建成功');
+        setAutoSaveEnabled(true);
         if (!articleId && res.data?.id) {
           navigate(`/articles/edit/${res.data.id}`, { replace: true });
         } else if (articleId) {
@@ -293,6 +295,20 @@ export default function ArticleEdit() {
     } finally {
       setLoading(false);
     }
+  };
+
+  /** 设置中点击「完成」：校验后关闭弹窗并执行与顶栏保存相同的保存逻辑 */
+  const handleSettingsConfirm = async () => {
+    if (!title.trim()) {
+      toast.error('请填写文章标题');
+      return;
+    }
+    if (!content.trim()) {
+      toast.error('请输入文章内容');
+      return;
+    }
+    setSettingsOpen(false);
+    await handleSave();
   };
 
   const uploadImages = async (files: File[]) => {
@@ -520,8 +536,9 @@ export default function ArticleEdit() {
         <AdminModal
           title="文章设置"
           onClose={() => setSettingsOpen(false)}
-          onConfirm={() => setSettingsOpen(false)}
+          onConfirm={() => void handleSettingsConfirm()}
           confirmLabel="完成"
+          loading={loading}
           maxWidth="md"
         >
           <div className="space-y-4">

@@ -2,6 +2,8 @@ package models
 
 import (
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // ArticleStatus 文章状态
@@ -35,7 +37,7 @@ type Article struct {
 	PublishedAt  *time.Time    `json:"publishedAt"`
 	CreatedAt    time.Time     `json:"createdAt" gorm:"autoCreateTime"`
 	UpdatedAt    time.Time     `json:"updatedAt" gorm:"autoUpdateTime"`
-	DeletedAt    *time.Time    `json:"-" gorm:"index"`
+	DeletedAt    gorm.DeletedAt `json:"-" gorm:"index"`
 
 	// 关联关系
 	Author   User      `json:"author" gorm:"foreignKey:AuthorID"`
