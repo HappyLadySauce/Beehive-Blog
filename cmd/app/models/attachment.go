@@ -40,14 +40,18 @@ type Attachment struct {
 	Height       int            `json:"height"` // 图片高度
 	PolicyID     int64          `json:"policyId" gorm:"not null;index"`
 	GroupID      *int64         `json:"groupId" gorm:"index"`
+	ParentID     *int64         `json:"parentId" gorm:"index"` // 非空表示由父附件派生（压缩/转换/复制）
+	Variant      string         `json:"variant" gorm:"size:32"` // original|compressed|converted|copy 等，可选
 	UploadedBy   int64          `json:"uploadedBy" gorm:"not null;index"`
 	CreatedAt    time.Time      `json:"createdAt" gorm:"autoCreateTime"`
 	UpdatedAt    time.Time      `json:"updatedAt" gorm:"autoUpdateTime"`
 
 	// 关联关系
-	Policy StoragePolicy    `json:"policy" gorm:"foreignKey:PolicyID"`
-	Group  *AttachmentGroup `json:"group,omitempty" gorm:"foreignKey:GroupID"`
-	User   User             `json:"user" gorm:"foreignKey:UploadedBy"`
+	Policy   StoragePolicy    `json:"policy" gorm:"foreignKey:PolicyID"`
+	Group    *AttachmentGroup `json:"group,omitempty" gorm:"foreignKey:GroupID"`
+	User     User             `json:"user" gorm:"foreignKey:UploadedBy"`
+	Parent   *Attachment      `json:"parent,omitempty" gorm:"foreignKey:ParentID"`
+	Children []Attachment     `json:"children,omitempty" gorm:"foreignKey:ParentID"`
 }
 
 func (Attachment) TableName() string {

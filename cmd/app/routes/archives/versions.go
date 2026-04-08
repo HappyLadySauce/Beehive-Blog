@@ -248,5 +248,9 @@ func (a *ArticleAdmin) RestoreVersion(ctx context.Context, articleID, versionID,
 	}
 
 	maybeHexoSyncSingle(a.svc, articleID)
+	var row models.Article
+	if err := a.svc.DB.WithContext(ctx).Where("id = ?", articleID).First(&row).Error; err == nil {
+		a.syncArticleAttachmentRefs(ctx, articleID, row.Content, row.Summary)
+	}
 	return a.loadArticleDetail(ctx, articleID)
 }

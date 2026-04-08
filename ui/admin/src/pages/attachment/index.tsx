@@ -1,152 +1,394 @@
-import { useState, useEffect, useRef } from 'react';
-import { getAttachments, deleteAttachment, uploadAttachment, Attachment } from '../../api/attachment';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  getAttachments,
+  deleteAttachment,
+  uploadAttachment,
+  getAttachmentFamily,
+  listAttachmentGroups,
+  createAttachmentGroup,
+  Attachment,
+  AttachmentFamilyResponse,
+  AttachmentGroupItem,
+} from '../../api/attachment';
 import { toast } from 'sonner';
-import { Image as ImageIcon, Trash2, Copy, Upload, Download } from 'lucide-react';
+import {
+  Image as ImageIcon,
+  Trash2,
+  Copy,
+  Upload,
+  FileImage,
+  File,
+} from 'lucide-react';
+import AdminModal from '../../components/AdminModal';
+import ImageAttachmentDetailModal from './ImageAttachmentDetailModal';
+import { formatSize } from './attachmentUtils';
 
 export default function Attachments() {
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [items, setItems] = useState<Attachment[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [keywordDraft, setKeywordDraft] = useState('');
+  const [keyword, setKeyword] = useState('');
+  const [groupId, setGroupId] = useState<number | null>(null);
+  const [groups, setGroups] = useState<AttachmentGroupItem[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const fetchAttachments = async () => {
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [familyData, setFamilyData] = useState<AttachmentFamilyResponse | null>(null);
+
+  const [newGroupOpen, setNewGroupOpen] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [creatingGroup, setCreatingGroup] = useState(false);
+
+  const fetchGroups = useCallback(async () => {
+    try {
+      const res = await listAttachmentGroups();
+      if (res.code === 200) {
+        setGroups(res.data || []);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const fetchAttachments = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getAttachments();
-      if (res.code === 200) {
-        setAttachments(res.data.items || []);
+      const res = await getAttachments({
+        page,
+        pageSize: 20,
+        keyword: keyword.trim() || undefined,
+        groupId: groupId ?? undefined,
+        rootsOnly: true,
+      });
+      if (res.code === 200 && res.data) {
+        setItems(res.data.items || []);
+        setTotal(res.data.total);
       } else {
         toast.error(res.message || '获取附件失败');
       }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || '请求附件失败');
+    } catch (error: unknown) {
+      const msg =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      toast.error(msg || '请求附件失败');
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, keyword, groupId]);
 
   useEffect(() => {
-    fetchAttachments();
-  }, []);
+    void fetchGroups();
+  }, [fetchGroups]);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('确定要删除该附件吗？')) return;
+  useEffect(() => {
+    void fetchAttachments();
+  }, [fetchAttachments]);
+
+  const handleDelete = async (id: number, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (!window.confirm('删除根附件将同时删除其全部派生文件，确定？')) return;
     try {
       const res = await deleteAttachment(id);
       if (res.code === 200) {
         toast.success('删除成功');
-        fetchAttachments();
+        void fetchAttachments();
       } else {
         toast.error(res.message || '删除失败');
       }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || '删除请求失败');
+    } catch (error: unknown) {
+      const msg =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      toast.error(msg || '删除请求失败');
     }
   };
 
-  const handleCopyUrl = (url: string) => {
-    navigator.clipboard.writeText(url);
-    toast.success('链接已复制到剪贴板');
+  const handleCopyUrl = (url: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    void navigator.clipboard.writeText(url);
+    toast.success('链接已复制');
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-
     setUploading(true);
     try {
       for (let i = 0; i < files.length; i++) {
-        const res = await uploadAttachment(files[i]);
+        const res = await uploadAttachment(files[i], groupId ?? undefined);
         if (res.code === 200) {
-          toast.success(`文件 ${files[i].name} 上传成功`);
+          toast.success(`已上传 ${files[i].name}`);
         } else {
-          toast.error(res.message || `文件 ${files[i].name} 上传失败`);
+          toast.error(res.message || `${files[i].name} 失败`);
         }
       }
-      fetchAttachments();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || '上传请求失败');
+      void fetchAttachments();
+    } catch (error: unknown) {
+      const msg =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      toast.error(msg || '上传失败');
     } finally {
       setUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
+  const openDetail = async (a: Attachment) => {
+    try {
+      const res = await getAttachmentFamily(a.id);
+      if (res.code !== 200 || !res.data) {
+        toast.error(res.message || '加载失败');
+        return;
+      }
+      setFamilyData(res.data);
+      setDetailOpen(true);
+    } catch (error: unknown) {
+      const msg =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      toast.error(msg || '请求失败');
+    }
+  };
+
+  const closeDetail = () => {
+    setDetailOpen(false);
+    setFamilyData(null);
+  };
+
+  const submitNewGroup = async () => {
+    const n = newGroupName.trim();
+    if (!n) {
+      toast.error('请输入分类名称');
+      return;
+    }
+    setCreatingGroup(true);
+    try {
+      const res = await createAttachmentGroup({ name: n, sortOrder: 0 });
+      if (res.code === 200) {
+        toast.success('已创建分类');
+        setNewGroupOpen(false);
+        setNewGroupName('');
+        void fetchGroups();
+      } else {
+        toast.error(res.message || '创建失败');
+      }
+    } catch (error: unknown) {
+      const msg =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      toast.error(msg || '创建失败');
+    } finally {
+      setCreatingGroup(false);
+    }
+  };
+
+  const totalPages = Math.max(1, Math.ceil(total / 20));
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <ImageIcon className="w-5 h-5 text-muted-foreground" />
+          <ImageIcon className="h-5 w-5 text-muted-foreground" />
           <h2 className="text-lg font-medium text-foreground">附件管理</h2>
         </div>
-        <div>
-          <input 
-            type="file" 
-            multiple 
-            className="hidden" 
-            ref={fileInputRef} 
-            onChange={handleFileChange} 
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="text"
+            placeholder="搜索文件名..."
+            value={keywordDraft}
+            onChange={(e) => setKeywordDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                setKeyword(keywordDraft.trim());
+                setPage(1);
+              }
+            }}
+            className="rounded-md border border-border bg-input-background px-3 py-1.5 text-sm text-foreground"
           />
-          <button 
+          <button
+            type="button"
+            onClick={() => {
+              setKeyword(keywordDraft.trim());
+              setPage(1);
+            }}
+            className="rounded border border-border bg-background px-3 py-1.5 text-sm hover:bg-accent"
+          >
+            搜索
+          </button>
+          <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileChange} />
+          <button
+            type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors flex items-center gap-1.5 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
-            <Upload className="w-4 h-4" />
+            <Upload className="h-4 w-4" />
             {uploading ? '上传中...' : '上传附件'}
           </button>
         </div>
       </div>
 
-      {loading ? (
-        <div className="py-12 text-center text-muted-foreground">加载中...</div>
-      ) : attachments.length === 0 ? (
-        <div className="py-12 text-center text-muted-foreground bg-card border border-border rounded">暂无附件</div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {attachments.map((attachment) => (
-            <div key={attachment.id} className="bg-card border border-border rounded overflow-hidden group relative">
-              <div className="aspect-square bg-muted flex items-center justify-center overflow-hidden">
-                {attachment.type === 'image' ? (
-                  <img src={attachment.thumbUrl || attachment.url} alt={attachment.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="text-muted-foreground flex flex-col items-center">
-                    <Download className="w-8 h-8 mb-2" />
-                    <span className="text-xs uppercase">{attachment.type}</span>
-                  </div>
-                )}
-              </div>
-              <div className="p-2 border-t border-border">
-                <div className="text-xs font-medium text-foreground truncate" title={attachment.originalName}>
-                  {attachment.originalName}
-                </div>
-                <div className="text-[10px] text-muted-foreground mt-0.5">
-                  {(attachment.size / 1024).toFixed(1)} KB
-                </div>
-              </div>
-              
-              {/* Hover Actions */}
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                <button 
-                  onClick={() => handleCopyUrl(attachment.url)}
-                  className="p-2 bg-card text-foreground rounded-full hover:text-primary transition-colors"
-                  title="复制链接"
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm text-muted-foreground">分类：</span>
+        <button
+          type="button"
+          onClick={() => {
+            setGroupId(null);
+            setPage(1);
+          }}
+          className={`rounded-full border px-3 py-1 text-xs ${groupId === null ? 'border-primary bg-primary/10' : 'border-border'}`}
+        >
+          全部
+        </button>
+        {groups.map((g) => (
+          <button
+            key={g.id}
+            type="button"
+            onClick={() => {
+              setGroupId(g.id);
+              setPage(1);
+            }}
+            className={`rounded-full border px-3 py-1 text-xs ${groupId === g.id ? 'border-primary bg-primary/10' : 'border-border'}`}
+          >
+            {g.name}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => setNewGroupOpen(true)}
+          className="rounded-full border border-dashed border-border px-3 py-1 text-xs text-muted-foreground hover:bg-accent"
+        >
+          + 新建分类
+        </button>
+      </div>
+
+      <div className="overflow-x-auto rounded border border-border bg-card">
+        {loading ? (
+          <div className="py-12 text-center text-muted-foreground">加载中...</div>
+        ) : items.length === 0 ? (
+          <div className="py-12 text-center text-muted-foreground">暂无附件</div>
+        ) : (
+          <table className="w-full text-left text-sm">
+            <thead className="border-b border-border bg-muted/40">
+              <tr>
+                <th className="px-3 py-2 font-medium">类型</th>
+                <th className="px-3 py-2 font-medium">文件名</th>
+                <th className="px-3 py-2 font-medium">MIME</th>
+                <th className="px-3 py-2 font-medium">大小</th>
+                <th className="px-3 py-2 font-medium">分类</th>
+                <th className="px-3 py-2 font-medium">引用文章数</th>
+                <th className="px-3 py-2 font-medium">上传时间</th>
+                <th className="px-3 py-2 font-medium text-right">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((a) => (
+                <tr
+                  key={a.id}
+                  className="cursor-pointer border-b border-border hover:bg-accent/40"
+                  onClick={() => void openDetail(a)}
                 >
-                  <Copy className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={() => handleDelete(attachment.id)}
-                  className="p-2 bg-card text-foreground rounded-full hover:text-red-600 transition-colors"
-                  title="删除"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          ))}
+                  <td className="px-3 py-2">
+                    {a.type === 'image' ? (
+                      <FileImage className="h-5 w-5 text-muted-foreground" aria-hidden />
+                    ) : (
+                      <File className="h-5 w-5 text-muted-foreground" aria-hidden />
+                    )}
+                  </td>
+                  <td className="max-w-[200px] truncate px-3 py-2 font-medium" title={a.originalName}>
+                    {a.originalName || a.name}
+                  </td>
+                  <td className="px-3 py-2 text-muted-foreground">{a.mimeType}</td>
+                  <td className="px-3 py-2">{formatSize(a.size)}</td>
+                  <td className="px-3 py-2 text-muted-foreground">{a.groupName || '—'}</td>
+                  <td className="px-3 py-2">{a.refArticleCount ?? 0}</td>
+                  <td className="px-3 py-2 text-muted-foreground">
+                    {a.createdAt ? new Date(a.createdAt).toLocaleString() : '—'}
+                  </td>
+                  <td className="px-3 py-2 text-right">
+                    <button
+                      type="button"
+                      className="mr-2 inline-flex rounded p-1 hover:bg-accent"
+                      title="复制 URL"
+                      onClick={(e) => handleCopyUrl(a.url, e)}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      className="inline-flex rounded p-1 text-destructive hover:bg-destructive/10"
+                      title="删除"
+                      onClick={(e) => void handleDelete(a.id, e)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <button
+            type="button"
+            disabled={page <= 1}
+            className="rounded border px-2 py-1 text-sm disabled:opacity-50"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            上一页
+          </button>
+          <span className="text-sm text-muted-foreground">
+            {page} / {totalPages}
+          </span>
+          <button
+            type="button"
+            disabled={page >= totalPages}
+            className="rounded border px-2 py-1 text-sm disabled:opacity-50"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          >
+            下一页
+          </button>
         </div>
+      )}
+
+      {detailOpen && familyData && (
+        <ImageAttachmentDetailModal
+          familyData={familyData}
+          groups={groups}
+          onClose={closeDetail}
+          onFamilyData={setFamilyData}
+          onListRefresh={() => void fetchAttachments()}
+        />
+      )}
+
+      {newGroupOpen && (
+        <AdminModal
+          title="新建附件分类"
+          onClose={() => setNewGroupOpen(false)}
+          onConfirm={() => void submitNewGroup()}
+          loading={creatingGroup}
+          maxWidth="sm"
+        >
+          <input
+            type="text"
+            value={newGroupName}
+            onChange={(e) => setNewGroupName(e.target.value)}
+            placeholder="分类名称"
+            className="w-full rounded-md border border-border bg-input-background px-3 py-2 text-sm"
+          />
+        </AdminModal>
       )}
     </div>
   );

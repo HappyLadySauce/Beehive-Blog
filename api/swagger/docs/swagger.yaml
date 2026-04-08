@@ -276,6 +276,9 @@ definitions:
         type: string
       slug:
         type: string
+      status:
+        description: Status 管理员接口返回文章状态；公开接口不设置，JSON omitempty。
+        type: string
       summary:
         type: string
       tags:
@@ -750,6 +753,22 @@ definitions:
       sortOrder:
         type: integer
     type: object
+  v1.ReplaceAttachmentInArticlesRequest:
+    properties:
+      articleIds:
+        items:
+          type: integer
+        minItems: 1
+        type: array
+      fromAttachmentId:
+        type: integer
+      toAttachmentId:
+        type: integer
+    required:
+    - articleIds
+    - fromAttachmentId
+    - toAttachmentId
+    type: object
   v1.SettingsResponse:
     properties:
       group:
@@ -962,6 +981,15 @@ definitions:
         type: string
     required:
     - title
+    type: object
+  v1.UpdateAttachmentRequest:
+    properties:
+      groupId:
+        type: integer
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
     type: object
   v1.UpdateCategoryRequest:
     properties:
@@ -2109,6 +2137,90 @@ paths:
       security:
       - BearerAuth: []
       summary: 删除附件
+      tags:
+      - admin
+    put:
+      consumes:
+      - application/json
+      description: 可选物理重命名（移动文件并同步公开 URL 与正文引用）与可选分类；根附件改分类时同步子附件
+      parameters:
+      - description: 附件 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新字段（name 与 groupId 至少其一）
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.UpdateAttachmentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: 更新附件
+      tags:
+      - admin
+  /api/v1/admin/attachments/replace-in-articles:
+    post:
+      consumes:
+      - application/json
+      description: 将选中文章中 from 附件链接替换为 to（须为同一家族）
+      parameters:
+      - description: 替换参数
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.ReplaceAttachmentInArticlesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: 批量替换文章中的附件 URL
       tags:
       - admin
   /api/v1/admin/attachments/upload:

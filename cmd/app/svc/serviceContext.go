@@ -186,6 +186,7 @@ func autoMigrateModels(db *gorm.DB) error {
 		&models.AttachmentGroup{},
 		&models.StoragePolicy{},
 		&models.Attachment{},
+		&models.ArticleAttachment{},
 		&models.Setting{},
 		&models.Link{},
 		&models.OperationLog{},

@@ -185,12 +185,223 @@ func (s *Service) HandleUploadImage(c *gin.Context) {
 	})
 }
 
+func (s *Service) HandleGetProcessingSettings(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+	resp, status, err := s.GetProcessingSettings(ctx)
+	if err != nil {
+		common.Fail(c, status, err)
+		return
+	}
+	common.Success(c, resp)
+}
+
+func (s *Service) HandlePutProcessingSettings(c *gin.Context) {
+	var req v1.AttachmentProcessingSettings
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.Fail(c, http.StatusBadRequest, err)
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
+	defer cancel()
+	resp, status, err := s.PutProcessingSettings(ctx, &req)
+	if err != nil {
+		common.Fail(c, status, err)
+		return
+	}
+	common.Success(c, resp)
+}
+
+func (s *Service) HandleFamily(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || id <= 0 {
+		common.Fail(c, http.StatusBadRequest, nil)
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+	resp, status, err := s.Family(ctx, id)
+	if err != nil {
+		common.Fail(c, status, err)
+		return
+	}
+	common.Success(c, resp)
+}
+
+func (s *Service) HandleProcess(c *gin.Context) {
+	userID, ok := middlewares.GetCurrentUserID(c)
+	if !ok {
+		common.Fail(c, http.StatusUnauthorized, nil)
+		return
+	}
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || id <= 0 {
+		common.Fail(c, http.StatusBadRequest, nil)
+		return
+	}
+	var req v1.ProcessAttachmentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.Fail(c, http.StatusBadRequest, err)
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 120*time.Second)
+	defer cancel()
+	resp, status, err := s.ProcessImage(ctx, userID, id, &req)
+	if err != nil {
+		common.Fail(c, status, err)
+		return
+	}
+	common.Success(c, resp)
+}
+
+func (s *Service) HandleListGroups(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+	resp, status, err := s.ListGroups(ctx)
+	if err != nil {
+		common.Fail(c, status, err)
+		return
+	}
+	common.Success(c, resp)
+}
+
+func (s *Service) HandleCreateGroup(c *gin.Context) {
+	var req v1.CreateAttachmentGroupRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.Fail(c, http.StatusBadRequest, err)
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+	resp, status, err := s.CreateGroup(ctx, &req)
+	if err != nil {
+		common.Fail(c, status, err)
+		return
+	}
+	common.Success(c, resp)
+}
+
+func (s *Service) HandleUpdateGroup(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || id <= 0 {
+		common.Fail(c, http.StatusBadRequest, nil)
+		return
+	}
+	var req v1.UpdateAttachmentGroupRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.Fail(c, http.StatusBadRequest, err)
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+	resp, status, err := s.UpdateGroup(ctx, id, &req)
+	if err != nil {
+		common.Fail(c, status, err)
+		return
+	}
+	common.Success(c, resp)
+}
+
+func (s *Service) HandleDeleteGroup(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || id <= 0 {
+		common.Fail(c, http.StatusBadRequest, nil)
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+	defer cancel()
+	status, err := s.DeleteGroup(ctx, id)
+	if err != nil {
+		common.Fail(c, status, err)
+		return
+	}
+	common.Success(c, gin.H{"id": id})
+}
+
+// HandleUpdateAttachment godoc
+//
+//	@Summary		更新附件
+//	@Description	可选物理重命名（移动文件并同步公开 URL 与正文引用）与可选分类；根附件改分类时同步子附件
+//	@Tags			admin
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		integer	true	"附件 ID"
+//	@Param			body	body		v1.UpdateAttachmentRequest	true	"更新字段（name 与 groupId 至少其一）"
+//	@Success		200		{object}	common.BaseResponse
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		404		{object}	common.BaseResponse
+//	@Failure		500		{object}	common.BaseResponse
+//	@Security		BearerAuth
+//	@Router			/api/v1/admin/attachments/{id} [put]
+func (s *Service) HandleUpdateAttachment(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || id <= 0 {
+		common.Fail(c, http.StatusBadRequest, nil)
+		return
+	}
+	var req v1.UpdateAttachmentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.Fail(c, http.StatusBadRequest, err)
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 120*time.Second)
+	defer cancel()
+	resp, status, err := s.UpdateAttachment(ctx, id, &req)
+	if err != nil {
+		common.Fail(c, status, err)
+		return
+	}
+	common.Success(c, resp)
+}
+
+// HandleReplaceInArticles godoc
+//
+//	@Summary		批量替换文章中的附件 URL
+//	@Description	将选中文章中 from 附件链接替换为 to（须为同一家族）
+//	@Tags			admin
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		v1.ReplaceAttachmentInArticlesRequest	true	"替换参数"
+//	@Success		200		{object}	common.BaseResponse
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		404		{object}	common.BaseResponse
+//	@Failure		500		{object}	common.BaseResponse
+//	@Security		BearerAuth
+//	@Router			/api/v1/admin/attachments/replace-in-articles [post]
+func (s *Service) HandleReplaceInArticles(c *gin.Context) {
+	var req v1.ReplaceAttachmentInArticlesRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.Fail(c, http.StatusBadRequest, err)
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 120*time.Second)
+	defer cancel()
+	resp, status, err := s.ReplaceAttachmentInArticles(ctx, &req)
+	if err != nil {
+		common.Fail(c, status, err)
+		return
+	}
+	common.Success(c, resp)
+}
+
 // RegisterAdminRoutes registers attachment-related routes inside the admin group.
 // The group is expected to already have Auth + admin-role middleware applied.
 func RegisterAdminRoutes(g *gin.RouterGroup, svcCtx *svc.ServiceContext) {
 	svc := NewService(svcCtx)
 	g.POST("/attachments/upload", svc.HandleUpload)
+	g.GET("/attachments/settings", svc.HandleGetProcessingSettings)
+	g.PUT("/attachments/settings", svc.HandlePutProcessingSettings)
+	g.POST("/attachments/replace-in-articles", svc.HandleReplaceInArticles)
 	g.GET("/attachments", svc.HandleList)
+	g.PUT("/attachments/:id", svc.HandleUpdateAttachment)
+	g.GET("/attachments/:id/family", svc.HandleFamily)
+	g.POST("/attachments/:id/process", svc.HandleProcess)
 	g.DELETE("/attachments/:id", svc.HandleDelete)
+	g.GET("/attachment-groups", svc.HandleListGroups)
+	g.POST("/attachment-groups", svc.HandleCreateGroup)
+	g.PUT("/attachment-groups/:id", svc.HandleUpdateGroup)
+	g.DELETE("/attachment-groups/:id", svc.HandleDeleteGroup)
 	g.POST("/upload-image", svc.HandleUploadImage)
 }

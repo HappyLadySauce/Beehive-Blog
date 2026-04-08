@@ -11,6 +11,7 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/attachmentref"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/passwd"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/slug"
 	"gorm.io/gorm"
@@ -24,6 +25,16 @@ type ArticleAdmin struct {
 
 func newArticleAdmin(svcCtx *svc.ServiceContext) *ArticleAdmin {
 	return &ArticleAdmin{svc: svcCtx}
+}
+
+func (a *ArticleAdmin) syncArticleAttachmentRefs(ctx context.Context, articleID int64, content, summary string) {
+	base := strings.TrimSpace(a.svc.Config.StorageOptions.BaseURL)
+	if base == "" {
+		return
+	}
+	if err := attachmentref.SyncForArticle(ctx, a.svc.DB, articleID, content, summary, base); err != nil {
+		klog.ErrorS(err, "syncArticleAttachmentRefs", "articleID", articleID)
+	}
 }
 
 func parseRFC3339Ptr(s *string) (*time.Time, error) {
@@ -328,6 +339,7 @@ func (a *ArticleAdmin) CreateArticle(ctx context.Context, adminUserID int64, req
 	}
 
 	maybeHexoSyncSingle(a.svc, art.ID)
+	a.syncArticleAttachmentRefs(ctx, art.ID, art.Content, art.Summary)
 	return a.loadArticleDetail(ctx, art.ID)
 }
 
@@ -474,6 +486,15 @@ func (a *ArticleAdmin) UpdateArticle(ctx context.Context, articleID int64, req *
 	}
 
 	maybeHexoSyncSingle(a.svc, articleID)
+	content := art.Content
+	if req.Content != nil {
+		content = *req.Content
+	}
+	summary := art.Summary
+	if req.Summary != nil {
+		summary = *req.Summary
+	}
+	a.syncArticleAttachmentRefs(ctx, articleID, content, summary)
 	return a.loadArticleDetail(ctx, articleID)
 }
 
@@ -487,6 +508,7 @@ func (a *ArticleAdmin) DeleteArticle(ctx context.Context, articleID int64, _ *ht
 		return nil, http.StatusNotFound, errors.New("article not found")
 	}
 	_ = a.svc.DB.WithContext(ctx).Where("article_id = ?", articleID).Delete(&models.ArticleTag{})
+	_ = a.svc.DB.WithContext(ctx).Where("article_id = ?", articleID).Delete(&models.ArticleAttachment{})
 	maybeHexoDeletePost(a.svc, articleID)
 	return &v1.DeleteArticleResponse{ID: articleID}, http.StatusOK, nil
 }

@@ -188,6 +188,7 @@ func (s *Service) Upload(ctx context.Context, userID int64, fh *multipart.FileHe
 		Height:       height,
 		PolicyID:     policy.ID,
 		GroupID:      groupID,
+		Variant:      "original",
 		UploadedBy:   userID,
 	}
 	if err := s.svc.DB.WithContext(ctx).Create(&a).Error; err != nil {
@@ -206,6 +207,8 @@ func (s *Service) Upload(ctx context.Context, userID int64, fh *multipart.FileHe
 		Size:         a.Size,
 		Width:        a.Width,
 		Height:       a.Height,
+		Variant:      a.Variant,
+		GroupID:      a.GroupID,
 		CreatedAt:    a.CreatedAt,
 	}, http.StatusOK, nil
 }
@@ -229,6 +232,9 @@ func (s *Service) List(ctx context.Context, q *v1.AttachmentListQuery) (*v1.Atta
 	offset := (page - 1) * pageSize
 
 	baseQ := s.svc.DB.WithContext(ctx).Model(&models.Attachment{})
+	if q.RootsOnly == nil || (q.RootsOnly != nil && *q.RootsOnly) {
+		baseQ = baseQ.Where("parent_id IS NULL")
+	}
 	if strings.TrimSpace(q.Type) != "" {
 		baseQ = baseQ.Where("type = ?", models.AttachmentType(q.Type))
 	}
@@ -247,6 +253,9 @@ func (s *Service) List(ctx context.Context, q *v1.AttachmentListQuery) (*v1.Atta
 	}
 
 	listQ := s.svc.DB.WithContext(ctx).Model(&models.Attachment{})
+	if q.RootsOnly == nil || (q.RootsOnly != nil && *q.RootsOnly) {
+		listQ = listQ.Where("parent_id IS NULL")
+	}
 	if strings.TrimSpace(q.Type) != "" {
 		listQ = listQ.Where("type = ?", models.AttachmentType(q.Type))
 	}
@@ -259,14 +268,79 @@ func (s *Service) List(ctx context.Context, q *v1.AttachmentListQuery) (*v1.Atta
 	}
 
 	var rows []models.Attachment
-	if err := listQ.Order("created_at DESC").Offset(offset).Limit(pageSize).Find(&rows).Error; err != nil {
+	if err := listQ.Preload("Group").Order("created_at DESC").Offset(offset).Limit(pageSize).Find(&rows).Error; err != nil {
 		klog.ErrorS(err, "List: find")
 		return nil, http.StatusInternalServerError, errors.New("system error")
+	}
+
+	// 根行展示：家族（根 + 子附件）在 article_attachments 中涉及的 distinct article_id 数量
+	familyDistinctArticles := map[int64]int64{}
+	if len(rows) > 0 {
+		rootIDs := make([]int64, 0, len(rows))
+		for i := range rows {
+			rootIDs = append(rootIDs, rows[i].ID)
+		}
+		attToRoot := make(map[int64]int64, len(rootIDs)*2)
+		for _, rid := range rootIDs {
+			attToRoot[rid] = rid
+		}
+		var childRows []struct {
+			ID       int64 `gorm:"column:id"`
+			ParentID int64 `gorm:"column:parent_id"`
+		}
+		if err := s.svc.DB.WithContext(ctx).Model(&models.Attachment{}).
+			Select("id", "parent_id").
+			Where("parent_id IN ?", rootIDs).
+			Scan(&childRows).Error; err != nil {
+			klog.ErrorS(err, "List: children for ref count")
+			return nil, http.StatusInternalServerError, errors.New("system error")
+		}
+		for i := range childRows {
+			attToRoot[childRows[i].ID] = childRows[i].ParentID
+		}
+		allFamilyAttIDs := make([]int64, 0, len(attToRoot))
+		for aid := range attToRoot {
+			allFamilyAttIDs = append(allFamilyAttIDs, aid)
+		}
+		type pairRow struct {
+			AttachmentID int64 `gorm:"column:attachment_id"`
+			ArticleID    int64 `gorm:"column:article_id"`
+		}
+		var pairs []pairRow
+		if len(allFamilyAttIDs) > 0 {
+			if err := s.svc.DB.WithContext(ctx).Model(&models.ArticleAttachment{}).
+				Select("attachment_id", "article_id").
+				Where("attachment_id IN ?", allFamilyAttIDs).
+				Scan(&pairs).Error; err != nil {
+				klog.ErrorS(err, "List: article_attachments for family ref")
+				return nil, http.StatusInternalServerError, errors.New("system error")
+			}
+		}
+		perRootArts := make(map[int64]map[int64]struct{}, len(rootIDs))
+		for _, rid := range rootIDs {
+			perRootArts[rid] = make(map[int64]struct{})
+		}
+		for _, p := range pairs {
+			rootID, ok := attToRoot[p.AttachmentID]
+			if !ok {
+				continue
+			}
+			if _, ok := perRootArts[rootID]; ok {
+				perRootArts[rootID][p.ArticleID] = struct{}{}
+			}
+		}
+		for rid, set := range perRootArts {
+			familyDistinctArticles[rid] = int64(len(set))
+		}
 	}
 
 	items := make([]v1.AttachmentItem, 0, len(rows))
 	for i := range rows {
 		a := &rows[i]
+		gn := ""
+		if a.Group != nil {
+			gn = a.Group.Name
+		}
 		items = append(items, v1.AttachmentItem{
 			ID:           a.ID,
 			Name:         a.Name,
@@ -278,6 +352,11 @@ func (s *Service) List(ctx context.Context, q *v1.AttachmentListQuery) (*v1.Atta
 			Size:         a.Size,
 			Width:        a.Width,
 			Height:       a.Height,
+			ParentID:     a.ParentID,
+			Variant:      a.Variant,
+			GroupID:      a.GroupID,
+			GroupName:    gn,
+			RefCount:     familyDistinctArticles[a.ID],
 			CreatedAt:    a.CreatedAt,
 		})
 	}
@@ -289,7 +368,7 @@ func (s *Service) List(ctx context.Context, q *v1.AttachmentListQuery) (*v1.Atta
 	}, http.StatusOK, nil
 }
 
-// Delete removes an attachment record and its physical file from disk.
+// Delete removes an attachment; deleting a root removes all descendants and their files.
 func (s *Service) Delete(ctx context.Context, attachmentID int64) (*v1.DeleteAttachmentResponse, int, error) {
 	if attachmentID <= 0 {
 		return nil, http.StatusBadRequest, errors.New("invalid attachment id")
@@ -303,16 +382,48 @@ func (s *Service) Delete(ctx context.Context, attachmentID int64) (*v1.DeleteAtt
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
 
-	if err := s.svc.DB.WithContext(ctx).Delete(&a).Error; err != nil {
-		klog.ErrorS(err, "Delete: db delete", "id", attachmentID)
+	if a.ParentID != nil {
+		if err := s.deleteAttachmentLeaf(ctx, &a); err != nil {
+			klog.ErrorS(err, "Delete: leaf", "id", attachmentID)
+			return nil, http.StatusInternalServerError, errors.New("system error")
+		}
+		return &v1.DeleteAttachmentResponse{ID: attachmentID}, http.StatusOK, nil
+	}
+
+	var childIDs []int64
+	if err := s.svc.DB.WithContext(ctx).Model(&models.Attachment{}).
+		Where("parent_id = ?", a.ID).Pluck("id", &childIDs).Error; err != nil {
+		klog.ErrorS(err, "Delete: list children", "id", attachmentID)
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
-
-	if a.Path != "" {
-		if err := os.Remove(a.Path); err != nil && !os.IsNotExist(err) {
-			klog.ErrorS(err, "Delete: remove file", "path", a.Path)
+	for _, cid := range childIDs {
+		var c models.Attachment
+		if err := s.svc.DB.WithContext(ctx).Where("id = ?", cid).First(&c).Error; err != nil {
+			continue
+		}
+		if err := s.deleteAttachmentLeaf(ctx, &c); err != nil {
+			klog.ErrorS(err, "Delete: child", "id", cid)
+			return nil, http.StatusInternalServerError, errors.New("system error")
 		}
 	}
-
+	if err := s.deleteAttachmentLeaf(ctx, &a); err != nil {
+		klog.ErrorS(err, "Delete: root", "id", attachmentID)
+		return nil, http.StatusInternalServerError, errors.New("system error")
+	}
 	return &v1.DeleteAttachmentResponse{ID: attachmentID}, http.StatusOK, nil
+}
+
+func (s *Service) deleteAttachmentLeaf(ctx context.Context, a *models.Attachment) error {
+	if err := s.svc.DB.WithContext(ctx).Where("attachment_id = ?", a.ID).Delete(&models.ArticleAttachment{}).Error; err != nil {
+		return err
+	}
+	if err := s.svc.DB.WithContext(ctx).Delete(a).Error; err != nil {
+		return err
+	}
+	if a.Path != "" {
+		if err := os.Remove(a.Path); err != nil && !os.IsNotExist(err) {
+			klog.ErrorS(err, "deleteAttachmentLeaf: remove file", "path", a.Path)
+		}
+	}
+	return nil
 }

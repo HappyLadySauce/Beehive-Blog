@@ -1629,6 +1629,69 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/admin/attachments/replace-in-articles": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "将选中文章中 from 附件链接替换为 to（须为同一家族）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "批量替换文章中的附件 URL",
+                "parameters": [
+                    {
+                        "description": "替换参数",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.ReplaceAttachmentInArticlesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/admin/attachments/upload": {
             "post": {
                 "security": [
@@ -1697,6 +1760,74 @@ const docTemplate = `{
             }
         },
         "/api/v1/admin/attachments/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "可选物理重命名（移动文件并同步公开 URL 与正文引用）与可选分类；根附件改分类时同步子附件",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "更新附件",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "附件 ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新字段（name 与 groupId 至少其一）",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.UpdateAttachmentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            },
             "delete": {
                 "security": [
                     {
@@ -5305,6 +5436,10 @@ const docTemplate = `{
                 "slug": {
                     "type": "string"
                 },
+                "status": {
+                    "description": "Status 管理员接口返回文章状态；公开接口不设置，JSON omitempty。",
+                    "type": "string"
+                },
                 "summary": {
                     "type": "string"
                 },
@@ -6011,6 +6146,29 @@ const docTemplate = `{
                 }
             }
         },
+        "v1.ReplaceAttachmentInArticlesRequest": {
+            "type": "object",
+            "required": [
+                "articleIds",
+                "fromAttachmentId",
+                "toAttachmentId"
+            ],
+            "properties": {
+                "articleIds": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "fromAttachmentId": {
+                    "type": "integer"
+                },
+                "toAttachmentId": {
+                    "type": "integer"
+                }
+            }
+        },
         "v1.SettingsResponse": {
             "type": "object",
             "properties": {
@@ -6323,6 +6481,19 @@ const docTemplate = `{
                 "title": {
                     "type": "string",
                     "maxLength": 200,
+                    "minLength": 1
+                }
+            }
+        },
+        "v1.UpdateAttachmentRequest": {
+            "type": "object",
+            "properties": {
+                "groupId": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 255,
                     "minLength": 1
                 }
             }

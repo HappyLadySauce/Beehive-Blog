@@ -50,6 +50,9 @@ CREATE TABLE IF NOT EXISTS attachments (
     height INT,
     policy_id BIGINT NOT NULL REFERENCES storage_policies(id) ON DELETE RESTRICT,
     group_id BIGINT REFERENCES attachment_groups(id) ON DELETE SET NULL,
+    -- 派生附件（压缩/转格式/复制）指向根附件；根附件为 NULL
+    parent_id BIGINT REFERENCES attachments(id) ON DELETE CASCADE,
+    variant VARCHAR(32),
     uploaded_by BIGINT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -58,7 +61,22 @@ CREATE TABLE IF NOT EXISTS attachments (
 CREATE INDEX idx_attachments_type ON attachments(type);
 CREATE INDEX idx_attachments_policy_id ON attachments(policy_id);
 CREATE INDEX idx_attachments_group_id ON attachments(group_id);
+CREATE INDEX idx_attachments_parent_id ON attachments(parent_id);
 CREATE INDEX idx_attachments_uploaded_by ON attachments(uploaded_by);
 CREATE INDEX idx_attachments_created_at ON attachments(created_at);
 
 COMMENT ON TABLE attachments IS '附件表';
+COMMENT ON COLUMN attachments.parent_id IS '父附件 ID，非空表示派生自该根/父附件';
+COMMENT ON COLUMN attachments.variant IS '派生类型：original|compressed|converted|copy 等';
+
+-- 文章正文引用的附件（与 Markdown 中 URL 解析同步）
+CREATE TABLE IF NOT EXISTS article_attachments (
+    article_id BIGINT NOT NULL REFERENCES articles(id) ON DELETE CASCADE,
+    attachment_id BIGINT NOT NULL REFERENCES attachments(id) ON DELETE CASCADE,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (article_id, attachment_id)
+);
+
+CREATE INDEX idx_article_attachments_attachment_id ON article_attachments(attachment_id);
+
+COMMENT ON TABLE article_attachments IS '文章与附件引用关系（正文 URL）';

@@ -14,7 +14,7 @@ interface AdminModalProps {
   /** 禁用确定按钮（例如无待提交数据时） */
   confirmDisabled?: boolean;
   /** 弹窗最大宽度，默认 max-w-lg */
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '6xl';
   children: ReactNode;
 }
 
@@ -30,6 +30,7 @@ const maxWidthClass: Record<string, string> = {
   lg: 'max-w-lg',
   xl: 'max-w-3xl',
   '2xl': 'max-w-4xl',
+  '6xl': 'max-w-6xl',
 };
 
 /**

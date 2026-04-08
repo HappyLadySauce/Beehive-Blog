@@ -19,6 +19,7 @@
 \ir 010_comment_counts_approved_only.sql
 \ir 011_article_versions_index.sql
 \ir 012_article_versions_autosave.sql
+\ir 013_attachment_refs.sql
 
 \echo '========================================'
 \echo 'Beehive-Blog 数据库初始化完成'
