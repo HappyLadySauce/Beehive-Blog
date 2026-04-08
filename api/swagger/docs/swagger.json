@@ -254,6 +254,141 @@
                 }
             }
         },
+        "/api/v1/admin/articles/export": {
+            "post": {
+                "description": "需管理员；按 id 列表打包 markdown 或 html，ZIP 内文件名为 slug",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/zip"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "批量导出文章为 ZIP",
+                "parameters": [
+                    {
+                        "description": "文章 id 列表与格式",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.BatchExportArticlesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/articles/import": {
+            "post": {
+                "description": "需管理员；multipart：files 多个 .md，或 archive 一个 .zip（内含 .md）；标签不存在时自动创建",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "admin"
+                ],
+                "summary": "批量导入 Markdown",
+                "parameters": [
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "file"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Markdown 文件",
+                        "name": "files",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "ZIP 归档",
+                        "name": "archive",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/v1.ImportArticlesResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "413": {
+                        "description": "Request Entity Too Large",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/admin/articles/trash": {
             "get": {
                 "description": "需管理员；分页列出已软删文章，支持 keyword 与 sort（newest|oldest|popular）",
@@ -5401,6 +5536,29 @@
                 }
             }
         },
+        "v1.BatchExportArticlesRequest": {
+            "type": "object",
+            "required": [
+                "ids"
+            ],
+            "properties": {
+                "format": {
+                    "type": "string",
+                    "enum": [
+                        "markdown",
+                        "html"
+                    ]
+                },
+                "ids": {
+                    "type": "array",
+                    "maxItems": 100,
+                    "minItems": 1,
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
         "v1.CategoryBrief": {
             "type": "object",
             "properties": {
@@ -5684,6 +5842,48 @@
             "properties": {
                 "id": {
                     "type": "integer"
+                }
+            }
+        },
+        "v1.ImportArticleCreatedItem": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.ImportArticleErrorItem": {
+            "type": "object",
+            "properties": {
+                "file": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.ImportArticlesResponse": {
+            "type": "object",
+            "properties": {
+                "created": {
+                    "type": "integer"
+                },
+                "errors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.ImportArticleErrorItem"
+                    }
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/v1.ImportArticleCreatedItem"
+                    }
                 }
             }
         },

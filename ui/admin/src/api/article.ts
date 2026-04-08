@@ -1,4 +1,6 @@
+import axios, { AxiosError } from 'axios';
 import request from '../utils/request';
+import { useAuthStore } from '../store/authStore';
 
 export interface ArticleListQuery {
   page?: number;
@@ -120,6 +122,75 @@ export interface BatchArticleRequest {
 }
 
 type ApiResponse<T> = { code: number; message: string; data: T };
+
+export interface ImportArticleErrorItem {
+  file: string;
+  reason: string;
+}
+
+export interface ImportArticleCreatedItem {
+  id: number;
+  title: string;
+}
+
+export interface ImportArticlesResponse {
+  created: number;
+  items: ImportArticleCreatedItem[];
+  errors: ImportArticleErrorItem[];
+}
+
+/** 批量导出为 ZIP（Markdown）。失败时服务端返回 JSON，需从 Blob 解析 message。 */
+export async function exportArticlesZip(ids: number[]): Promise<Blob> {
+  const baseURL = import.meta.env.VITE_API_BASE_URL || '';
+  const token = useAuthStore.getState().token;
+  try {
+    const res = await axios.post(
+      `${baseURL}/api/v1/admin/articles/export`,
+      { ids, format: 'markdown' },
+      {
+        responseType: 'blob',
+        timeout: 120000,
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+    const blob = res.data as Blob;
+    if (blob.type && blob.type.includes('application/json')) {
+      const text = await blob.text();
+      let msg = 'export failed';
+      try {
+        const j = JSON.parse(text) as { message?: string };
+        if (j.message) msg = j.message;
+      } catch {
+        msg = text.slice(0, 200) || msg;
+      }
+      throw new Error(msg);
+    }
+    return blob;
+  } catch (err) {
+    const e = err as AxiosError;
+    const data = e.response?.data;
+    if (data instanceof Blob) {
+      const text = await data.text();
+      let msg = 'export failed';
+      try {
+        const j = JSON.parse(text) as { message?: string };
+        if (j.message) msg = j.message;
+      } catch {
+        msg = text.slice(0, 200) || msg;
+      }
+      throw new Error(msg);
+    }
+    throw err;
+  }
+}
+
+export const importArticles = (formData: FormData) =>
+  request.post<any, ApiResponse<ImportArticlesResponse>>('/api/v1/admin/articles/import', formData, {
+    timeout: 120000,
+  });
 
 export const getArticles = (params: ArticleListQuery) =>
   request.get<any, ApiResponse<AdminArticleListResponse>>('/api/v1/admin/articles', { params });

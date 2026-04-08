@@ -435,6 +435,22 @@ definitions:
       affected:
         type: integer
     type: object
+  v1.BatchExportArticlesRequest:
+    properties:
+      format:
+        enum:
+        - markdown
+        - html
+        type: string
+      ids:
+        items:
+          type: integer
+        maxItems: 100
+        minItems: 1
+        type: array
+    required:
+    - ids
+    type: object
   v1.CategoryBrief:
     properties:
       articleCount:
@@ -627,6 +643,33 @@ definitions:
     properties:
       id:
         type: integer
+    type: object
+  v1.ImportArticleCreatedItem:
+    properties:
+      id:
+        type: integer
+      title:
+        type: string
+    type: object
+  v1.ImportArticleErrorItem:
+    properties:
+      file:
+        type: string
+      reason:
+        type: string
+    type: object
+  v1.ImportArticlesResponse:
+    properties:
+      created:
+        type: integer
+      errors:
+        items:
+          $ref: '#/definitions/v1.ImportArticleErrorItem'
+        type: array
+      items:
+        items:
+          $ref: '#/definitions/v1.ImportArticleCreatedItem'
+        type: array
     type: object
   v1.LoginRequest:
     properties:
@@ -1832,6 +1875,92 @@ paths:
           schema:
             $ref: '#/definitions/common.BaseResponse'
       summary: 文章批量操作
+      tags:
+      - admin
+  /api/v1/admin/articles/export:
+    post:
+      consumes:
+      - application/json
+      description: 需管理员；按 id 列表打包 markdown 或 html，ZIP 内文件名为 slug
+      parameters:
+      - description: 文章 id 列表与格式
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.BatchExportArticlesRequest'
+      produces:
+      - application/zip
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 批量导出文章为 ZIP
+      tags:
+      - admin
+  /api/v1/admin/articles/import:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 需管理员；multipart：files 多个 .md，或 archive 一个 .zip（内含 .md）；标签不存在时自动创建
+      parameters:
+      - collectionFormat: csv
+        description: Markdown 文件
+        in: formData
+        items:
+          type: file
+        name: files
+        type: array
+      - description: ZIP 归档
+        in: formData
+        name: archive
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.ImportArticlesResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "413":
+          description: Request Entity Too Large
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 批量导入 Markdown
       tags:
       - admin
   /api/v1/admin/articles/trash:

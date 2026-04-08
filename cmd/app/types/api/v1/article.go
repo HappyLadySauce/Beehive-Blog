@@ -213,3 +213,28 @@ type BatchArticleRequest struct {
 type BatchArticleResponse struct {
 	Affected int64 `json:"affected"`
 }
+
+// BatchExportArticlesRequest 批量导出为 ZIP（管理员）。
+type BatchExportArticlesRequest struct {
+	IDs    []int64 `json:"ids" binding:"required,min=1,max=100,dive,min=1"`
+	Format string  `json:"format" binding:"omitempty,oneof=markdown html"`
+}
+
+// ImportArticleErrorItem 单文件导入失败说明。
+type ImportArticleErrorItem struct {
+	File   string `json:"file"`
+	Reason string `json:"reason"`
+}
+
+// ImportArticleCreatedItem 成功创建的文章摘要。
+type ImportArticleCreatedItem struct {
+	ID    int64  `json:"id"`
+	Title string `json:"title"`
+}
+
+// ImportArticlesResponse Markdown 批量导入结果。
+type ImportArticlesResponse struct {
+	Created int64                    `json:"created"`
+	Items   []ImportArticleCreatedItem `json:"items"`
+	Errors  []ImportArticleErrorItem `json:"errors"`
+}

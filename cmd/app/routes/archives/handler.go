@@ -22,6 +22,8 @@ func RegisterArticleAdminRoutes(g *gin.RouterGroup, svcCtx *svc.ServiceContext) 
 	h := &articleHandlers{svc: newArticleAdmin(svcCtx)}
 	// 批量操作须在 /:id 参数路由之前注册，避免路径冲突
 	g.POST("/articles/batch", h.handleBatchArticles)
+	g.POST("/articles/export", h.handleBatchExportArticles)
+	g.POST("/articles/import", h.handleImportArticles)
 	g.GET("/articles", h.handleListArticles)
 	g.POST("/articles", h.handleCreateArticle)
 	// /articles/trash 须在 GET /articles/:id 之前注册，否则 "trash" 会被解析为 id
@@ -472,6 +474,74 @@ func (h *articleHandlers) handleBatchArticles(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
 	defer cancel()
 	resp, code, err := h.svc.BatchArticles(ctx, &req)
+	if err != nil {
+		common.Fail(c, code, err)
+		return
+	}
+	common.Success(c, resp)
+}
+
+// handleBatchExportArticles godoc
+//
+//	@Summary		批量导出文章为 ZIP
+//	@Description	需管理员；按 id 列表打包 markdown 或 html，ZIP 内文件名为 slug
+//	@Tags			admin
+//	@Accept			json
+//	@Produce		application/zip
+//	@Param			request	body		v1.BatchExportArticlesRequest	true	"文章 id 列表与格式"
+//	@Success		200		{file}		binary
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		403		{object}	common.BaseResponse
+//	@Failure		500		{object}	common.BaseResponse
+//	@Router			/api/v1/admin/articles/export [post]
+func (h *articleHandlers) handleBatchExportArticles(c *gin.Context) {
+	uid, ok := middlewares.GetCurrentUserID(c)
+	if !ok || uid <= 0 {
+		common.FailMessage(c, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	var req v1.BatchExportArticlesRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.Fail(c, http.StatusBadRequest, err)
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 60*time.Second)
+	defer cancel()
+	data, contentType, code, err := h.svc.BatchExportArticlesZIP(ctx, req.IDs, req.Format)
+	if err != nil {
+		common.Fail(c, code, err)
+		return
+	}
+	fn := "beehive-articles-" + strconv.FormatInt(time.Now().Unix(), 10) + ".zip"
+	c.Header("Content-Disposition", `attachment; filename="`+fn+`"`)
+	c.Data(http.StatusOK, contentType, data)
+}
+
+// handleImportArticles godoc
+//
+//	@Summary		批量导入 Markdown
+//	@Description	需管理员；multipart：files 多个 .md，或 archive 一个 .zip（内含 .md）；标签不存在时自动创建
+//	@Tags			admin
+//	@Accept			multipart/form-data
+//	@Produce		json
+//	@Param			files	formData	[]file	false	"Markdown 文件"
+//	@Param			archive	formData	file	false	"ZIP 归档"
+//	@Success		200		{object}	common.BaseResponse{data=v1.ImportArticlesResponse}
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		413		{object}	common.BaseResponse
+//	@Failure		500		{object}	common.BaseResponse
+//	@Router			/api/v1/admin/articles/import [post]
+func (h *articleHandlers) handleImportArticles(c *gin.Context) {
+	uid, ok := middlewares.GetCurrentUserID(c)
+	if !ok || uid <= 0 {
+		common.FailMessage(c, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 120*time.Second)
+	defer cancel()
+	resp, code, err := h.svc.ImportMarkdownUpload(ctx, uid, c)
 	if err != nil {
 		common.Fail(c, code, err)
 		return

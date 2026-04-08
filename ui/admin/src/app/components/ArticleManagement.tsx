@@ -1,13 +1,23 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Search, Edit, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Search, Edit, Trash2, Upload, X } from 'lucide-react';
 import Pagination from '../../components/Pagination';
 import CustomSelect from '../../components/CustomSelect';
 import ConfirmModal from '../../components/ConfirmModal';
 import AdminModal from '../../components/AdminModal';
-import { getArticles, deleteArticle, batchOperateArticles, AdminArticleListItem, ArticleListQuery } from '../../api/article';
+import { getArticles, deleteArticle, batchOperateArticles, exportArticlesZip, importArticles, AdminArticleListItem, ArticleListQuery } from '../../api/article';
 import { getCategories, getTags, CategoryBrief, TagListItem } from '../../api/taxonomy';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+
+function importFileKey(f: File): string {
+  return `${f.name}:${f.size}:${f.lastModified}`;
+}
+
+function formatImportFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 export default function ArticleManagement() {
   const navigate = useNavigate();
@@ -28,6 +38,11 @@ export default function ArticleManagement() {
   const [batchCategoryId, setBatchCategoryId] = useState<number | null>(null);
   const [batchTagIds, setBatchTagIds] = useState<number[]>([]);
   const [batchSubmitting, setBatchSubmitting] = useState(false);
+  const [importExportBusy, setImportExportBusy] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [importDragActive, setImportDragActive] = useState(false);
+  const [importStagedFiles, setImportStagedFiles] = useState<File[]>([]);
+  const importFileInputRef = useRef<HTMLInputElement>(null);
 
   const [confirmState, setConfirmState] = useState<{
     open: boolean;
@@ -331,6 +346,172 @@ export default function ArticleManagement() {
   const batchToolbarBtnClass =
     'rounded border border-border bg-background px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-accent';
 
+  const runBatchExportZip = async () => {
+    if (!selectedArticles.length) {
+      toast.warning('请先选择要导出的文章');
+      return;
+    }
+    setImportExportBusy(true);
+    try {
+      const blob = await exportArticlesZip(selectedArticles);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `beehive-articles-${Date.now()}.zip`;
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('导出成功');
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : '导出失败';
+      toast.error(msg);
+    } finally {
+      setImportExportBusy(false);
+    }
+  };
+
+  const filterImportableFiles = (list: File[]) =>
+    list.filter((f) => {
+      const lower = f.name.toLowerCase();
+      return lower.endsWith('.zip') || lower.endsWith('.md') || lower.endsWith('.markdown');
+    });
+
+  const submitImportFiles = async (files: File[]) => {
+    const accepted = filterImportableFiles(files);
+    if (accepted.length === 0) {
+      toast.warning('请拖入 .md、.markdown 或 .zip 文件');
+      return;
+    }
+    const formData = new FormData();
+    let archiveAppended = false;
+    for (const f of accepted) {
+      const lower = f.name.toLowerCase();
+      if (lower.endsWith('.zip')) {
+        if (archiveAppended) {
+          toast.warning('一次仅处理一个 ZIP，已忽略多余的压缩包');
+          continue;
+        }
+        formData.append('archive', f);
+        archiveAppended = true;
+      } else {
+        formData.append('files', f);
+      }
+    }
+    setImportExportBusy(true);
+    try {
+      const res = await importArticles(formData);
+      if (res.code === 200) {
+        const { created, errors } = res.data;
+        if (created > 0) {
+          toast.success(`成功导入 ${created} 篇文章`);
+          setSelectedArticles([]);
+          fetchArticles();
+          setImportStagedFiles([]);
+          setImportModalOpen(false);
+        }
+        if (errors?.length) {
+          const preview = errors.slice(0, 3).map((x) => `${x.file}: ${x.reason}`).join('；');
+          const detail = errors.length > 3 ? `${preview}…` : preview;
+          if (created > 0) {
+            toast.warning(`部分失败：${detail}`);
+          } else {
+            toast.error(detail || '导入失败');
+          }
+        } else if (created === 0) {
+          toast.info('没有导入任何文章');
+        }
+      } else {
+        toast.error(res.message || '导入失败');
+      }
+    } catch (error: unknown) {
+      const msg =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined;
+      toast.error(msg || '导入请求失败');
+    } finally {
+      setImportExportBusy(false);
+    }
+  };
+
+  const mergeFilesToStage = (incoming: File[]) => {
+    const valid = filterImportableFiles(incoming);
+    if (incoming.length > valid.length) {
+      toast.warning(`已忽略 ${incoming.length - valid.length} 个不支持的文件`);
+    }
+    if (valid.length === 0) return;
+
+    const zipsInBatch = valid.filter((f) => f.name.toLowerCase().endsWith('.zip'));
+    if (zipsInBatch.length > 1) {
+      toast.warning('一次仅添加一个 ZIP，已使用第一个');
+    }
+
+    setImportStagedFiles((prev) => {
+      let next = [...prev];
+      const mdsInBatch = valid.filter((f) => !f.name.toLowerCase().endsWith('.zip'));
+
+      if (zipsInBatch.length > 0) {
+        next = next.filter((f) => !f.name.toLowerCase().endsWith('.zip'));
+        next.push(zipsInBatch[0]);
+      }
+
+      const seen = new Set(next.map(importFileKey));
+      for (const f of mdsInBatch) {
+        const k = importFileKey(f);
+        if (!seen.has(k)) {
+          seen.add(k);
+          next.push(f);
+        }
+      }
+      return next;
+    });
+  };
+
+  const handleImportFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    e.target.value = '';
+    if (!files?.length) return;
+    mergeFilesToStage(Array.from(files));
+  };
+
+  const confirmImportUpload = () => {
+    if (importStagedFiles.length === 0) {
+      toast.warning('请先添加要导入的文件');
+      return;
+    }
+    void submitImportFiles(importStagedFiles);
+  };
+
+  const handleImportDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setImportDragActive(false);
+    if (importExportBusy) return;
+    const dropped = Array.from(e.dataTransfer.files || []);
+    mergeFilesToStage(dropped);
+  };
+
+  const handleImportDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleImportDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setImportDragActive(true);
+  };
+
+  const handleImportDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setImportDragActive(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="admin-card admin-card-glass rounded border">
@@ -347,13 +528,9 @@ export default function ArticleManagement() {
           </div>
         </div>
 
-        <div
-          className={`flex flex-wrap items-center gap-3 border-b border-border p-4 ${
-            selectedArticles.length > 0 ? 'justify-between' : ''
-          }`}
-        >
+        <div className="flex w-full flex-wrap items-center gap-3 border-b border-border p-4 justify-between">
           {selectedArticles.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
               <button type="button" className={batchToolbarBtnClass} onClick={() => void runBatchPublish()}>
                 发布
               </button>
@@ -365,6 +542,14 @@ export default function ArticleManagement() {
               </button>
               <button
                 type="button"
+                className={batchToolbarBtnClass}
+                disabled={importExportBusy}
+                onClick={() => void runBatchExportZip()}
+              >
+                导出
+              </button>
+              <button
+                type="button"
                 className="rounded bg-red-600 px-3 py-1.5 text-sm text-white transition-colors hover:bg-red-700"
                 onClick={handleBatchDelete}
               >
@@ -372,7 +557,7 @@ export default function ArticleManagement() {
               </button>
             </div>
           )}
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-3">
             <span className="text-sm text-muted-foreground">状态:</span>
             <CustomSelect
               value={selectedStatus}
@@ -421,6 +606,19 @@ export default function ArticleManagement() {
               ariaLabel="文章排序"
             />
           </div>
+          {selectedArticles.length === 0 && (
+            <button
+              type="button"
+              className={`${batchToolbarBtnClass} shrink-0`}
+              disabled={importExportBusy}
+              onClick={() => {
+                setImportStagedFiles([]);
+                setImportModalOpen(true);
+              }}
+            >
+              导入
+            </button>
+          )}
         </div>
 
         <div className="overflow-x-auto">
@@ -524,6 +722,100 @@ export default function ArticleManagement() {
 
         <Pagination total={total} page={page} pageSize={10} onPageChange={setPage} unit="项结果" />
       </div>
+
+      {importModalOpen && (
+        <AdminModal
+          title="导入 Markdown"
+          maxWidth="2xl"
+          onClose={() => {
+            setImportModalOpen(false);
+            setImportDragActive(false);
+            setImportStagedFiles([]);
+          }}
+          onConfirm={() => void confirmImportUpload()}
+          confirmLabel="确定"
+          loading={importExportBusy}
+          confirmDisabled={importStagedFiles.length === 0}
+        >
+          <div className="max-h-[min(70vh,560px)] space-y-4 overflow-y-auto pr-1">
+            <p className="text-sm text-muted-foreground">
+              点击虚线区域或拖入文件添加至列表，确认无误后点击「确定」上传。支持多个 Markdown 文件或导出的 zip 压缩包。
+            </p>
+            <input
+              ref={importFileInputRef}
+              type="file"
+              className="hidden"
+              accept=".md,.markdown,.zip,application/zip"
+              multiple
+              onChange={handleImportFileInputChange}
+            />
+            <div
+              role="button"
+              tabIndex={0}
+              onKeyDown={(ev) => {
+                if (ev.key === 'Enter' || ev.key === ' ') {
+                  ev.preventDefault();
+                  if (!importExportBusy) importFileInputRef.current?.click();
+                }
+              }}
+              onClick={() => {
+                if (!importExportBusy) importFileInputRef.current?.click();
+              }}
+              onDrop={handleImportDrop}
+              onDragOver={handleImportDragOver}
+              onDragEnter={handleImportDragEnter}
+              onDragLeave={handleImportDragLeave}
+              className={`flex min-h-[220px] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-10 text-center transition-colors ${
+                importDragActive ? 'border-primary bg-primary/10' : 'border-border bg-muted/30'
+              } ${importExportBusy ? 'pointer-events-none opacity-60' : ''}`}
+            >
+              <Upload className="h-10 w-10 text-muted-foreground" aria-hidden />
+              <span className="text-sm font-medium text-foreground">点击选择文件或拖放到此处</span>
+              <span className="text-xs text-muted-foreground">.md、.markdown、.zip</span>
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-sm font-medium text-foreground">
+                待上传文件 ({importStagedFiles.length})
+              </span>
+              {importStagedFiles.length === 0 ? (
+                <p className="text-sm text-muted-foreground">暂无文件，请先添加。</p>
+              ) : (
+                <ul className="max-h-48 space-y-1.5 overflow-y-auto rounded border border-border bg-muted/20 p-2">
+                  {importStagedFiles.map((f) => {
+                    const k = importFileKey(f);
+                    return (
+                      <li
+                        key={k}
+                        className="flex items-center justify-between gap-2 rounded px-2 py-1.5 text-sm"
+                      >
+                        <span className="min-w-0 truncate text-foreground" title={f.name}>
+                          {f.name}
+                          <span className="ml-2 text-muted-foreground">
+                            ({formatImportFileSize(f.size)})
+                          </span>
+                        </span>
+                        <button
+                          type="button"
+                          className="shrink-0 rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+                          disabled={importExportBusy}
+                          aria-label={`移除 ${f.name}`}
+                          onClick={(ev) => {
+                            ev.stopPropagation();
+                            setImportStagedFiles((prev) => prev.filter((x) => importFileKey(x) !== k));
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </div>
+        </AdminModal>
+      )}
 
       {batchSettingsOpen && (
         <AdminModal

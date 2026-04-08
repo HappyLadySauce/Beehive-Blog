@@ -11,8 +11,10 @@ interface AdminModalProps {
   confirmLabel?: string;
   confirmVariant?: ConfirmVariant;
   loading?: boolean;
+  /** 禁用确定按钮（例如无待提交数据时） */
+  confirmDisabled?: boolean;
   /** 弹窗最大宽度，默认 max-w-lg */
-  maxWidth?: 'sm' | 'md' | 'lg';
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
   children: ReactNode;
 }
 
@@ -26,6 +28,8 @@ const maxWidthClass: Record<string, string> = {
   sm: 'max-w-sm',
   md: 'max-w-md',
   lg: 'max-w-lg',
+  xl: 'max-w-3xl',
+  '2xl': 'max-w-4xl',
 };
 
 /**
@@ -43,6 +47,7 @@ export default function AdminModal({
   confirmLabel = '确认',
   confirmVariant = 'primary',
   loading = false,
+  confirmDisabled = false,
   maxWidth = 'lg',
   children,
 }: AdminModalProps) {
@@ -75,7 +80,7 @@ export default function AdminModal({
           {onConfirm && (
             <button
               onClick={onConfirm}
-              disabled={loading}
+              disabled={loading || confirmDisabled}
               className={`admin-control-md rounded px-4 text-[clamp(0.86rem,0.13vw+0.82rem,0.96rem)] transition-colors disabled:opacity-50 ${confirmVariantClass[confirmVariant]}`}
             >
               {loading ? '提交中...' : confirmLabel}

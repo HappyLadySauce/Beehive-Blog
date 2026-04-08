@@ -77,6 +77,7 @@ func buildMarkdownExport(art *models.Article) []byte {
 		}
 		sb = append(sb, []byte("]\n")...)
 	}
+	sb = append(sb, []byte(fmt.Sprintf("status: %q\n", art.Status))...)
 	sb = append(sb, []byte("---\n\n")...)
 	sb = append(sb, []byte(art.Content)...)
 	return sb
