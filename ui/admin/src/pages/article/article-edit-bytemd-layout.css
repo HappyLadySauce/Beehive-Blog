@@ -1,0 +1,184 @@
+/**
+ * 文章编辑页 ByteMD：拉满半栏宽度、暗色编辑区/工具栏、代码块语言角标与对比度。
+ * 作用域：.article-edit-bytemd（仅本页）
+ */
+
+/* ByteMD 默认 max-width:800px 居中；暗色下 markdown-body 背景仅覆盖 800px 造成「变窄」观感 */
+.article-edit-bytemd .bytemd-preview .markdown-body,
+.article-edit-bytemd .bytemd-editor .CodeMirror .CodeMirror-lines {
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* 预览区与正文背景一致，铺满半栏 */
+html.dark .article-edit-bytemd .bytemd-preview {
+  background-color: #0d1117;
+}
+
+/* ---------- 暗色：整卡与工具栏、分割线与状态栏 ---------- */
+html.dark .article-edit-bytemd .bytemd {
+  background-color: #0d1117;
+  border-color: #30363d;
+  color: #c9d1d9;
+}
+
+html.dark .article-edit-bytemd .bytemd-toolbar {
+  background-color: #161b22;
+  border-bottom-color: #30363d;
+}
+
+html.dark .article-edit-bytemd .bytemd-toolbar-tab {
+  color: #8b949e;
+}
+
+html.dark .article-edit-bytemd .bytemd-toolbar-tab-active {
+  color: #58a6ff;
+}
+
+html.dark .article-edit-bytemd .bytemd-toolbar-icon:hover {
+  background-color: #30363d;
+}
+
+html.dark .article-edit-bytemd .bytemd-toolbar-icon-active {
+  color: #58a6ff;
+}
+
+html.dark .article-edit-bytemd .bytemd-split .bytemd-preview {
+  border-left-color: #30363d;
+}
+
+html.dark .article-edit-bytemd .bytemd-status {
+  border-top-color: #30363d;
+  color: #8b949e;
+}
+
+html.dark .article-edit-bytemd .bytemd-status-right span:hover {
+  color: #58a6ff;
+}
+
+/* ---------- 暗色：CodeMirror 编辑区 ---------- */
+html.dark .article-edit-bytemd .CodeMirror {
+  background: #0d1117 !important;
+  color: #c9d1d9;
+}
+
+html.dark .article-edit-bytemd .CodeMirror-gutters {
+  background: #0d1117 !important;
+  border-right-color: #30363d;
+}
+
+html.dark .article-edit-bytemd .CodeMirror-linenumber {
+  color: #6e7681;
+}
+
+html.dark .article-edit-bytemd .CodeMirror-cursor {
+  border-left-color: #c9d1d9 !important;
+}
+
+html.dark .article-edit-bytemd .CodeMirror-selected {
+  background: rgba(56, 139, 253, 0.28) !important;
+}
+
+html.dark .article-edit-bytemd .CodeMirror-focused .CodeMirror-selected {
+  background: rgba(56, 139, 253, 0.35) !important;
+}
+
+html.dark .article-edit-bytemd .CodeMirror-line::selection,
+html.dark .article-edit-bytemd .CodeMirror-line > span::selection,
+html.dark .article-edit-bytemd .CodeMirror-line > span > span::selection {
+  background: rgba(56, 139, 253, 0.35);
+}
+
+html.dark .article-edit-bytemd .bytemd-editor .CodeMirror pre.CodeMirror-placeholder {
+  color: #6e7681 !important;
+}
+
+html.dark .article-edit-bytemd .cm-s-default .cm-header {
+  color: #79c0ff;
+}
+
+html.dark .article-edit-bytemd .cm-s-default .cm-quote {
+  color: #8b949e;
+}
+
+html.dark .article-edit-bytemd .cm-s-default .cm-keyword {
+  color: #ff7b72;
+}
+
+html.dark .article-edit-bytemd .cm-s-default .cm-atom {
+  color: #79c0ff;
+}
+
+html.dark .article-edit-bytemd .cm-s-default .cm-number {
+  color: #79c0ff;
+}
+
+html.dark .article-edit-bytemd .cm-s-default .cm-def {
+  color: #d2a8ff;
+}
+
+html.dark .article-edit-bytemd .cm-s-default .cm-variable-2 {
+  color: #c9d1d9;
+}
+
+html.dark .article-edit-bytemd .cm-s-default .cm-comment {
+  color: #8b949e;
+}
+
+html.dark .article-edit-bytemd .cm-s-default .cm-string {
+  color: #a5d6ff;
+}
+
+html.dark .article-edit-bytemd .cm-s-default .cm-string-2 {
+  color: #a5d6ff;
+}
+
+html.dark .article-edit-bytemd .cm-s-default .cm-meta {
+  color: #8b949e;
+}
+
+html.dark .article-edit-bytemd .cm-s-default .cm-builtin {
+  color: #ffa657;
+}
+
+html.dark .article-edit-bytemd .cm-s-default .cm-link {
+  color: #58a6ff;
+}
+
+/* ---------- 代码块语言角标（rehype-pre-language → pre[data-language]） ---------- */
+.article-edit-bytemd .markdown-body pre[data-language] {
+  position: relative;
+  padding-top: 1.85rem;
+}
+
+.article-edit-bytemd .markdown-body pre[data-language]::before {
+  content: attr(data-language);
+  position: absolute;
+  top: 0.45rem;
+  right: 0.75rem;
+  font-size: 12px;
+  line-height: 1;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+  text-transform: capitalize;
+  color: #59636e;
+  pointer-events: none;
+  z-index: 1;
+}
+
+html.dark .article-edit-bytemd .markdown-body pre[data-language]::before {
+  color: #8b949e;
+}
+
+/* ---------- 亮色：代码块对比度（边框 + 底） ---------- */
+html:not(.dark) .article-edit-bytemd .markdown-body pre {
+  border: 1px solid #d1d9e0;
+  border-radius: 6px;
+  background-color: #f6f8fa;
+}
+
+/* ---------- 暗色：代码块边框（略提亮） ---------- */
+html.dark .article-edit-bytemd .markdown-body pre {
+  border: 1px solid #30363d;
+  border-radius: 6px;
+}

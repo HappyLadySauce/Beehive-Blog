@@ -1,8 +1,12 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Editor } from '@bytemd/react';
-import gfm from '@bytemd/plugin-gfm';
 import 'bytemd/dist/index.css';
+import 'github-markdown-css/github-markdown-light.css';
+import './github-markdown-dark-scoped.css';
+import './article-edit-bytemd-hljs.css';
+import './article-edit-bytemd-layout.css';
+import { articleBytemdPlugins } from './bytemd-plugins';
 import {
   getArticle,
   createArticle,
@@ -21,7 +25,6 @@ import { ArrowLeft, Save, History, Settings, Timer, Pencil, Trash2 } from 'lucid
 import CustomSelect from '../../components/CustomSelect';
 import AdminModal from '../../components/AdminModal';
 
-const plugins = [gfm()];
 
 function stableArticlePayloadSnapshot(p: {
   title: string;
@@ -529,7 +532,12 @@ export default function ArticleEdit() {
       </div>
 
       <div className="editor-container min-h-0 flex-1 overflow-hidden rounded border border-border bg-card">
-        <Editor value={content} plugins={plugins} onChange={(v) => setContent(v)} uploadImages={uploadImages} />
+        <Editor
+          value={content}
+          plugins={articleBytemdPlugins}
+          onChange={(v) => setContent(v)}
+          uploadImages={uploadImages}
+        />
       </div>
 
       {settingsOpen && (
