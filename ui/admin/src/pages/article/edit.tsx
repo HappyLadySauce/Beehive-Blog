@@ -800,7 +800,7 @@ export default function ArticleEdit() {
         </div>
       </div>
 
-      <div className="flex min-h-[70vh] flex-col gap-0 overflow-hidden rounded border border-border bg-card">
+      <div className="flex min-h-[calc(100dvh-12rem)] flex-col gap-0 overflow-x-hidden rounded border border-border bg-card">
         <div className="flex shrink-0 flex-wrap items-center gap-4 border-b border-border px-3 py-2">
           <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
             <Switch checked={showLineNumbers} onCheckedChange={setShowLineNumbers} />
@@ -811,7 +811,7 @@ export default function ArticleEdit() {
             笔记属性
           </label>
         </div>
-        <div className="editor-container min-h-0 flex-1 overflow-hidden">
+        <div className="editor-container flex min-h-0 flex-1 flex-col overflow-x-hidden">
           <Editor
             key={`bytemd-${showLineNumbers}-${showNoteProperties}`}
             value={editorBody}
@@ -972,8 +972,6 @@ export default function ArticleEdit() {
 
       <style>{`
         .article-edit-bytemd .editor-container .bytemd {
-          height: 100%;
-          min-height: 280px;
           border: none;
         }
         .article-edit-bytemd .bytemd-toolbar {

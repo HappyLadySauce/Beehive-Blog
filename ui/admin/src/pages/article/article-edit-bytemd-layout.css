@@ -32,6 +32,44 @@ html.dark .article-edit-bytemd .beehive-note-properties-root {
   margin-right: 0;
 }
 
+/* ---------- 高度链：editor-container → React 根 → .bytemd → .bytemd-body 填满（覆盖 ByteMD 默认 300px / calc(100%-58px)） ---------- */
+.article-edit-bytemd .editor-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.article-edit-bytemd .editor-container > div {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.article-edit-bytemd .editor-container .bytemd {
+  display: flex !important;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0 !important;
+  height: auto !important;
+}
+
+.article-edit-bytemd .bytemd-toolbar {
+  flex-shrink: 0;
+}
+
+.article-edit-bytemd .bytemd > .bytemd-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto !important;
+  overflow: auto;
+}
+
+.article-edit-bytemd .bytemd-status {
+  flex-shrink: 0;
+}
+
 /* 预览区与正文背景一致，铺满半栏 */
 html.dark .article-edit-bytemd .bytemd-preview {
   background-color: #0d1117;
@@ -217,10 +255,14 @@ html.dark .article-edit-bytemd .markdown-body pre {
 }
 
 /* ---------- Split：双栏拉伸 + 编辑区右侧全高分隔线（不依赖预览列高度） ---------- */
-.article-edit-bytemd .bytemd-split .bytemd-body {
+.article-edit-bytemd .bytemd-split > .bytemd-body {
   display: flex;
   flex-direction: row;
   align-items: stretch;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto !important;
+  overflow: auto;
 }
 
 .article-edit-bytemd .bytemd-split .bytemd-editor,

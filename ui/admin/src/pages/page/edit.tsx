@@ -221,7 +221,7 @@ export default function PageEdit() {
         </div>
       </div>
 
-      <div className="editor-container h-[70vh] min-h-[320px] overflow-hidden rounded border border-border bg-card">
+      <div className="editor-container flex min-h-[max(20rem,calc(100dvh-10rem))] flex-col overflow-x-hidden rounded border border-border bg-card">
         <Editor
           value={content}
           plugins={articleBytemdPlugins}
