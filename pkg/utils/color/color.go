@@ -1,6 +1,8 @@
 package color
 
 import (
+	"crypto/rand"
+	"fmt"
 	"regexp"
 	"strings"
 )
@@ -44,54 +46,92 @@ func expandShortHex(s string) string {
 
 // namedColors 常见颜色名 -> #RRGGBB（与前端主题展示兼容）。
 var namedColors = map[string]string{
-	"black":                "#000000",
-	"white":                "#FFFFFF",
-	"red":                  "#FF0000",
-	"green":                "#008000",
-	"blue":                 "#0000FF",
-	"yellow":               "#FFFF00",
-	"cyan":                 "#00FFFF",
-	"magenta":              "#FF00FF",
-	"gray":                 "#808080",
-	"grey":                 "#808080",
-	"orange":               "#FFA500",
-	"purple":               "#800080",
-	"violet":               "#EE82EE",
-	"pink":                 "#FFC0CB",
-	"brown":                "#A52A2A",
-	"navy":                 "#000080",
-	"teal":                 "#008080",
-	"lime":                 "#00FF00",
-	"olive":                "#808000",
-	"maroon":               "#800000",
-	"silver":               "#C0C0C0",
-	"gold":                 "#FFD700",
-	"skyblue":              "#87CEEB",
-	"lightblue":            "#ADD8E6",
-	"lightgreen":           "#90EE90",
-	"lightgrey":            "#D3D3D3",
-	"lightgray":            "#D3D3D3",
-	"darkblue":             "#00008B",
-	"darkgreen":            "#006400",
-	"darkred":              "#8B0000",
-	"darkgray":             "#A9A9A9",
-	"darkgrey":             "#A9A9A9",
-	"cornflowerblue":       "#6495ED",
-	"dodgerblue":           "#1E90FF",
-	"deepskyblue":          "#00BFFF",
-	"royalblue":            "#4169E1",
-	"steelblue":            "#4682B4",
-	"mediumslateblue":      "#7B68EE",
-	"slateblue":            "#6A5ACD",
-	"mediumseagreen":       "#3CB371",
-	"seagreen":             "#2E8B57",
-	"forestgreen":          "#228B22",
-	"springgreen":          "#00FF7F",
-	"tomato":               "#FF6347",
-	"coral":                "#FF7F50",
-	"salmon":               "#FA8072",
-	"crimson":              "#DC143C",
-	"indigo":               "#4B0082",
-	"turquoise":            "#40E0D0",
-	"khaki":                "#F0E68C",
+	"black":           "#000000",
+	"white":           "#FFFFFF",
+	"red":             "#FF0000",
+	"green":           "#008000",
+	"blue":            "#0000FF",
+	"yellow":          "#FFFF00",
+	"cyan":            "#00FFFF",
+	"magenta":         "#FF00FF",
+	"gray":            "#808080",
+	"grey":            "#808080",
+	"orange":          "#FFA500",
+	"purple":          "#800080",
+	"violet":          "#EE82EE",
+	"pink":            "#FFC0CB",
+	"brown":           "#A52A2A",
+	"navy":            "#000080",
+	"teal":            "#008080",
+	"lime":            "#00FF00",
+	"olive":           "#808000",
+	"maroon":          "#800000",
+	"silver":          "#C0C0C0",
+	"gold":            "#FFD700",
+	"skyblue":         "#87CEEB",
+	"lightblue":       "#ADD8E6",
+	"lightgreen":      "#90EE90",
+	"lightgrey":       "#D3D3D3",
+	"lightgray":       "#D3D3D3",
+	"darkblue":        "#00008B",
+	"darkgreen":       "#006400",
+	"darkred":         "#8B0000",
+	"darkgray":        "#A9A9A9",
+	"darkgrey":        "#A9A9A9",
+	"cornflowerblue":  "#6495ED",
+	"dodgerblue":      "#1E90FF",
+	"deepskyblue":     "#00BFFF",
+	"royalblue":       "#4169E1",
+	"steelblue":       "#4682B4",
+	"mediumslateblue": "#7B68EE",
+	"slateblue":       "#6A5ACD",
+	"mediumseagreen":  "#3CB371",
+	"seagreen":        "#2E8B57",
+	"forestgreen":     "#228B22",
+	"springgreen":     "#00FF7F",
+	"tomato":          "#FF6347",
+	"coral":           "#FF7F50",
+	"salmon":          "#FA8072",
+	"crimson":         "#DC143C",
+	"indigo":          "#4B0082",
+	"turquoise":       "#40E0D0",
+	"khaki":           "#F0E68C",
+}
+
+const randomHexAttempts = 16
+
+// RandomHexColor 返回随机 #RRGGBB（大写），用于导入等场景新建标签颜色。
+// 使用 crypto/rand；若多次抽样仍过近纯黑/纯白则回退为任意合法随机色。
+func RandomHexColor() string {
+	for range randomHexAttempts {
+		var b [3]byte
+		if _, err := rand.Read(b[:]); err != nil {
+			break
+		}
+		h := fmt.Sprintf("#%02X%02X%02X", b[0], b[1], b[2])
+		if isTooExtremeGray(b[0], b[1], b[2]) {
+			continue
+		}
+		if ValidHex(h) {
+			return h
+		}
+	}
+	var b [3]byte
+	if _, err := rand.Read(b[:]); err == nil {
+		return fmt.Sprintf("#%02X%02X%02X", b[0], b[1], b[2])
+	}
+	return "#6B7280"
+}
+
+// 排除过暗（易看成黑）与过亮（易看成白）的填充色。
+func isTooExtremeGray(r, g, b byte) bool {
+	const dark = 28
+	const light = 248
+	if r <= dark && g <= dark && b <= dark {
+		return true
+	}
+	if r >= light && g >= light && b >= light {
+		return true
+	}
+	return false
 }

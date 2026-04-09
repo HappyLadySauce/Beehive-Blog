@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
+	routehexo "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/hexo"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"k8s.io/klog/v2"
 )
@@ -65,6 +66,9 @@ func (a *ArticleAdmin) batchDelete(ctx context.Context, ids []int64) (*v1.BatchA
 	}
 	// 清理关联标签
 	_ = a.svc.DB.WithContext(ctx).Where("article_id IN ?", ids).Delete(&models.ArticleTag{})
+	for _, id := range ids {
+		routehexo.MaybeDeletePost(a.svc, id)
+	}
 	return &v1.BatchArticleResponse{Affected: res.RowsAffected}, http.StatusOK, nil
 }
 
@@ -89,6 +93,9 @@ func (a *ArticleAdmin) batchSetStatus(ctx context.Context, ids []int64, status s
 		klog.ErrorS(res.Error, "batchSetStatus")
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
+	for _, id := range ids {
+		routehexo.MaybeSyncArticle(a.svc, id)
+	}
 	return &v1.BatchArticleResponse{Affected: res.RowsAffected}, http.StatusOK, nil
 }
 
@@ -109,6 +116,9 @@ func (a *ArticleAdmin) batchSetCategory(ctx context.Context, ids []int64, catego
 	if res.Error != nil {
 		klog.ErrorS(res.Error, "batchSetCategory")
 		return nil, http.StatusInternalServerError, errors.New("system error")
+	}
+	for _, id := range ids {
+		routehexo.MaybeSyncArticle(a.svc, id)
 	}
 	return &v1.BatchArticleResponse{Affected: res.RowsAffected}, http.StatusOK, nil
 }
@@ -152,6 +162,9 @@ func (a *ArticleAdmin) batchSetTags(ctx context.Context, ids []int64, tagIDs []i
 	}
 	if err := tx.Commit().Error; err != nil {
 		return nil, http.StatusInternalServerError, errors.New("system error")
+	}
+	for _, id := range activeIDs {
+		routehexo.MaybeSyncArticle(a.svc, id)
 	}
 	return &v1.BatchArticleResponse{Affected: int64(len(activeIDs))}, http.StatusOK, nil
 }

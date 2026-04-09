@@ -23,11 +23,10 @@ import (
 )
 
 const (
-	maxImportFiles            = 50
-	maxImportMDBytes          = 4 << 20 // 单篇 Markdown
-	maxImportZipBytes         = 32 << 20
-	maxImportZipUncompressed  = 20 << 20
-	defaultImportTagColorHex  = "#6B7280"
+	maxImportFiles           = 50
+	maxImportMDBytes         = 4 << 20 // 单篇 Markdown
+	maxImportZipBytes        = 32 << 20
+	maxImportZipUncompressed = 20 << 20
 )
 
 type importSourceFile struct {
@@ -455,7 +454,7 @@ func (a *ArticleAdmin) findOrCreateTagByName(ctx context.Context, name string) (
 		return 0, err
 	}
 
-	col := defaultImportTagColorHex
+	col := color.RandomHexColor()
 	if h := color.NormalizeToHex(col); h != "" {
 		col = h
 	}
