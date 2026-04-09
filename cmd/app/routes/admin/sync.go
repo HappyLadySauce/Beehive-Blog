@@ -17,6 +17,7 @@ func newHexoSyncService(svcCtx *svc.ServiceContext) (*sync.SyncService, error) {
 	return sync.NewSyncService(
 		h.PostsDir,
 		h.GenerateWorkdir,
+		h.CleanArgs,
 		h.GenerateArgs,
 		svcCtx.DB,
 		svcCtx.Redis,
@@ -26,7 +27,7 @@ func newHexoSyncService(svcCtx *svc.ServiceContext) (*sync.SyncService, error) {
 // HandleSyncPosts godoc
 //
 //	@Summary		Hexo 文章全量同步
-//	@Description	将已发布文章写入 Hexo source/_posts，可选执行 hexo 构建命令
+//	@Description	将已发布文章写入 Hexo source/_posts；rebuild=true 且配置了 clean_args/generate_args 时顺序执行 hexo clean 与 generate
 //	@Tags			admin
 //	@Accept			json
 //	@Produce		json
@@ -54,12 +55,15 @@ func HandleSyncPosts(svcCtx *svc.ServiceContext) gin.HandlerFunc {
 			return
 		}
 
-		if req.Rebuild && len(svcCtx.Config.HexoOptions.GenerateArgs) > 0 {
-			genCtx, cancel := context.WithTimeout(ctx, 15*time.Minute)
-			defer cancel()
-			if err := syncSvc.RunHexoGenerate(genCtx); err != nil {
-				common.Fail(c, http.StatusInternalServerError, err)
-				return
+		if req.Rebuild {
+			hasRebuild := len(svcCtx.Config.HexoOptions.CleanArgs) > 0 || len(svcCtx.Config.HexoOptions.GenerateArgs) > 0
+			if hasRebuild {
+				genCtx, cancel := context.WithTimeout(ctx, 15*time.Minute)
+				defer cancel()
+				if err := syncSvc.RunHexoRebuild(genCtx); err != nil {
+					common.Fail(c, http.StatusInternalServerError, err)
+					return
+				}
 			}
 		}
 

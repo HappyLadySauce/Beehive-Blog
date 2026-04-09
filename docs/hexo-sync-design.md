@@ -768,14 +768,14 @@ async function recordView(articleId) {
 
 ### Phase 2：自动化集成
 
-**目标**：文章 CRUD 操作后自动触发同步
+**目标**：文章 CRUD 操作后自动触发同步；可选全量/定时补偿后执行 `hexo clean` + `hexo generate`（见 `hexo.clean_args` / `hexo.generate_args`）。
 
-- [ ] 文章 Create Handler 中加入异步 `SyncSingle` 调用
-- [ ] 文章 Update Handler 中加入异步 `SyncSingle` 调用
-- [ ] 文章 Delete Handler 中加入 `DeletePostFile` 调用
-- [ ] 文章 Status Change Handler 中判断同步/删除
-- [ ] 实现 `StartSyncScheduler` 定时补偿任务
-- [ ] 在 `app.go` 启动流程中注册定时任务
+- [x] 文章 Create Handler 中加入异步 `SyncSingle` 调用（`hexo.auto_sync`）
+- [x] 文章 Update Handler 中加入异步 `SyncSingle` 调用
+- [x] 文章 Delete Handler 中加入 `DeletePostFile` 调用
+- [x] 文章 Status Change Handler 中判断同步/删除
+- [x] 手动全量 `POST .../sync/posts` 且 `rebuild: true` 时 `RunHexoRebuild`（clean 后 generate）
+- [x] 可选 `rebuild_after_auto_sync`：单篇自动同步后再重建静态站
 - [ ] **验证**：通过管理 API 创建/编辑/删除文章 → 自动检查 `_posts/` 变化
 
 ### Phase 3：主题适配

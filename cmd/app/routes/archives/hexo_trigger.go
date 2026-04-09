@@ -16,7 +16,7 @@ func maybeHexoSyncSingle(svcCtx *svc.ServiceContext, articleID int64) {
 		return
 	}
 	h := svcCtx.Config.HexoOptions
-	syncSvc, err := sync.NewSyncService(h.PostsDir, h.GenerateWorkdir, h.GenerateArgs, svcCtx.DB, svcCtx.Redis)
+	syncSvc, err := sync.NewSyncService(h.PostsDir, h.GenerateWorkdir, h.CleanArgs, h.GenerateArgs, svcCtx.DB, svcCtx.Redis)
 	if err != nil {
 		klog.ErrorS(err, "[hexo] failed to init sync service")
 		return
@@ -26,6 +26,18 @@ func maybeHexoSyncSingle(svcCtx *svc.ServiceContext, articleID int64) {
 		defer cancel()
 		if err := syncSvc.SyncSingle(ctx, articleID); err != nil {
 			klog.ErrorS(err, "[hexo] SyncSingle failed", "articleID", articleID)
+			return
+		}
+		if !h.RebuildAfterAutoSync {
+			return
+		}
+		if len(h.CleanArgs) == 0 && len(h.GenerateArgs) == 0 {
+			return
+		}
+		rebuildCtx, rebuildCancel := context.WithTimeout(context.Background(), 15*time.Minute)
+		defer rebuildCancel()
+		if err := syncSvc.RunHexoRebuild(rebuildCtx); err != nil {
+			klog.ErrorS(err, "[hexo] RunHexoRebuild after SyncSingle", "articleID", articleID)
 		}
 	}()
 }
@@ -36,7 +48,7 @@ func maybeHexoDeletePost(svcCtx *svc.ServiceContext, articleID int64) {
 		return
 	}
 	h := svcCtx.Config.HexoOptions
-	syncSvc, err := sync.NewSyncService(h.PostsDir, h.GenerateWorkdir, h.GenerateArgs, svcCtx.DB, svcCtx.Redis)
+	syncSvc, err := sync.NewSyncService(h.PostsDir, h.GenerateWorkdir, h.CleanArgs, h.GenerateArgs, svcCtx.DB, svcCtx.Redis)
 	if err != nil {
 		klog.ErrorS(err, "[hexo] failed to init sync service for delete")
 		return

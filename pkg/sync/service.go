@@ -15,6 +15,7 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
+	"k8s.io/klog/v2"
 )
 
 const redisLastSyncKey = "beehive:hexo_sync:last_sync_at"
@@ -23,13 +24,14 @@ const redisLastSyncKey = "beehive:hexo_sync:last_sync_at"
 type SyncService struct {
 	postsDirAbs     string
 	generateWorkdir string
+	cleanArgs       []string
 	generateArgs    []string
 	db              *gorm.DB
 	rdb             *redis.Client
 }
 
 // NewSyncService 基于配置解析绝对路径并构造同步服务。
-func NewSyncService(postsDir, generateWorkdir string, generateArgs []string, db *gorm.DB, rdb *redis.Client) (*SyncService, error) {
+func NewSyncService(postsDir, generateWorkdir string, cleanArgs, generateArgs []string, db *gorm.DB, rdb *redis.Client) (*SyncService, error) {
 	if db == nil {
 		return nil, errors.New("db is nil")
 	}
@@ -41,10 +43,12 @@ func NewSyncService(postsDir, generateWorkdir string, generateArgs []string, db 
 	if err != nil {
 		return nil, fmt.Errorf("resolve hexo workdir: %w", err)
 	}
+	ca := append([]string(nil), cleanArgs...)
 	ga := append([]string(nil), generateArgs...)
 	return &SyncService{
 		postsDirAbs:     postsAbs,
 		generateWorkdir: genAbs,
+		cleanArgs:       ca,
 		generateArgs:    ga,
 		db:              db,
 		rdb:             rdb,
@@ -283,17 +287,51 @@ func atomicWriteFile(path string, data []byte, perm os.FileMode) error {
 	return os.Rename(tmpName, path)
 }
 
-// RunHexoGenerate 在配置非空时执行静态站点生成命令。
+func (s *SyncService) runHexoStep(ctx context.Context, label string, argv []string) error {
+	if len(argv) == 0 {
+		return nil
+	}
+	start := time.Now()
+	cmd := exec.CommandContext(ctx, argv[0], argv[1:]...)
+	cmd.Dir = s.generateWorkdir
+	cmd.Env = os.Environ()
+	out, err := cmd.CombinedOutput()
+	elapsed := time.Since(start)
+	outTrim := strings.TrimSpace(string(out))
+	if err != nil {
+		return fmt.Errorf("%s: %w: %s", label, err, outTrim)
+	}
+	klog.InfoS("[hexo] command succeeded", "step", label, "argv", argv, "workdir", s.generateWorkdir, "duration", elapsed, "outputBytes", len(out))
+	return nil
+}
+
+// RunHexoClean 在 clean_args 非空时执行 Hexo clean。
+func (s *SyncService) RunHexoClean(ctx context.Context) error {
+	return s.runHexoStep(ctx, "hexo clean", s.cleanArgs)
+}
+
+// RunHexoGenerate 在 generate_args 非空时执行静态站点生成命令。
 func (s *SyncService) RunHexoGenerate(ctx context.Context) error {
 	if len(s.generateArgs) == 0 {
 		return errors.New("hexo generate_args is not configured")
 	}
-	cmd := exec.CommandContext(ctx, s.generateArgs[0], s.generateArgs[1:]...)
-	cmd.Dir = s.generateWorkdir
-	cmd.Env = os.Environ()
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("hexo generate: %w: %s", err, strings.TrimSpace(string(out)))
+	return s.runHexoStep(ctx, "hexo generate", s.generateArgs)
+}
+
+// RunHexoRebuild 顺序执行 clean（若配置）与 generate（若配置）；两者皆空时无操作。
+func (s *SyncService) RunHexoRebuild(ctx context.Context) error {
+	if len(s.cleanArgs) == 0 && len(s.generateArgs) == 0 {
+		return nil
+	}
+	if len(s.cleanArgs) > 0 {
+		if err := s.RunHexoClean(ctx); err != nil {
+			return err
+		}
+	}
+	if len(s.generateArgs) > 0 {
+		if err := s.RunHexoGenerate(ctx); err != nil {
+			return err
+		}
 	}
 	return nil
 }
