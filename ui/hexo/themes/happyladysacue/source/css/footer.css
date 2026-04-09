@@ -1,0 +1,120 @@
+/* Footer — 4 列 + 居中版权 */
+
+.site-footer {
+  margin-top: 40px;
+  border-top: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+html[data-theme="dark"] .site-footer,
+html.dark .site-footer {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.footer-grid {
+  max-width: var(--layout-max);
+  margin: 0 auto;
+  padding: 48px 24px 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+}
+
+.footer-col h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0 0 14px;
+}
+
+.footer-col p {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin: 0;
+}
+
+.footer-col ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.footer-col ul a {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+}
+
+.footer-col ul a:hover {
+  color: var(--text);
+}
+
+.footer-subscribe {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.footer-subscribe input {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text);
+  font-size: 0.875rem;
+}
+
+html[data-theme="dark"] .footer-subscribe input,
+html.dark .footer-subscribe input {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.footer-subscribe button {
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: var(--grad-primary);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.2s ease;
+}
+
+.footer-subscribe button:hover {
+  opacity: 0.88;
+}
+
+.footer-bottom {
+  max-width: var(--layout-max);
+  margin: 0 auto;
+  padding: 24px 24px 32px;
+  margin-top: 32px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.footer-heart {
+  display: inline-flex;
+  animation: heart-beat 1s ease infinite;
+}
+
+.footer-heart svg {
+  width: 16px;
+  height: 16px;
+}
+
+@keyframes heart-beat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.22); }
+}

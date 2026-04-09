@@ -1,0 +1,148 @@
+/* 文章页 — 正文、代码块、目录 */
+
+.page-article,
+.page-listing,
+.page-single {
+  max-width: var(--layout-max);
+  margin: 0 auto;
+  padding: 100px 24px 80px;
+}
+
+.article-card,
+.listing-shell {
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-soft);
+}
+
+.article-card {
+  border-radius: var(--radius-xl);
+  padding: 36px;
+}
+
+.article-card--page {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.article-hero {
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 28px;
+}
+
+.article-hero__meta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-top: 12px;
+}
+
+.article-content h2,
+.article-content h3,
+.article-content h4 {
+  line-height: 1.2;
+  margin-top: 1.7em;
+  margin-bottom: 0.65em;
+}
+
+.article-content {
+  min-width: 0;
+}
+
+.article-content p,
+.article-content li,
+.article-content blockquote {
+  color: var(--text);
+}
+
+.article-content img {
+  border-radius: var(--radius-md);
+  margin: 24px auto;
+  box-shadow: var(--shadow-soft);
+}
+
+.article-content blockquote {
+  margin: 24px 0;
+  padding: 18px 20px;
+  border-left: 4px solid var(--accent);
+  background: rgba(59, 130, 246, 0.06);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+/* Hexo highlight：figure + table 会按最长行撑开宽度，需在容器上横向滚动 */
+.article-content figure.highlight {
+  display: block;
+  margin: 1.25em 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius-md);
+}
+
+.article-content figure.highlight table {
+  margin: 0;
+  border: none;
+  border-collapse: collapse;
+}
+
+.article-content figure.highlight .gutter pre {
+  padding-right: 0.75em;
+  opacity: 0.55;
+}
+
+.article-content pre {
+  overflow: auto;
+  max-width: 100%;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  background: #111827;
+  color: #f9fafb;
+}
+
+.article-content :not(pre) > code {
+  padding: 0.18em 0.42em;
+  border-radius: 6px;
+  background: rgba(59, 130, 246, 0.08);
+  color: var(--accent);
+}
+
+.article-footer {
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+}
+
+.article-aside {
+  display: grid;
+  gap: 18px;
+}
+
+.toc-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.toc-list ol,
+.toc-list ul {
+  list-style: none;
+  padding-left: 14px;
+}
+
+.toc-list a {
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+}
+
+.toc-list a:hover {
+  color: var(--accent);
+}
+
+.page-description {
+  max-width: 42rem;
+}

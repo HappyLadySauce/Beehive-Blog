@@ -1,0 +1,197 @@
+/* 导航 — 固定浮动 + 滚动毛玻璃 */
+
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.site-header.is-scrolled {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 1px 16px rgba(0, 0, 0, 0.08);
+}
+
+html[data-theme="dark"] .site-header.is-scrolled,
+html.dark .site-header.is-scrolled {
+  background: rgba(17, 24, 39, 0.88);
+  box-shadow: 0 1px 16px rgba(0, 0, 0, 0.32);
+}
+
+.nav-container {
+  max-width: var(--layout-max);
+  margin: 0 auto;
+  padding: 0 24px;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Logo — 圆形渐变 + 名称 */
+.brandmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.brandmark__glow {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--grad-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.32);
+}
+
+.brandmark__glow::after {
+  display: none;
+}
+
+.brandmark__letter {
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.brandmark__text {
+  display: grid;
+}
+
+.brandmark__text strong {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.brandmark__text small {
+  display: none;
+}
+
+/* 主菜单 */
+.site-menu {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.site-menu__link {
+  position: relative;
+  padding: 8px 14px;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+}
+
+.site-menu__link:hover {
+  color: var(--text);
+  background: transparent;
+  border-color: transparent;
+}
+
+/* 下划线动效 */
+.site-menu__link::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--grad-primary);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.site-menu__link:hover::after {
+  width: 100%;
+}
+
+/* 右侧操作区 */
+.site-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.nav-icon-btn:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+/* theme-toggle 复用 nav-icon-btn */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.theme-toggle:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text);
+}
+
+html[data-theme="dark"] .theme-toggle:hover,
+html.dark .theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.theme-toggle__sun,
+.theme-toggle__moon {
+  display: none;
+}
+
+.theme-toggle svg,
+.nav-icon-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.nav-toggle span {
+  width: 22px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--text);
+}

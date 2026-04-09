@@ -1,0 +1,56 @@
+/* 分类/标签索引格子 + 分页 */
+
+.taxonomy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.taxonomy-card {
+  display: grid;
+  gap: 6px;
+  padding: 22px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.taxonomy-card strong {
+  font-size: 1rem;
+}
+
+.taxonomy-card span {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+}
+
+.taxonomy-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(59, 130, 246, 0.28);
+}
+
+.pagination-nav {
+  margin-top: 28px;
+}
+
+.pagination-nav .page-number,
+.pagination-nav .extend {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  margin-right: 8px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: 0.9rem;
+}
+
+.pagination-nav .current {
+  background: var(--grad-primary);
+  color: #fff;
+  border-color: transparent;
+}

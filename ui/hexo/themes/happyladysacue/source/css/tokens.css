@@ -1,0 +1,49 @@
+/* Design tokens — light / dark */
+
+:root {
+  --bg: #ffffff;
+  --bg-elevated: rgba(255, 255, 255, 0.82);
+  --card: #ffffff;
+  --card-strong: #ffffff;
+  --text: #111827;
+  --text-muted: #6b7280;
+  --border: rgba(0, 0, 0, 0.08);
+  --accent: #3b82f6;
+  --accent-2: #9333ea;
+  --accent-3: #ec4899;
+  --success: #16a34a;
+  --shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.1);
+  --shadow-card-hover: 0 20px 60px rgba(0, 0, 0, 0.18);
+  --radius-xl: 24px;
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  --layout-max: 1440px;
+  --container: min(var(--layout-max), calc(100vw - 48px));
+  --font-sans: "Inter", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Code", monospace;
+  /* 渐变快捷方式 */
+  --grad-primary: linear-gradient(135deg, var(--accent), var(--accent-2));
+  --grad-hero: linear-gradient(135deg, var(--accent), var(--accent-2), var(--accent-3));
+  --grad-text: linear-gradient(90deg, #2563eb, var(--accent-2), var(--accent-3));
+}
+
+html[data-theme="dark"],
+html.dark {
+  --bg: #111827;
+  --bg-elevated: rgba(17, 24, 39, 0.88);
+  --card: #1f2937;
+  --card-strong: #1f2937;
+  --text: #f9fafb;
+  --text-muted: #9ca3af;
+  --border: rgba(255, 255, 255, 0.08);
+  --accent: #60a5fa;
+  --accent-2: #a855f7;
+  --accent-3: #f472b6;
+  --shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.28);
+  --shadow-card: 0 10px 30px rgba(0, 0, 0, 0.32);
+  --shadow-card-hover: 0 20px 60px rgba(0, 0, 0, 0.48);
+}

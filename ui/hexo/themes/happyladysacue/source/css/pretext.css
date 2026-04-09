@@ -1,0 +1,7 @@
+/* Pretext 占位过渡 */
+
+[data-pretext-excerpt],
+[data-pretext-title],
+[data-pretext-balance] {
+  transition: min-height 0.2s ease;
+}
