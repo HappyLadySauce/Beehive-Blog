@@ -62,15 +62,13 @@ INSERT INTO settings (key, value, "group") VALUES
 ('allow_indexing', 'true', 'seo'),
 ('robots_txt', 'User-agent: *\nAllow: /', 'seo'),
 
--- SMTP设置
-('smtp_host', '', 'smtp'),
-('smtp_port', '587', 'smtp'),
-('smtp_encryption', 'tls', 'smtp'),
-('smtp_username', '', 'smtp'),
-('smtp_password', '', 'smtp'),
-('smtp_from_email', '', 'smtp'),
-('smtp_from_name', 'Beehive Blog', 'smtp'),
-('smtp_enabled', 'false', 'smtp'),
+-- SMTP（键名与 mailer.ConfigFromSMTPSettings / 管理端一致）
+('smtp.host', '', 'smtp'),
+('smtp.port', '587', 'smtp'),
+('smtp.encryption', 'tls', 'smtp'),
+('smtp.username', '', 'smtp'),
+('smtp.password', '', 'smtp'),
+('smtp.fromName', 'Beehive Blog', 'smtp'),
 
 -- 评论设置
 ('comment_enabled', 'true', 'comment'),

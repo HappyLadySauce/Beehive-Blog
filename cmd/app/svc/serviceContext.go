@@ -155,14 +155,7 @@ func loadMailerFromDB(db *gorm.DB) (*mailer.SMTPMailer, error) {
 	for _, r := range rows {
 		kv[r.Key] = r.Value
 	}
-	cfg := mailer.Config{
-		Host:       kv["smtp.host"],
-		Port:       kv["smtp.port"],
-		Username:   kv["smtp.username"],
-		Password:   kv["smtp.password"],
-		FromName:   kv["smtp.fromName"],
-		Encryption: kv["smtp.encryption"],
-	}
+	cfg := mailer.ConfigFromSMTPSettings(kv)
 	if !cfg.IsValid() {
 		return nil, errors.New("smtp settings not fully configured")
 	}

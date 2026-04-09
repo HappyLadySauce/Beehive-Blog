@@ -2,6 +2,13 @@ import { useState, useEffect } from 'react';
 import { getSettings, updateSettings, testSmtp, syncHexoPosts, getHexoSyncStatus } from '../../api/setting';
 import { toast } from 'sonner';
 import { Settings as SettingsIcon, RefreshCw, Mail, Save } from 'lucide-react';
+import CustomSelect from '../../components/CustomSelect';
+
+const smtpEncryptionOptions = [
+  { value: 'tls', label: 'TLS（端口 587 常用）' },
+  { value: 'ssl', label: 'SSL（端口 465 常用）' },
+  { value: 'none', label: '无加密' },
+];
 
 const tabs = [
   { id: 'general', label: '基础设置' },
@@ -243,8 +250,8 @@ export default function Settings() {
                     <label className="block text-sm font-medium text-foreground mb-1">SMTP 服务器</label>
                     <input
                       type="text"
-                      value={settings['smtp_host'] || ''}
-                      onChange={(e) => handleChange('smtp_host', e.target.value)}
+                      value={settings['smtp.host'] || ''}
+                      onChange={(e) => handleChange('smtp.host', e.target.value)}
                       className="w-full px-3 py-2 border border-border rounded bg-input-background text-foreground focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
                     />
                   </div>
@@ -252,17 +259,37 @@ export default function Settings() {
                     <label className="block text-sm font-medium text-foreground mb-1">SMTP 端口</label>
                     <input
                       type="text"
-                      value={settings['smtp_port'] || ''}
-                      onChange={(e) => handleChange('smtp_port', e.target.value)}
+                      value={settings['smtp.port'] || ''}
+                      onChange={(e) => handleChange('smtp.port', e.target.value)}
                       className="w-full px-3 py-2 border border-border rounded bg-input-background text-foreground focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">加密方式</label>
+                    <CustomSelect
+                      value={settings['smtp.encryption'] || 'tls'}
+                      onChange={(v) => handleChange('smtp.encryption', v)}
+                      options={smtpEncryptionOptions}
+                      className="w-full"
+                      ariaLabel="SMTP 加密方式"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">发件人邮箱</label>
                     <input
                       type="email"
-                      value={settings['smtp_user'] || ''}
-                      onChange={(e) => handleChange('smtp_user', e.target.value)}
+                      value={settings['smtp.username'] || ''}
+                      onChange={(e) => handleChange('smtp.username', e.target.value)}
+                      className="w-full px-3 py-2 border border-border rounded bg-input-background text-foreground focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">发件人显示名</label>
+                    <input
+                      type="text"
+                      value={settings['smtp.fromName'] || ''}
+                      onChange={(e) => handleChange('smtp.fromName', e.target.value)}
+                      placeholder="默认同发件人邮箱"
                       className="w-full px-3 py-2 border border-border rounded bg-input-background text-foreground focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
                     />
                   </div>
@@ -270,8 +297,12 @@ export default function Settings() {
                     <label className="block text-sm font-medium text-foreground mb-1">密码 / 授权码</label>
                     <input
                       type="password"
-                      value={settings['smtp_pass'] || ''}
-                      onChange={(e) => handleChange('smtp_pass', e.target.value)}
+                      value={
+                        settings['smtp.password'] && settings['smtp.password'] !== '***'
+                          ? settings['smtp.password']
+                          : ''
+                      }
+                      onChange={(e) => handleChange('smtp.password', e.target.value)}
                       placeholder="留空表示不修改"
                       className="w-full px-3 py-2 border border-border rounded bg-input-background text-foreground focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
                     />

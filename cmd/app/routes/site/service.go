@@ -79,6 +79,10 @@ func (s *Service) UpdateSettings(ctx context.Context, group string, req *v1.Upda
 		if smtpSensitiveKeys[k] && v == "***" {
 			continue
 		}
+		// 发件密码留空表示不修改（避免误将库中密码覆盖为空）
+		if smtpSensitiveKeys[k] && strings.TrimSpace(v) == "" {
+			continue
+		}
 		if group == models.SettingGroupHexo {
 			if k == hexocfg.KeyHexoDir {
 				continue
@@ -130,14 +134,7 @@ func (s *Service) TestSMTP(ctx context.Context, req *v1.TestSMTPRequest) (int, e
 	for _, r := range rows {
 		kv[r.Key] = r.Value
 	}
-	cfg := mailer.Config{
-		Host:       kv["smtp.host"],
-		Port:       kv["smtp.port"],
-		Username:   kv["smtp.username"],
-		Password:   kv["smtp.password"],
-		FromName:   kv["smtp.fromName"],
-		Encryption: kv["smtp.encryption"],
-	}
+	cfg := mailer.ConfigFromSMTPSettings(kv)
 	m, err := mailer.New(cfg)
 	if err != nil {
 		return http.StatusBadRequest, fmt.Errorf("SMTP not configured: %w", err)
