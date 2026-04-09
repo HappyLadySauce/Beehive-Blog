@@ -9,6 +9,10 @@ import { getArticles, deleteArticle, batchOperateArticles, exportArticlesZip, im
 import { getCategories, getTags, CategoryBrief, TagListItem } from '../../api/taxonomy';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import {
+  ADMIN_TABLE_BATCH_BTN_CLASS,
+  ADMIN_TABLE_CHECKBOX_CLASS,
+} from '../constants/adminTable';
 
 export default function ArticleManagement() {
   const navigate = useNavigate();
@@ -332,9 +336,6 @@ export default function ArticleManagement() {
     [categories],
   );
 
-  const batchToolbarBtnClass =
-    'rounded border border-border bg-background px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-accent';
-
   const runBatchExportZip = async () => {
     if (!selectedArticles.length) {
       toast.warning('请先选择要导出的文章');
@@ -485,18 +486,18 @@ export default function ArticleManagement() {
         <div className="flex w-full flex-wrap items-center gap-3 border-b border-border p-4 justify-between">
           {selectedArticles.length > 0 && (
             <div className="flex flex-wrap items-center gap-2 shrink-0">
-              <button type="button" className={batchToolbarBtnClass} onClick={() => void runBatchPublish()}>
+              <button type="button" className={ADMIN_TABLE_BATCH_BTN_CLASS} onClick={() => void runBatchPublish()}>
                 发布
               </button>
-              <button type="button" className={batchToolbarBtnClass} onClick={() => void runBatchUnpublish()}>
+              <button type="button" className={ADMIN_TABLE_BATCH_BTN_CLASS} onClick={() => void runBatchUnpublish()}>
                 取消发布
               </button>
-              <button type="button" className={batchToolbarBtnClass} onClick={openBatchSettings}>
+              <button type="button" className={ADMIN_TABLE_BATCH_BTN_CLASS} onClick={openBatchSettings}>
                 批量设置
               </button>
               <button
                 type="button"
-                className={batchToolbarBtnClass}
+                className={ADMIN_TABLE_BATCH_BTN_CLASS}
                 disabled={importExportBusy}
                 onClick={() => void runBatchExportZip()}
               >
@@ -563,7 +564,7 @@ export default function ArticleManagement() {
           {selectedArticles.length === 0 && (
             <button
               type="button"
-              className={`${batchToolbarBtnClass} shrink-0`}
+              className={`${ADMIN_TABLE_BATCH_BTN_CLASS} shrink-0`}
               disabled={importExportBusy}
               onClick={() => {
                 setImportStagedFiles([]);
@@ -584,7 +585,7 @@ export default function ArticleManagement() {
                     type="checkbox"
                     checked={articles.length > 0 && selectedArticles.length === articles.length}
                     onChange={toggleSelectAll}
-                    className="w-4 h-4 text-primary border-border rounded focus:ring-ring"
+                    className={ADMIN_TABLE_CHECKBOX_CLASS}
                   />
                 </th>
                 <th className="px-4 py-3 text-sm font-medium text-muted-foreground">标题</th>
@@ -613,7 +614,7 @@ export default function ArticleManagement() {
                         type="checkbox"
                         checked={selectedArticles.includes(article.id)}
                         onChange={() => toggleSelectArticle(article.id)}
-                        className="w-4 h-4 text-primary border-border rounded focus:ring-ring"
+                        className={ADMIN_TABLE_CHECKBOX_CLASS}
                       />
                     </td>
                     <td className="px-4 py-3">

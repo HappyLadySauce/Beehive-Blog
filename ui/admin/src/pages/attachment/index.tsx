@@ -23,6 +23,7 @@ import AdminModal from '../../components/AdminModal';
 import StagedFileUploadModal, { mergeStagedFilesDedupe } from '../../components/StagedFileUploadModal';
 import ImageAttachmentDetailModal from './ImageAttachmentDetailModal';
 import { formatSize } from './attachmentUtils';
+import { ADMIN_TABLE_CHECKBOX_CLASS } from '../../app/constants/adminTable';
 
 export default function Attachments() {
   const [items, setItems] = useState<Attachment[]>([]);
@@ -44,6 +45,8 @@ export default function Attachments() {
   const [newGroupOpen, setNewGroupOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [creatingGroup, setCreatingGroup] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [batchBusy, setBatchBusy] = useState(false);
 
   const fetchGroups = useCallback(async () => {
     try {
@@ -90,6 +93,51 @@ export default function Attachments() {
   useEffect(() => {
     void fetchAttachments();
   }, [fetchAttachments]);
+
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [page, keyword, groupId]);
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === items.length && items.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(items.map((a) => a.id));
+    }
+  };
+
+  const handleBatchDelete = () => {
+    if (!selectedIds.length) {
+      toast.warning('请先选择附件');
+      return;
+    }
+    if (!window.confirm(`确定删除选中的 ${selectedIds.length} 个根附件吗？将同时删除其派生文件。`)) return;
+    void (async () => {
+      const ids = [...selectedIds];
+      setBatchBusy(true);
+      let ok = 0;
+      let lastErr = '';
+      for (const id of ids) {
+        try {
+          const res = await deleteAttachment(id);
+          if (res.code === 200) ok += 1;
+          else lastErr = res.message || '删除失败';
+        } catch (error: unknown) {
+          lastErr =
+            error && typeof error === 'object' && 'response' in error
+              ? (error as { response?: { data?: { message?: string } } }).response?.data?.message ||
+                '请求失败'
+              : '请求失败';
+        }
+      }
+      setBatchBusy(false);
+      setSelectedIds([]);
+      void fetchAttachments();
+      if (ok === ids.length) toast.success(`已删除 ${ok} 个附件`);
+      else if (ok > 0) toast.warning(`成功删除 ${ok} 个${lastErr ? `，部分失败：${lastErr}` : ''}`);
+      else toast.error(lastErr || '批量删除失败');
+    })();
+  };
 
   const handleDelete = async (id: number, e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -283,6 +331,19 @@ export default function Attachments() {
         </button>
       </div>
 
+      {selectedIds.length > 0 && (
+        <div className="mb-2 flex flex-wrap items-center gap-2 rounded border border-border bg-muted/30 px-4 py-2">
+          <button
+            type="button"
+            disabled={batchBusy}
+            className="rounded bg-red-600 px-3 py-1.5 text-sm text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+            onClick={handleBatchDelete}
+          >
+            批量删除
+          </button>
+        </div>
+      )}
+
       <div className="overflow-x-auto rounded border border-border bg-card">
         {loading ? (
           <div className="py-12 text-center text-muted-foreground">加载中...</div>
@@ -292,6 +353,16 @@ export default function Attachments() {
           <table className="w-full text-left text-sm">
             <thead className="border-b border-border bg-muted/40">
               <tr>
+                <th className="w-10 px-3 py-2">
+                  <input
+                    type="checkbox"
+                    checked={items.length > 0 && selectedIds.length === items.length}
+                    onChange={toggleSelectAll}
+                    onClick={(e) => e.stopPropagation()}
+                    className={ADMIN_TABLE_CHECKBOX_CLASS}
+                    aria-label="全选"
+                  />
+                </th>
                 <th className="px-3 py-2 font-medium">类型</th>
                 <th className="px-3 py-2 font-medium">文件名</th>
                 <th className="px-3 py-2 font-medium">MIME</th>
@@ -309,6 +380,24 @@ export default function Attachments() {
                   className="cursor-pointer border-b border-border hover:bg-accent/40"
                   onClick={() => void openDetail(a)}
                 >
+                  <td
+                    className="px-3 py-2 align-middle"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(a.id)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        setSelectedIds((prev) =>
+                          prev.includes(a.id) ? prev.filter((x) => x !== a.id) : [...prev, a.id],
+                        );
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className={ADMIN_TABLE_CHECKBOX_CLASS}
+                      aria-label={`选择 ${a.originalName || a.name}`}
+                    />
+                  </td>
                   <td className="px-3 py-2">
                     {a.type === 'image' ? (
                       <FileImage className="h-5 w-5 text-muted-foreground" aria-hidden />

@@ -13,6 +13,7 @@ import { Edit, Trash2 } from 'lucide-react';
 import AdminModal from '../../components/AdminModal';
 import ConfirmModal from '../../components/ConfirmModal';
 import { TextField, TextareaField, ColorField } from '../../components/FormField';
+import { ADMIN_TABLE_CHECKBOX_CLASS } from '../../app/constants/adminTable';
 
 interface TagForm {
   name: string;
@@ -31,6 +32,8 @@ export default function Tags() {
   const [editTarget, setEditTarget] = useState<TagListItem | null>(null);
   const [form, setForm] = useState<TagForm>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [batchBusy, setBatchBusy] = useState(false);
 
   const [confirmState, setConfirmState] = useState<{
     open: boolean;
@@ -52,6 +55,18 @@ export default function Tags() {
     opts: Omit<typeof confirmState, 'open'>,
   ) => setConfirmState({ open: true, ...opts });
   const hideConfirm = () => setConfirmState((s) => ({ ...s, open: false }));
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === tags.length && tags.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(tags.map((t) => t.id));
+    }
+  };
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
 
   const fetchTags = async () => {
     setLoading(true);
@@ -155,12 +170,72 @@ export default function Tags() {
     });
   };
 
+  const handleBatchDelete = () => {
+    if (!selectedIds.length) {
+      toast.warning('请先选择标签');
+      return;
+    }
+    showConfirm({
+      title: '批量删除标签',
+      message: `确定要删除选中的 ${selectedIds.length} 个标签吗？`,
+      confirmLabel: '删除',
+      confirmVariant: 'danger',
+      onConfirm: async () => {
+        hideConfirm();
+        const ids = [...selectedIds];
+        setBatchBusy(true);
+        let ok = 0;
+        let lastErr = '';
+        for (const id of ids) {
+          try {
+            const res = await deleteTag(id, true);
+            if (res.code === 200) ok += 1;
+            else lastErr = res.message || '删除失败';
+          } catch (error: unknown) {
+            lastErr =
+              error && typeof error === 'object' && 'response' in error
+                ? (error as { response?: { data?: { message?: string } } }).response?.data?.message ||
+                  '请求失败'
+                : '请求失败';
+          }
+        }
+        setBatchBusy(false);
+        setSelectedIds([]);
+        void fetchTags();
+        if (ok === ids.length) toast.success(`已删除 ${ok} 个标签`);
+        else if (ok > 0) toast.warning(`成功 ${ok} 个，部分失败${lastErr ? `：${lastErr}` : ''}`);
+        else toast.error(lastErr || '批量删除失败');
+      },
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div className="admin-card admin-card-glass overflow-hidden rounded border">
+        {selectedIds.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 border-b border-border bg-muted/30 px-4 py-2">
+            <button
+              type="button"
+              disabled={batchBusy}
+              className="rounded bg-red-600 px-3 py-1.5 text-sm text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+              onClick={handleBatchDelete}
+            >
+              批量删除
+            </button>
+          </div>
+        )}
         <table className="admin-table w-full border-collapse text-left">
           <thead>
             <tr className="bg-muted/50 border-b border-border">
+              <th className="w-10 px-4 py-3">
+                <input
+                  type="checkbox"
+                  checked={tags.length > 0 && selectedIds.length === tags.length}
+                  onChange={toggleSelectAll}
+                  className={ADMIN_TABLE_CHECKBOX_CLASS}
+                  aria-label="全选"
+                />
+              </th>
               <th className="px-4 py-3 text-sm font-medium text-muted-foreground min-w-[200px]">名称</th>
               <th className="px-4 py-3 text-sm font-medium text-muted-foreground">颜色</th>
               <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground whitespace-nowrap">
@@ -172,19 +247,28 @@ export default function Tags() {
           <tbody className="divide-y divide-border">
             {loading ? (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                   加载中...
                 </td>
               </tr>
             ) : tags.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                   暂无标签
                 </td>
               </tr>
             ) : (
               tags.map((tag) => (
                 <tr key={tag.id} className="hover:bg-muted/50">
+                  <td className="px-4 py-3 align-top">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(tag.id)}
+                      onChange={() => toggleSelect(tag.id)}
+                      className={ADMIN_TABLE_CHECKBOX_CLASS}
+                      aria-label={`选择 ${tag.name}`}
+                    />
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex items-start gap-2 min-w-0">
                       <span

@@ -25,6 +25,8 @@ import {
 } from '../../components/FormField';
 import Pagination from '../../components/Pagination';
 import CustomSelect from '../../components/CustomSelect';
+import { useAuthStore } from '../../store/authStore';
+import { ADMIN_TABLE_CHECKBOX_CLASS } from '../../app/constants/adminTable';
 
 // ─── 常量映射 ────────────────────────────────────────────────────────────────
 
@@ -200,6 +202,7 @@ function UserFormModal({
 // ─── 主页面 ──────────────────────────────────────────────────────────────────
 
 export default function Users() {
+  const authUser = useAuthStore((s) => s.user);
   const [items, setItems] = useState<AdminUserItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
@@ -209,6 +212,9 @@ export default function Users() {
   const [keyword, setKeyword] = useState('');
   const [role, setRole] = useState<string>('');
   const [status, setStatus] = useState<string>('');
+
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [batchBusy, setBatchBusy] = useState(false);
 
   const [currentUser, setCurrentUser] = useState<AdminUserItem | null>(null);
   const [modalType, setModalType] = useState<ModalType>(null);
@@ -270,6 +276,69 @@ export default function Users() {
   useEffect(() => {
     fetchUsers();
   }, [query]);
+
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [query]);
+
+  const selectableUsers = useMemo(
+    () => items.filter((u) => u.id !== authUser?.id),
+    [items, authUser?.id],
+  );
+
+  const toggleSelectAll = () => {
+    if (selectableUsers.length === 0) return;
+    const allSelected = selectableUsers.every((u) => selectedIds.includes(u.id));
+    if (allSelected) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(selectableUsers.map((u) => u.id));
+    }
+  };
+
+  const toggleSelect = (id: number) => {
+    if (authUser?.id === id) return;
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
+  const handleBatchDelete = () => {
+    const targets = selectedIds.filter((id) => id !== authUser?.id);
+    if (!targets.length) {
+      toast.warning('请先选择要删除的用户（不能删除当前登录账号）');
+      return;
+    }
+    showConfirm({
+      title: '批量删除用户',
+      message: `确认软删除选中的 ${targets.length} 位用户吗？该操作不可直接恢复。`,
+      confirmLabel: '删除',
+      confirmVariant: 'danger',
+      onConfirm: async () => {
+        hideConfirm();
+        setBatchBusy(true);
+        let ok = 0;
+        let lastErr = '';
+        for (const id of targets) {
+          try {
+            const res = await deleteAdminUser(id);
+            if (res.code === 200) ok += 1;
+            else lastErr = res.message || '删除失败';
+          } catch (error: unknown) {
+            lastErr =
+              error && typeof error === 'object' && 'response' in error
+                ? (error as { response?: { data?: { message?: string } } }).response?.data?.message ||
+                  '请求失败'
+                : '请求失败';
+          }
+        }
+        setBatchBusy(false);
+        setSelectedIds([]);
+        void fetchUsers();
+        if (ok === targets.length) toast.success(`已删除 ${ok} 位用户`);
+        else if (ok > 0) toast.warning(`成功 ${ok} 位${lastErr ? `，部分失败：${lastErr}` : ''}`);
+        else toast.error(lastErr || '批量删除失败');
+      },
+    });
+  };
 
   const patchForm = (patch: Partial<UserFormData>) =>
     setFormData((f) => ({ ...f, ...patch }));
@@ -506,11 +575,37 @@ export default function Users() {
           />
         </div>
 
+        {selectedIds.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 border-b border-border bg-muted/30 px-4 py-2">
+            <button
+              type="button"
+              disabled={batchBusy}
+              className="rounded bg-red-600 px-3 py-1.5 text-sm text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+              onClick={handleBatchDelete}
+            >
+              批量删除
+            </button>
+          </div>
+        )}
+
         {/* 表格 */}
         <div className="overflow-x-auto">
           <table className="admin-table w-full border-collapse text-left">
             <thead>
               <tr className="bg-muted/50 border-b border-border">
+                <th className="w-10 px-4 py-3">
+                  <input
+                    type="checkbox"
+                    checked={
+                      selectableUsers.length > 0 &&
+                      selectableUsers.every((u) => selectedIds.includes(u.id))
+                    }
+                    onChange={toggleSelectAll}
+                    className={ADMIN_TABLE_CHECKBOX_CLASS}
+                    aria-label="全选"
+                    disabled={selectableUsers.length === 0}
+                  />
+                </th>
                 <th className="px-4 py-3 text-sm font-medium text-muted-foreground min-w-[170px]">用户</th>
                 <th className="px-4 py-3 text-sm font-medium text-muted-foreground w-24">角色</th>
                 <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground whitespace-nowrap">
@@ -523,13 +618,13 @@ export default function Users() {
             <tbody className="divide-y divide-border">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
                     加载中...
                   </td>
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
                     暂无用户
                   </td>
                 </tr>
@@ -537,8 +632,20 @@ export default function Users() {
                 items.map((item) => {
                   const displayName = item.nickname?.trim() || item.username;
                   const initial = (displayName || '?').charAt(0).toUpperCase();
+                  const isSelf = authUser?.id === item.id;
                   return (
                   <tr key={item.id} className="hover:bg-muted/50">
+                    <td className="px-4 py-3 align-top">
+                      <input
+                        type="checkbox"
+                        disabled={isSelf}
+                        checked={selectedIds.includes(item.id)}
+                        onChange={() => toggleSelect(item.id)}
+                        className={ADMIN_TABLE_CHECKBOX_CLASS}
+                        aria-label={isSelf ? '不可删除当前账号' : `选择 ${item.username}`}
+                        title={isSelf ? '不可删除当前登录账号' : undefined}
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3 min-w-0">
                         <span

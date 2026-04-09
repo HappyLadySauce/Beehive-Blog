@@ -11,6 +11,7 @@ import {
   ArticleListQuery,
 } from '../../api/article';
 import { toast } from 'sonner';
+import { ADMIN_TABLE_CHECKBOX_CLASS } from '../../app/constants/adminTable';
 
 export default function ArticleTrash() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -19,6 +20,8 @@ export default function ArticleTrash() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [batchBusy, setBatchBusy] = useState(false);
 
   const [confirmState, setConfirmState] = useState<{
     open: boolean;
@@ -80,6 +83,22 @@ export default function ArticleTrash() {
     void fetchList();
   }, [page, searchQuery, selectedSort]);
 
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [page, searchQuery, selectedSort]);
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === articles.length && articles.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(articles.map((a) => a.id));
+    }
+  };
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
   const runRestore = async (id: number) => {
     try {
       const res = await restoreArticle(id);
@@ -116,6 +135,88 @@ export default function ArticleTrash() {
     }
   };
 
+  const handleBatchRestore = () => {
+    if (!selectedIds.length) {
+      toast.warning('请先选择文章');
+      return;
+    }
+    showConfirm({
+      title: '批量恢复文章',
+      message: `确定将选中的 ${selectedIds.length} 篇文章恢复到文章列表吗？`,
+      confirmLabel: '恢复',
+      confirmVariant: 'primary',
+      onConfirm: () => {
+        hideConfirm();
+        void (async () => {
+          const ids = [...selectedIds];
+          setBatchBusy(true);
+          let ok = 0;
+          let lastErr = '';
+          for (const id of ids) {
+            try {
+              const res = await restoreArticle(id);
+              if (res.code === 200) ok += 1;
+              else lastErr = res.message || '恢复失败';
+            } catch (error: unknown) {
+              lastErr =
+                error && typeof error === 'object' && 'response' in error
+                  ? (error as { response?: { data?: { message?: string } } }).response?.data?.message ||
+                    '请求失败'
+                  : '请求失败';
+            }
+          }
+          setBatchBusy(false);
+          setSelectedIds([]);
+          void fetchList();
+          if (ok === ids.length) toast.success(`已恢复 ${ok} 篇文章`);
+          else if (ok > 0) toast.warning(`成功恢复 ${ok} 篇${lastErr ? `，部分失败：${lastErr}` : ''}`);
+          else toast.error(lastErr || '批量恢复失败');
+        })();
+      },
+    });
+  };
+
+  const handleBatchPermanent = () => {
+    if (!selectedIds.length) {
+      toast.warning('请先选择文章');
+      return;
+    }
+    showConfirm({
+      title: '批量彻底删除',
+      message: `彻底删除选中的 ${selectedIds.length} 篇文章后无法恢复，确定继续吗？`,
+      confirmLabel: '彻底删除',
+      confirmVariant: 'danger',
+      onConfirm: () => {
+        hideConfirm();
+        void (async () => {
+          const ids = [...selectedIds];
+          setBatchBusy(true);
+          let ok = 0;
+          let lastErr = '';
+          for (const id of ids) {
+            try {
+              const res = await permanentDeleteArticle(id);
+              if (res.code === 200) ok += 1;
+              else lastErr = res.message || '删除失败';
+            } catch (error: unknown) {
+              lastErr =
+                error && typeof error === 'object' && 'response' in error
+                  ? (error as { response?: { data?: { message?: string } } }).response?.data?.message ||
+                    '请求失败'
+                  : '请求失败';
+            }
+          }
+          setBatchBusy(false);
+          setSelectedIds([]);
+          void fetchList();
+          if (ok === ids.length) toast.success(`已彻底删除 ${ok} 篇文章`);
+          else if (ok > 0) toast.warning(`成功删除 ${ok} 篇${lastErr ? `，部分失败：${lastErr}` : ''}`);
+          else toast.error(lastErr || '批量删除失败');
+        })();
+      },
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div className="admin-card admin-card-glass rounded border">
@@ -149,10 +250,40 @@ export default function ArticleTrash() {
           />
         </div>
 
+        {selectedIds.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 border-b border-border bg-muted/30 px-4 py-2">
+            <button
+              type="button"
+              disabled={batchBusy}
+              className="rounded border border-border bg-background px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-accent disabled:opacity-50"
+              onClick={handleBatchRestore}
+            >
+              批量恢复
+            </button>
+            <button
+              type="button"
+              disabled={batchBusy}
+              className="rounded bg-red-600 px-3 py-1.5 text-sm text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+              onClick={handleBatchPermanent}
+            >
+              批量彻底删除
+            </button>
+          </div>
+        )}
+
         <div className="overflow-x-auto">
           <table className="admin-table w-full border-collapse text-left">
             <thead>
               <tr className="border-b border-border bg-muted/50">
+                <th className="w-10 px-4 py-3">
+                  <input
+                    type="checkbox"
+                    checked={articles.length > 0 && selectedIds.length === articles.length}
+                    onChange={toggleSelectAll}
+                    className={ADMIN_TABLE_CHECKBOX_CLASS}
+                    aria-label="全选"
+                  />
+                </th>
                 <th className="px-4 py-3 text-sm font-medium text-muted-foreground">标题</th>
                 <th className="px-4 py-3 text-sm font-medium text-muted-foreground">分类 / 标签</th>
                 <th className="px-4 py-3 text-sm font-medium text-muted-foreground">作者</th>
@@ -163,19 +294,28 @@ export default function ArticleTrash() {
             <tbody className="divide-y divide-border">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">
+                  <td colSpan={6} className="px-4 py-8 text-center text-sm text-muted-foreground">
                     加载中...
                   </td>
                 </tr>
               ) : articles.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-sm text-muted-foreground">
+                  <td colSpan={6} className="px-4 py-10 text-center text-sm text-muted-foreground">
                     回收站为空。删除的文章会出现在这里，可恢复或彻底删除。
                   </td>
                 </tr>
               ) : (
                 articles.map((article) => (
                   <tr key={article.id} className="transition-colors hover:bg-muted/50">
+                    <td className="px-4 py-3 align-top">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(article.id)}
+                        onChange={() => toggleSelect(article.id)}
+                        className={ADMIN_TABLE_CHECKBOX_CLASS}
+                        aria-label={`选择 ${article.title}`}
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <div className="max-w-md truncate text-sm font-medium text-foreground">{article.title}</div>
                     </td>

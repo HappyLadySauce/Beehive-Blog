@@ -4,6 +4,10 @@ import { toast } from 'sonner';
 import { MessageSquare, Check, X, ShieldAlert, Search } from 'lucide-react';
 import Pagination from '../../components/Pagination';
 import CustomSelect from '../../components/CustomSelect';
+import {
+  ADMIN_TABLE_BATCH_BTN_CLASS,
+  ADMIN_TABLE_CHECKBOX_CLASS,
+} from '../../app/constants/adminTable';
 
 const statusColors: Record<string, string> = {
   approved: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400',
@@ -34,6 +38,8 @@ export default function Comments() {
   const [loading, setLoading] = useState(false);
   const [filterStatus, setFilterStatus] = useState('');
   const [keyword, setKeyword] = useState('');
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [batchBusy, setBatchBusy] = useState(false);
 
   const fetchComments = async () => {
     setLoading(true);
@@ -61,6 +67,52 @@ export default function Comments() {
   useEffect(() => {
     fetchComments();
   }, [page, filterStatus, keyword]);
+
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [page, filterStatus, keyword]);
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === comments.length && comments.length > 0) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(comments.map((c) => c.id));
+    }
+  };
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
+  const runBatchStatus = async (status: string, label: string) => {
+    if (!selectedIds.length) {
+      toast.warning('请先选择评论');
+      return;
+    }
+    const ids = [...selectedIds];
+    setBatchBusy(true);
+    let ok = 0;
+    let lastErr = '';
+    for (const id of ids) {
+      try {
+        const res = await updateCommentStatus(id, status);
+        if (res.code === 200) ok += 1;
+        else lastErr = res.message || '更新失败';
+      } catch (error: unknown) {
+        lastErr =
+          error && typeof error === 'object' && 'response' in error
+            ? (error as { response?: { data?: { message?: string } } }).response?.data?.message ||
+              '请求失败'
+            : '请求失败';
+      }
+    }
+    setBatchBusy(false);
+    setSelectedIds([]);
+    void fetchComments();
+    if (ok === ids.length) toast.success(`已${label} ${ok} 条评论`);
+    else if (ok > 0) toast.warning(`成功 ${ok} 条${lastErr ? `，部分失败：${lastErr}` : ''}`);
+    else toast.error(lastErr || '批量操作失败');
+  };
 
   const handleStatusChange = async (id: number, status: string) => {
     try {
@@ -106,10 +158,48 @@ export default function Comments() {
           />
         </div>
 
+        {selectedIds.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 border-b border-border bg-muted/30 px-4 py-2">
+            <button
+              type="button"
+              disabled={batchBusy}
+              className={`${ADMIN_TABLE_BATCH_BTN_CLASS} text-green-700 hover:bg-green-50 dark:text-green-400`}
+              onClick={() => void runBatchStatus('approved', '通过')}
+            >
+              批量通过
+            </button>
+            <button
+              type="button"
+              disabled={batchBusy}
+              className={`${ADMIN_TABLE_BATCH_BTN_CLASS} text-red-700 hover:bg-red-50 dark:text-red-400`}
+              onClick={() => void runBatchStatus('rejected', '拒绝')}
+            >
+              批量拒绝
+            </button>
+            <button
+              type="button"
+              disabled={batchBusy}
+              className={`${ADMIN_TABLE_BATCH_BTN_CLASS} text-orange-800 hover:bg-orange-50 dark:text-orange-300`}
+              onClick={() => void runBatchStatus('spam', '标记为垃圾')}
+            >
+              批量标垃圾
+            </button>
+          </div>
+        )}
+
         <div className="overflow-x-auto">
           <table className="admin-table w-full border-collapse text-left">
             <thead>
               <tr className="bg-muted/50 border-b border-border">
+                <th className="w-10 px-4 py-3">
+                  <input
+                    type="checkbox"
+                    checked={comments.length > 0 && selectedIds.length === comments.length}
+                    onChange={toggleSelectAll}
+                    className={ADMIN_TABLE_CHECKBOX_CLASS}
+                    aria-label="全选"
+                  />
+                </th>
                 <th className="px-4 py-3 text-sm font-medium text-muted-foreground min-w-[200px]">内容</th>
                 <th className="px-4 py-3 text-sm font-medium text-muted-foreground whitespace-nowrap">文章</th>
                 <th className="px-4 py-3 text-sm font-medium text-muted-foreground">作者</th>
@@ -122,12 +212,21 @@ export default function Comments() {
             </thead>
             <tbody className="divide-y divide-border">
               {loading ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">加载中...</td></tr>
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">加载中...</td></tr>
               ) : comments.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">暂无评论</td></tr>
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">暂无评论</td></tr>
               ) : (
                 comments.map((comment) => (
                   <tr key={comment.id} className="hover:bg-muted/50">
+                    <td className="px-4 py-3 align-top">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(comment.id)}
+                        onChange={() => toggleSelect(comment.id)}
+                        className={ADMIN_TABLE_CHECKBOX_CLASS}
+                        aria-label="选择评论"
+                      />
+                    </td>
                     <td className="px-4 py-3 text-sm text-foreground max-w-md truncate">
                       {comment.content}
                     </td>
