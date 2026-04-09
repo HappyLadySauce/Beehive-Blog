@@ -640,7 +640,7 @@ const docTemplate = `{
                 }
             },
             "delete": {
-                "description": "需管理员；软删除文章并清理关联标签；开启 Hexo auto_sync 时异步删 md",
+                "description": "需管理员；软删除文章并清理关联标签；后台 Hexo 设置开启 auto_sync 时异步删 md",
                 "produces": [
                     "application/json"
                 ],
@@ -853,7 +853,7 @@ const docTemplate = `{
         },
         "/api/v1/admin/articles/{id}/permanent": {
             "delete": {
-                "description": "需管理员；仅当文章在回收站（已软删）时硬删；开启 Hexo auto_sync 时异步删 md",
+                "description": "需管理员；仅当文章在回收站（已软删）时硬删；后台 Hexo 设置开启 auto_sync 时异步删 md",
                 "produces": [
                     "application/json"
                 ],
@@ -1001,7 +1001,7 @@ const docTemplate = `{
         },
         "/api/v1/admin/articles/{id}/restore": {
             "post": {
-                "description": "需管理员；清除 deleted_at，文章回到正常列表；开启 Hexo auto_sync 时异步同步",
+                "description": "需管理员；清除 deleted_at，文章回到正常列表；后台 Hexo 设置开启 auto_sync 时异步同步",
                 "produces": [
                     "application/json"
                 ],
@@ -2472,7 +2472,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "需管理员；按 group 读取设置键值对（SMTP 密码脱敏）；group 可为 general/seo/smtp/comment/security",
+                "description": "需管理员；按 group 读取设置键值对（SMTP 密码脱敏）；group 可为 general/seo/smtp/comment/security/hexo（hexo 含只读 hexo.hexo_dir）",
                 "produces": [
                     "application/json"
                 ],
@@ -2540,7 +2540,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "需管理员；批量 upsert 指定 group 的设置；SMTP 密码传 \"***\" 表示不修改",
+                "description": "需管理员；批量 upsert 指定 group 的设置；SMTP 密码传 \"***\" 表示不修改；hexo 分组不可写入 hexo.hexo_dir",
                 "consumes": [
                     "application/json"
                 ],
@@ -2672,7 +2672,7 @@ const docTemplate = `{
         },
         "/api/v1/admin/sync/posts": {
             "post": {
-                "description": "将已发布文章写入 Hexo source/_posts，可选执行 hexo 构建命令",
+                "description": "将已发布文章写入 Hexo source/_posts；rebuild=true 且在后台 Hexo 设置中配置了 clean_args/generate_args 时顺序执行 hexo clean 与 generate",
                 "consumes": [
                     "application/json"
                 ],
@@ -6210,7 +6210,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "rebuild": {
-                    "description": "Rebuild 为 true 且服务端配置了 hexo.generate_args 时，在同步后执行静态站点生成。",
+                    "description": "Rebuild 为 true 且在后台 Hexo 设置中配置了 generate_args（及可选 clean_args）时，在同步后执行生成。",
                     "type": "boolean"
                 }
             }

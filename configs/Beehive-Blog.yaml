@@ -35,17 +35,7 @@ storage:
     baseUrl: http://localhost:8081/uploads     # 文件访问 URL 前缀
     maxFileSize: 104857600                     # 单文件最大字节，默认 100MB
 
-# Hexo 同步：数据库已发布文章 → ui/hexo/source/_posts/*.md
+# Hexo：仅部署级根目录；自动同步 / clean / generate 等在后台「系统设置 → Hexo 同步」中配置（存于 settings 表）
 hexo:
-    posts_dir: ui/hexo/source/_posts
-    # 为 true 时：保存/更新已发布文章后异步写入 _posts（需 Redis 以记录 last_sync）
-    auto_sync: true
-    generate_workdir: ui/hexo
-    # 手动全量同步且 JSON {"rebuild":true} 时顺序执行 clean → generate（任一侧非空即执行）；需 PATH 可找到 hexo
-    # clean_args: ["hexo", "clean"]
-    # generate_args: ["hexo", "generate"]
-    clean_args: ["pnpm", "exec", "hexo", "clean"]
-    generate_args: ["pnpm", "exec", "hexo", "generate"]
-    # 单篇自动同步后是否再跑 clean+generate（成本高，默认 false）
-    rebuild_after_auto_sync: true
+    hexo_dir: ui/hexo
 

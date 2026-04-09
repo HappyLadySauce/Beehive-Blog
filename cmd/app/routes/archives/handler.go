@@ -115,7 +115,7 @@ func (h *articleHandlers) handleListTrashedArticles(c *gin.Context) {
 // handleRestoreArticle godoc
 //
 //	@Summary		从回收站恢复文章
-//	@Description	需管理员；清除 deleted_at，文章回到正常列表；开启 Hexo auto_sync 时异步同步
+//	@Description	需管理员；清除 deleted_at，文章回到正常列表；后台 Hexo 设置开启 auto_sync 时异步同步
 //	@Tags			admin
 //	@Produce		json
 //	@Param			id	path	int	true	"文章 ID"
@@ -145,7 +145,7 @@ func (h *articleHandlers) handleRestoreArticle(c *gin.Context) {
 // handlePermanentDeleteArticle godoc
 //
 //	@Summary		永久删除回收站文章
-//	@Description	需管理员；仅当文章在回收站（已软删）时硬删；开启 Hexo auto_sync 时异步删 md
+//	@Description	需管理员；仅当文章在回收站（已软删）时硬删；后台 Hexo 设置开启 auto_sync 时异步删 md
 //	@Tags			admin
 //	@Produce		json
 //	@Param			id	path	int	true	"文章 ID"
@@ -279,7 +279,7 @@ func (h *articleHandlers) handleUpdateArticle(c *gin.Context) {
 // handleDeleteArticle godoc
 //
 //	@Summary		管理员删除文章
-//	@Description	需管理员；软删除文章并清理关联标签；开启 Hexo auto_sync 时异步删 md
+//	@Description	需管理员；软删除文章并清理关联标签；后台 Hexo 设置开启 auto_sync 时异步删 md
 //	@Tags			admin
 //	@Produce		json
 //	@Param			id	path	int	true	"文章 ID"

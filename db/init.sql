@@ -20,6 +20,7 @@
 \ir 011_article_versions_index.sql
 \ir 012_article_versions_autosave.sql
 \ir 013_attachment_refs.sql
+\ir 014_hexo_settings.sql
 
 \echo '========================================'
 \echo 'Beehive-Blog 数据库初始化完成'

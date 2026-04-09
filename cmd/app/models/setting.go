@@ -25,6 +25,7 @@ const (
 	SettingGroupSMTP     = "smtp"     // 邮件设置
 	SettingGroupComment  = "comment"  // 评论设置
 	SettingGroupSecurity = "security" // 安全设置
+	SettingGroupHexo     = "hexo"     // Hexo 同步行为（路径仍来自 YAML hexo_dir）
 )
 
 // Link 友情链接模型

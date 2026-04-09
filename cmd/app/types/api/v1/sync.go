@@ -2,7 +2,7 @@ package v1
 
 // SyncPostsRequest 手动全量同步请求体。
 type SyncPostsRequest struct {
-	// Rebuild 为 true 且服务端配置了 hexo.generate_args 时，在同步后执行静态站点生成。
+	// Rebuild 为 true 且在后台 Hexo 设置中配置了 generate_args（及可选 clean_args）时，在同步后执行生成。
 	Rebuild bool `json:"rebuild"`
 }
 

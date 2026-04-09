@@ -46,19 +46,43 @@ export default function Settings() {
   };
 
   useEffect(() => {
-    if (activeTab !== 'hexo') {
-      fetchSettings(activeTab);
+    if (activeTab === 'hexo') {
+      setLoading(true);
+      void (async () => {
+        try {
+          const [setRes, syncRes] = await Promise.all([getSettings('hexo'), getHexoSyncStatus()]);
+          if (setRes.code === 200) {
+            setSettings(setRes.data.settings || {});
+          } else {
+            toast.error(setRes.message || '获取 Hexo 设置失败');
+          }
+          if (syncRes.code === 200) {
+            setSyncStatus(syncRes.data);
+          }
+        } catch (e: any) {
+          toast.error(e.response?.data?.message || '加载 Hexo 页失败');
+        } finally {
+          setLoading(false);
+        }
+      })();
     } else {
-      fetchSyncStatus();
+      void fetchSettings(activeTab);
     }
   }, [activeTab]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const res = await updateSettings(activeTab, settings);
+      const payload =
+        activeTab === 'hexo'
+          ? Object.fromEntries(Object.entries(settings).filter(([k]) => k !== 'hexo.hexo_dir'))
+          : settings;
+      const res = await updateSettings(activeTab, payload);
       if (res.code === 200) {
         toast.success('保存成功');
+        if (activeTab === 'hexo') {
+          setSettings(res.data.settings || {});
+        }
       } else {
         toast.error(res.message || '保存失败');
       }
@@ -289,13 +313,84 @@ export default function Settings() {
                     </div>
                   </div>
 
-                  <button
-                    onClick={handleSyncHexo}
-                    className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors flex items-center gap-2 text-sm font-medium"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                    手动触发全量同步
-                  </button>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">Hexo 根目录（hexo_dir）</label>
+                    <input
+                      type="text"
+                      readOnly
+                      value={settings['hexo.hexo_dir'] || ''}
+                      className="w-full px-3 py-2 border border-border rounded bg-muted/50 text-muted-foreground text-sm cursor-not-allowed"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">由服务端配置文件指定，修改后需重启服务。文章目录默认为 hexo 根目录下的 source/_posts。</p>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <input
+                      id="hexo-auto-sync"
+                      type="checkbox"
+                      checked={settings['hexo.auto_sync'] === 'true'}
+                      onChange={(e) => handleChange('hexo.auto_sync', e.target.checked ? 'true' : 'false')}
+                      className="rounded border-border"
+                    />
+                    <label htmlFor="hexo-auto-sync" className="text-sm text-foreground">
+                      保存/更新已发布文章后自动同步到 Hexo
+                    </label>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <input
+                      id="hexo-rebuild-after"
+                      type="checkbox"
+                      checked={settings['hexo.rebuild_after_auto_sync'] === 'true'}
+                      onChange={(e) => handleChange('hexo.rebuild_after_auto_sync', e.target.checked ? 'true' : 'false')}
+                      className="rounded border-border"
+                    />
+                    <label htmlFor="hexo-rebuild-after" className="text-sm text-foreground">
+                      单篇自动同步后执行 hexo clean + generate
+                    </label>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">clean_args（JSON 数组）</label>
+                    <textarea
+                      value={settings['hexo.clean_args'] ?? ''}
+                      onChange={(e) => handleChange('hexo.clean_args', e.target.value)}
+                      rows={2}
+                      placeholder='例如 ["hexo","clean"] 或 ["pnpm","exec","hexo","clean"]，留空表示不执行'
+                      className="w-full px-3 py-2 border border-border rounded bg-input-background text-foreground font-mono text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">generate_args（JSON 数组）</label>
+                    <textarea
+                      value={settings['hexo.generate_args'] ?? ''}
+                      onChange={(e) => handleChange('hexo.generate_args', e.target.value)}
+                      rows={2}
+                      placeholder='例如 ["hexo","generate"]，留空表示不执行'
+                      className="w-full px-3 py-2 border border-border rounded bg-input-background text-foreground font-mono text-sm"
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={handleSave}
+                      disabled={saving}
+                      className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors flex items-center gap-2 text-sm font-medium disabled:opacity-50"
+                    >
+                      <Save className="w-4 h-4" />
+                      {saving ? '保存中...' : '保存 Hexo 设置'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSyncHexo}
+                      className="px-4 py-2 bg-muted text-foreground rounded hover:bg-accent transition-colors flex items-center gap-2 text-sm font-medium"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      手动触发全量同步
+                    </button>
+                  </div>
                 </div>
               )}
 

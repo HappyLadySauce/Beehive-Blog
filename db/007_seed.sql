@@ -83,7 +83,13 @@ INSERT INTO settings (key, value, "group") VALUES
 ('rate_limit_requests', '100', 'security'),
 ('rate_limit_window', '60', 'security'),
 ('login_max_attempts', '5', 'security'),
-('login_lockout_duration', '3600', 'security');
+('login_lockout_duration', '3600', 'security'),
+
+-- Hexo 同步行为（路径 hexo_dir 仅来自服务端 YAML）
+('hexo.auto_sync', 'false', 'hexo'),
+('hexo.clean_args', '', 'hexo'),
+('hexo.generate_args', '', 'hexo'),
+('hexo.rebuild_after_auto_sync', 'false', 'hexo');
 
 -- 默认菜单
 INSERT INTO menus (name, location, sort_order, is_enabled) VALUES

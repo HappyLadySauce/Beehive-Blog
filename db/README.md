@@ -19,6 +19,17 @@
 | `006_notifications.sql` | 通知相关表（notifications, subscriptions, webhooks） |
 | `007_seed.sql` | 初始数据（等级配置、默认设置、菜单等） |
 | `008_triggers.sql` | 数据库触发器（自动更新时间戳、计数器） |
+| `014_hexo_settings.sql` | Hexo 运行时设置默认行（`settings.group=hexo`；存量库可单独执行） |
+
+## 已有环境升级
+
+若仓库新增了 `014_hexo_settings.sql` 等增量脚本，在已存在的数据库上执行（幂等）：
+
+```bash
+psql -U postgres -d beehive_blog -f db/014_hexo_settings.sql
+```
+
+全量 `init.sql` 已包含该文件，**新库**无需单独执行。
 
 ## 快速开始
 

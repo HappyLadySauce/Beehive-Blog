@@ -12,6 +12,7 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/hexocfg"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/mailer"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -52,6 +53,9 @@ func (s *Service) GetSettings(ctx context.Context, group string) (*v1.SettingsRe
 			kv[r.Key] = r.Value
 		}
 	}
+	if group == models.SettingGroupHexo {
+		kv[hexocfg.KeyHexoDir] = hexocfg.HexoDirDisplay(s.svc.Config.HexoOptions)
+	}
 	return &v1.SettingsResponse{Group: group, Settings: kv}, http.StatusOK, nil
 }
 
@@ -74,6 +78,14 @@ func (s *Service) UpdateSettings(ctx context.Context, group string, req *v1.Upda
 		// 忽略密码脱敏占位符（前端未修改时回传 "***"）
 		if smtpSensitiveKeys[k] && v == "***" {
 			continue
+		}
+		if group == models.SettingGroupHexo {
+			if k == hexocfg.KeyHexoDir {
+				continue
+			}
+			if err := hexocfg.ValidateHexoSettingValue(k, v); err != nil {
+				return nil, http.StatusBadRequest, err
+			}
 		}
 		rows = append(rows, models.Setting{
 			Key:   k,
@@ -208,9 +220,10 @@ func validateGroup(group string) error {
 		models.SettingGroupSMTP:     true,
 		models.SettingGroupComment:  true,
 		models.SettingGroupSecurity: true,
+		models.SettingGroupHexo:     true,
 	}
 	if !allowed[group] {
-		return fmt.Errorf("unknown settings group %q; allowed: general, seo, smtp, comment, security", group)
+		return fmt.Errorf("unknown settings group %q; allowed: general, seo, smtp, comment, security, hexo", group)
 	}
 	return nil
 }

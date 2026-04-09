@@ -243,28 +243,24 @@ configs/
 
 ## 6. 核心模块详细设计
 
-### 6.1 配置项 (`pkg/options/hexo.go`)
+### 6.1 配置项（部署级 YAML + 运行时 DB）
 
-```go
-package options
-
-type HexoConfig struct {
-	PostsDir    string `mapstructure:"posts_dir"`    // _posts 目录路径（相对或绝对）
-	AutoSync    bool   `mapstructure:"auto_sync"`    // CRUD 后是否自动同步
-	HexoCommand string `mapstructure:"hexo_command"` // hexo build 命令（可选自动执行）
-	WatchMode   bool   `mapstructure:"watch_mode"`   // 开发环境 watch 模式
-}
-```
-
-**configs/Beehive-Blog.yaml 新增段**：
+**服务端配置文件**（[`configs/Beehive-Blog.yaml`](../configs/Beehive-Blog.yaml)）仅包含 Hexo **项目根目录**：
 
 ```yaml
 hexo:
-  posts_dir: "ui/hexo/source/_posts"
-  auto_sync: true
-  hexo_command: ""          # 留空表示不自动执行 hexo generate
-  watch_mode: false
+  hexo_dir: ui/hexo   # 含 package.json / _config.yml；文章目录恒为 <hexo_dir>/source/_posts
 ```
+
+[`pkg/options/hexo.go`](../pkg/options/hexo.go) 中 `HexoOptions` 仅映射 `hexo_dir`；`Validate` 时规范化路径。
+
+**运行时行为**（自动同步、是否 rebuild、`clean_args` / `generate_args`）存于 PostgreSQL `settings` 表 **`group = hexo`**，由管理后台「系统设置 → Hexo 同步」维护，运行时经 [`pkg/hexocfg/effective.go`](../pkg/hexocfg/effective.go) 的 `LoadEffective` 与 YAML 合并为 `EffectiveHexo`（含绝对路径后的 `PostsDirAbs`、`GenerateWorkdirAbs` 等）。
+
+| 来源 | 键 / 字段 | 说明 |
+|------|-----------|------|
+| YAML | `hexo_dir` | 仅部署时可改，需重启 |
+| DB | `hexo.auto_sync` 等 | 见 `hexocfg` 常量与 `SettingGroupHexo` |
+| API 只读合并 | `hexo.hexo_dir` | `GET /admin/settings/hexo` 返回，**不可**通过 PUT 写入 |
 
 ### 6.2 数据传输对象 (`cmd/app/types/api/v1/sync.go`)
 
@@ -768,9 +764,9 @@ async function recordView(articleId) {
 
 ### Phase 2：自动化集成
 
-**目标**：文章 CRUD 操作后自动触发同步；可选全量/定时补偿后执行 `hexo clean` + `hexo generate`（见 `hexo.clean_args` / `hexo.generate_args`）。
+**目标**：文章 CRUD 操作后自动触发同步；可选全量同步后执行 `hexo clean` + `hexo generate`（见后台 Hexo 设置中的 `hexo.clean_args` / `hexo.generate_args`）。
 
-- [x] 文章 Create Handler 中加入异步 `SyncSingle` 调用（`hexo.auto_sync`）
+- [x] 文章 Create Handler 中加入异步 `SyncSingle` 调用（后台 Hexo 设置 `hexo.auto_sync`）
 - [x] 文章 Update Handler 中加入异步 `SyncSingle` 调用
 - [x] 文章 Delete Handler 中加入 `DeletePostFile` 调用
 - [x] 文章 Status Change Handler 中判断同步/删除

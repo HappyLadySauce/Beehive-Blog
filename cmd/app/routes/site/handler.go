@@ -15,7 +15,7 @@ import (
 // HandleGetSettings godoc
 //
 //	@Summary		读取站点设置
-//	@Description	需管理员；按 group 读取设置键值对（SMTP 密码脱敏）；group 可为 general/seo/smtp/comment/security
+//	@Description	需管理员；按 group 读取设置键值对（SMTP 密码脱敏）；group 可为 general/seo/smtp/comment/security/hexo（hexo 含只读 hexo.hexo_dir）
 //	@Tags			admin
 //	@Produce		json
 //	@Param			group	path		string	true	"设置分组"
@@ -41,7 +41,7 @@ func (s *Service) HandleGetSettings(c *gin.Context) {
 // HandleUpdateSettings godoc
 //
 //	@Summary		更新站点设置
-//	@Description	需管理员；批量 upsert 指定 group 的设置；SMTP 密码传 "***" 表示不修改
+//	@Description	需管理员；批量 upsert 指定 group 的设置；SMTP 密码传 "***" 表示不修改；hexo 分组不可写入 hexo.hexo_dir
 //	@Tags			admin
 //	@Accept			json
 //	@Produce		json

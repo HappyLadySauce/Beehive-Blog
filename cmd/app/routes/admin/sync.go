@@ -8,17 +8,17 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/hexocfg"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/sync"
 	"github.com/gin-gonic/gin"
 )
 
-func newHexoSyncService(svcCtx *svc.ServiceContext) (*sync.SyncService, error) {
-	h := svcCtx.Config.HexoOptions
+func newHexoSyncServiceCtx(svcCtx *svc.ServiceContext, eff *hexocfg.EffectiveHexo) (*sync.SyncService, error) {
 	return sync.NewSyncService(
-		h.PostsDir,
-		h.GenerateWorkdir,
-		h.CleanArgs,
-		h.GenerateArgs,
+		eff.PostsDirAbs,
+		eff.GenerateWorkdirAbs,
+		eff.CleanArgs,
+		eff.GenerateArgs,
 		svcCtx.DB,
 		svcCtx.Redis,
 	)
@@ -27,7 +27,7 @@ func newHexoSyncService(svcCtx *svc.ServiceContext) (*sync.SyncService, error) {
 // HandleSyncPosts godoc
 //
 //	@Summary		Hexo 文章全量同步
-//	@Description	将已发布文章写入 Hexo source/_posts；rebuild=true 且配置了 clean_args/generate_args 时顺序执行 hexo clean 与 generate
+//	@Description	将已发布文章写入 Hexo source/_posts；rebuild=true 且在后台 Hexo 设置中配置了 clean_args/generate_args 时顺序执行 hexo clean 与 generate
 //	@Tags			admin
 //	@Accept			json
 //	@Produce		json
@@ -42,24 +42,32 @@ func HandleSyncPosts(svcCtx *svc.ServiceContext) gin.HandlerFunc {
 		var req v1.SyncPostsRequest
 		_ = c.ShouldBindJSON(&req)
 
-		syncSvc, err := newHexoSyncService(svcCtx)
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+		defer cancel()
+		eff, err := hexocfg.LoadEffective(ctx, svcCtx.DB, svcCtx.Config.HexoOptions)
 		if err != nil {
 			common.Fail(c, http.StatusInternalServerError, err)
 			return
 		}
 
-		ctx := c.Request.Context()
-		res, err := syncSvc.SyncAll(ctx)
+		syncSvc, err := newHexoSyncServiceCtx(svcCtx, eff)
+		if err != nil {
+			common.Fail(c, http.StatusInternalServerError, err)
+			return
+		}
+
+		syncCtx := c.Request.Context()
+		res, err := syncSvc.SyncAll(syncCtx)
 		if err != nil {
 			common.Fail(c, http.StatusInternalServerError, err)
 			return
 		}
 
 		if req.Rebuild {
-			hasRebuild := len(svcCtx.Config.HexoOptions.CleanArgs) > 0 || len(svcCtx.Config.HexoOptions.GenerateArgs) > 0
+			hasRebuild := len(eff.CleanArgs) > 0 || len(eff.GenerateArgs) > 0
 			if hasRebuild {
-				genCtx, cancel := context.WithTimeout(ctx, 15*time.Minute)
-				defer cancel()
+				genCtx, genCancel := context.WithTimeout(syncCtx, 15*time.Minute)
+				defer genCancel()
 				if err := syncSvc.RunHexoRebuild(genCtx); err != nil {
 					common.Fail(c, http.StatusInternalServerError, err)
 					return
@@ -90,14 +98,22 @@ func HandleSyncPosts(svcCtx *svc.ServiceContext) gin.HandlerFunc {
 //	@Router			/api/v1/admin/sync/status [get]
 func HandleSyncStatus(svcCtx *svc.ServiceContext) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		syncSvc, err := newHexoSyncService(svcCtx)
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+		defer cancel()
+		eff, err := hexocfg.LoadEffective(ctx, svcCtx.DB, svcCtx.Config.HexoOptions)
 		if err != nil {
 			common.Fail(c, http.StatusInternalServerError, err)
 			return
 		}
-		ctx := c.Request.Context()
 
-		total, err := syncSvc.PublishedArticleCount(ctx)
+		syncSvc, err := newHexoSyncServiceCtx(svcCtx, eff)
+		if err != nil {
+			common.Fail(c, http.StatusInternalServerError, err)
+			return
+		}
+		syncCtx := c.Request.Context()
+
+		total, err := syncSvc.PublishedArticleCount(syncCtx)
 		if err != nil {
 			common.Fail(c, http.StatusInternalServerError, err)
 			return
@@ -107,12 +123,12 @@ func HandleSyncStatus(svcCtx *svc.ServiceContext) gin.HandlerFunc {
 			common.Fail(c, http.StatusInternalServerError, err)
 			return
 		}
-		pending, err := syncSvc.PendingSync(ctx)
+		pending, err := syncSvc.PendingSync(syncCtx)
 		if err != nil {
 			common.Fail(c, http.StatusInternalServerError, err)
 			return
 		}
-		last, err := syncSvc.LastSyncTime(ctx)
+		last, err := syncSvc.LastSyncTime(syncCtx)
 		if err != nil {
 			common.Fail(c, http.StatusInternalServerError, err)
 			return
