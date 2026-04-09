@@ -3,12 +3,12 @@ import { createRoot } from 'react-dom/client';
 import ObsidianNoteProperties from './ObsidianNoteProperties';
 import { useArticleNotePropsStore } from './articleNotePropsStore';
 
-function NotePropertiesHost() {
+function NotePropertiesHost({ readOnly }: { readOnly?: boolean }) {
   const show = useArticleNotePropsStore((s) => s.showNoteProperties);
   if (!show) {
     return null;
   }
-  return <ObsidianNoteProperties />;
+  return <ObsidianNoteProperties readOnly={readOnly} />;
 }
 
 /**
@@ -25,7 +25,7 @@ export function createNotePropertiesBytemdPlugin(): BytemdPlugin {
       el.className = 'beehive-note-properties-root';
       editor.insertBefore(el, editor.firstChild);
       const root = createRoot(el);
-      root.render(<NotePropertiesHost />);
+      root.render(<NotePropertiesHost readOnly={false} />);
       return () => {
         root.unmount();
         el.remove();
@@ -40,7 +40,7 @@ export function createNotePropertiesBytemdPlugin(): BytemdPlugin {
       el.className = 'beehive-note-properties-root';
       parent.insertBefore(el, ctx.markdownBody);
       const root = createRoot(el);
-      root.render(<NotePropertiesHost />);
+      root.render(<NotePropertiesHost readOnly />);
       return () => {
         root.unmount();
         el.remove();

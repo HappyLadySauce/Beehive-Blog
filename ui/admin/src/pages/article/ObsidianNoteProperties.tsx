@@ -26,16 +26,20 @@ function PropRow({
   label,
   children,
   className,
+  readOnly,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   children: React.ReactNode;
   className?: string;
+  /** 预览区：无悬停高亮，避免像可编辑区域 */
+  readOnly?: boolean;
 }) {
   return (
     <div
       className={cn(
-        'beehive-prop-row flex min-h-9 items-start gap-2 rounded-md border border-transparent px-1 py-1 hover:border-border/80 hover:bg-muted/40',
+        'beehive-prop-row flex min-h-9 items-start gap-2 rounded-md border border-transparent px-1 py-1',
+        !readOnly && 'hover:border-border/80 hover:bg-muted/40',
         className,
       )}
     >
@@ -46,7 +50,13 @@ function PropRow({
   );
 }
 
-export default function ObsidianNoteProperties() {
+function ReadonlyCell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="break-words px-1 py-0.5 text-xs leading-snug text-foreground">{children}</div>
+  );
+}
+
+export default function ObsidianNoteProperties({ readOnly = false }: { readOnly?: boolean }) {
   const idBase = useId();
   const [open, setOpen] = useState(false);
   const [catSearch, setCatSearch] = useState('');
@@ -85,6 +95,11 @@ export default function ObsidianNoteProperties() {
   const selectedTags = useMemo(
     () => selectedTagIds.map((id) => tags.find((t) => t.id === id)).filter(Boolean),
     [selectedTagIds, tags],
+  );
+
+  const statusLabel = useMemo(
+    () => statusOptions.find((o) => o.value === status)?.label ?? status,
+    [status, statusOptions],
   );
 
   const onPickCategory = useCallback(
@@ -146,6 +161,64 @@ export default function ObsidianNoteProperties() {
     }
   };
 
+  if (readOnly) {
+    return (
+      <div className="beehive-note-properties beehive-note-properties--readonly text-sm">
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="mb-1 flex w-full items-center gap-1 rounded px-0.5 py-1 text-left text-xs font-medium text-muted-foreground hover:text-foreground"
+        >
+          {expanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
+          笔记属性
+        </button>
+        {expanded && (
+          <div className="space-y-0.5 border-b border-border/60 pb-2">
+            <PropRow icon={AlignLeft} label="title" readOnly>
+              <ReadonlyCell>{title.trim() ? title : '—'}</ReadonlyCell>
+            </PropRow>
+            <PropRow icon={Hash} label="slug" readOnly>
+              <ReadonlyCell>{slug.trim() ? slug : '—'}</ReadonlyCell>
+            </PropRow>
+            <PropRow icon={List} label="categories" readOnly>
+              <ReadonlyCell>{currentCategoryName || '无分类'}</ReadonlyCell>
+            </PropRow>
+            <PropRow icon={AlignLeft} label="status" readOnly>
+              <ReadonlyCell>{statusLabel}</ReadonlyCell>
+            </PropRow>
+            <PropRow icon={TagIcon} label="tags" readOnly>
+              <div className="flex flex-wrap gap-1 px-1 py-0.5">
+                {selectedTags.length === 0 ? (
+                  <span className="text-xs text-muted-foreground">—</span>
+                ) : (
+                  selectedTags.map((t) =>
+                    t ? (
+                      <span
+                        key={t.id}
+                        className="inline-flex rounded-md border border-border bg-muted/50 px-1.5 py-0.5 text-xs text-foreground"
+                      >
+                        {t.name}
+                      </span>
+                    ) : null,
+                  )
+                )}
+              </div>
+            </PropRow>
+            <PropRow icon={AlignLeft} label="summary" readOnly>
+              <ReadonlyCell>
+                {summary.trim() ? (
+                  <span className="whitespace-pre-wrap">{summary}</span>
+                ) : (
+                  '—'
+                )}
+              </ReadonlyCell>
+            </PropRow>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="beehive-note-properties text-sm">
       <button
@@ -182,7 +255,7 @@ export default function ObsidianNoteProperties() {
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="flex w-full min-w-0 items-center justify-between rounded border border-transparent px-1 py-0.5 text-left hover:border-border"
+                  className="flex w-full min-w-0 items-center justify-between rounded border border-transparent px-1 py-0.5 text-left text-xs hover:border-border"
                 >
                   <span className={cn('truncate', !currentCategoryName && 'text-muted-foreground')}>
                     {currentCategoryName || '无分类'}
@@ -252,6 +325,7 @@ export default function ObsidianNoteProperties() {
                 className="w-full min-w-0"
                 size="sm"
                 ariaLabel="文章状态"
+                triggerClassName="!h-auto !min-h-7 !border-transparent !bg-transparent !px-1 !py-0.5 !text-xs !shadow-none hover:!bg-muted/40"
               />
             </div>
           </PropRow>
