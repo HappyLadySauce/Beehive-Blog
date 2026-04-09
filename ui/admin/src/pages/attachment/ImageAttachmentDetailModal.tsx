@@ -16,6 +16,23 @@ import {
 } from '../../api/attachment';
 import { collectFamilyMembers, findMember, formatSize } from './attachmentUtils';
 
+/** 与 Tailwind `lg`（min-width: 1024px）及后台侧栏显隐一致，用于左栏预览显隐与双击放大逻辑 */
+const LG_MIN_PX = 1024;
+
+function useLgPreviewColumnVisible(): boolean {
+  const [visible, setVisible] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth >= LG_MIN_PX : true,
+  );
+  useEffect(() => {
+    const mql = window.matchMedia(`(min-width: ${LG_MIN_PX}px)`);
+    const onChange = () => setVisible(mql.matches);
+    mql.addEventListener('change', onChange);
+    setVisible(mql.matches);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
+  return visible;
+}
+
 type ImageAttachmentDetailModalProps = {
   familyData: AttachmentFamilyResponse;
   groups: AttachmentGroupItem[];
@@ -32,6 +49,7 @@ export default function ImageAttachmentDetailModal({
   onListRefresh,
 }: ImageAttachmentDetailModalProps) {
   const rootId = familyData.root.id;
+  const showPreviewColumn = useLgPreviewColumnVisible();
 
   const [selectedMemberId, setSelectedMemberId] = useState(rootId);
 
@@ -48,7 +66,6 @@ export default function ImageAttachmentDetailModal({
   const [processFormat, setProcessFormat] = useState<'' | ProcessOutputFormat>('');
   const [processing, setProcessing] = useState(false);
 
-  const [replaceFromId, setReplaceFromId] = useState(rootId);
   const [replaceToId, setReplaceToId] = useState(rootId);
   const [selectedArticleIds, setSelectedArticleIds] = useState<number[]>([]);
   const [replacing, setReplacing] = useState(false);
@@ -81,7 +98,6 @@ export default function ImageAttachmentDetailModal({
 
   useEffect(() => {
     const m = collectFamilyMembers(familyData);
-    setReplaceFromId(familyData.root.id);
     setReplaceToId(m.length > 1 ? m[1]!.id : familyData.root.id);
   }, [familyData]);
 
@@ -154,14 +170,14 @@ export default function ImageAttachmentDetailModal({
       toast.error('请选择至少一篇文章');
       return;
     }
-    if (replaceFromId === replaceToId) {
+    if (selectedMemberId === replaceToId) {
       toast.error('源与目标不能相同');
       return;
     }
     setReplacing(true);
     try {
       const res = await replaceAttachmentInArticles({
-        fromAttachmentId: replaceFromId,
+        fromAttachmentId: selectedMemberId,
         toAttachmentId: replaceToId,
         articleIds: selectedArticleIds,
       });
@@ -297,225 +313,258 @@ export default function ImageAttachmentDetailModal({
   const extHint =
     processFormat === 'jpeg' ? 'jpg' : processFormat || '*';
 
-  return (
-    <>
-      <AdminModal title="附件预览与处理" onClose={onClose} maxWidth="6xl">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <div className="space-y-4">
-            {previewAttachment?.type === 'image' && (
+  const previewColumn = (
+    <div className="space-y-4">
+      {previewAttachment?.type === 'image' && (
+        <button
+          type="button"
+          className="flex max-h-[min(18rem,40vh)] w-full cursor-zoom-in justify-center overflow-hidden rounded border border-border bg-muted/30 p-2"
+          onClick={() => previewAttachment && setPreviewZoomUrl(previewAttachment.url)}
+          title="点击放大"
+        >
+          <img
+            src={previewAttachment.url}
+            alt=""
+            className="max-h-[min(16rem,40vh)] object-contain"
+          />
+        </button>
+      )}
+      {previewAttachment && previewAttachment.type !== 'image' && (
+        <p className="text-sm text-muted-foreground">非图片附件，可复制链接。</p>
+      )}
+      <div className="flex flex-wrap gap-2">
+        {previewAttachment && (
+          <button
+            type="button"
+            className="rounded border px-3 py-1.5 text-sm"
+            onClick={() => previewAttachment && handleCopyUrl(previewAttachment.url)}
+          >
+            <Copy className="mr-1 inline h-4 w-4" />
+            复制 URL
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
+  const middleColumn = (
+    <div className={`space-y-4 ${showPreviewColumn ? 'lg:border-l lg:pl-6' : ''}`}>
+      {!showPreviewColumn && previewAttachment && (
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="rounded border px-3 py-1.5 text-sm"
+            onClick={() => handleCopyUrl(previewAttachment.url)}
+          >
+            <Copy className="mr-1 inline h-4 w-4" />
+            复制 URL
+          </button>
+        </div>
+      )}
+
+      <div>
+        <div className="mb-2 text-sm font-medium">家族成员</div>
+        <ul className="max-h-48 space-y-1 overflow-y-auto rounded border border-border p-2">
+          {members.map((m) => (
+            <li
+              key={m.id}
+              className={`flex items-center gap-1 rounded px-1 py-0.5 ${
+                selectedMemberId === m.id ? 'bg-primary/15' : ''
+              }`}
+              onDoubleClick={(e) => {
+                if (showPreviewColumn || m.type !== 'image') return;
+                if ((e.target as HTMLElement).closest('button[title="重命名"], button[title="删除"]')) {
+                  return;
+                }
+                setPreviewZoomUrl(m.url);
+              }}
+            >
               <button
                 type="button"
-                className="flex max-h-72 w-full cursor-zoom-in justify-center overflow-hidden rounded border border-border bg-muted/30 p-2"
-                onClick={() => previewAttachment && setPreviewZoomUrl(previewAttachment.url)}
-                title="点击放大"
+                onClick={() => setSelectedMemberId(m.id)}
+                className="min-w-0 flex-1 rounded px-2 py-1.5 text-left text-sm hover:bg-accent/50"
+                title={!showPreviewColumn && m.type === 'image' ? '双击放大预览' : undefined}
               >
-                <img
-                  src={previewAttachment.url}
-                  alt=""
-                  className="max-h-64 object-contain"
-                />
+                <span className="mr-2 text-xs text-muted-foreground">
+                  {!m.parentId ? '根' : m.variant || '派生'}
+                </span>
+                <span className="font-medium">{m.originalName || m.name}</span>
+                <span className="ml-2 text-xs text-muted-foreground">{formatSize(m.size)}</span>
               </button>
-            )}
-            {previewAttachment && previewAttachment.type !== 'image' && (
-              <p className="text-sm text-muted-foreground">非图片附件，可复制链接。</p>
-            )}
-            <div className="flex flex-wrap gap-2">
-              {previewAttachment && (
-                <button
-                  type="button"
-                  className="rounded border px-3 py-1.5 text-sm"
-                  onClick={() => previewAttachment && handleCopyUrl(previewAttachment.url)}
-                >
-                  <Copy className="mr-1 inline h-4 w-4" />
-                  复制 URL
-                </button>
-              )}
-            </div>
+              <button
+                type="button"
+                className="shrink-0 rounded p-1 hover:bg-accent"
+                title="重命名"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openRenameFor(m);
+                }}
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                className="shrink-0 rounded p-1 text-destructive hover:bg-destructive/10"
+                title="删除"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void handleDeleteMember(m);
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
 
-            <div>
-              <div className="mb-2 text-sm font-medium">家族成员</div>
-              <ul className="max-h-48 space-y-1 overflow-y-auto rounded border border-border p-2">
-                {members.map((m) => (
-                  <li
-                    key={m.id}
-                    className={`flex items-center gap-1 rounded px-1 py-0.5 ${
-                      selectedMemberId === m.id ? 'bg-primary/15' : ''
-                    }`}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setSelectedMemberId(m.id)}
-                      className="min-w-0 flex-1 rounded px-2 py-1.5 text-left text-sm hover:bg-accent/50"
-                    >
-                      <span className="mr-2 text-xs text-muted-foreground">
-                        {!m.parentId ? '根' : m.variant || '派生'}
-                      </span>
-                      <span className="font-medium">{m.originalName || m.name}</span>
-                      <span className="ml-2 text-xs text-muted-foreground">{formatSize(m.size)}</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="shrink-0 rounded p-1 hover:bg-accent"
-                      title="重命名"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openRenameFor(m);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      className="shrink-0 rounded p-1 text-destructive hover:bg-destructive/10"
-                      title="删除"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        void handleDeleteMember(m);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
+      <div className="space-y-2 border-t border-border pt-3">
+        <div className="text-sm font-medium">分类</div>
+        <CustomSelect
+          ariaLabel="附件分类"
+          value={groupSelect}
+          options={groupOptions}
+          onChange={setGroupSelect}
+          size="md"
+          className="w-full"
+        />
+      </div>
 
-            <div className="space-y-2 border-t border-border pt-3">
-              <div className="text-sm font-medium">分类</div>
+      {familyData.root.type === 'image' && (
+        <div className="space-y-3 border-t border-border pt-3">
+          <div>
+            <div className="mb-1 flex items-center justify-between text-sm">
+              <span>压缩质量</span>
+              <span className="text-muted-foreground">{processQuality}%</span>
+            </div>
+            <input
+              type="range"
+              min={1}
+              max={100}
+              value={processQuality}
+              onChange={(e) => setProcessQuality(parseInt(e.target.value, 10) || 85)}
+              className="w-full accent-primary"
+            />
+          </div>
+          <label className="block text-sm">
+            输出格式
+            <div className="mt-1">
               <CustomSelect
-                ariaLabel="附件分类"
-                value={groupSelect}
-                options={groupOptions}
-                onChange={setGroupSelect}
+                ariaLabel="输出格式"
+                value={processFormat}
+                options={formatOptions}
+                onChange={(v) => setProcessFormat((v || '') as '' | ProcessOutputFormat)}
                 size="md"
                 className="w-full"
               />
-              <button
-                type="button"
-                disabled={savingGroup}
-                onClick={() => void saveGroup()}
-                className="w-full rounded border border-border bg-background px-3 py-2 text-sm hover:bg-accent disabled:opacity-50"
-              >
-                {savingGroup ? '保存中…' : '保存分类'}
-              </button>
             </div>
+          </label>
+          <p className="text-xs text-muted-foreground">
+            派生文件名将形如：根文件名-compress{processQuality}.{extHint}
+          </p>
+          <button
+            type="button"
+            disabled={processing}
+            onClick={() => void runProcess()}
+            className="w-full rounded bg-primary px-3 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          >
+            {processing ? '处理中…' : '生成派生副本'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
 
-            {familyData.root.type === 'image' && (
-              <div className="space-y-3 border-t border-border pt-3">
-                <div>
-                  <div className="mb-1 flex items-center justify-between text-sm">
-                    <span>压缩质量</span>
-                    <span className="text-muted-foreground">{processQuality}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min={1}
-                    max={100}
-                    value={processQuality}
-                    onChange={(e) => setProcessQuality(parseInt(e.target.value, 10) || 85)}
-                    className="w-full accent-primary"
-                  />
-                </div>
-                <label className="block text-sm">
-                  输出格式
-                  <div className="mt-1">
-                    <CustomSelect
-                      ariaLabel="输出格式"
-                      value={processFormat}
-                      options={formatOptions}
-                      onChange={(v) => setProcessFormat((v || '') as '' | ProcessOutputFormat)}
-                      size="md"
-                      className="w-full"
-                    />
-                  </div>
-                </label>
-                <p className="text-xs text-muted-foreground">
-                  派生文件名将形如：根文件名-compress{processQuality}.{extHint}
-                </p>
-                <button
-                  type="button"
-                  disabled={processing}
-                  onClick={() => void runProcess()}
-                  className="w-full rounded bg-primary px-3 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                >
-                  {processing ? '处理中…' : '生成派生副本'}
-                </button>
-              </div>
-            )}
+  const rightColumn = (
+    <div
+      className={`space-y-3 border-t border-border pt-4 ${
+        showPreviewColumn
+          ? 'lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0'
+          : 'md:border-l md:border-t-0 md:pl-6 md:pt-0'
+      }`}
+    >
+      <div className="text-sm font-medium">引用文章（当前成员）</div>
+      {referencingArticlesForMember.length ? (
+        <>
+          <div className="flex gap-2">
+            <button type="button" className="text-xs text-primary" onClick={selectAllArticles}>
+              全选
+            </button>
+            <button
+              type="button"
+              className="text-xs text-muted-foreground"
+              onClick={() => setSelectedArticleIds([])}
+            >
+              清空
+            </button>
           </div>
+          <ul className="max-h-48 space-y-2 overflow-y-auto rounded border border-border p-2">
+            {referencingArticlesForMember.map((ar) => (
+              <li key={ar.articleId} className="flex items-start gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={selectedArticleIds.includes(ar.articleId)}
+                  onChange={() => toggleArticle(ar.articleId)}
+                  className="mt-1"
+                />
+                <span className="flex-1">{ar.title}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <p className="text-sm text-muted-foreground">暂无关联文章（正文 URL 解析）</p>
+      )}
 
-          <div className="space-y-3 border-t border-border pt-2 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-            <div className="text-sm font-medium">引用文章（当前成员）</div>
-            {referencingArticlesForMember.length ? (
-              <>
-                <div className="flex gap-2">
-                  <button type="button" className="text-xs text-primary" onClick={selectAllArticles}>
-                    全选
-                  </button>
-                  <button
-                    type="button"
-                    className="text-xs text-muted-foreground"
-                    onClick={() => setSelectedArticleIds([])}
-                  >
-                    清空
-                  </button>
-                </div>
-                <ul className="max-h-48 space-y-2 overflow-y-auto rounded border border-border p-2">
-                  {referencingArticlesForMember.map((ar) => (
-                    <li key={ar.articleId} className="flex items-start gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={selectedArticleIds.includes(ar.articleId)}
-                        onChange={() => toggleArticle(ar.articleId)}
-                        className="mt-1"
-                      />
-                      <span className="flex-1">{ar.title}</span>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground">暂无关联文章（正文 URL 解析）</p>
-            )}
-
-            <div className="space-y-2 border-t border-border pt-3">
-              <div className="text-sm font-medium">文中替换链接</div>
-              <label className="block text-xs text-muted-foreground">
-                将链接从
-                <div className="mt-1">
-                  <CustomSelect
-                    ariaLabel="将链接从"
-                    value={String(replaceFromId)}
-                    options={memberOptions}
-                    onChange={(v) => setReplaceFromId(parseInt(v, 10))}
-                    size="sm"
-                    className="w-full"
-                  />
-                </div>
-              </label>
-              <label className="block text-xs text-muted-foreground">
-                替换为
-                <div className="mt-1">
-                  <CustomSelect
-                    ariaLabel="替换为"
-                    value={String(replaceToId)}
-                    options={memberOptions}
-                    onChange={(v) => setReplaceToId(parseInt(v, 10))}
-                    size="sm"
-                    className="w-full"
-                  />
-                </div>
-              </label>
-              <button
-                type="button"
-                disabled={replacing || selectedArticleIds.length === 0}
-                onClick={() => void runReplace()}
-                className="w-full rounded border border-primary bg-primary/10 px-3 py-2 text-sm text-primary hover:bg-primary/15 disabled:opacity-50"
-              >
-                {replacing ? '替换中…' : '替换选中文章中的链接'}
-              </button>
-            </div>
+      <div className="space-y-2 border-t border-border pt-3">
+        <div className="text-sm font-medium">文中替换链接</div>
+        <p className="text-xs text-muted-foreground">
+          将当前选中成员的链接替换为下方所选附件。
+        </p>
+        <label className="block text-xs text-muted-foreground">
+          替换为
+          <div className="mt-1">
+            <CustomSelect
+              ariaLabel="替换为"
+              value={String(replaceToId)}
+              options={memberOptions}
+              onChange={(v) => setReplaceToId(parseInt(v, 10))}
+              size="sm"
+              className="w-full"
+            />
           </div>
+        </label>
+        <button
+          type="button"
+          disabled={replacing || selectedArticleIds.length === 0}
+          onClick={() => void runReplace()}
+          className="w-full rounded border border-primary bg-primary/10 px-3 py-2 text-sm text-primary hover:bg-primary/15 disabled:opacity-50"
+        >
+          {replacing ? '替换中…' : '替换选中文章中的链接'}
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <AdminModal
+        title="附件预览与处理"
+        onClose={onClose}
+        onConfirm={() => void saveGroup()}
+        confirmLabel="确定"
+        loading={savingGroup}
+        maxWidth="7xl"
+        scrollableBody
+      >
+        <div
+          className={`grid gap-4 md:gap-6 ${
+            showPreviewColumn ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'
+          }`}
+        >
+          {showPreviewColumn && previewColumn}
+          {middleColumn}
+          {rightColumn}
         </div>
       </AdminModal>
 
