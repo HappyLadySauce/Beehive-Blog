@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"os"
@@ -92,8 +93,8 @@ func (s *SyncService) SyncAll(ctx context.Context) (*SyncResult, error) {
 	}
 	res.Deleted = n
 
-	if s.rdb != nil {
-		_ = s.rdb.Set(ctx, redisLastSyncKey, time.Now().UTC().Format(time.RFC3339Nano), 0).Err()
+	if err := s.writeLastSyncMarker(ctx); err != nil {
+		return res, err
 	}
 
 	return res, nil
@@ -111,10 +112,7 @@ func (s *SyncService) SyncSingle(ctx context.Context, articleID int64) error {
 	if _, err := s.writeArticleFile(ctx, &a); err != nil {
 		return err
 	}
-	if s.rdb != nil {
-		_ = s.rdb.Set(ctx, redisLastSyncKey, time.Now().UTC().Format(time.RFC3339Nano), 0).Err()
-	}
-	return nil
+	return s.writeLastSyncMarker(ctx)
 }
 
 // DeletePostFile 删除该文章 ID 对应的全部 beehive-{id}-*.md（处理 slug 变更）。
@@ -331,6 +329,39 @@ func (s *SyncService) PublishedArticleCount(ctx context.Context) (int64, error) 
 	return c, err
 }
 
+// publishedMaxUpdatedAt 返回已发布文章在库中的最大 updated_at；无已发布文章时为零值。
+func (s *SyncService) publishedMaxUpdatedAt(ctx context.Context) (time.Time, error) {
+	var max sql.NullTime
+	err := s.db.WithContext(ctx).Raw(
+		`SELECT MAX(updated_at) FROM articles WHERE status = ?`,
+		models.ArticleStatusPublished,
+	).Scan(&max).Error
+	if err != nil {
+		return time.Time{}, err
+	}
+	if !max.Valid {
+		return time.Time{}, nil
+	}
+	return max.Time, nil
+}
+
+// writeLastSyncMarker 将 Redis 中的同步锚点写为 max(当前 UTC, 已发布文章最大 updated_at)，
+// 避免锚点早于库中时间戳，并与 PendingSync 的 Go 侧比较一致。
+func (s *SyncService) writeLastSyncMarker(ctx context.Context) error {
+	if s.rdb == nil {
+		return nil
+	}
+	maxU, err := s.publishedMaxUpdatedAt(ctx)
+	if err != nil {
+		return err
+	}
+	mark := time.Now().UTC()
+	if maxU.After(mark) {
+		mark = maxU.UTC()
+	}
+	return s.rdb.Set(ctx, redisLastSyncKey, mark.Format(time.RFC3339Nano), 0).Err()
+}
+
 // LastSyncTime 读取上次成功全量/单篇同步写入 Redis 的时间。
 func (s *SyncService) LastSyncTime(ctx context.Context) (time.Time, error) {
 	if s.rdb == nil {
@@ -347,6 +378,7 @@ func (s *SyncService) LastSyncTime(ctx context.Context) (time.Time, error) {
 }
 
 // PendingSync 判断是否存在更新时间晚于上次同步的已发布文章。
+// 在 Go 内比较 MAX(updated_at) 与 last，避免 PostgreSQL 对 timestamp without time zone 与 UTC 参数的误判。
 func (s *SyncService) PendingSync(ctx context.Context) (bool, error) {
 	last, err := s.LastSyncTime(ctx)
 	if err != nil {
@@ -362,12 +394,12 @@ func (s *SyncService) PendingSync(ctx context.Context) (bool, error) {
 		}
 		return c > 0, nil
 	}
-	var c int64
-	err = s.db.WithContext(ctx).Model(&models.Article{}).
-		Where("status = ? AND updated_at > ?", models.ArticleStatusPublished, last).
-		Count(&c).Error
+	maxU, err := s.publishedMaxUpdatedAt(ctx)
 	if err != nil {
 		return false, err
 	}
-	return c > 0, nil
+	if maxU.IsZero() {
+		return false, nil
+	}
+	return maxU.UTC().After(last.UTC()), nil
 }
