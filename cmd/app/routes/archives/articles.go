@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
+	routehexo "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/hexo"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/attachmentref"
@@ -338,7 +339,7 @@ func (a *ArticleAdmin) CreateArticle(ctx context.Context, adminUserID int64, req
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
 
-	maybeHexoSyncSingle(a.svc, art.ID)
+	routehexo.MaybeSyncArticle(a.svc, art.ID)
 	a.syncArticleAttachmentRefs(ctx, art.ID, art.Content, art.Summary)
 	return a.loadArticleDetail(ctx, art.ID)
 }
@@ -485,7 +486,7 @@ func (a *ArticleAdmin) UpdateArticle(ctx context.Context, articleID int64, req *
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
 
-	maybeHexoSyncSingle(a.svc, articleID)
+	routehexo.MaybeSyncArticle(a.svc, articleID)
 	content := art.Content
 	if req.Content != nil {
 		content = *req.Content
@@ -509,7 +510,7 @@ func (a *ArticleAdmin) DeleteArticle(ctx context.Context, articleID int64, _ *ht
 	}
 	_ = a.svc.DB.WithContext(ctx).Where("article_id = ?", articleID).Delete(&models.ArticleTag{})
 	_ = a.svc.DB.WithContext(ctx).Where("article_id = ?", articleID).Delete(&models.ArticleAttachment{})
-	maybeHexoDeletePost(a.svc, articleID)
+	routehexo.MaybeDeletePost(a.svc, articleID)
 	return &v1.DeleteArticleResponse{ID: articleID}, http.StatusOK, nil
 }
 
@@ -548,7 +549,7 @@ func (a *ArticleAdmin) UpdateArticleStatus(ctx context.Context, articleID int64,
 	if err := a.svc.DB.WithContext(ctx).Model(&models.Article{}).Where("id = ? AND deleted_at IS NULL", articleID).Updates(updates).Error; err != nil {
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
-	maybeHexoSyncSingle(a.svc, articleID)
+	routehexo.MaybeSyncArticle(a.svc, articleID)
 	return a.loadArticleDetail(ctx, articleID)
 }
 
@@ -571,7 +572,7 @@ func (a *ArticleAdmin) UpdateArticleSlug(ctx context.Context, articleID int64, r
 	if err := a.svc.DB.WithContext(ctx).Model(&models.Article{}).Where("id = ? AND deleted_at IS NULL", articleID).Update("slug", s).Error; err != nil {
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
-	maybeHexoSyncSingle(a.svc, articleID)
+	routehexo.MaybeSyncArticle(a.svc, articleID)
 	return a.loadArticleDetail(ctx, articleID)
 }
 
@@ -612,6 +613,6 @@ func (a *ArticleAdmin) UpdateArticlePin(ctx context.Context, articleID int64, re
 		Updates(map[string]interface{}{"is_pinned": req.IsPinned, "pin_order": po}).Error; err != nil {
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
-	maybeHexoSyncSingle(a.svc, articleID)
+	routehexo.MaybeSyncArticle(a.svc, articleID)
 	return a.loadArticleDetail(ctx, articleID)
 }

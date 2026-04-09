@@ -9,11 +9,17 @@ const (
 	SyncActionDelete SyncAction = "deleted"
 )
 
-// SyncResult 一次同步任务的汇总结果。
+// SyncResult 一次同步任务的汇总结果（文章 + 独立页面）。
 type SyncResult struct {
 	Total   int
 	Created int
 	Updated int
 	Deleted int
 	Files   []string
+
+	PagesTotal   int
+	PagesCreated int
+	PagesUpdated int
+	PagesDeleted int
+	PageFiles    []string
 }

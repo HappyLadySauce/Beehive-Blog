@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
+	routehexo "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/hexo"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/scheduler"
 )
@@ -44,7 +45,7 @@ func PromoteDueScheduledArticles(ctx context.Context, svcCtx *svc.ServiceContext
 			return ctx.Err()
 		default:
 		}
-		maybeHexoSyncSingle(svcCtx, id)
+		routehexo.MaybeSyncArticle(svcCtx, id)
 	}
 	return nil
 }

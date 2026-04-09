@@ -26,8 +26,8 @@ func newHexoSyncServiceCtx(svcCtx *svc.ServiceContext, eff *hexocfg.EffectiveHex
 
 // HandleSyncPosts godoc
 //
-//	@Summary		Hexo 文章全量同步
-//	@Description	将已发布文章写入 Hexo source/_posts；rebuild=true 且在后台 Hexo 设置中配置了 clean_args/generate_args 时顺序执行 hexo clean 与 generate
+//	@Summary		Hexo 内容全量同步
+//	@Description	将已发布文章写入 source/_posts、已发布独立页面写入 source/beehive-pages；rebuild=true 且在后台 Hexo 设置中配置了 clean_args/generate_args 时顺序执行 hexo clean 与 generate
 //	@Tags			admin
 //	@Accept			json
 //	@Produce		json
@@ -81,6 +81,12 @@ func HandleSyncPosts(svcCtx *svc.ServiceContext) gin.HandlerFunc {
 			Updated: res.Updated,
 			Deleted: res.Deleted,
 			Files:   res.Files,
+
+			PagesTotal:   res.PagesTotal,
+			PagesCreated: res.PagesCreated,
+			PagesUpdated: res.PagesUpdated,
+			PagesDeleted: res.PagesDeleted,
+			PageFiles:    res.PageFiles,
 		})
 	}
 }
@@ -88,7 +94,7 @@ func HandleSyncPosts(svcCtx *svc.ServiceContext) gin.HandlerFunc {
 // HandleSyncStatus godoc
 //
 //	@Summary		Hexo 同步状态
-//	@Description	查询上次同步时间与本地 beehive 文章文件数量等
+//	@Description	查询上次同步时间、已发布文章/页面数与本地 beehive 文件数量等
 //	@Tags			admin
 //	@Produce		json
 //	@Success		200	{object}	common.BaseResponse{data=v1.SyncStatusResponse}
@@ -123,6 +129,16 @@ func HandleSyncStatus(svcCtx *svc.ServiceContext) gin.HandlerFunc {
 			common.Fail(c, http.StatusInternalServerError, err)
 			return
 		}
+		pages, err := syncSvc.PublishedPageCount(syncCtx)
+		if err != nil {
+			common.Fail(c, http.StatusInternalServerError, err)
+			return
+		}
+		localPages, err := syncSvc.LocalBeehivePageCount()
+		if err != nil {
+			common.Fail(c, http.StatusInternalServerError, err)
+			return
+		}
 		pending, err := syncSvc.PendingSync(syncCtx)
 		if err != nil {
 			common.Fail(c, http.StatusInternalServerError, err)
@@ -143,6 +159,8 @@ func HandleSyncStatus(svcCtx *svc.ServiceContext) gin.HandlerFunc {
 			TotalPosts:   total,
 			LocalFiles:   local,
 			PendingSync:  pending,
+			TotalPages:   pages,
+			LocalPages:   localPages,
 		})
 	}
 }

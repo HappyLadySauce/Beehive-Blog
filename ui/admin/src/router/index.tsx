@@ -13,6 +13,9 @@ import Comments from '../pages/comment';
 import Attachments from '../pages/attachment';
 import Settings from '../pages/setting';
 import Users from '../pages/user';
+import PageManagement from '../app/components/PageManagement';
+import PageEdit from '../pages/page/edit';
+import PageTrash from '../pages/page/trash';
 
 const router = createBrowserRouter([
   {
@@ -70,6 +73,22 @@ const router = createBrowserRouter([
       {
         path: 'tags',
         element: <Navigate to="/articles/tags" replace />,
+      },
+      {
+        path: 'pages/create',
+        element: <PageEdit />,
+      },
+      {
+        path: 'pages/edit/:id',
+        element: <PageEdit />,
+      },
+      {
+        path: 'pages/trash',
+        element: <PageTrash />,
+      },
+      {
+        path: 'pages',
+        element: <PageManagement />,
       },
       {
         path: 'comments',

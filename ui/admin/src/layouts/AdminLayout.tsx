@@ -31,6 +31,14 @@ export default function AdminLayout() {
     pageTitle = '新建文章';
   } else if (path.startsWith('/articles')) {
     pageTitle = '文章';
+  } else if (path.startsWith('/pages/trash')) {
+    pageTitle = '页面回收站';
+  } else if (path.startsWith('/pages/create')) {
+    pageTitle = '新建页面';
+  } else if (path.startsWith('/pages/edit/')) {
+    pageTitle = '编辑页面';
+  } else if (path.startsWith('/pages')) {
+    pageTitle = '独立页面';
   } else if (path.startsWith('/comments')) {
     pageTitle = '评论';
   } else if (path.startsWith('/attachments')) {

@@ -2,6 +2,8 @@ package models
 
 import (
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // ThemeConfig 主题配置
@@ -87,9 +89,9 @@ type Page struct {
 	IsInMenu  bool          `json:"isInMenu" gorm:"default:false"`
 	SortOrder int           `json:"sortOrder" gorm:"default:0"`
 	ViewCount int64         `json:"viewCount" gorm:"default:0"`
-	CreatedAt time.Time     `json:"createdAt" gorm:"autoCreateTime"`
-	UpdatedAt time.Time     `json:"updatedAt" gorm:"autoUpdateTime"`
-	DeletedAt *time.Time    `json:"-" gorm:"index"`
+	CreatedAt time.Time      `json:"createdAt" gorm:"autoCreateTime"`
+	UpdatedAt time.Time      `json:"updatedAt" gorm:"autoUpdateTime"`
+	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
 }
 
 func (Page) TableName() string {

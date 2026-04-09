@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
+	routehexo "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/hexo"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"gorm.io/gorm"
 	"k8s.io/klog/v2"
@@ -247,7 +248,7 @@ func (a *ArticleAdmin) RestoreVersion(ctx context.Context, articleID, versionID,
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
 
-	maybeHexoSyncSingle(a.svc, articleID)
+	routehexo.MaybeSyncArticle(a.svc, articleID)
 	var row models.Article
 	if err := a.svc.DB.WithContext(ctx).Where("id = ?", articleID).First(&row).Error; err == nil {
 		a.syncArticleAttachmentRefs(ctx, articleID, row.Content, row.Summary)

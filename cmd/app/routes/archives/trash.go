@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
+	routehexo "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/hexo"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/articlequery"
 	"gorm.io/gorm"
@@ -62,7 +63,7 @@ func (a *ArticleAdmin) RestoreArticle(ctx context.Context, articleID int64) (*v1
 	if res.RowsAffected == 0 {
 		return nil, http.StatusNotFound, errors.New("article not found in trash")
 	}
-	maybeHexoSyncSingle(a.svc, articleID)
+	routehexo.MaybeSyncArticle(a.svc, articleID)
 	return &v1.DeleteArticleResponse{ID: articleID}, http.StatusOK, nil
 }
 
@@ -98,6 +99,6 @@ func (a *ArticleAdmin) PermanentDeleteArticle(ctx context.Context, articleID int
 		klog.ErrorS(err, "PermanentDeleteArticle", "articleID", articleID)
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
-	maybeHexoDeletePost(a.svc, articleID)
+	routehexo.MaybeDeletePost(a.svc, articleID)
 	return &v1.DeleteArticleResponse{ID: articleID}, http.StatusOK, nil
 }

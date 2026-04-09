@@ -8,6 +8,7 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/attachments"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/categories"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/comments"
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/pages"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/site"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/tags"
 	userroute "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/user"
@@ -45,6 +46,7 @@ func Init(svcCtx *svc.ServiceContext) {
 	g.POST("/sync/posts", HandleSyncPosts(svcCtx))
 	g.GET("/sync/status", HandleSyncStatus(svcCtx))
 	archives.RegisterArticleAdminRoutes(g, svcCtx)
+	pages.RegisterAdminRoutes(g, svcCtx)
 	categories.RegisterAdminRoutes(g, svcCtx)
 	tags.RegisterAdminRoutes(g, svcCtx)
 	comments.RegisterAdminRoutes(g, svcCtx)

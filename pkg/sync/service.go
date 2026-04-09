@@ -20,14 +20,15 @@ import (
 
 const redisLastSyncKey = "beehive:hexo_sync:last_sync_at"
 
-// SyncService 将已发布文章写入 Hexo _posts 目录。
+// SyncService 将已发布文章写入 Hexo _posts，已发布独立页面写入 source/beehive-pages。
 type SyncService struct {
-	postsDirAbs     string
-	generateWorkdir string
-	cleanArgs       []string
-	generateArgs    []string
-	db              *gorm.DB
-	rdb             *redis.Client
+	postsDirAbs        string
+	beehivePagesDirAbs string
+	generateWorkdir    string
+	cleanArgs          []string
+	generateArgs       []string
+	db                 *gorm.DB
+	rdb                *redis.Client
 }
 
 // NewSyncService 基于配置解析绝对路径并构造同步服务。
@@ -45,13 +46,15 @@ func NewSyncService(postsDir, generateWorkdir string, cleanArgs, generateArgs []
 	}
 	ca := append([]string(nil), cleanArgs...)
 	ga := append([]string(nil), generateArgs...)
+	pagesRoot := filepath.Join(genAbs, "source", "beehive-pages")
 	return &SyncService{
-		postsDirAbs:     postsAbs,
-		generateWorkdir: genAbs,
-		cleanArgs:       ca,
-		generateArgs:    ga,
-		db:              db,
-		rdb:             rdb,
+		postsDirAbs:        postsAbs,
+		beehivePagesDirAbs: pagesRoot,
+		generateWorkdir:    genAbs,
+		cleanArgs:          ca,
+		generateArgs:       ga,
+		db:                 db,
+		rdb:                rdb,
 	}, nil
 }
 
@@ -96,6 +99,16 @@ func (s *SyncService) SyncAll(ctx context.Context) (*SyncResult, error) {
 		return res, err
 	}
 	res.Deleted = n
+
+	pt, pc, pu, pd, pfiles, err := s.SyncAllPages(ctx)
+	if err != nil {
+		return res, err
+	}
+	res.PagesTotal = pt
+	res.PagesCreated = pc
+	res.PagesUpdated = pu
+	res.PagesDeleted = pd
+	res.PageFiles = pfiles
 
 	if err := s.writeLastSyncMarker(ctx); err != nil {
 		return res, err
@@ -367,8 +380,8 @@ func (s *SyncService) PublishedArticleCount(ctx context.Context) (int64, error) 
 	return c, err
 }
 
-// publishedMaxUpdatedAt 返回已发布文章在库中的最大 updated_at；无已发布文章时为零值。
-func (s *SyncService) publishedMaxUpdatedAt(ctx context.Context) (time.Time, error) {
+// publishedArticlesMaxUpdatedAt 返回已发布文章在库中的最大 updated_at。
+func (s *SyncService) publishedArticlesMaxUpdatedAt(ctx context.Context) (time.Time, error) {
 	var max sql.NullTime
 	err := s.db.WithContext(ctx).Raw(
 		`SELECT MAX(updated_at) FROM articles WHERE status = ?`,
@@ -383,13 +396,49 @@ func (s *SyncService) publishedMaxUpdatedAt(ctx context.Context) (time.Time, err
 	return max.Time, nil
 }
 
+// publishedPagesMaxUpdatedAt 返回已发布独立页面的最大 updated_at。
+func (s *SyncService) publishedPagesMaxUpdatedAt(ctx context.Context) (time.Time, error) {
+	var max sql.NullTime
+	err := s.db.WithContext(ctx).Raw(
+		`SELECT MAX(updated_at) FROM pages WHERE status = ?`,
+		models.ArticleStatusPublished,
+	).Scan(&max).Error
+	if err != nil {
+		return time.Time{}, err
+	}
+	if !max.Valid {
+		return time.Time{}, nil
+	}
+	return max.Time, nil
+}
+
+func maxTime(a, b time.Time) time.Time {
+	if a.After(b) {
+		return a
+	}
+	return b
+}
+
+// publishedContentMaxUpdatedAt 合并文章与页面的最大更新时间，用于同步锚点与 PendingSync。
+func (s *SyncService) publishedContentMaxUpdatedAt(ctx context.Context) (time.Time, error) {
+	ma, err := s.publishedArticlesMaxUpdatedAt(ctx)
+	if err != nil {
+		return time.Time{}, err
+	}
+	mp, err := s.publishedPagesMaxUpdatedAt(ctx)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return maxTime(ma, mp), nil
+}
+
 // writeLastSyncMarker 将 Redis 中的同步锚点写为 max(当前 UTC, 已发布文章最大 updated_at)，
 // 避免锚点早于库中时间戳，并与 PendingSync 的 Go 侧比较一致。
 func (s *SyncService) writeLastSyncMarker(ctx context.Context) error {
 	if s.rdb == nil {
 		return nil
 	}
-	maxU, err := s.publishedMaxUpdatedAt(ctx)
+	maxU, err := s.publishedContentMaxUpdatedAt(ctx)
 	if err != nil {
 		return err
 	}
@@ -423,16 +472,21 @@ func (s *SyncService) PendingSync(ctx context.Context) (bool, error) {
 		return false, err
 	}
 	if last.IsZero() {
-		var c int64
-		err = s.db.WithContext(ctx).Model(&models.Article{}).
+		var ac int64
+		if err := s.db.WithContext(ctx).Model(&models.Article{}).
 			Where("status = ?", models.ArticleStatusPublished).
-			Count(&c).Error
-		if err != nil {
+			Count(&ac).Error; err != nil {
 			return false, err
 		}
-		return c > 0, nil
+		var pc int64
+		if err := s.db.WithContext(ctx).Model(&models.Page{}).
+			Where("status = ?", models.ArticleStatusPublished).
+			Count(&pc).Error; err != nil {
+			return false, err
+		}
+		return ac > 0 || pc > 0, nil
 	}
-	maxU, err := s.publishedMaxUpdatedAt(ctx)
+	maxU, err := s.publishedContentMaxUpdatedAt(ctx)
 	if err != nil {
 		return false, err
 	}
