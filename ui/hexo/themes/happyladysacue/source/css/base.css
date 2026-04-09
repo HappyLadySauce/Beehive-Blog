@@ -11,15 +11,42 @@ html {
 body {
   margin: 0;
   font-family: var(--font-sans);
+  font-size: var(--global-font-size);
   color: var(--text);
   background: var(--bg);
-  line-height: 1.7;
+  line-height: var(--text-line-height);
   min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+*::selection {
+  background: var(--selection-bg);
+  color: var(--selection-fg);
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: 8px;
+}
+
+*::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--accent) 55%, transparent) transparent;
 }
 
 img {

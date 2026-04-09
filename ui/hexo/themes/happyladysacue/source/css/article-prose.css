@@ -1,0 +1,257 @@
+/* 文章正文区 .article-content — 对齐 anzhiyu #article-container / .post-content 阅读体验 */
+
+.article-content {
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  font-size: var(--global-font-size);
+  line-height: var(--text-line-height);
+  color: var(--text);
+}
+
+.article-content > :last-child {
+  margin-bottom: 0 !important;
+}
+
+.article-content p {
+  margin: 0 0 16px;
+}
+
+.article-content h1,
+.article-content h2,
+.article-content h3,
+.article-content h4,
+.article-content h5,
+.article-content h6 {
+  position: relative;
+  margin: 20px 0 14px;
+  line-height: 1.6;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.article-content h1 {
+  font-size: 1.75rem;
+}
+
+.article-content h2 {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px dashed color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.article-content > h2:first-child {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 1rem;
+}
+
+.article-content h3 {
+  font-size: 1.15rem;
+}
+
+.article-content h4 {
+  font-size: 1.05rem;
+}
+
+.article-content h5,
+.article-content h6 {
+  font-size: 1rem;
+}
+
+.article-content a {
+  color: var(--article-link-color);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.article-content a:hover {
+  text-decoration: underline;
+  color: var(--accent);
+}
+
+.article-content .headerlink {
+  float: right;
+  margin-left: 8px;
+  opacity: 0.12;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 700;
+  color: inherit;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.article-content h1 .headerlink {
+  line-height: 2;
+  font-size: 2rem;
+}
+
+.article-content h2 .headerlink {
+  line-height: 2;
+  font-size: 1.8rem;
+}
+
+.article-content h3 .headerlink,
+.article-content h4 .headerlink,
+.article-content h5 .headerlink,
+.article-content h6 .headerlink {
+  line-height: 2;
+  font-size: 1.3rem;
+}
+
+.article-content h1:hover .headerlink,
+.article-content h2:hover .headerlink,
+.article-content h3:hover .headerlink,
+.article-content h4:hover .headerlink,
+.article-content h5:hover .headerlink,
+.article-content h6:hover .headerlink {
+  opacity: 1;
+}
+
+.article-content h1 .headerlink::before,
+.article-content h2 .headerlink::before,
+.article-content h3 .headerlink::before,
+.article-content h4 .headerlink::before,
+.article-content h5 .headerlink::before,
+.article-content h6 .headerlink::before {
+  content: "#";
+}
+
+.article-content ul,
+.article-content ol {
+  margin: 0 0 12px;
+  padding-left: 1.25rem;
+}
+
+.article-content li {
+  margin: 4px 0;
+}
+
+.article-content li::marker {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 1.05em;
+}
+
+.article-content ul ul,
+.article-content ul ol,
+.article-content ol ul,
+.article-content ol ol {
+  margin-bottom: 0;
+}
+
+.article-content blockquote {
+  margin: 1rem 0 20px;
+  padding: 12px 15px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--blockquote-accent);
+  border-radius: 8px;
+  background: var(--blockquote-bg);
+  color: var(--blockquote-color);
+}
+
+.article-content blockquote footer cite::before {
+  padding: 0 5px;
+  content: "—";
+}
+
+.article-content img {
+  display: block;
+  margin: 0 auto 20px;
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  transition: opacity 0.3s ease;
+}
+
+.article-content iframe {
+  margin: 0 0 20px;
+  max-width: 100%;
+  border: none;
+  border-radius: 12px;
+}
+
+.article-content hr {
+  margin: 2.5rem auto;
+  border: none;
+  border-top: 2px dashed color-mix(in srgb, var(--accent) 25%, var(--border));
+}
+
+.article-content table {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  margin: 1rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: var(--global-font-size);
+}
+
+.article-content thead {
+  background: var(--table-head-bg);
+}
+
+.article-content th,
+.article-content td {
+  padding: 0.3rem 0.6rem;
+  vertical-align: middle;
+  border: 1px solid var(--border);
+}
+
+.article-content tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--text) 3%, transparent);
+}
+
+.article-content kbd {
+  margin: 0 3px;
+  padding: 3px 5px;
+  border: 1px solid color-mix(in srgb, var(--text) 35%, #b4b4b4);
+  border-radius: 3px;
+  background-color: color-mix(in srgb, var(--card) 92%, var(--text));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25), 0 2px 1px 0 rgba(255, 255, 255, 0.45) inset;
+  color: #34495e;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 0.9em;
+  font-family: Monaco, "Ubuntu Mono", var(--font-mono);
+  line-height: 1em;
+}
+
+html[data-theme="dark"] .article-content kbd,
+html.dark .article-content kbd {
+  border-color: rgba(255, 255, 255, 0.25);
+  background-color: rgba(30, 30, 36, 0.95);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 0 0 rgba(255, 255, 255, 0.08) inset;
+  color: var(--text-muted);
+}
+
+.article-content :not(pre) > code {
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: var(--inline-code-bg);
+  color: var(--inline-code-fg);
+  font-size: var(--code-font-size);
+  font-family: var(--font-mono) !important;
+}
+
+/* Hexo  fenced code 多为 figure.highlight；裸 pre 仅处理顶层 */
+.article-content > pre {
+  overflow: auto;
+  max-width: 100%;
+  margin: 0 0 20px;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  font-size: var(--code-font-size);
+  line-height: var(--line-height-code-block);
+  background: #111827;
+  color: #f9fafb;
+}
+
+html[data-theme="dark"] .article-content > pre,
+html.dark .article-content > pre {
+  background: #0d1117;
+  color: #e6edf3;
+}

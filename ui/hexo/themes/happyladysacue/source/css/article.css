@@ -1,4 +1,4 @@
-/* 文章页 — 正文、代码块、目录 */
+/* 文章页 — 布局、卡片、目录（正文排版见 article-prose.css，代码块见 code-highlight.css） */
 
 .page-article,
 .page-listing,
@@ -38,76 +38,6 @@
   color: var(--text-muted);
   font-size: 0.9rem;
   margin-top: 12px;
-}
-
-.article-content h2,
-.article-content h3,
-.article-content h4 {
-  line-height: 1.2;
-  margin-top: 1.7em;
-  margin-bottom: 0.65em;
-}
-
-.article-content {
-  min-width: 0;
-}
-
-.article-content p,
-.article-content li,
-.article-content blockquote {
-  color: var(--text);
-}
-
-.article-content img {
-  border-radius: var(--radius-md);
-  margin: 24px auto;
-  box-shadow: var(--shadow-soft);
-}
-
-.article-content blockquote {
-  margin: 24px 0;
-  padding: 18px 20px;
-  border-left: 4px solid var(--accent);
-  background: rgba(59, 130, 246, 0.06);
-  border-radius: 0 var(--radius-md) var(--radius-md) 0;
-}
-
-/* Hexo highlight：figure + table 会按最长行撑开宽度，需在容器上横向滚动 */
-.article-content figure.highlight {
-  display: block;
-  margin: 1.25em 0;
-  max-width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-  border-radius: var(--radius-md);
-}
-
-.article-content figure.highlight table {
-  margin: 0;
-  border: none;
-  border-collapse: collapse;
-}
-
-.article-content figure.highlight .gutter pre {
-  padding-right: 0.75em;
-  opacity: 0.55;
-}
-
-.article-content pre {
-  overflow: auto;
-  max-width: 100%;
-  padding: 18px;
-  border-radius: var(--radius-md);
-  background: #111827;
-  color: #f9fafb;
-}
-
-.article-content :not(pre) > code {
-  padding: 0.18em 0.42em;
-  border-radius: 6px;
-  background: rgba(59, 130, 246, 0.08);
-  color: var(--accent);
 }
 
 .article-footer {

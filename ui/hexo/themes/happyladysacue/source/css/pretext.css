@@ -1,7 +1,9 @@
-/* Pretext 占位过渡 */
+/* Pretext 占位过渡；keep-all 与中文换行策略对齐（不作用于代码块） */
 
 [data-pretext-excerpt],
 [data-pretext-title],
 [data-pretext-balance] {
   transition: min-height 0.2s ease;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }

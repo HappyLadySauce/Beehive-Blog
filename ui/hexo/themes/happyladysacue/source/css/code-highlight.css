@@ -1,0 +1,281 @@
+/* Hexo highlight.js：一体 figure + mac light 顶栏 + 行号列（对齐 anzhiyu mac light / diff 色系，自写） */
+
+.article-content figure.highlight {
+  --hl-color: #90a4ae;
+  --hl-bg: #f6f8fa;
+  --hltools-bg: #f7f7f9;
+  --hltools-color: var(--text);
+  --hlnumber-bg: #f7f7f9;
+  --hlnumber-color: rgba(144, 164, 174, 0.55);
+  --hlscrollbar-bg: #d8dee4;
+  --hl-mac-shadow: rgba(144, 164, 174, 0.4);
+
+  /* diff / 语法色 — anzhiyu highlight/theme mac light */
+  --hl-comment: #969896;
+  --hl-red: #e53935;
+  --hl-orange: #f76d47;
+  --hl-yellow: #ffb62c;
+  --hl-green: #91b859;
+  --hl-aqua: #39adb5;
+  --hl-blue: #6182b8;
+  --hl-purple: #7c4dff;
+  --hl-deletion: #bf42bf;
+  --hl-addition: #105ede;
+
+  position: relative;
+  display: block;
+  margin: 0 0 24px;
+  padding: 0;
+  max-width: 100%;
+  overflow: hidden;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  box-shadow: 0 5px 10px 0 var(--hl-mac-shadow);
+  background: var(--card);
+  line-height: var(--line-height-code-block);
+  -webkit-font-smoothing: antialiased;
+}
+
+html[data-theme="dark"] .article-content figure.highlight,
+html.dark .article-content figure.highlight {
+  --hl-color: rgba(255, 255, 255, 0.72);
+  --hl-bg: #141414;
+  --hltools-bg: #161616;
+  --hltools-color: #90a4ae;
+  --hlnumber-bg: #141414;
+  --hlnumber-color: rgba(255, 255, 255, 0.38);
+  --hlscrollbar-bg: #2c2c2c;
+  --hl-mac-shadow: rgba(0, 0, 0, 0.35);
+
+  --hl-comment: #969896;
+  --hl-red: #ff5370;
+  --hl-orange: #f78c6c;
+  --hl-yellow: #ffcb6b;
+  --hl-green: #c3e88d;
+  --hl-aqua: #89ddff;
+  --hl-blue: #82aaff;
+  --hl-purple: #c792ea;
+  --hl-deletion: #bf42bf;
+  --hl-addition: #105ede;
+
+  background: var(--card);
+}
+
+/* 工具栏由 code-block-ui.js 注入 */
+.article-content figure.highlight .highlight-tools {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 24px;
+  height: 2.15em;
+  background: var(--hltools-bg);
+  color: var(--hltools-color);
+  font-size: var(--code-font-size);
+  font-family: var(--font-mono);
+  border-bottom: 1px solid var(--border);
+}
+
+.article-content figure.highlight .highlight-tools::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fc625d;
+  box-shadow: 20px 0 #fdbc40, 40px 0 #35cd4b;
+  pointer-events: none;
+}
+
+.article-content figure.highlight .highlight-tools .code-lang {
+  position: absolute;
+  left: 75px;
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 1.05em;
+  line-height: 1;
+  user-select: none;
+  pointer-events: none;
+}
+
+.article-content figure.highlight .highlight-tools .copy-notice {
+  position: absolute;
+  right: 2.75rem;
+  font-size: 0.85em;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.article-content figure.highlight .highlight-tools .copy-notice.is-visible {
+  opacity: 1;
+}
+
+.article-content figure.highlight .highlight-tools .copy-button {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  margin: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.article-content figure.highlight .highlight-tools .copy-button:hover {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.article-content figure.highlight table {
+  display: block;
+  width: 100%;
+  margin: 0;
+  border: none;
+  border-collapse: collapse;
+  overflow-x: auto;
+  scrollbar-color: var(--hlscrollbar-bg) transparent;
+}
+
+.article-content figure.highlight table::-webkit-scrollbar-thumb {
+  background: var(--hlscrollbar-bg);
+  border-radius: 6px;
+}
+
+.article-content figure.highlight tbody tr {
+  display: flex;
+  width: 100%;
+}
+
+.article-content figure.highlight td {
+  padding: 0;
+  border: none;
+  vertical-align: top;
+}
+
+.article-content figure.highlight .gutter {
+  flex: 0 0 auto;
+  user-select: none;
+}
+
+.article-content figure.highlight .gutter pre {
+  margin: 0;
+  padding: 8px 0.5rem 8px 0.625rem;
+  border: none;
+  border-radius: 0;
+  border-right: 1px solid var(--border);
+  background: var(--hlnumber-bg) !important;
+  color: var(--hlnumber-color);
+  text-align: right;
+  line-height: var(--line-height-code-block);
+  font-size: var(--code-font-size);
+  font-family: var(--font-mono) !important;
+}
+
+.article-content figure.highlight .code {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: var(--hl-bg);
+}
+
+.article-content figure.highlight .code pre {
+  margin: 0;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 0;
+  background: transparent !important;
+  color: var(--hl-color);
+  line-height: var(--line-height-code-block);
+  font-size: var(--code-font-size);
+  font-family: var(--font-mono) !important;
+  overflow: visible;
+}
+
+.article-content figure.highlight .marked,
+.article-content figure.highlight .line.marked {
+  background-color: rgba(128, 203, 196, 0.25);
+}
+
+html[data-theme="dark"] .article-content figure.highlight .marked,
+html.dark .article-content figure.highlight .marked,
+html[data-theme="dark"] .article-content figure.highlight .line.marked,
+html.dark .article-content figure.highlight .line.marked {
+  background-color: rgba(96, 165, 250, 0.12);
+}
+
+/* diff.styl 映射（Hexo hljs: false 仍输出部分 class） */
+.article-content figure.highlight .addition {
+  color: var(--hl-addition);
+}
+
+.article-content figure.highlight .deletion {
+  color: var(--hl-deletion);
+}
+
+.article-content figure.highlight .meta {
+  color: var(--hl-purple);
+}
+
+.article-content figure.highlight .comment {
+  color: var(--hl-comment);
+}
+
+.article-content figure.highlight .variable,
+.article-content figure.highlight .attribute,
+.article-content figure.highlight .regexp,
+.article-content figure.highlight .ruby .constant,
+.article-content figure.highlight .tag .name,
+.article-content figure.highlight .css .id,
+.article-content figure.highlight .css .class,
+.article-content figure.highlight .css .pseudo {
+  color: var(--hl-red);
+}
+
+.article-content figure.highlight .tag {
+  color: var(--hl-aqua);
+}
+
+.article-content figure.highlight .number,
+.article-content figure.highlight .preprocessor,
+.article-content figure.highlight .literal,
+.article-content figure.highlight .params,
+.article-content figure.highlight .constant,
+.article-content figure.highlight .command {
+  color: var(--hl-orange);
+}
+
+.article-content figure.highlight .built_in {
+  color: var(--hl-yellow);
+}
+
+.article-content figure.highlight .string,
+.article-content figure.highlight .value,
+.article-content figure.highlight .inheritance,
+.article-content figure.highlight .header,
+.article-content figure.highlight .special,
+.article-content figure.highlight .formula {
+  color: var(--hl-green);
+}
+
+.article-content figure.highlight .keyword,
+.article-content figure.highlight .title,
+.article-content figure.highlight .css .hexcolor {
+  color: var(--hl-aqua);
+}
+
+.article-content figure.highlight .function,
+.article-content figure.highlight .javascript .function {
+  color: var(--hl-purple);
+}
+
+.article-content figure.highlight .title .keyword {
+  color: var(--hl-aqua);
+}
