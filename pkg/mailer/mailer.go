@@ -23,7 +23,7 @@ type Config struct {
 	Username string // smtp.username（发件人邮箱）
 	Password string // smtp.password
 	FromName string // smtp.fromName，默认同 Username
-	// Encryption: ssl | tls | none；ssl/tls 走 TLS 连接，none 走明文
+	// Encryption: ssl（隐式 TLS / SMTPS，常见 465）| tls（明文后 STARTTLS，常见 587）| none（全程明文）
 	Encryption string // smtp.encryption，默认 "ssl"
 }
 
@@ -82,14 +82,17 @@ func (m *SMTPMailer) Send(ctx context.Context, to, subject, htmlBody string) err
 
 	enc := strings.ToLower(strings.TrimSpace(m.cfg.Encryption))
 	switch enc {
-	case "ssl", "tls":
-		return m.sendTLS(dialer, addr, to, msg)
+	case "ssl":
+		return m.sendImplicitTLS(dialer, addr, to, msg)
+	case "tls":
+		return m.sendSTARTTLS(dialer, addr, to, msg)
 	default:
 		return m.sendPlain(dialer, addr, to, msg)
 	}
 }
 
-func (m *SMTPMailer) sendTLS(dialer *net.Dialer, addr, to string, msg []byte) error {
+// sendImplicitTLS 连接即 TLS（SMTPS），适用于常见 465 端口。
+func (m *SMTPMailer) sendImplicitTLS(dialer *net.Dialer, addr, to string, msg []byte) error {
 	tlsCfg := &tls.Config{
 		ServerName: m.cfg.Host,
 		MinVersion: tls.VersionTLS12,
@@ -105,6 +108,35 @@ func (m *SMTPMailer) sendTLS(dialer *net.Dialer, addr, to string, msg []byte) er
 		return fmt.Errorf("mailer: SMTP client init failed: %w", err)
 	}
 	defer client.Quit() //nolint:errcheck
+
+	auth := smtp.PlainAuth("", m.cfg.Username, m.cfg.Password, m.cfg.Host)
+	if err := client.Auth(auth); err != nil {
+		return fmt.Errorf("mailer: SMTP auth failed: %w", err)
+	}
+	return sendViaClient(client, m.cfg.Username, to, msg)
+}
+
+// sendSTARTTLS 先明文连接再 STARTTLS 升级，适用于常见 587 端口。
+func (m *SMTPMailer) sendSTARTTLS(dialer *net.Dialer, addr, to string, msg []byte) error {
+	conn, err := dialer.Dial("tcp", addr)
+	if err != nil {
+		return fmt.Errorf("mailer: dial failed: %w", err)
+	}
+
+	client, err := smtp.NewClient(conn, m.cfg.Host)
+	if err != nil {
+		conn.Close()
+		return fmt.Errorf("mailer: SMTP client init failed: %w", err)
+	}
+	defer client.Quit() //nolint:errcheck
+
+	tlsCfg := &tls.Config{
+		ServerName: m.cfg.Host,
+		MinVersion: tls.VersionTLS12,
+	}
+	if err := client.StartTLS(tlsCfg); err != nil {
+		return fmt.Errorf("mailer: STARTTLS failed: %w", err)
+	}
 
 	auth := smtp.PlainAuth("", m.cfg.Username, m.cfg.Password, m.cfg.Host)
 	if err := client.Auth(auth); err != nil {

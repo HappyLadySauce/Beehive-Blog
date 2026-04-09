@@ -144,6 +144,7 @@ func (s *Service) TestSMTP(ctx context.Context, req *v1.TestSMTPRequest) (int, e
 	defer cancel()
 	if err := m.Send(sendCtx, req.To, "Beehive-Blog SMTP 测试邮件",
 		"<p>这是一封 SMTP 配置测试邮件，收到即表示配置正确。</p>"); err != nil {
+		klog.ErrorS(err, "TestSMTP: send failed", "to", req.To)
 		return http.StatusBadGateway, fmt.Errorf("send test email failed: %w", err)
 	}
 	return http.StatusOK, nil

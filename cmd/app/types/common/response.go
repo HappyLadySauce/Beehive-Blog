@@ -29,6 +29,23 @@ func Fail(c *gin.Context, httpStatus int, err error) {
 	Response(c, httpStatus, err, nil)
 }
 
+// FailBadGateway 返回 HTTP 502，message 为 err 文本。
+// 仅用于管理员排障类接口（如 SMTP 测试）；上游 SMTP 返回的文案一般不含密钥，便于定位证书/认证/中继问题。
+func FailBadGateway(c *gin.Context, err error) {
+	if err == nil {
+		err = errors.New(http.StatusText(http.StatusBadGateway))
+	}
+	msg := strings.TrimSpace(err.Error())
+	if msg == "" {
+		msg = "bad gateway"
+	}
+	c.JSON(http.StatusBadGateway, BaseResponse{
+		Code: http.StatusBadGateway,
+		Msg:  msg,
+		Data: nil,
+	})
+}
+
 // FailMessage 使用指定错误消息返回失败响应。
 func FailMessage(c *gin.Context, httpStatus int, message string) {
 	if strings.TrimSpace(message) == "" {

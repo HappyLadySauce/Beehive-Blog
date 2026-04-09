@@ -83,7 +83,7 @@ func (s *Service) HandleUpdateSettings(c *gin.Context) {
 //	@Failure		400		{object}	common.BaseResponse
 //	@Failure		401		{object}	common.BaseResponse
 //	@Failure		403		{object}	common.BaseResponse
-//	@Failure		502		{object}	common.BaseResponse
+//	@Failure		502		{object}	common.BaseResponse	"上游 SMTP 失败；message 为脱敏后的错误原因（非统一 internal server error）"
 //	@Failure		500		{object}	common.BaseResponse
 //	@Security		BearerAuth
 //	@Router			/api/v1/admin/settings/smtp/test [post]
@@ -97,6 +97,10 @@ func (s *Service) HandleTestSMTP(c *gin.Context) {
 	defer cancel()
 	code, err := s.TestSMTP(ctx, &req)
 	if err != nil {
+		if code == http.StatusBadGateway {
+			common.FailBadGateway(c, err)
+			return
+		}
 		common.Fail(c, code, err)
 		return
 	}
