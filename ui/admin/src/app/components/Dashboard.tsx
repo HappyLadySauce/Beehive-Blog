@@ -34,8 +34,8 @@ export default function Dashboard() {
   return (
     <div className="space-y-[clamp(1rem,0.8vw,1.5rem)]">
       <div className="flex items-center gap-3">
-        <LayoutDashboard className="w-5 h-5 text-muted-foreground" />
-        <h2 className="text-lg font-medium text-foreground">控制台概览</h2>
+        <LayoutDashboard className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+        <h2 className="text-xl font-semibold tracking-tight text-foreground">控制台概览</h2>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">

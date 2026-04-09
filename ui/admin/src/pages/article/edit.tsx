@@ -553,7 +553,7 @@ export default function ArticleEdit() {
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h2 className="text-lg font-medium text-foreground">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">
             {articleId ? '编辑文章' : '新建文章'}
           </h2>
         </div>

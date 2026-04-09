@@ -80,8 +80,8 @@ export default function Comments() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <MessageSquare className="w-5 h-5 text-muted-foreground" />
-          <h2 className="text-lg font-medium text-foreground">评论管理</h2>
+          <MessageSquare className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">评论管理</h2>
         </div>
       </div>
 

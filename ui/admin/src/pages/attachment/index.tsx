@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   getAttachments,
   deleteAttachment,
@@ -20,6 +20,7 @@ import {
   File,
 } from 'lucide-react';
 import AdminModal from '../../components/AdminModal';
+import StagedFileUploadModal, { mergeStagedFilesDedupe } from '../../components/StagedFileUploadModal';
 import ImageAttachmentDetailModal from './ImageAttachmentDetailModal';
 import { formatSize } from './attachmentUtils';
 
@@ -33,7 +34,9 @@ export default function Attachments() {
   const [keyword, setKeyword] = useState('');
   const [groupId, setGroupId] = useState<number | null>(null);
   const [groups, setGroups] = useState<AttachmentGroupItem[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [uploadStagedFiles, setUploadStagedFiles] = useState<File[]>([]);
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [familyData, setFamilyData] = useState<AttachmentFamilyResponse | null>(null);
@@ -114,19 +117,27 @@ export default function Attachments() {
     toast.success('链接已复制');
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+  const uploadGroupLabel =
+    groupId == null ? '未指定（全部视图下上传）' : groups.find((g) => g.id === groupId)?.name ?? `分类 #${groupId}`;
+
+  const confirmAttachmentUpload = async () => {
+    if (uploadStagedFiles.length === 0) {
+      toast.warning('请先添加要上传的文件');
+      return;
+    }
     setUploading(true);
     try {
-      for (let i = 0; i < files.length; i++) {
-        const res = await uploadAttachment(files[i], groupId ?? undefined);
+      for (let i = 0; i < uploadStagedFiles.length; i++) {
+        const file = uploadStagedFiles[i];
+        const res = await uploadAttachment(file, groupId ?? undefined);
         if (res.code === 200) {
-          toast.success(`已上传 ${files[i].name}`);
+          toast.success(`已上传 ${file.name}`);
         } else {
-          toast.error(res.message || `${files[i].name} 失败`);
+          toast.error(res.message || `${file.name} 失败`);
         }
       }
+      setUploadStagedFiles([]);
+      setUploadModalOpen(false);
       void fetchAttachments();
     } catch (error: unknown) {
       const msg =
@@ -136,7 +147,6 @@ export default function Attachments() {
       toast.error(msg || '上传失败');
     } finally {
       setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -197,8 +207,8 @@ export default function Attachments() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <ImageIcon className="h-5 w-5 text-muted-foreground" />
-          <h2 className="text-lg font-medium text-foreground">附件管理</h2>
+          <ImageIcon className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">附件管理</h2>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <input
@@ -224,10 +234,12 @@ export default function Attachments() {
           >
             搜索
           </button>
-          <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileChange} />
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => {
+              setUploadStagedFiles([]);
+              setUploadModalOpen(true);
+            }}
             disabled={uploading}
             className="inline-flex items-center gap-1.5 rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
@@ -390,6 +402,33 @@ export default function Attachments() {
           />
         </AdminModal>
       )}
+
+      <StagedFileUploadModal
+        open={uploadModalOpen}
+        title="上传附件"
+        description={
+          <>
+            将文件加入列表后点击「确定」逐个上传。当前附件分类：
+            <span className="font-medium text-foreground"> {uploadGroupLabel}</span>
+            {groupId != null
+              ? '（上传时将归入该分类）'
+              : '（未指定分类标签，与在「全部」下列表一致）'}
+          </>
+        }
+        extensionsHint="支持多文件，类型不限"
+        loading={uploading}
+        disabled={uploading}
+        stagedFiles={uploadStagedFiles}
+        onStagedFilesChange={setUploadStagedFiles}
+        onPickFiles={(picked) => setUploadStagedFiles((prev) => mergeStagedFilesDedupe(picked, prev))}
+        onClose={() => {
+          setUploadModalOpen(false);
+          setUploadStagedFiles([]);
+        }}
+        onConfirm={() => void confirmAttachmentUpload()}
+        confirmLabel="确定"
+        confirmDisabled={uploadStagedFiles.length === 0}
+      />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Eye, Lock, Search, Trash2, UserCog } from 'lucide-react';
+import { Eye, Lock, Search, Trash2, UserCog, Users as UsersIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   AdminUserItem,
@@ -457,7 +457,10 @@ export default function Users() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-medium text-foreground">用户管理</h2>
+        <div className="flex items-center gap-3">
+          <UsersIcon className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">用户管理</h2>
+        </div>
         <button
           onClick={openCreate}
           className="px-3 py-1.5 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors"

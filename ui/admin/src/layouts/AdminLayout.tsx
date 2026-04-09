@@ -75,7 +75,7 @@ export default function AdminLayout() {
           >
             <Menu className="h-5 w-5" />
           </button>
-          <h1 className="min-w-0 flex-1 truncate text-base font-medium text-foreground">
+          <h1 className="min-w-0 flex-1 truncate text-base font-semibold tracking-tight text-foreground">
             {pageTitle}
           </h1>
           <ThemeToggle />

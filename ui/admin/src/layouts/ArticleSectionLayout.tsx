@@ -1,4 +1,5 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { FileText, FolderOpen, Tags, Trash2, type LucideIcon } from 'lucide-react';
 
 const sectionTitle = (pathname: string): string => {
   if (pathname === '/articles' || pathname === '/articles/') return '文章';
@@ -8,10 +9,18 @@ const sectionTitle = (pathname: string): string => {
   return '文章';
 };
 
+const sectionIcon = (pathname: string): LucideIcon => {
+  if (pathname.startsWith('/articles/categories')) return FolderOpen;
+  if (pathname.startsWith('/articles/tags')) return Tags;
+  if (pathname.startsWith('/articles/trash')) return Trash2;
+  return FileText;
+};
+
 export default function ArticleSectionLayout() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const title = sectionTitle(pathname);
+  const TitleIcon = sectionIcon(pathname);
 
   const navBtn = (target: string, label: string, active: boolean) => (
     <button
@@ -30,7 +39,10 @@ export default function ArticleSectionLayout() {
   return (
     <div className="space-y-6">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">{title}</h1>
+        <div className="flex items-center gap-3">
+          <TitleIcon className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">{title}</h1>
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           {navBtn('/articles/categories', '分类', pathname.startsWith('/articles/categories'))}
           {navBtn('/articles/tags', '标签', pathname.startsWith('/articles/tags'))}

@@ -189,7 +189,9 @@ export default function PageEdit() {
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h2 className="text-lg font-medium text-foreground">{isCreate ? '新建页面' : '编辑页面'}</h2>
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">
+            {isCreate ? '新建页面' : '编辑页面'}
+          </h2>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <button

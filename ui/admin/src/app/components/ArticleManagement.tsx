@@ -1,23 +1,14 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Search, Edit, Trash2, Upload, X } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Search, Edit, Trash2 } from 'lucide-react';
 import Pagination from '../../components/Pagination';
 import CustomSelect from '../../components/CustomSelect';
 import ConfirmModal from '../../components/ConfirmModal';
 import AdminModal from '../../components/AdminModal';
+import StagedFileUploadModal, { defaultStagedFileKey } from '../../components/StagedFileUploadModal';
 import { getArticles, deleteArticle, batchOperateArticles, exportArticlesZip, importArticles, AdminArticleListItem, ArticleListQuery } from '../../api/article';
 import { getCategories, getTags, CategoryBrief, TagListItem } from '../../api/taxonomy';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-
-function importFileKey(f: File): string {
-  return `${f.name}:${f.size}:${f.lastModified}`;
-}
-
-function formatImportFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
 
 export default function ArticleManagement() {
   const navigate = useNavigate();
@@ -40,9 +31,7 @@ export default function ArticleManagement() {
   const [batchSubmitting, setBatchSubmitting] = useState(false);
   const [importExportBusy, setImportExportBusy] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
-  const [importDragActive, setImportDragActive] = useState(false);
   const [importStagedFiles, setImportStagedFiles] = useState<File[]>([]);
-  const importFileInputRef = useRef<HTMLInputElement>(null);
 
   const [confirmState, setConfirmState] = useState<{
     open: boolean;
@@ -457,9 +446,9 @@ export default function ArticleManagement() {
         next.push(zipsInBatch[0]);
       }
 
-      const seen = new Set(next.map(importFileKey));
+      const seen = new Set(next.map(defaultStagedFileKey));
       for (const f of mdsInBatch) {
-        const k = importFileKey(f);
+        const k = defaultStagedFileKey(f);
         if (!seen.has(k)) {
           seen.add(k);
           next.push(f);
@@ -469,47 +458,12 @@ export default function ArticleManagement() {
     });
   };
 
-  const handleImportFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    e.target.value = '';
-    if (!files?.length) return;
-    mergeFilesToStage(Array.from(files));
-  };
-
   const confirmImportUpload = () => {
     if (importStagedFiles.length === 0) {
       toast.warning('请先添加要导入的文件');
       return;
     }
     void submitImportFiles(importStagedFiles);
-  };
-
-  const handleImportDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setImportDragActive(false);
-    if (importExportBusy) return;
-    const dropped = Array.from(e.dataTransfer.files || []);
-    mergeFilesToStage(dropped);
-  };
-
-  const handleImportDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const handleImportDragEnter = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setImportDragActive(true);
-  };
-
-  const handleImportDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-      setImportDragActive(false);
-    }
   };
 
   return (
@@ -723,99 +677,25 @@ export default function ArticleManagement() {
         <Pagination total={total} page={page} pageSize={10} onPageChange={setPage} unit="项结果" />
       </div>
 
-      {importModalOpen && (
-        <AdminModal
-          title="导入 Markdown"
-          maxWidth="2xl"
-          onClose={() => {
-            setImportModalOpen(false);
-            setImportDragActive(false);
-            setImportStagedFiles([]);
-          }}
-          onConfirm={() => void confirmImportUpload()}
-          confirmLabel="确定"
-          loading={importExportBusy}
-          confirmDisabled={importStagedFiles.length === 0}
-        >
-          <div className="max-h-[min(70vh,560px)] space-y-4 overflow-y-auto pr-1">
-            <p className="text-sm text-muted-foreground">
-              点击虚线区域或拖入文件添加至列表，确认无误后点击「确定」上传。支持多个 Markdown 文件或导出的 zip 压缩包。
-            </p>
-            <input
-              ref={importFileInputRef}
-              type="file"
-              className="hidden"
-              accept=".md,.markdown,.zip,application/zip"
-              multiple
-              onChange={handleImportFileInputChange}
-            />
-            <div
-              role="button"
-              tabIndex={0}
-              onKeyDown={(ev) => {
-                if (ev.key === 'Enter' || ev.key === ' ') {
-                  ev.preventDefault();
-                  if (!importExportBusy) importFileInputRef.current?.click();
-                }
-              }}
-              onClick={() => {
-                if (!importExportBusy) importFileInputRef.current?.click();
-              }}
-              onDrop={handleImportDrop}
-              onDragOver={handleImportDragOver}
-              onDragEnter={handleImportDragEnter}
-              onDragLeave={handleImportDragLeave}
-              className={`flex min-h-[220px] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-10 text-center transition-colors ${
-                importDragActive ? 'border-primary bg-primary/10' : 'border-border bg-muted/30'
-              } ${importExportBusy ? 'pointer-events-none opacity-60' : ''}`}
-            >
-              <Upload className="h-10 w-10 text-muted-foreground" aria-hidden />
-              <span className="text-sm font-medium text-foreground">点击选择文件或拖放到此处</span>
-              <span className="text-xs text-muted-foreground">.md、.markdown、.zip</span>
-            </div>
-
-            <div className="space-y-2">
-              <span className="text-sm font-medium text-foreground">
-                待上传文件 ({importStagedFiles.length})
-              </span>
-              {importStagedFiles.length === 0 ? (
-                <p className="text-sm text-muted-foreground">暂无文件，请先添加。</p>
-              ) : (
-                <ul className="max-h-48 space-y-1.5 overflow-y-auto rounded border border-border bg-muted/20 p-2">
-                  {importStagedFiles.map((f) => {
-                    const k = importFileKey(f);
-                    return (
-                      <li
-                        key={k}
-                        className="flex items-center justify-between gap-2 rounded px-2 py-1.5 text-sm"
-                      >
-                        <span className="min-w-0 truncate text-foreground" title={f.name}>
-                          {f.name}
-                          <span className="ml-2 text-muted-foreground">
-                            ({formatImportFileSize(f.size)})
-                          </span>
-                        </span>
-                        <button
-                          type="button"
-                          className="shrink-0 rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
-                          disabled={importExportBusy}
-                          aria-label={`移除 ${f.name}`}
-                          onClick={(ev) => {
-                            ev.stopPropagation();
-                            setImportStagedFiles((prev) => prev.filter((x) => importFileKey(x) !== k));
-                          }}
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-          </div>
-        </AdminModal>
-      )}
+      <StagedFileUploadModal
+        open={importModalOpen}
+        title="导入 Markdown"
+        description="点击虚线区域或拖入文件添加至列表，确认无误后点击「确定」上传。支持多个 Markdown 文件或导出的 zip 压缩包。"
+        extensionsHint=".md、.markdown、.zip"
+        accept=".md,.markdown,.zip,application/zip"
+        loading={importExportBusy}
+        disabled={importExportBusy}
+        stagedFiles={importStagedFiles}
+        onStagedFilesChange={setImportStagedFiles}
+        onPickFiles={(files) => mergeFilesToStage(files)}
+        onClose={() => {
+          setImportModalOpen(false);
+          setImportStagedFiles([]);
+        }}
+        onConfirm={() => void confirmImportUpload()}
+        confirmLabel="确定"
+        confirmDisabled={importStagedFiles.length === 0}
+      />
 
       {batchSettingsOpen && (
         <AdminModal

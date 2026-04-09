@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Search, Edit, Trash2 } from 'lucide-react';
+import { Search, Edit, Trash2, FileStack } from 'lucide-react';
 import Pagination from '../../components/Pagination';
 import CustomSelect from '../../components/CustomSelect';
 import ConfirmModal from '../../components/ConfirmModal';
@@ -197,7 +197,10 @@ export default function PageManagement() {
   return (
     <div className="space-y-6">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">独立页面</h1>
+        <div className="flex items-center gap-3">
+          <FileStack className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden />
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">独立页面</h1>
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
