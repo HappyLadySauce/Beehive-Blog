@@ -65,9 +65,7 @@ html.dark .article-edit-bytemd .bytemd-toolbar-icon-active {
   color: #58a6ff;
 }
 
-html.dark .article-edit-bytemd .bytemd-split .bytemd-preview {
-  border-left-color: #30363d;
-}
+/* 竖线在编辑区右侧绘制，见下文 .bytemd-split .bytemd-editor border-right */
 
 html.dark .article-edit-bytemd .bytemd-status {
   border-top-color: #30363d;
@@ -216,4 +214,32 @@ html.dark .article-edit-bytemd .markdown-body pre {
 .article-edit-bytemd .markdown-body details {
   margin-top: 0;
   margin-bottom: 0.75rem;
+}
+
+/* ---------- Split：双栏拉伸 + 编辑区右侧全高分隔线（不依赖预览列高度） ---------- */
+.article-edit-bytemd .bytemd-split .bytemd-body {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+
+.article-edit-bytemd .bytemd-split .bytemd-editor,
+.article-edit-bytemd .bytemd-split .bytemd-preview {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  display: block;
+}
+
+/* ByteMD 默认在预览列画 border-left；改在编辑列画 border-right，与左栏盒等高 */
+.article-edit-bytemd .bytemd-split .bytemd-preview {
+  border-left: none !important;
+}
+
+.article-edit-bytemd .bytemd-split .bytemd-editor {
+  border-right: 1px solid var(--border, #e1e4e8);
+}
+
+html.dark .article-edit-bytemd .bytemd-split .bytemd-editor {
+  border-right-color: #30363d;
 }

@@ -66,7 +66,7 @@ export default function AdminLayout() {
       </Drawer>
 
       <main className="min-w-0 flex-1 overflow-y-auto">
-        <header className="lg:hidden sticky top-0 z-30 flex h-[var(--admin-mobile-header-height)] items-center gap-2 border-b border-border bg-card/95 px-3 backdrop-blur">
+        <header className="lg:hidden sticky top-0 z-30 flex h-[var(--admin-mobile-header-height)] shrink-0 items-center gap-2 border-b border-border bg-card/95 px-3 backdrop-blur">
           <button
             type="button"
             onClick={() => setMobileNavOpen(true)}
@@ -81,7 +81,7 @@ export default function AdminLayout() {
           <ThemeToggle />
         </header>
         <div className="p-5 md:p-7 lg:p-9 xl:p-12">
-        <Outlet />
+          <Outlet />
         </div>
       </main>
     </div>

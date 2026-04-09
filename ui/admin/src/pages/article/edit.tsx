@@ -24,7 +24,7 @@ import { useArticleNotePropsStore } from './articleNotePropsStore';
 import { createNotePropertiesBytemdPlugin } from './note-properties-bytemd-plugin';
 import request from '../../utils/request';
 import { toast } from 'sonner';
-import { ArrowLeft, Save, History, Settings, Timer, Pencil, Trash2, Clock } from 'lucide-react';
+import { ArrowLeft, Save, History, Timer, Pencil, Trash2, Clock } from 'lucide-react';
 import AdminModal from '../../components/AdminModal';
 import { Switch } from '../../app/components/ui/switch';
 import {
@@ -176,7 +176,6 @@ export default function ArticleEdit() {
   const [categories, setCategories] = useState<CategoryBrief[]>([]);
   const [tags, setTags] = useState<TagListItem[]>([]);
 
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [versions, setVersions] = useState<ArticleVersionItem[]>([]);
   const [versionsLoading, setVersionsLoading] = useState(false);
@@ -496,20 +495,6 @@ export default function ArticleEdit() {
     }
   };
 
-  /** 设置中点击「完成」：校验后关闭弹窗并执行与顶栏保存相同的保存逻辑 */
-  const handleSettingsConfirm = async () => {
-    if (!title.trim()) {
-      toast.error('请填写文章标题');
-      return;
-    }
-    if (!editorBody.trim()) {
-      toast.error('请输入文章内容');
-      return;
-    }
-    setSettingsOpen(false);
-    await handleSave();
-  };
-
   const uploadImages = async (files: File[]) => {
     const results = await Promise.all(
       files.map(async (file) => {
@@ -747,8 +732,8 @@ export default function ArticleEdit() {
   ]);
 
   return (
-    <div className="article-edit-bytemd flex h-full min-h-0 flex-col gap-4">
-      <div className="flex shrink-0 items-center justify-between">
+    <div className="article-edit-bytemd flex w-full flex-col gap-4">
+      <div className="sticky top-[var(--admin-mobile-header-height)] z-20 flex shrink-0 items-center justify-between border-b border-border/60 bg-background/95 py-1 backdrop-blur supports-[backdrop-filter]:bg-background/80 lg:top-0">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -786,14 +771,6 @@ export default function ArticleEdit() {
             <History className="h-4 w-4" />
             历史版本
           </button>
-          <button
-            type="button"
-            onClick={() => setSettingsOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-accent"
-          >
-            <Settings className="h-4 w-4" />
-            设置
-          </button>
           <span
             className="hidden text-sm text-muted-foreground sm:inline"
             title="在编辑区「笔记属性」中修改状态"
@@ -823,7 +800,7 @@ export default function ArticleEdit() {
         </div>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden rounded border border-border bg-card">
+      <div className="flex min-h-[70vh] flex-col gap-0 overflow-hidden rounded border border-border bg-card">
         <div className="flex shrink-0 flex-wrap items-center gap-4 border-b border-border px-3 py-2">
           <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
             <Switch checked={showLineNumbers} onCheckedChange={setShowLineNumbers} />
@@ -867,34 +844,6 @@ export default function ArticleEdit() {
               value={scheduleLocalInput}
               onChange={(e) => setScheduleLocalInput(e.target.value)}
               className="w-full rounded-md border border-border bg-input-background px-3 py-2 text-sm text-foreground focus:border-transparent focus:ring-2 focus:ring-ring"
-            />
-          </div>
-        </AdminModal>
-      )}
-
-      {settingsOpen && (
-        <AdminModal
-          title="文章设置"
-          onClose={() => setSettingsOpen(false)}
-          onConfirm={() => void handleSettingsConfirm()}
-          confirmLabel="完成"
-          loading={loading}
-          maxWidth="md"
-        >
-          <p className="text-sm text-muted-foreground">
-            标题、Slug、分类、标签、状态等请在编辑区「笔记属性」中编辑；此处仅编辑摘要。
-          </p>
-          <div className="space-y-2 pt-2">
-            <label className="text-sm font-medium text-foreground" htmlFor="settings-summary-only">
-              摘要
-            </label>
-            <textarea
-              id="settings-summary-only"
-              value={summary}
-              onChange={(e) => setSummary(e.target.value)}
-              placeholder="可选，留空则自动截取正文..."
-              rows={6}
-              className="w-full resize-none rounded-md border border-border bg-input-background px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-ring focus:border-transparent"
             />
           </div>
         </AdminModal>

@@ -178,8 +178,8 @@ export default function PageEdit() {
   }
 
   return (
-    <div className="article-edit-bytemd flex h-full min-h-0 flex-col gap-4">
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
+    <div className="article-edit-bytemd flex w-full flex-col gap-4">
+      <div className="sticky top-[var(--admin-mobile-header-height)] z-20 flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border/60 bg-background/95 py-1 backdrop-blur supports-[backdrop-filter]:bg-background/80 lg:top-0">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -221,7 +221,7 @@ export default function PageEdit() {
         </div>
       </div>
 
-      <div className="editor-container min-h-0 flex-1 overflow-hidden rounded border border-border bg-card">
+      <div className="editor-container h-[70vh] min-h-[320px] overflow-hidden rounded border border-border bg-card">
         <Editor
           value={content}
           plugins={articleBytemdPlugins}
