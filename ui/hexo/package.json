@@ -14,6 +14,7 @@
   "dependencies": {
     "@chenglou/pretext": "^0.0.4",
     "hexo": "^8.0.0",
+    "hexo-cli": "^4.3.2",
     "hexo-generator-archive": "^2.0.0",
     "hexo-generator-category": "^2.0.0",
     "hexo-generator-index": "^4.0.0",
