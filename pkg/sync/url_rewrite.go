@@ -2,7 +2,6 @@ package sync
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
@@ -10,19 +9,19 @@ import (
 )
 
 // loadSiteURL 读取 general.site_url；无记录时返回空字符串。
+// 使用 Find+Limit 而非 Take/First，避免 GORM 将「无行」记为 record not found 并打错误日志。
 func loadSiteURL(ctx context.Context, db *gorm.DB) (string, error) {
 	if db == nil {
 		return "", nil
 	}
-	var row models.Setting
-	err := db.WithContext(ctx).Where(`"key" = ? AND "group" = ?`, "site_url", models.SettingGroupGeneral).Take(&row).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return "", nil
-		}
+	var rows []models.Setting
+	if err := db.WithContext(ctx).Where(`"key" = ? AND "group" = ?`, "site_url", models.SettingGroupGeneral).Limit(1).Find(&rows).Error; err != nil {
 		return "", err
 	}
-	return strings.TrimSpace(row.Value), nil
+	if len(rows) == 0 {
+		return "", nil
+	}
+	return strings.TrimSpace(rows[0].Value), nil
 }
 
 // publicUploadsBase 计算 Hexo 导出时附件 URL 应使用的前缀。
