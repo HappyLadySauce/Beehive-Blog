@@ -14,6 +14,7 @@ import (
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/markdownfrontmatter"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/color"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/slug"
 	"github.com/gin-gonic/gin"
@@ -186,28 +187,9 @@ func isSafeZipEntryPath(name string) bool {
 	return true
 }
 
-func splitFrontMatter(raw string) (yamlPart string, body string, ok bool) {
-	s := strings.TrimPrefix(strings.TrimSpace(raw), "\uFEFF")
-	if !strings.HasPrefix(s, "---") {
-		return "", "", false
-	}
-	s = strings.TrimPrefix(s, "---")
-	s = strings.TrimLeft(s, "\r\n")
-	idx := strings.Index(s, "\n---")
-	if idx < 0 {
-		return "", "", false
-	}
-	yamlPart = strings.TrimSpace(s[:idx])
-	body = strings.TrimLeft(s[idx+4:], "\r\n") // after \n---
-	if yamlPart == "" {
-		return "", "", false
-	}
-	return yamlPart, body, true
-}
-
 func (a *ArticleAdmin) importOneMarkdown(ctx context.Context, adminUserID int64, filename string, data []byte) (*v1.ImportArticleCreatedItem, string) {
 	text := strings.ReplaceAll(string(data), "\r\n", "\n")
-	yamlStr, body, ok := splitFrontMatter(text)
+	yamlStr, body, ok := markdownfrontmatter.SplitFrontMatter(text)
 	if !ok {
 		return nil, "missing or invalid yaml front matter"
 	}

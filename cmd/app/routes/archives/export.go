@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/markdownfrontmatter"
 	"gorm.io/gorm"
 )
 
@@ -79,7 +80,11 @@ func buildMarkdownExport(art *models.Article) []byte {
 	}
 	sb = append(sb, []byte(fmt.Sprintf("status: %q\n", art.Status))...)
 	sb = append(sb, []byte("---\n\n")...)
-	sb = append(sb, []byte(art.Content)...)
+	contentBody := art.Content
+	if _, b, ok := markdownfrontmatter.SplitFrontMatter(art.Content); ok {
+		contentBody = b
+	}
+	sb = append(sb, []byte(contentBody)...)
 	return sb
 }
 
@@ -87,7 +92,11 @@ func buildMarkdownExport(art *models.Article) []byte {
 // 正文以 <pre> 标签包裹原始 Markdown，适合在浏览器中查看或二次处理。
 func buildHTMLExport(art *models.Article) []byte {
 	escapedTitle := html.EscapeString(art.Title)
-	escapedContent := html.EscapeString(art.Content)
+	contentBody := art.Content
+	if _, b, ok := markdownfrontmatter.SplitFrontMatter(art.Content); ok {
+		contentBody = b
+	}
+	escapedContent := html.EscapeString(contentBody)
 	body := fmt.Sprintf(`<!DOCTYPE html>
 <html lang="zh-CN">
 <head>

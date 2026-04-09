@@ -3,6 +3,27 @@
  * 作用域：.article-edit-bytemd（仅本页）
  */
 
+/* 注入到编辑区/预览区顶部的笔记属性（Obsidian 式） */
+.article-edit-bytemd .beehive-note-properties-root {
+  padding: 0.5rem 0.75rem 0.25rem;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  background: color-mix(in srgb, var(--card, #fff) 92%, transparent);
+}
+
+.article-edit-bytemd .beehive-note-properties-root:empty {
+  display: none;
+}
+
+html.dark .article-edit-bytemd .beehive-note-properties-root {
+  background: rgba(22, 27, 34, 0.85);
+  border-bottom-color: #30363d;
+}
+
+.article-edit-bytemd .beehive-note-properties .beehive-prop-row input,
+.article-edit-bytemd .beehive-note-properties .beehive-prop-row textarea {
+  font-size: 0.8125rem;
+}
+
 /* ByteMD 默认 max-width:800px 居中；暗色下 markdown-body 背景仅覆盖 800px 造成「变窄」观感 */
 .article-edit-bytemd .bytemd-preview .markdown-body,
 .article-edit-bytemd .bytemd-editor .CodeMirror .CodeMirror-lines {

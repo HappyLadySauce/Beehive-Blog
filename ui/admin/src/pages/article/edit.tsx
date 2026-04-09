@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Editor } from '@bytemd/react';
 import 'bytemd/dist/index.css';
@@ -19,11 +19,89 @@ import {
   ArticleVersionItem,
 } from '../../api/article';
 import { getCategories, getTags, CategoryBrief, TagListItem } from '../../api/taxonomy';
+import { alignTaxonomyIds, fetchLatestTaxonomy } from '../../lib/ensureTaxonomy';
+import { useArticleNotePropsStore } from './articleNotePropsStore';
+import { createNotePropertiesBytemdPlugin } from './note-properties-bytemd-plugin';
 import request from '../../utils/request';
 import { toast } from 'sonner';
 import { ArrowLeft, Save, History, Settings, Timer, Pencil, Trash2, Clock } from 'lucide-react';
-import CustomSelect from '../../components/CustomSelect';
 import AdminModal from '../../components/AdminModal';
+import { Switch } from '../../app/components/ui/switch';
+import {
+  splitFrontMatter,
+  buildMatterDocument,
+  buildArticleContent,
+} from '../../lib/frontMatter';
+
+const LS_SHOW_LINE_NUMBERS = 'beehive.articleEdit.showLineNumbers';
+const LS_SHOW_NOTE_PROPERTIES = 'beehive.articleEdit.showNoteProperties';
+
+function readBoolPref(key: string, defaultVal: boolean): boolean {
+  try {
+    const v = localStorage.getItem(key);
+    if (v === null) {
+      return defaultVal;
+    }
+    return v === 'true';
+  } catch {
+    return defaultVal;
+  }
+}
+
+/**
+ * 由编辑区正文与元数据生成写入 API 的完整 content（含 YAML Front Matter）。
+ */
+function computeStoredArticleContent(
+  editorBody: string,
+  p: {
+    title: string;
+    slug: string;
+    summary: string;
+    status: string;
+    publishedAt: string;
+    categoryId: number | null;
+    selectedTagIds: number[];
+  },
+  categories: CategoryBrief[],
+  tags: TagListItem[],
+): string {
+  const categoryNames: string[] = [];
+  if (p.categoryId != null) {
+    const c = categories.find((x) => x.id === p.categoryId);
+    if (c) {
+      categoryNames.push(c.name);
+    }
+  }
+  const tagNames = p.selectedTagIds
+    .map((id) => tags.find((t) => t.id === id)?.name)
+    .filter((n): n is string => Boolean(n));
+  const matter = buildMatterDocument({
+    title: p.title,
+    slug: p.slug,
+    summary: p.summary,
+    status: p.status,
+    categoryNames,
+    tagNames,
+    publishedAt: p.publishedAt.trim() || undefined,
+  });
+  return buildArticleContent(matter, editorBody);
+}
+
+/** 与详情接口数据对齐，用于初次/恢复后的 lastSynced 快照（不依赖分类下拉是否已请求）。 */
+function computeSyncedFullContentFromDetail(data: ArticleDetailResponse, editorBody: string): string {
+  const categoryNames = data.category ? [data.category.name] : [];
+  const tagNames = data.tags?.map((t) => t.name) || [];
+  const matter = buildMatterDocument({
+    title: data.title,
+    slug: data.slug || '',
+    summary: data.summary || '',
+    status: data.status,
+    categoryNames,
+    tagNames,
+    publishedAt: data.publishedAt || undefined,
+  });
+  return buildArticleContent(matter, editorBody);
+}
 
 /** 本地日期时间输入（datetime-local）格式，用于定时发布弹窗 */
 function formatLocalDatetime(d: Date): string {
@@ -33,6 +111,7 @@ function formatLocalDatetime(d: Date): string {
 
 function stableArticlePayloadSnapshot(p: {
   title: string;
+  slug: string;
   content: string;
   summary: string;
   status: string;
@@ -42,6 +121,7 @@ function stableArticlePayloadSnapshot(p: {
 }) {
   return JSON.stringify({
     title: p.title.trim(),
+    slug: p.slug.trim(),
     content: p.content,
     summary: p.summary.trim(),
     status: p.status,
@@ -55,7 +135,8 @@ function applyDetailToState(
   data: ArticleDetailResponse,
   setters: {
     setTitle: (v: string) => void;
-    setContent: (v: string) => void;
+    setEditorBody: (v: string) => void;
+    setSlug: (v: string) => void;
     setSummary: (v: string) => void;
     setStatus: (v: string) => void;
     setPublishedAt: (v: string) => void;
@@ -64,7 +145,9 @@ function applyDetailToState(
   },
 ) {
   setters.setTitle(data.title);
-  setters.setContent(data.content);
+  setters.setSlug(data.slug || '');
+  const split = splitFrontMatter(data.content);
+  setters.setEditorBody(split ? split.body : data.content);
   setters.setSummary(data.summary || '');
   setters.setStatus(data.status);
   setters.setPublishedAt(data.publishedAt || '');
@@ -78,7 +161,9 @@ export default function ArticleEdit() {
   const articleId = id ? parseInt(id, 10) : undefined;
 
   const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+  /** 不含 Front Matter，仅 Markdown 正文 */
+  const [editorBody, setEditorBody] = useState('');
+  const [slug, setSlug] = useState('');
   const [summary, setSummary] = useState('');
   const [status, setStatus] = useState('draft');
   /** RFC3339，定时发布必填 */
@@ -103,9 +188,33 @@ export default function ArticleEdit() {
   /** 编辑已存在文章（URL 含 id）时默认开启自动保存；新建（/articles/create）默认关闭 */
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(() => Boolean(id));
 
+  const [showLineNumbers, setShowLineNumbers] = useState(() =>
+    readBoolPref(LS_SHOW_LINE_NUMBERS, true),
+  );
+  const [showNoteProperties, setShowNoteProperties] = useState(() =>
+    readBoolPref(LS_SHOW_NOTE_PROPERTIES, true),
+  );
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LS_SHOW_LINE_NUMBERS, String(showLineNumbers));
+    } catch {
+      /* ignore */
+    }
+  }, [showLineNumbers]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LS_SHOW_NOTE_PROPERTIES, String(showNoteProperties));
+    } catch {
+      /* ignore */
+    }
+  }, [showNoteProperties]);
+
   const stateRef = useRef({
     title,
-    content,
+    editorBody,
+    slug,
     summary,
     status,
     publishedAt,
@@ -119,14 +228,15 @@ export default function ArticleEdit() {
   useEffect(() => {
     stateRef.current = {
       title,
-      content,
+      editorBody,
+      slug,
       summary,
       status,
       publishedAt,
       categoryId,
       selectedTagIds,
     };
-  }, [title, content, summary, status, publishedAt, categoryId, selectedTagIds]);
+  }, [title, editorBody, slug, summary, status, publishedAt, categoryId, selectedTagIds]);
 
   useEffect(() => {
     loadingRef.current = loading;
@@ -154,9 +264,12 @@ export default function ArticleEdit() {
       try {
         const res = await getArticle(articleId);
         if (res.code === 200) {
+          const split = splitFrontMatter(res.data.content);
+          const eb = split ? split.body : res.data.content;
           applyDetailToState(res.data, {
             setTitle,
-            setContent,
+            setEditorBody,
+            setSlug,
             setSummary,
             setStatus,
             setPublishedAt,
@@ -165,7 +278,8 @@ export default function ArticleEdit() {
           });
           lastSyncedRef.current = stableArticlePayloadSnapshot({
             title: res.data.title,
-            content: res.data.content,
+            slug: res.data.slug || '',
+            content: computeSyncedFullContentFromDetail(res.data, eb),
             summary: res.data.summary || '',
             status: res.data.status,
             publishedAt: res.data.publishedAt || '',
@@ -219,32 +333,57 @@ export default function ArticleEdit() {
       void (async () => {
         if (loadingRef.current || savingRef.current) return;
         const s = stateRef.current;
-        if (!s.title.trim() || !s.content.trim()) return;
+        if (!s.title.trim() || !s.editorBody.trim()) return;
         if (s.status === 'scheduled' && !s.publishedAt.trim()) return;
-        const snap = stableArticlePayloadSnapshot({
-          title: s.title,
-          content: s.content,
-          summary: s.summary,
-          status: s.status,
-          publishedAt: s.publishedAt,
-          categoryId: s.categoryId,
-          tagIds: s.selectedTagIds,
-        });
-        if (snap === lastSyncedRef.current) return;
         savingRef.current = true;
         try {
+          const { categories: cats, tags: tgs } = await fetchLatestTaxonomy();
+          setCategories(cats);
+          setTags(tgs);
+          const aligned = alignTaxonomyIds(s.categoryId, s.selectedTagIds, cats, tgs);
+          setCategoryId(aligned.categoryId);
+          setSelectedTagIds(aligned.tagIds);
+          const fullContentEnsured = computeStoredArticleContent(
+            s.editorBody,
+            {
+              title: s.title,
+              slug: s.slug,
+              summary: s.summary,
+              status: s.status,
+              publishedAt: s.publishedAt,
+              categoryId: aligned.categoryId,
+              selectedTagIds: aligned.tagIds,
+            },
+            cats,
+            tgs,
+          );
+          const snapEnsured = stableArticlePayloadSnapshot({
+            title: s.title,
+            slug: s.slug,
+            content: fullContentEnsured,
+            summary: s.summary,
+            status: s.status,
+            publishedAt: s.publishedAt,
+            categoryId: aligned.categoryId,
+            tagIds: aligned.tagIds,
+          });
+          if (snapEnsured === lastSyncedRef.current) {
+            savingRef.current = false;
+            return;
+          }
           const res = await updateArticle(articleId, {
             title: s.title.trim(),
-            content: s.content,
+            content: fullContentEnsured,
+            slug: s.slug.trim() || undefined,
             summary: s.summary.trim() || undefined,
             status: s.status,
             publishedAt: s.publishedAt.trim() || undefined,
-            categoryId: s.categoryId ?? undefined,
-            tagIds: s.selectedTagIds.length > 0 ? s.selectedTagIds : undefined,
+            categoryId: aligned.categoryId ?? undefined,
+            tagIds: aligned.tagIds.length > 0 ? aligned.tagIds : undefined,
             autoSave: true,
           });
           if (res.code === 200) {
-            lastSyncedRef.current = snap;
+            lastSyncedRef.current = snapEnsured;
           } else {
             toast.error(res.message || '自动保存失败');
           }
@@ -264,11 +403,10 @@ export default function ArticleEdit() {
 
   const handleSave = async () => {
     if (!title.trim()) {
-      setSettingsOpen(true);
-      toast.error('请在设置中填写文章标题');
+      toast.error('请填写文章标题（笔记属性中的 title）');
       return;
     }
-    if (!content.trim()) {
+    if (!editorBody.trim()) {
       toast.error('请输入文章内容');
       return;
     }
@@ -288,14 +426,36 @@ export default function ArticleEdit() {
 
     setLoading(true);
     try {
+      const { categories: cats, tags: tgs } = await fetchLatestTaxonomy();
+      setCategories(cats);
+      setTags(tgs);
+      const aligned = alignTaxonomyIds(categoryId, selectedTagIds, cats, tgs);
+      setCategoryId(aligned.categoryId);
+      setSelectedTagIds(aligned.tagIds);
+
+      const fullContent = computeStoredArticleContent(
+        editorBody,
+        {
+          title,
+          slug,
+          summary,
+          status,
+          publishedAt,
+          categoryId: aligned.categoryId,
+          selectedTagIds: aligned.tagIds,
+        },
+        cats,
+        tgs,
+      );
       const payload = {
         title: title.trim(),
-        content,
+        slug: slug.trim() || undefined,
+        content: fullContent,
         summary: summary.trim() || undefined,
         status,
         publishedAt: publishedAt.trim() || undefined,
-        categoryId: categoryId ?? undefined,
-        tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
+        categoryId: aligned.categoryId ?? undefined,
+        tagIds: aligned.tagIds.length > 0 ? aligned.tagIds : undefined,
       };
 
       let res;
@@ -313,12 +473,13 @@ export default function ArticleEdit() {
         } else if (articleId) {
           lastSyncedRef.current = stableArticlePayloadSnapshot({
             title: title.trim(),
-            content,
+            slug: slug.trim(),
+            content: fullContent,
             summary,
             status,
             publishedAt,
-            categoryId,
-            tagIds: selectedTagIds,
+            categoryId: aligned.categoryId,
+            tagIds: aligned.tagIds,
           });
         }
       } else {
@@ -341,7 +502,7 @@ export default function ArticleEdit() {
       toast.error('请填写文章标题');
       return;
     }
-    if (!content.trim()) {
+    if (!editorBody.trim()) {
       toast.error('请输入文章内容');
       return;
     }
@@ -448,9 +609,12 @@ export default function ArticleEdit() {
       const res = await restoreArticleVersion(articleId, versionId);
       if (res.code === 200) {
         toast.success('已恢复到所选版本');
+        const split = splitFrontMatter(res.data.content);
+        const eb = split ? split.body : res.data.content;
         applyDetailToState(res.data, {
           setTitle,
-          setContent,
+          setEditorBody,
+          setSlug,
           setSummary,
           setStatus,
           setPublishedAt,
@@ -459,7 +623,8 @@ export default function ArticleEdit() {
         });
         lastSyncedRef.current = stableArticlePayloadSnapshot({
           title: res.data.title,
-          content: res.data.content,
+          slug: res.data.slug || '',
+          content: computeSyncedFullContentFromDetail(res.data, eb),
           summary: res.data.summary || '',
           status: res.data.status,
           publishedAt: res.data.publishedAt || '',
@@ -534,13 +699,52 @@ export default function ArticleEdit() {
     [],
   );
 
-  const categoryOptions = useMemo(
-    () => [
-      { value: '', label: '无分类' },
-      ...categories.map((c) => ({ value: String(c.id), label: c.name })),
-    ],
-    [categories],
+  const bytemdEditorConfig = useMemo(
+    () => ({ lineNumbers: showLineNumbers }),
+    [showLineNumbers],
   );
+
+  const bytemdPlugins = useMemo(
+    () => [...articleBytemdPlugins, createNotePropertiesBytemdPlugin()],
+    [],
+  );
+
+  useLayoutEffect(() => {
+    useArticleNotePropsStore.setState({
+      showNoteProperties,
+      title,
+      setTitle,
+      slug,
+      setSlug,
+      summary,
+      setSummary,
+      status,
+      handleStatusSelect,
+      statusOptions,
+      categoryId,
+      setCategoryId,
+      categories,
+      setCategories,
+      tags,
+      setTags,
+      selectedTagIds,
+      setSelectedTagIds,
+      toggleTag,
+    });
+  }, [
+    showNoteProperties,
+    title,
+    slug,
+    summary,
+    status,
+    handleStatusSelect,
+    statusOptions,
+    categoryId,
+    categories,
+    tags,
+    selectedTagIds,
+    toggleTag,
+  ]);
 
   return (
     <div className="article-edit-bytemd flex h-full min-h-0 flex-col gap-4">
@@ -590,14 +794,12 @@ export default function ArticleEdit() {
             <Settings className="h-4 w-4" />
             设置
           </button>
-          <CustomSelect
-            value={status}
-            onChange={handleStatusSelect}
-            options={statusOptions}
-            className="w-[132px]"
-            size="sm"
-            ariaLabel="文章状态"
-          />
+          <span
+            className="hidden text-sm text-muted-foreground sm:inline"
+            title="在编辑区「笔记属性」中修改状态"
+          >
+            {statusOptions.find((o) => o.value === status)?.label ?? status}
+          </span>
           {status === 'scheduled' && (
             <button
               type="button"
@@ -621,13 +823,27 @@ export default function ArticleEdit() {
         </div>
       </div>
 
-      <div className="editor-container min-h-0 flex-1 overflow-hidden rounded border border-border bg-card">
-        <Editor
-          value={content}
-          plugins={articleBytemdPlugins}
-          onChange={(v) => setContent(v)}
-          uploadImages={uploadImages}
-        />
+      <div className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden rounded border border-border bg-card">
+        <div className="flex shrink-0 flex-wrap items-center gap-4 border-b border-border px-3 py-2">
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
+            <Switch checked={showLineNumbers} onCheckedChange={setShowLineNumbers} />
+            行号
+          </label>
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
+            <Switch checked={showNoteProperties} onCheckedChange={setShowNoteProperties} />
+            笔记属性
+          </label>
+        </div>
+        <div className="editor-container min-h-0 flex-1 overflow-hidden">
+          <Editor
+            key={`bytemd-${showLineNumbers}-${showNoteProperties}`}
+            value={editorBody}
+            plugins={bytemdPlugins}
+            editorConfig={bytemdEditorConfig}
+            onChange={(v) => setEditorBody(v)}
+            uploadImages={uploadImages}
+          />
+        </div>
       </div>
 
       {scheduleModalOpen && (
@@ -665,60 +881,21 @@ export default function ArticleEdit() {
           loading={loading}
           maxWidth="md"
         >
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">文章标题</label>
-              <input
-                type="text"
-                placeholder="输入文章标题..."
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full rounded-md border border-border bg-input-background px-3 py-2 text-sm text-foreground focus:border-transparent focus:ring-2 focus:ring-ring"
-              />
-            </div>
-            <div className="space-y-2">
-              <span className="text-sm font-medium text-foreground">分类</span>
-              <CustomSelect
-                value={categoryId === null ? '' : String(categoryId)}
-                onChange={(v) => setCategoryId(v === '' ? null : parseInt(v, 10))}
-                options={categoryOptions}
-                className="w-full"
-                size="sm"
-                ariaLabel="文章分类"
-              />
-            </div>
-            <div className="space-y-2">
-              <span className="text-sm font-medium text-foreground">标签</span>
-              <div className="flex max-h-40 flex-wrap gap-2 overflow-y-auto rounded border border-border p-2">
-                {tags.map((tag) => (
-                  <button
-                    key={tag.id}
-                    type="button"
-                    onClick={() => toggleTag(tag.id)}
-                    className={`rounded border px-2 py-1 text-xs transition-colors ${
-                      selectedTagIds.includes(tag.id)
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : 'border-border bg-card text-foreground hover:border-primary/50'
-                    }`}
-                  >
-                    {tag.name}
-                  </button>
-                ))}
-                {tags.length === 0 && (
-                  <span className="text-xs text-muted-foreground">暂无标签</span>
-                )}
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">摘要</label>
-              <textarea
-                value={summary}
-                onChange={(e) => setSummary(e.target.value)}
-                placeholder="可选，留空则自动截取正文..."
-                rows={4}
-                className="w-full resize-none rounded-md border border-border bg-input-background px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-ring focus:border-transparent"
-              />
-            </div>
+          <p className="text-sm text-muted-foreground">
+            标题、Slug、分类、标签、状态等请在编辑区「笔记属性」中编辑；此处仅编辑摘要。
+          </p>
+          <div className="space-y-2 pt-2">
+            <label className="text-sm font-medium text-foreground" htmlFor="settings-summary-only">
+              摘要
+            </label>
+            <textarea
+              id="settings-summary-only"
+              value={summary}
+              onChange={(e) => setSummary(e.target.value)}
+              placeholder="可选，留空则自动截取正文..."
+              rows={6}
+              className="w-full resize-none rounded-md border border-border bg-input-background px-3 py-2 text-sm text-foreground focus:ring-2 focus:ring-ring focus:border-transparent"
+            />
           </div>
         </AdminModal>
       )}
@@ -846,8 +1023,8 @@ export default function ArticleEdit() {
 
       <style>{`
         .article-edit-bytemd .editor-container .bytemd {
-          height: calc(100vh - 12rem);
-          min-height: 320px;
+          height: 100%;
+          min-height: 280px;
           border: none;
         }
         .article-edit-bytemd .bytemd-toolbar {

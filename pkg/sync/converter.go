@@ -10,6 +10,7 @@ import (
 	"unicode"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/markdownfrontmatter"
 	"gopkg.in/yaml.v3"
 )
 
@@ -89,12 +90,17 @@ func ArticleToHexoMarkdown(article *models.Article, categoryName string, tagName
 	}
 	_ = enc.Close()
 
+	body := article.Content
+	if _, b, ok := markdownfrontmatter.SplitFrontMatter(article.Content); ok {
+		body = b
+	}
+
 	var out bytes.Buffer
 	out.WriteString("---\n")
 	out.Write(ymlBody.Bytes())
 	out.WriteString("---\n\n")
-	out.WriteString(article.Content)
-	if len(article.Content) == 0 || !strings.HasSuffix(article.Content, "\n") {
+	out.WriteString(body)
+	if len(body) == 0 || !strings.HasSuffix(body, "\n") {
 		out.WriteByte('\n')
 	}
 	return out.Bytes(), nil
