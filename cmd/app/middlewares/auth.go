@@ -1,6 +1,8 @@
 package middlewares
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -65,7 +67,7 @@ func Auth(svcCtx *svc.ServiceContext) gin.HandlerFunc {
 			return
 		}
 
-		authState, ok, err := validateByRedis(c, redisClient, claims)
+		authState, ok, err := validateByRedis(c.Request.Context(), redisClient, claims)
 		if err != nil {
 			klog.ErrorS(err, "Redis auth validation failed", "userID", claims.UserID)
 			common.AbortFailMessage(c, http.StatusInternalServerError, "auth service unavailable")
@@ -135,9 +137,9 @@ type redisAuthState struct {
 	Status string
 }
 
-func validateByRedis(c *gin.Context, redisClient *redis.Client, claims *jwt.CustomClaims) (redisAuthState, bool, error) {
+func validateByRedis(ctx context.Context, redisClient *redis.Client, claims *jwt.CustomClaims) (redisAuthState, bool, error) {
 	key := authutil.UserAuthCacheKey(claims.UserID)
-	result, err := redisClient.HGetAll(c.Request.Context(), key).Result()
+	result, err := redisClient.HGetAll(ctx, key).Result()
 	if err != nil {
 		return redisAuthState{}, false, err
 	}
@@ -157,4 +159,31 @@ func validateByRedis(c *gin.Context, redisClient *redis.Client, claims *jwt.Cust
 		return redisAuthState{}, false, nil
 	}
 	return redisAuthState{Role: role, Status: status}, true, nil
+}
+
+// ValidateBearerToken 执行与 Auth 中间件相同的 JWT + Redis 会话校验，供 WebSocket 等非 HTTP 场景使用。
+func ValidateBearerToken(ctx context.Context, svcCtx *svc.ServiceContext, rawToken string) (*jwt.CustomClaims, error) {
+	if svcCtx == nil {
+		return nil, fmt.Errorf("auth service unavailable")
+	}
+	redisClient := svcCtx.Redis
+	jwtSecret := strings.TrimSpace(svcCtx.Config.JWTOptions.JWTSecret)
+	if redisClient == nil || jwtSecret == "" {
+		return nil, fmt.Errorf("auth service unavailable")
+	}
+	claims, err := jwt.ParseToken(jwtSecret, rawToken)
+	if err != nil {
+		return nil, err
+	}
+	if claims.UserID <= 0 || strings.TrimSpace(claims.Role) == "" {
+		return nil, fmt.Errorf("invalid token claims")
+	}
+	_, ok, err := validateByRedis(ctx, redisClient, claims)
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, fmt.Errorf("token is no longer valid")
+	}
+	return claims, nil
 }

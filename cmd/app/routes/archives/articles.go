@@ -24,7 +24,8 @@ type ArticleAdmin struct {
 	svc *svc.ServiceContext
 }
 
-func newArticleAdmin(svcCtx *svc.ServiceContext) *ArticleAdmin {
+// NewArticleAdmin 构造管理员文章业务实例（HTTP 与 WebSocket 共用）。
+func NewArticleAdmin(svcCtx *svc.ServiceContext) *ArticleAdmin {
 	return &ArticleAdmin{svc: svcCtx}
 }
 

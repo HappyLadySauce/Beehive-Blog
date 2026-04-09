@@ -22,6 +22,7 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/likes"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/tags"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/user"
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/ws"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/scheduler"
 )
@@ -102,6 +103,7 @@ func serve(ctx context.Context, svcCtx *svc.ServiceContext) error {
 	user.Init(svcCtx)
 	likes.Init(svcCtx)
 	admin.Init(svcCtx)
+	ws.Init(svcCtx)
 
 	jobRunner := scheduler.NewRunner(time.Minute)
 	archives.RegisterScheduledPublishJob(jobRunner, svcCtx)

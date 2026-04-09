@@ -19,7 +19,7 @@ type articleHandlers struct {
 
 // RegisterArticleAdminRoutes 在已挂载管理员鉴权的 RouterGroup 上注册文章管理路由（路径前缀为 /api/v1/admin）。
 func RegisterArticleAdminRoutes(g *gin.RouterGroup, svcCtx *svc.ServiceContext) {
-	h := &articleHandlers{svc: newArticleAdmin(svcCtx)}
+	h := &articleHandlers{svc: NewArticleAdmin(svcCtx)}
 	// 批量操作须在 /:id 参数路由之前注册，避免路径冲突
 	g.POST("/articles/batch", h.handleBatchArticles)
 	g.POST("/articles/export", h.handleBatchExportArticles)

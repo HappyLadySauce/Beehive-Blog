@@ -21,6 +21,8 @@ export default defineConfig({
       '/api': {
         target: 'http://127.0.0.1:8081',
         changeOrigin: true,
+        /** 必须开启，否则开发模式下 ws://localhost:5173/api/v1/ws 无法转到后端，自动保存 WebSocket 会静默失败 */
+        ws: true,
       },
       '/uploads': {
         target: 'http://127.0.0.1:8081',

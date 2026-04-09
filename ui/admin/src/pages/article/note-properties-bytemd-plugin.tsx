@@ -27,8 +27,17 @@ export function createNotePropertiesBytemdPlugin(): BytemdPlugin {
       const root = createRoot(el);
       root.render(<NotePropertiesHost readOnly={false} />);
       return () => {
-        root.unmount();
-        el.remove();
+        // ByteMD 可能在父组件仍处渲染阶段时调用 cleanup；同步 root.unmount() 会触发 React 警告，故推迟到下一 macrotask。
+        const r = root;
+        const node = el;
+        setTimeout(() => {
+          try {
+            r.unmount();
+          } catch {
+            /* ignore */
+          }
+          node.remove();
+        }, 0);
       };
     },
     viewerEffect(ctx) {
@@ -42,8 +51,16 @@ export function createNotePropertiesBytemdPlugin(): BytemdPlugin {
       const root = createRoot(el);
       root.render(<NotePropertiesHost readOnly />);
       return () => {
-        root.unmount();
-        el.remove();
+        const r = root;
+        const node = el;
+        setTimeout(() => {
+          try {
+            r.unmount();
+          } catch {
+            /* ignore */
+          }
+          node.remove();
+        }, 0);
       };
     },
   };

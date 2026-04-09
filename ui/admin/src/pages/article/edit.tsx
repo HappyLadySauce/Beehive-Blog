@@ -20,12 +20,14 @@ import {
 } from '../../api/article';
 import { getCategories, getTags, CategoryBrief, TagListItem } from '../../api/taxonomy';
 import { alignTaxonomyIds, fetchLatestTaxonomy } from '../../lib/ensureTaxonomy';
+import { closeAdminWebSocket, sendArticleAutosave } from '../../lib/adminWs';
 import { useArticleNotePropsStore } from './articleNotePropsStore';
 import { createNotePropertiesBytemdPlugin } from './note-properties-bytemd-plugin';
 import request from '../../utils/request';
 import { toast } from 'sonner';
 import { ArrowLeft, Save, History, Timer, Pencil, Trash2, Clock } from 'lucide-react';
 import AdminModal from '../../components/AdminModal';
+import ConfirmModal from '../../components/ConfirmModal';
 import { Switch } from '../../app/components/ui/switch';
 import {
   splitFrontMatter,
@@ -175,12 +177,16 @@ export default function ArticleEdit() {
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<CategoryBrief[]>([]);
   const [tags, setTags] = useState<TagListItem[]>([]);
+  const categoriesRef = useRef(categories);
+  const tagsRef = useRef(tags);
 
   const [historyOpen, setHistoryOpen] = useState(false);
   const [versions, setVersions] = useState<ArticleVersionItem[]>([]);
   const [versionsLoading, setVersionsLoading] = useState(false);
   const [restoringId, setRestoringId] = useState<number | null>(null);
   const [deletingVersionId, setDeletingVersionId] = useState<number | null>(null);
+  /** 待确认删除的版本 id，非 null 时显示 ConfirmModal */
+  const [versionDeleteConfirmId, setVersionDeleteConfirmId] = useState<number | null>(null);
   const [editingVersionId, setEditingVersionId] = useState<number | null>(null);
   const [editingVersionTitle, setEditingVersionTitle] = useState('');
   const [savingVersionTitle, setSavingVersionTitle] = useState(false);
@@ -240,6 +246,20 @@ export default function ArticleEdit() {
   useEffect(() => {
     loadingRef.current = loading;
   }, [loading]);
+
+  useEffect(() => {
+    categoriesRef.current = categories;
+  }, [categories]);
+
+  useEffect(() => {
+    tagsRef.current = tags;
+  }, [tags]);
+
+  useEffect(() => {
+    return () => {
+      closeAdminWebSocket();
+    };
+  }, []);
 
   useEffect(() => {
     const loadFilters = async () => {
@@ -336,9 +356,8 @@ export default function ArticleEdit() {
         if (s.status === 'scheduled' && !s.publishedAt.trim()) return;
         savingRef.current = true;
         try {
-          const { categories: cats, tags: tgs } = await fetchLatestTaxonomy();
-          setCategories(cats);
-          setTags(tgs);
+          const cats = categoriesRef.current;
+          const tgs = tagsRef.current;
           const aligned = alignTaxonomyIds(s.categoryId, s.selectedTagIds, cats, tgs);
           setCategoryId(aligned.categoryId);
           setSelectedTagIds(aligned.tagIds);
@@ -370,17 +389,25 @@ export default function ArticleEdit() {
             savingRef.current = false;
             return;
           }
-          const res = await updateArticle(articleId, {
-            title: s.title.trim(),
-            content: fullContentEnsured,
-            slug: s.slug.trim() || undefined,
-            summary: s.summary.trim() || undefined,
-            status: s.status,
-            publishedAt: s.publishedAt.trim() || undefined,
-            categoryId: aligned.categoryId ?? undefined,
-            tagIds: aligned.tagIds.length > 0 ? aligned.tagIds : undefined,
-            autoSave: true,
-          });
+          const requestId =
+            typeof crypto !== 'undefined' && crypto.randomUUID
+              ? crypto.randomUUID()
+              : `${Date.now()}-${Math.random()}`;
+          const res = await sendArticleAutosave(
+            articleId,
+            {
+              title: s.title.trim(),
+              content: fullContentEnsured,
+              slug: s.slug.trim() || undefined,
+              summary: s.summary.trim() || undefined,
+              status: s.status,
+              publishedAt: s.publishedAt.trim() || undefined,
+              categoryId: aligned.categoryId ?? undefined,
+              tagIds: aligned.tagIds.length > 0 ? aligned.tagIds : undefined,
+              autoSave: true,
+            },
+            requestId,
+          );
           if (res.code === 200) {
             lastSyncedRef.current = snapEnsured;
           } else {
@@ -388,9 +415,11 @@ export default function ArticleEdit() {
           }
         } catch (error: unknown) {
           const msg =
-            error && typeof error === 'object' && 'response' in error
-              ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
-              : undefined;
+            error instanceof Error
+              ? error.message
+              : error && typeof error === 'object' && 'message' in error
+                ? String((error as { message?: string }).message)
+                : undefined;
           toast.error(msg || '自动保存请求失败');
         } finally {
           savingRef.current = false;
@@ -561,14 +590,14 @@ export default function ArticleEdit() {
     }
   };
 
-  const handleDeleteVersion = async (versionId: number) => {
+  const executeDeleteVersion = async (versionId: number) => {
     if (!articleId) return;
-    if (!window.confirm('确定删除该版本记录？此操作不可恢复。')) return;
     setDeletingVersionId(versionId);
     try {
       const res = await deleteArticleVersion(articleId, versionId);
       if (res.code === 200) {
         toast.success('已删除版本');
+        setVersionDeleteConfirmId(null);
         if (editingVersionId === versionId) {
           handleCancelEditVersion();
         }
@@ -855,6 +884,7 @@ export default function ArticleEdit() {
           onClose={() => {
             setHistoryOpen(false);
             handleCancelEditVersion();
+            setVersionDeleteConfirmId(null);
           }}
           maxWidth="lg"
         >
@@ -945,7 +975,7 @@ export default function ArticleEdit() {
                             deletingVersionId !== null ||
                             savingVersionTitle
                           }
-                          onClick={() => void handleDeleteVersion(v.id)}
+                          onClick={() => setVersionDeleteConfirmId(v.id)}
                           className="inline-flex items-center gap-1 rounded border border-destructive/50 bg-background px-2 py-1.5 text-xs text-destructive hover:bg-destructive/10 disabled:opacity-50"
                           title="删除此版本记录"
                         >
@@ -969,6 +999,24 @@ export default function ArticleEdit() {
           </div>
         </AdminModal>
       )}
+
+      <ConfirmModal
+        open={versionDeleteConfirmId !== null}
+        title="删除版本"
+        message="确定删除该版本记录？此操作不可恢复。"
+        confirmLabel="删除"
+        confirmVariant="danger"
+        loading={
+          versionDeleteConfirmId !== null &&
+          deletingVersionId !== null &&
+          deletingVersionId === versionDeleteConfirmId
+        }
+        onCancel={() => setVersionDeleteConfirmId(null)}
+        onConfirm={() => {
+          if (versionDeleteConfirmId === null) return;
+          void executeDeleteVersion(versionDeleteConfirmId);
+        }}
+      />
 
       <style>{`
         .article-edit-bytemd .editor-container .bytemd {
