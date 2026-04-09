@@ -47,7 +47,7 @@ export default function Dashboard() {
       <div className="admin-card admin-card-glass rounded border">
         <div className="border-b border-border p-[clamp(0.75rem,0.5vw+0.55rem,1rem)]">
           <div className="flex items-center justify-between">
-            <h3 className="text-[clamp(0.86rem,0.13vw+0.82rem,0.96rem)] font-medium text-foreground">热门文章 Top 10</h3>
+            <h3 className="admin-section-heading">热门文章 Top 10</h3>
           </div>
         </div>
         <div className="p-[clamp(0.75rem,0.5vw+0.55rem,1rem)]">

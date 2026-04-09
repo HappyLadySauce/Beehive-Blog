@@ -27,14 +27,14 @@ export default function StatCard({ title, value, icon: Icon, trend, color }: Sta
         </div>
       </div>
       <div>
-        <p className="text-xs text-muted-foreground mb-1">{title}</p>
-        <h3 className="text-2xl font-semibold text-foreground">{value}</h3>
+        <p className="text-sm text-muted-foreground mb-1">{title}</p>
+        <h3 className="text-3xl font-semibold text-foreground tabular-nums">{value}</h3>
         {trend && (
           <div className="mt-1.5 flex items-center gap-1">
-            <span className={`text-xs ${trend.positive ? 'text-green-600' : 'text-red-600'}`}>
+            <span className={`text-sm ${trend.positive ? 'text-green-600' : 'text-red-600'}`}>
               {trend.positive ? '↑' : '↓'} {trend.value}
             </span>
-            <span className="text-xs text-muted-foreground">较上月</span>
+            <span className="text-sm text-muted-foreground">较上月</span>
           </div>
         )}
       </div>

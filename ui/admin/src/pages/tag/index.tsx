@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useOutletContext } from 'react-router-dom';
+import type { ArticleSectionOutletContext } from '../../layouts/ArticleSectionLayout';
 import {
   getTags,
   createTag,
@@ -22,6 +24,7 @@ interface TagForm {
 const emptyForm: TagForm = { name: '', slug: '', color: '#3B82F6', description: '' };
 
 export default function Tags() {
+  const { registerNewAction } = useOutletContext<ArticleSectionOutletContext>();
   const [tags, setTags] = useState<TagListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -70,11 +73,16 @@ export default function Tags() {
     fetchTags();
   }, []);
 
-  const openCreate = () => {
+  const openCreate = useCallback(() => {
     setEditTarget(null);
     setForm(emptyForm);
     setShowModal(true);
-  };
+  }, []);
+
+  useEffect(() => {
+    registerNewAction(openCreate);
+    return () => registerNewAction(null);
+  }, [registerNewAction, openCreate]);
 
   const openEdit = (tag: TagListItem) => {
     setEditTarget(tag);
@@ -149,16 +157,6 @@ export default function Tags() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={openCreate}
-          className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          新建标签
-        </button>
-      </div>
-
       <div className="admin-card admin-card-glass overflow-hidden rounded border">
         <table className="admin-table w-full border-collapse text-left">
           <thead>

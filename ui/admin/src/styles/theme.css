@@ -3,7 +3,7 @@
 /* 触手生春风格：浅色 pastel 渐变 + 薰衣草紫强调；深色炭灰底 + 玻璃与光斑（见 docs/qq-chushou-shengchun） */
 :root {
   color-scheme: light;
-  --font-size: 16px;
+  --font-size: 17px;
   --admin-app-bg: linear-gradient(
     135deg,
     #f8e1ec 0%,
@@ -140,6 +140,9 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  /* 略大于默认刻度，贴近 1Panel 正文/辅助字可读性（rem 随 html --font-size 缩放） */
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
 }
 
 @layer base {
@@ -200,25 +203,25 @@
 
 /* Admin shell：渐变底 + 浅色光斑；深色为纯色底 + 伪元素光斑（pointer-events: none） */
 .admin-shell {
-  --admin-font-base: clamp(14px, 0.35vw + 12px, 17px);
+  --admin-font-base: clamp(15px, 0.4vw + 13px, 18px);
   --admin-space-1: clamp(0.25rem, 0.15vw + 0.2rem, 0.5rem);
   --admin-space-2: clamp(0.5rem, 0.25vw + 0.35rem, 0.75rem);
   --admin-space-3: clamp(0.75rem, 0.3vw + 0.55rem, 1rem);
   --admin-space-4: clamp(1rem, 0.4vw + 0.75rem, 1.25rem);
   --admin-space-5: clamp(1.25rem, 0.5vw + 0.95rem, 1.5rem);
   --admin-space-6: clamp(1.5rem, 0.7vw + 1.1rem, 2rem);
-  --admin-control-sm: clamp(2rem, 0.25vw + 1.9rem, 2.2rem);
-  --admin-control-md: clamp(2.35rem, 0.3vw + 2.2rem, 2.55rem);
-  --admin-control-lg: clamp(2.6rem, 0.35vw + 2.45rem, 2.85rem);
-  --admin-table-font: clamp(0.86rem, 0.16vw + 0.8rem, 0.97rem);
-  --admin-table-cell-x: clamp(0.75rem, 0.25vw + 0.55rem, 1rem);
-  --admin-table-cell-y: clamp(0.62rem, 0.2vw + 0.5rem, 0.85rem);
+  --admin-control-sm: clamp(2.05rem, 0.28vw + 1.95rem, 2.3rem);
+  --admin-control-md: clamp(2.4rem, 0.32vw + 2.25rem, 2.65rem);
+  --admin-control-lg: clamp(2.65rem, 0.38vw + 2.5rem, 2.95rem);
+  --admin-table-font: clamp(0.89rem, 0.17vw + 0.82rem, 1rem);
+  --admin-table-cell-x: clamp(0.8rem, 0.26vw + 0.58rem, 1.05rem);
+  --admin-table-cell-y: clamp(0.65rem, 0.22vw + 0.52rem, 0.88rem);
   --admin-sidebar-width-desktop: clamp(14rem, 15vw, 16rem);
   --admin-sidebar-width-drawer: min(84vw, 19rem);
-  --admin-sidebar-font-label: clamp(0.92rem, 0.14vw + 0.88rem, 1.02rem);
-  --admin-sidebar-font-meta: clamp(0.78rem, 0.1vw + 0.75rem, 0.86rem);
-  --admin-sidebar-icon: clamp(1rem, 0.14vw + 0.95rem, 1.14rem);
-  --admin-sidebar-item-height: clamp(2.25rem, 0.3vw + 2.1rem, 2.6rem);
+  --admin-sidebar-font-label: clamp(0.96rem, 0.15vw + 0.9rem, 1.06rem);
+  --admin-sidebar-font-meta: clamp(0.82rem, 0.11vw + 0.78rem, 0.9rem);
+  --admin-sidebar-icon: clamp(1.05rem, 0.15vw + 1rem, 1.2rem);
+  --admin-sidebar-item-height: clamp(2.35rem, 0.32vw + 2.2rem, 2.75rem);
   --admin-mobile-header-height: clamp(3rem, 0.4vw + 2.8rem, 3.4rem);
   position: relative;
   isolation: isolate;
@@ -298,7 +301,18 @@
 
 .admin-shell .admin-muted {
   color: var(--muted-foreground);
-  font-size: clamp(0.82rem, 0.12vw + 0.78rem, 0.92rem);
+  font-size: clamp(0.86rem, 0.13vw + 0.8rem, 0.96rem);
+}
+
+/* 卡片内区块标题：主色竖条（对齐 1Panel 区块标题层次） */
+.admin-shell .admin-section-heading {
+  margin: 0;
+  border-left: 4px solid var(--primary);
+  padding-left: 0.75rem;
+  font-size: clamp(0.95rem, 0.15vw + 0.88rem, 1.06rem);
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--foreground);
 }
 
 .admin-shell .admin-control-sm {

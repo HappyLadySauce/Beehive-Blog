@@ -250,14 +250,14 @@ export default function Attachments() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm text-muted-foreground">分类：</span>
+        <span className="text-base text-muted-foreground">分类：</span>
         <button
           type="button"
           onClick={() => {
             setGroupId(null);
             setPage(1);
           }}
-          className={`rounded-full border px-3 py-1 text-xs ${groupId === null ? 'border-primary bg-primary/10' : 'border-border'}`}
+          className={`rounded-full border px-3 py-1.5 text-sm ${groupId === null ? 'border-primary bg-primary/10' : 'border-border'}`}
         >
           全部
         </button>
@@ -269,7 +269,7 @@ export default function Attachments() {
               setGroupId(g.id);
               setPage(1);
             }}
-            className={`rounded-full border px-3 py-1 text-xs ${groupId === g.id ? 'border-primary bg-primary/10' : 'border-border'}`}
+            className={`rounded-full border px-3 py-1.5 text-sm ${groupId === g.id ? 'border-primary bg-primary/10' : 'border-border'}`}
           >
             {g.name}
           </button>
@@ -277,7 +277,7 @@ export default function Attachments() {
         <button
           type="button"
           onClick={() => setNewGroupOpen(true)}
-          className="rounded-full border border-dashed border-border px-3 py-1 text-xs text-muted-foreground hover:bg-accent"
+          className="rounded-full border border-dashed border-border px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent"
         >
           + 新建分类
         </button>

@@ -80,7 +80,7 @@ export default function AdminLayout() {
           </h1>
           <ThemeToggle />
         </header>
-        <div className="p-4 md:p-6 lg:p-8 xl:p-10">
+        <div className="p-5 md:p-7 lg:p-9 xl:p-12">
         <Outlet />
         </div>
       </main>

@@ -1,5 +1,10 @@
+import { useCallback, useMemo, useRef } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { FileText, FolderOpen, Tags, Trash2, type LucideIcon } from 'lucide-react';
+
+export type ArticleSectionOutletContext = {
+  registerNewAction: (fn: (() => void) | null) => void;
+};
 
 const sectionTitle = (pathname: string): string => {
   if (pathname === '/articles' || pathname === '/articles/') return '文章';
@@ -21,6 +26,30 @@ export default function ArticleSectionLayout() {
   const { pathname } = useLocation();
   const title = sectionTitle(pathname);
   const TitleIcon = sectionIcon(pathname);
+
+  const newActionRef = useRef<(() => void) | null>(null);
+  const registerNewAction = useCallback((fn: (() => void) | null) => {
+    newActionRef.current = fn;
+  }, []);
+  const outletContext = useMemo<ArticleSectionOutletContext>(
+    () => ({ registerNewAction }),
+    [registerNewAction],
+  );
+
+  const primaryLabel = (() => {
+    if (pathname.startsWith('/articles/trash')) return null;
+    if (pathname.startsWith('/articles/categories')) return '新建分类';
+    if (pathname.startsWith('/articles/tags')) return '新建标签';
+    return '新建文章';
+  })();
+
+  const handlePrimaryClick = () => {
+    if (pathname.startsWith('/articles/categories') || pathname.startsWith('/articles/tags')) {
+      newActionRef.current?.();
+      return;
+    }
+    navigate('/articles/create');
+  };
 
   const navBtn = (target: string, label: string, active: boolean) => (
     <button
@@ -47,16 +76,18 @@ export default function ArticleSectionLayout() {
           {navBtn('/articles/categories', '分类', pathname.startsWith('/articles/categories'))}
           {navBtn('/articles/tags', '标签', pathname.startsWith('/articles/tags'))}
           {navBtn('/articles/trash', '回收站', pathname.startsWith('/articles/trash'))}
-          <button
-            type="button"
-            onClick={() => navigate('/articles/create')}
-            className="rounded-md bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-          >
-            新建
-          </button>
+          {primaryLabel && (
+            <button
+              type="button"
+              onClick={handlePrimaryClick}
+              className="rounded-md bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+            >
+              {primaryLabel}
+            </button>
+          )}
         </div>
       </header>
-      <Outlet />
+      <Outlet context={outletContext} />
     </div>
   );
 }

@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useOutletContext } from 'react-router-dom';
+import type { ArticleSectionOutletContext } from '../../layouts/ArticleSectionLayout';
 import {
   getCategories,
   createCategory,
@@ -21,6 +23,7 @@ interface CategoryForm {
 const emptyForm: CategoryForm = { name: '', slug: '', description: '' };
 
 export default function Categories() {
+  const { registerNewAction } = useOutletContext<ArticleSectionOutletContext>();
   const [categories, setCategories] = useState<CategoryBrief[]>([]);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -69,11 +72,16 @@ export default function Categories() {
     fetchCategories();
   }, []);
 
-  const openCreate = () => {
+  const openCreate = useCallback(() => {
     setEditTarget(null);
     setForm(emptyForm);
     setShowModal(true);
-  };
+  }, []);
+
+  useEffect(() => {
+    registerNewAction(openCreate);
+    return () => registerNewAction(null);
+  }, [registerNewAction, openCreate]);
 
   const openEdit = (cat: CategoryBrief) => {
     setEditTarget(cat);
@@ -142,16 +150,6 @@ export default function Categories() {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={openCreate}
-          className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          新建分类
-        </button>
-      </div>
-
       <div className="admin-card admin-card-glass overflow-hidden rounded border">
         <table className="admin-table w-full border-collapse text-left">
           <thead>
