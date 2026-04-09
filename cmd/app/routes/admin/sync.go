@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
@@ -19,6 +20,7 @@ func newHexoSyncServiceCtx(svcCtx *svc.ServiceContext, eff *hexocfg.EffectiveHex
 		eff.GenerateWorkdirAbs,
 		eff.CleanArgs,
 		eff.GenerateArgs,
+		strings.TrimSpace(svcCtx.Config.StorageOptions.BaseURL),
 		svcCtx.DB,
 		svcCtx.Redis,
 	)

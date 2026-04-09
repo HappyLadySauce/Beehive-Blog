@@ -27,12 +27,14 @@ type SyncService struct {
 	generateWorkdir    string
 	cleanArgs          []string
 	generateArgs       []string
+	storageBaseURL     string // 与配置 storage.baseUrl 对齐（去尾 /），用于 Hexo 写出时替换附件链接
 	db                 *gorm.DB
 	rdb                *redis.Client
 }
 
 // NewSyncService 基于配置解析绝对路径并构造同步服务。
-func NewSyncService(postsDir, generateWorkdir string, cleanArgs, generateArgs []string, db *gorm.DB, rdb *redis.Client) (*SyncService, error) {
+// storageBaseURL 为文件访问前缀（如 http://host/uploads），与附件入库 URL 一致，用于同步到 Hexo 时改写为站点 URL。
+func NewSyncService(postsDir, generateWorkdir string, cleanArgs, generateArgs []string, storageBaseURL string, db *gorm.DB, rdb *redis.Client) (*SyncService, error) {
 	if db == nil {
 		return nil, errors.New("db is nil")
 	}
@@ -47,12 +49,14 @@ func NewSyncService(postsDir, generateWorkdir string, cleanArgs, generateArgs []
 	ca := append([]string(nil), cleanArgs...)
 	ga := append([]string(nil), generateArgs...)
 	pagesRoot := filepath.Join(genAbs, "source", "beehive-pages")
+	st := strings.TrimRight(strings.TrimSpace(storageBaseURL), "/")
 	return &SyncService{
 		postsDirAbs:        postsAbs,
 		beehivePagesDirAbs: pagesRoot,
 		generateWorkdir:    genAbs,
 		cleanArgs:          ca,
 		generateArgs:       ga,
+		storageBaseURL:     st,
 		db:                 db,
 		rdb:                rdb,
 	}, nil
@@ -140,11 +144,41 @@ func (s *SyncService) DeletePostFile(article *models.Article) error {
 	return s.removePostsFilesForArticleID(article.ID)
 }
 
+func (s *SyncService) rewriteForHexo(ctx context.Context, text string) (string, error) {
+	if strings.TrimSpace(text) == "" {
+		return text, nil
+	}
+	if s.storageBaseURL == "" {
+		return text, nil
+	}
+	site, err := loadSiteURL(ctx, s.db)
+	if err != nil {
+		return "", err
+	}
+	to := publicUploadsBase(site, s.storageBaseURL)
+	return RewriteStorageURLs(text, s.storageBaseURL, to), nil
+}
+
 func (s *SyncService) writeArticleFile(ctx context.Context, article *models.Article) (SyncAction, error) {
-	_ = ctx
+	gen := *article
+	var err error
+	gen.Content, err = s.rewriteForHexo(ctx, article.Content)
+	if err != nil {
+		return "", err
+	}
+	gen.Summary, err = s.rewriteForHexo(ctx, article.Summary)
+	if err != nil {
+		return "", err
+	}
+	if strings.TrimSpace(article.CoverImage) != "" {
+		gen.CoverImage, err = s.rewriteForHexo(ctx, article.CoverImage)
+		if err != nil {
+			return "", err
+		}
+	}
 	cat := CategoryNameOrEmpty(article.Category)
 	tags := SortedTagNames(article.Tags)
-	payload, err := ArticleToHexoMarkdown(article, cat, tags)
+	payload, err := ArticleToHexoMarkdown(&gen, cat, tags)
 	if err != nil {
 		return "", err
 	}

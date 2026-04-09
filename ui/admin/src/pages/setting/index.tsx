@@ -169,7 +169,7 @@ export default function Settings() {
               {activeTab === 'general' && (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1">站点名称</label>
+                    <label className="block text-sm font-medium text-foreground mb-1">站点标题</label>
                     <input
                       type="text"
                       value={settings['site_name'] || ''}
@@ -178,7 +178,40 @@ export default function Settings() {
                     />
                   </div>
                   <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">站点副标题</label>
+                    <input
+                      type="text"
+                      value={settings['site_subtitle'] || ''}
+                      onChange={(e) => handleChange('site_subtitle', e.target.value)}
+                      placeholder="显示在标题下方的简短说明"
+                      className="w-full px-3 py-2 border border-border rounded bg-input-background text-foreground focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">Logo</label>
+                    <input
+                      type="url"
+                      value={settings['site_logo'] || ''}
+                      onChange={(e) => handleChange('site_logo', e.target.value)}
+                      placeholder="https://example.com/logo.png"
+                      className="w-full px-3 py-2 border border-border rounded bg-input-background text-foreground focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1">Favicon</label>
+                    <input
+                      type="url"
+                      value={settings['site_favicon'] || ''}
+                      onChange={(e) => handleChange('site_favicon', e.target.value)}
+                      placeholder="https://example.com/favicon.ico"
+                      className="w-full px-3 py-2 border border-border rounded bg-input-background text-foreground focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
+                    />
+                  </div>
+                  <div>
                     <label className="block text-sm font-medium text-foreground mb-1">站点 URL</label>
+                    <p className="text-xs text-muted-foreground mb-1.5">
+                      用于 Hexo 同步时，将正文中的附件链接前缀替换为基于该地址的公开访问地址（末尾无需加 /uploads）。未填写时保持与后台存储配置中的附件地址一致。
+                    </p>
                     <input
                       type="url"
                       value={settings['site_url'] || ''}
@@ -207,7 +240,7 @@ export default function Settings() {
                       type="text"
                       value={settings['seo_title'] || ''}
                       onChange={(e) => handleChange('seo_title', e.target.value)}
-                      placeholder="默认使用站点名称"
+                      placeholder="默认使用站点标题"
                       className="w-full px-3 py-2 border border-border rounded bg-input-background text-foreground focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
                     />
                   </div>

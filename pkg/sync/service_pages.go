@@ -71,8 +71,13 @@ func (s *SyncService) DeletePageFile(page *models.Page) error {
 }
 
 func (s *SyncService) writePageFile(ctx context.Context, page *models.Page) (SyncAction, error) {
-	_ = ctx
-	payload, err := PageToHexoMarkdown(page)
+	gen := *page
+	content, err := s.rewriteForHexo(ctx, page.Content)
+	if err != nil {
+		return "", err
+	}
+	gen.Content = content
+	payload, err := PageToHexoMarkdown(&gen)
 	if err != nil {
 		return "", err
 	}

@@ -3,6 +3,7 @@ package hexo
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
@@ -75,6 +76,7 @@ func maybeRunSync(
 		eff.GenerateWorkdirAbs,
 		eff.CleanArgs,
 		eff.GenerateArgs,
+		strings.TrimSpace(svcCtx.Config.StorageOptions.BaseURL),
 		svcCtx.DB,
 		svcCtx.Redis,
 	)
