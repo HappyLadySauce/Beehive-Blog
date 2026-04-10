@@ -1,0 +1,57 @@
+<%
+const menuEntries = Object.entries(theme.menu || {});
+const brandName = (theme.brand && theme.brand.name) || config.title || 'Beehive Blog';
+const brandInitial = brandName.charAt(0).toUpperCase();
+%>
+<div class="nav-container">
+  <a class="brandmark" href="<%- url_for('/') %>" aria-label="<%= brandName %>">
+    <span class="brandmark__glow" aria-hidden="true">
+      <span class="brandmark__letter"><%= brandInitial %></span>
+    </span>
+    <span class="brandmark__text">
+      <strong><%= brandName %></strong>
+    </span>
+  </a>
+
+  <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-menu" data-nav-toggle>
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+
+  <nav class="site-menu" id="site-menu" data-nav-menu>
+    <% menuEntries.forEach(function (entry) { %>
+      <% const label = entry[0]; const href = entry[1]; %>
+      <a class="site-menu__link" href="<%- url_for(href) %>"><%= label %></a>
+    <% }) %>
+  </nav>
+
+  <div class="site-actions">
+    <button class="nav-icon-btn" type="button" aria-label="搜索" data-search-trigger>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+    </button>
+
+    <button class="theme-toggle" type="button" data-theme-toggle aria-label="切换主题">
+      <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1" x2="12" y2="3"/>
+        <line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/>
+        <line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+      <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </button>
+
+    <% if (theme.beehive && theme.beehive.enable_auth) { %>
+      <%- partial('partials/account-menu') %>
+    <% } %>
+  </div>
+</div>

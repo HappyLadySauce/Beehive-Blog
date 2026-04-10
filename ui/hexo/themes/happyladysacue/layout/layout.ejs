@@ -1,9 +1,19 @@
+<%
+const ph = theme.post_header || {};
+let postHeroCover = '';
+if (page.layout === 'post' && ph.enable !== false && page.top_img !== false) {
+  postHeroCover = page.top_img || page.cover || page.banner || ph.default_cover || (theme.seo && theme.seo.og_image) || '';
+}
+const showPostHero = !!(page.layout === 'post' && postHeroCover);
+const bodyClasses = ['layout-' + (page.layout || 'default')];
+if (showPostHero) bodyClasses.push('has-post-hero');
+%>
 <!DOCTYPE html>
 <html lang="<%= Array.isArray(config.language) ? config.language[0] : (config.language || 'zh-CN') %>" data-theme="light">
 <head>
   <%- partial('partials/head') %>
 </head>
-<body class="<%= page.layout ? 'layout-' + page.layout : 'layout-default' %>">
+<body class="<%= bodyClasses.join(' ') %>">
   <script>
     window.__HLS_THEME__ = {
       defaultTheme: "<%= theme.appearance && theme.appearance.default_theme ? theme.appearance.default_theme : 'auto' %>",
@@ -12,10 +22,16 @@
     window.__BEEHIVE_API_BASE__ = "<%= theme.beehive && theme.beehive.api_base ? theme.beehive.api_base : '' %>";
   </script>
   <div class="site-shell">
-    <%- partial('partials/nav') %>
-    <main class="site-main">
-      <%- body %>
-    </main>
+    <div id="body-wrap">
+      <% if (showPostHero) { %>
+        <%- partial('partials/post-page-header', { postHeroCover: postHeroCover }) %>
+      <% } else { %>
+        <%- partial('partials/nav') %>
+      <% } %>
+      <main class="site-main">
+        <%- body %>
+      </main>
+    </div>
     <%- partial('partials/footer') %>
   </div>
   <script src="<%- url_for('/js/theme.js') %>"></script>

@@ -1,5 +1,6 @@
 ---
 title: Hello World
+cover: /images/avatar-placeholder.svg
 description: Hexo 默认示例文章，用于验证 happyladysacue 主题的首页卡片、文章页和归档结构。
 categories:
   - 建站记录

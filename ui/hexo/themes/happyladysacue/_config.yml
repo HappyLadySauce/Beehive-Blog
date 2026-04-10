@@ -68,6 +68,13 @@ sidebar:
   categories: 8
   tag_count: 14
 
+# 文章页大顶栏（对齐 anzhiyu #page-header.post-bg 结构，样式自写）
+post_header:
+  enable: true
+  default_cover: ""
+  show_wave: true
+  show_wordcount: true
+
 footer:
   motto: Keep shipping beautiful pages.
   about: 以内容为中心，融合卡片式首页与 Beehive 用户体系的现代 Hexo 主题。

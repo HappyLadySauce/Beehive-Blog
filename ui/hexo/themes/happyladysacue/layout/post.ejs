@@ -2,10 +2,17 @@
 const tags = page.tags && page.tags.toArray ? page.tags.toArray() : [];
 const categories = page.categories && page.categories.toArray ? page.categories.toArray() : [];
 const articleToc = toc(page.content || '', { class: 'toc-list', list_number: false, max_depth: 3 });
+const phPost = theme.post_header || {};
+let covPost = '';
+if (phPost.enable !== false && page.top_img !== false) {
+  covPost = page.top_img || page.cover || page.banner || phPost.default_cover || (theme.seo && theme.seo.og_image) || '';
+}
+const showPostHeroPost = !!covPost;
 %>
 <div class="page-article">
   <div class="article-shell">
     <article class="article-card">
+      <% if (!showPostHeroPost) { %>
       <header class="article-hero">
         <% if (categories.length) { %>
           <p class="eyebrow"><%= categories[0].name %></p>
@@ -20,6 +27,7 @@ const articleToc = toc(page.content || '', { class: 'toc-list', list_number: fal
           <% } %>
         </div>
       </header>
+      <% } %>
 
       <div class="article-content">
         <%- page.content %>

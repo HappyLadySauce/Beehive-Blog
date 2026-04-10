@@ -145,6 +145,40 @@ definitions:
       id:
         type: integer
     type: object
+  v1.AdminPageListItem:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: integer
+      isInMenu:
+        type: boolean
+      slug:
+        type: string
+      sortOrder:
+        type: integer
+      status:
+        type: string
+      title:
+        type: string
+      updatedAt:
+        type: string
+      viewCount:
+        type: integer
+    type: object
+  v1.AdminPageListResponse:
+    properties:
+      list:
+        items:
+          $ref: '#/definitions/v1.AdminPageListItem'
+        type: array
+      page:
+        type: integer
+      pageSize:
+        type: integer
+      total:
+        type: integer
+    type: object
   v1.AdminResetUserPasswordRequest:
     properties:
       newPassword:
@@ -602,6 +636,32 @@ definitions:
       id:
         type: integer
     type: object
+  v1.CreatePageRequest:
+    properties:
+      content:
+        type: string
+      isInMenu:
+        type: boolean
+      slug:
+        maxLength: 100
+        type: string
+      sortOrder:
+        type: integer
+      status:
+        enum:
+        - draft
+        - published
+        - archived
+        - private
+        type: string
+      title:
+        maxLength: 200
+        minLength: 1
+        type: string
+    required:
+    - content
+    - title
+    type: object
   v1.CreateTagRequest:
     properties:
       color:
@@ -638,6 +698,11 @@ definitions:
         type: integer
     type: object
   v1.DeleteNotificationResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  v1.DeletePageResponse:
     properties:
       id:
         type: integer
@@ -698,6 +763,29 @@ definitions:
         type: integer
       isRead:
         type: boolean
+    type: object
+  v1.PageDetailResponse:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: integer
+      isInMenu:
+        type: boolean
+      slug:
+        type: string
+      sortOrder:
+        type: integer
+      status:
+        type: string
+      title:
+        type: string
+      updatedAt:
+        type: string
+      viewCount:
+        type: integer
     type: object
   v1.RecordArticleViewResponse:
     properties:
@@ -809,6 +897,18 @@ definitions:
         items:
           type: string
         type: array
+      page_files:
+        items:
+          type: string
+        type: array
+      pages_created:
+        type: integer
+      pages_deleted:
+        type: integer
+      pages_total:
+        type: integer
+      pages_updated:
+        type: integer
       total:
         type: integer
       updated:
@@ -820,8 +920,12 @@ definitions:
         type: string
       local_files:
         type: integer
+      local_pages:
+        type: integer
       pending_sync:
         type: boolean
+      total_pages:
+        type: integer
       total_posts:
         type: integer
     type: object
@@ -1024,6 +1128,41 @@ definitions:
         type: integer
       status:
         type: string
+    type: object
+  v1.UpdatePageRequest:
+    properties:
+      content:
+        type: string
+      isInMenu:
+        type: boolean
+      slug:
+        maxLength: 100
+        type: string
+      sortOrder:
+        type: integer
+      status:
+        enum:
+        - draft
+        - published
+        - archived
+        - private
+        type: string
+      title:
+        maxLength: 200
+        minLength: 1
+        type: string
+    type: object
+  v1.UpdatePageStatusRequest:
+    properties:
+      status:
+        enum:
+        - draft
+        - published
+        - archived
+        - private
+        type: string
+    required:
+    - status
     type: object
   v1.UpdatePasswordRequest:
     properties:
@@ -2557,6 +2696,280 @@ paths:
       summary: 更新评论审核状态
       tags:
       - admin
+  /api/v1/admin/pages:
+    get:
+      description: 分页、关键词、状态筛选、排序 newest|oldest|popular
+      parameters:
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页条数
+        in: query
+        name: pageSize
+        type: integer
+      - description: 关键词
+        in: query
+        name: keyword
+        type: string
+      - description: 状态，逗号分隔
+        in: query
+        name: status
+        type: string
+      - description: newest|oldest|popular
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.AdminPageListResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 管理员独立页面列表
+      tags:
+      - admin
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: 正文
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.CreatePageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.PageDetailResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: 创建独立页面
+      tags:
+      - admin
+  /api/v1/admin/pages/{id}:
+    delete:
+      parameters:
+      - description: 页面 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.DeletePageResponse'
+              type: object
+      summary: 软删除独立页面
+      tags:
+      - admin
+    get:
+      parameters:
+      - description: 页面 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.PageDetailResponse'
+              type: object
+      summary: 获取独立页面详情
+      tags:
+      - admin
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 页面 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 字段
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.UpdatePageRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.PageDetailResponse'
+              type: object
+      summary: 更新独立页面
+      tags:
+      - admin
+  /api/v1/admin/pages/{id}/permanent:
+    delete:
+      parameters:
+      - description: 页面 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.DeletePageResponse'
+              type: object
+      summary: 永久删除独立页面
+      tags:
+      - admin
+  /api/v1/admin/pages/{id}/restore:
+    post:
+      parameters:
+      - description: 页面 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.DeletePageResponse'
+              type: object
+      summary: 从回收站恢复独立页面
+      tags:
+      - admin
+  /api/v1/admin/pages/{id}/status:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: 页面 ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 状态
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/v1.UpdatePageStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.PageDetailResponse'
+              type: object
+      summary: 更新独立页面状态
+      tags:
+      - admin
+  /api/v1/admin/pages/trash:
+    get:
+      parameters:
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页条数
+        in: query
+        name: pageSize
+        type: integer
+      - description: 关键词
+        in: query
+        name: keyword
+        type: string
+      - description: 排序
+        in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.AdminPageListResponse'
+              type: object
+      summary: 独立页面回收站
+      tags:
+      - admin
   /api/v1/admin/ping:
     get:
       consumes:
@@ -2708,7 +3121,7 @@ paths:
           schema:
             $ref: '#/definitions/common.BaseResponse'
         "502":
-          description: Bad Gateway
+          description: 上游 SMTP 失败；message 为脱敏后的错误原因（非统一 internal server error）
           schema:
             $ref: '#/definitions/common.BaseResponse'
       security:
@@ -2752,8 +3165,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: 将已发布文章写入 Hexo source/_posts；rebuild=true 且在后台 Hexo 设置中配置了 clean_args/generate_args
-        时顺序执行 hexo clean 与 generate
+      description: 将已发布文章写入 source/_posts、已发布独立页面写入 source/beehive-pages；rebuild=true
+        且在后台 Hexo 设置中配置了 clean_args/generate_args 时顺序执行 hexo clean 与 generate
       parameters:
       - description: 选项
         in: body
@@ -2784,12 +3197,12 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/common.BaseResponse'
-      summary: Hexo 文章全量同步
+      summary: Hexo 内容全量同步
       tags:
       - admin
   /api/v1/admin/sync/status:
     get:
-      description: 查询上次同步时间与本地 beehive 文章文件数量等
+      description: 查询上次同步时间、已发布文章/页面数与本地 beehive 文件数量等
       produces:
       - application/json
       responses:

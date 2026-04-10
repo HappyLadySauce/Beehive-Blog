@@ -1,0 +1,93 @@
+<%
+const ph = theme.post_header || {};
+const tags = page.tags && page.tags.toArray ? page.tags.toArray() : [];
+const categories = page.categories && page.categories.toArray ? page.categories.toArray() : [];
+const coverUrl = typeof postHeroCover !== 'undefined' ? postHeroCover : '';
+const showWave = ph.show_wave !== false;
+const showWordcount = ph.show_wordcount !== false;
+const plain = String(page.content || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+const charCount = plain.length;
+const minRead = Math.max(1, Math.ceil(charCount / 350));
+const dateFmt = config.date_format || 'YYYY-MM-DD';
+%>
+<header id="page-header" class="post-bg">
+  <%- partial('partials/nav', { inPageHeader: true }) %>
+
+  <div id="post-info">
+    <div id="post-firstinfo">
+      <div class="meta-firstline">
+        <% if (page.reprint) { %>
+          <span class="post-meta-original">转载</span>
+        <% } else { %>
+          <span class="post-meta-original">原创</span>
+        <% } %>
+        <% if (categories.length) { %>
+          <span class="post-meta-categories-wrap">
+            <% categories.forEach(function (cat, index) { %>
+              <% if (index > 0) { %><span class="post-meta-separator" aria-hidden="true">/</span><% } %>
+              <a class="post-meta-categories" href="<%- url_for(cat.path) %>"><%= cat.name %></a>
+            <% }) %>
+          </span>
+        <% } %>
+        <% if (tags.length) { %>
+          <span class="article-meta tags" aria-label="标签">
+            <% tags.forEach(function (tag) { %>
+              <a class="article-meta__tags" href="<%- url_for(tag.path) %>">#<%= tag.name %></a>
+            <% }) %>
+          </span>
+        <% } %>
+      </div>
+    </div>
+
+    <h1 class="post-title"><%= page.title || 'Untitled' %></h1>
+
+    <div id="post-meta">
+      <div class="meta-firstline">
+        <span class="post-meta-date">
+          <span class="post-meta-label">发表于</span>
+          <time datetime="<%= date_xml(page.date) %>"><%= date(page.date, dateFmt) %></time>
+        </span>
+        <% if (page.updated) { %>
+          <span class="post-meta-separator" aria-hidden="true">·</span>
+          <span class="post-meta-date">
+            <span class="post-meta-label">更新于</span>
+            <time datetime="<%= date_xml(page.updated) %>"><%= date(page.updated, dateFmt) %></time>
+          </span>
+        <% } %>
+      </div>
+      <% if (showWordcount && charCount > 0) { %>
+        <div class="meta-secondline">
+          <span class="post-meta-wordcount">
+            <span class="post-meta-label">字数总计:</span>
+            <span class="word-count"><%= charCount >= 1000 ? (charCount / 1000).toFixed(1) + 'k' : charCount %></span>
+          </span>
+          <span class="post-meta-separator" aria-hidden="true">·</span>
+          <span class="post-meta-minread">
+            <span class="post-meta-label">阅读时长:</span>
+            <span><%= minRead %> 分钟</span>
+          </span>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <% if (showWave) { %>
+  <section class="main-hero-waves-area waves-area" aria-hidden="true">
+    <svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none">
+      <defs>
+        <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s58 18 88 18 58-18 88-18 58 18 88 18v44h-352z"/>
+      </defs>
+      <g class="parallax">
+        <use href="#gentle-wave" x="48" y="0"/>
+        <use href="#gentle-wave" x="48" y="3"/>
+        <use href="#gentle-wave" x="48" y="5"/>
+        <use href="#gentle-wave" x="48" y="7"/>
+      </g>
+    </svg>
+  </section>
+  <% } %>
+
+  <div id="post-top-cover">
+    <img id="post-top-bg" class="nolazyload" src="<%- url_for(coverUrl) %>" alt="" decoding="async" fetchpriority="high"/>
+  </div>
+</header>
