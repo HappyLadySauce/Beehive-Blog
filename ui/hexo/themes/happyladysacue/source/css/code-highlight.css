@@ -136,11 +136,11 @@ html.dark .article-content figure.highlight {
 }
 
 .article-content figure.highlight table {
-  /* display:table 才稳定应用 table-layout:fixed；display:block 下列宽易仍随内容 */
+  /* table-layout:auto：行号列随内容宽度；.code 设 width:100% 占满余量，避免右侧透出 figure 底 */
   display: table;
   width: 100%;
   max-width: 100%;
-  table-layout: fixed;
+  table-layout: auto;
   margin: 0;
   border: none;
   border-collapse: collapse;
@@ -173,27 +173,30 @@ html.dark .article-content figure.highlight {
 }
 
 .article-content figure.highlight .gutter {
-  width: 3.25rem;
-  min-width: 3.25rem;
-  max-width: 3.25rem;
   user-select: none;
+  white-space: nowrap;
+  vertical-align: top;
 }
 
 .article-content figure.highlight .gutter pre {
   margin: 0;
-  padding: 8px 0.5rem 8px 0.625rem;
+  /* 对齐 anzhiyu mac light：左右约 0.5rem */
+  padding: 8px 0.5rem;
   border: none;
   border-radius: 0;
   border-right: 1px solid var(--border);
   background: var(--hlnumber-bg) !important;
   color: var(--hlnumber-color);
   text-align: right;
+  white-space: nowrap;
   line-height: var(--line-height-code-block);
   font-size: var(--code-font-size);
   font-family: var(--font-mono) !important;
 }
 
 .article-content figure.highlight .code {
+  width: 100%;
+  min-width: 0;
   background: var(--hl-bg);
 }
 
