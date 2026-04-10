@@ -69,6 +69,7 @@ sidebar:
   tag_count: 14
 
 # 文章目录（行为参考 hexo-theme-anzhiyu toc / scrollFnToDo）
+# max_depth：不配置或 ≤0 时与 anzhiyu 一致（目录含全部标题层级）；设为 3 等可限制侧栏长度
 toc:
   expand: false
   number: true

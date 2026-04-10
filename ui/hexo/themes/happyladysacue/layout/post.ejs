@@ -5,7 +5,12 @@ const beehiveTaxPost = site.data.beehive_taxonomy || {};
 const tocCfg = theme.toc || {};
 const tocNumber = tocCfg.number !== false;
 const tocExpand = tocCfg.expand === true;
-const articleToc = toc(page.content || '', { class: 'toc-list', list_number: tocNumber, max_depth: 3 });
+const tocOpts = { class: 'toc-list', list_number: tocNumber };
+const tocMaxDepth = tocCfg.max_depth;
+if (typeof tocMaxDepth === 'number' && tocMaxDepth > 0) {
+  tocOpts.max_depth = tocMaxDepth;
+}
+const articleToc = toc(page.content || '', tocOpts);
 const phPost = theme.post_header || {};
 let covPost = '';
 if (phPost.enable !== false && page.top_img !== false) {

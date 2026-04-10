@@ -172,26 +172,46 @@ html.dark #page-header.post-bg .site-header--in-page-header.is-scrolled {
   margin-left: 0.5rem;
 }
 
+/* 顶栏标签：对齐 anzhiyu / 分类胶囊，无按标签着色 */
 #page-header.post-bg a.article-meta__tags {
-  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: 2rem;
+  padding: 0 0.5rem 0 0.75rem;
+  font-size: 0.875rem;
   font-weight: 600;
+  line-height: 1.2;
+  color: #fff;
   text-decoration: none;
-  /* 有 Beehive 色时由内联 color 覆盖下列默认 */
-  color: rgba(255, 255, 255, 0.88);
-}
-
-#page-header.post-bg a.article-meta__tags.tag-cloud-link--muted {
-  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 #page-header.post-bg a.article-meta__tags:hover {
-  text-decoration: underline;
-  filter: brightness(1.12);
+  background: #fff;
+  color: var(--accent);
 }
 
-#page-header.post-bg a.article-meta__tags.tag-cloud-link--muted:hover {
-  filter: none;
-  color: rgba(255, 255, 255, 0.9);
+#page-header.post-bg a.article-meta__tags:hover .article-meta__tag-hash {
+  stroke: var(--accent);
+}
+
+#page-header.post-bg .article-meta__tag-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+#page-header.post-bg .article-meta__tag-hash {
+  flex-shrink: 0;
+  display: block;
+  opacity: 0.95;
+}
+
+#page-header.post-bg .article-meta__tag-name {
+  white-space: nowrap;
 }
 
 #page-header.post-bg .post-title {

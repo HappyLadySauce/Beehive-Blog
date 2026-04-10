@@ -97,13 +97,33 @@
   function findTocLinkForId(tocRoot, id) {
     if (!id) return null;
     var hash = '#' + id;
+    var encHash = '';
+    try {
+      encHash = '#' + encodeURIComponent(id);
+    } catch (e) {
+      encHash = hash;
+    }
     var links = tocRoot.querySelectorAll('.toc-list-link');
     for (var i = 0; i < links.length; i++) {
       var h = links[i].getAttribute('href') || '';
-      if (h === hash) return links[i];
+      if (h === hash || h === encHash) return links[i];
       try {
         if (h.charAt(0) === '#' && decodeURIComponent(h.slice(1)) === id) return links[i];
-      } catch (e) {}
+      } catch (e2) {}
+    }
+    return null;
+  }
+
+  /**
+   * 正文当前标题若在目录中无对应项（如 max_depth 截断、h4+），沿标题链向上回退到最近有目录锚点的标题。
+   * 与 hexo-theme-anzhiyu 的「标题与目录一一对应」思路等价，但兼容目录为子集的情况。
+   */
+  function resolveActiveTocLink(tocRoot, filteredHeadings, currentIndex) {
+    if (!tocRoot || !filteredHeadings.length || currentIndex < 0) return null;
+    for (var j = currentIndex; j >= 0; j--) {
+      var hid = filteredHeadings[j].id;
+      var link = findTocLinkForId(tocRoot, hid);
+      if (link) return link;
     }
     return null;
   }
@@ -169,24 +189,31 @@
       });
     }
 
-    var lastActiveId = '';
+    /** 以最终高亮链接的 href 为键；避免「目录无匹配 id 时先写 lastActiveId 导致后续无法重试」的锁死。 */
+    var lastHighlightHref = '';
 
     function findHeadPosition(scrollTop) {
       var filtered = collectHeadings();
-      var currentId = '';
+      var currentIndex = -1;
       for (var i = 0; i < filtered.length; i++) {
-        var ele = filtered[i];
-        if (scrollTop >= getEleTop(ele) - HEADING_OFFSET) {
-          currentId = ele.id;
+        if (scrollTop >= getEleTop(filtered[i]) - HEADING_OFFSET) {
+          currentIndex = i;
         }
       }
-      if (lastActiveId === currentId) return;
-      lastActiveId = currentId;
+
+      var activeLink = null;
+      if (currentIndex >= 0) {
+        activeLink = resolveActiveTocLink(tocContent, filtered, currentIndex);
+      } else if (filtered.length > 0) {
+        /* 尚未滚过第一个标题：展开并高亮目录首项，避免折叠态下只剩顶层编号 */
+        activeLink = tocContent.querySelector('.toc-list-link');
+      }
+
+      var hrefKey = activeLink ? activeLink.getAttribute('href') || '' : '';
+      if (hrefKey === lastHighlightHref) return;
+      lastHighlightHref = hrefKey;
 
       clearActive();
-      if (!currentId) return;
-
-      var activeLink = findTocLinkForId(tocContent, currentId);
       if (!activeLink) return;
 
       activeLink.classList.add('active');
