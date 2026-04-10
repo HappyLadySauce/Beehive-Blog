@@ -1,6 +1,6 @@
 /**
  * 文章页目录：滚动高亮、点击平滑滚动、阅读百分比、窄屏浮层开关。
- * 行为参考 hexo-theme-anzhiyu main.js scrollFnToDo、utils scrollToDest/getEleTop（等价自写）。
+ * 行为参考 hexo-theme-anzhiyu main.js scrollFnToDo、utils throttle（trailing）/ scrollToDest/getEleTop。
  */
 (function () {
   'use strict';
@@ -9,6 +9,8 @@
   var HEADING_OFFSET = 80;
   var CLICK_SCROLL_OFFSET = 80;
   var THROTTLE_MS = 100;
+  /** 与 HEADING_OFFSET 一致，正文 h* 的 scroll-margin 由 article-prose.css 设置 */
+  var TOC_INVIEW_PADDING = 12;
 
   function isMobileLayout() {
     return window.innerWidth <= MOBILE_MAX;
@@ -49,13 +51,45 @@
     });
   }
 
-  function throttle(fn, wait) {
-    var last = 0;
+  /**
+   * 与 hexo-theme-anzhiyu utils.throttle 同语义：burst 结束后 trailing 再执行一次，避免快速滚动后 TOC 停在陈旧位置。
+   */
+  function throttle(fn, wait, options) {
+    options = options || {};
+    var timeout = null;
+    var context;
+    var args;
+    var previous = 0;
+
+    function later() {
+      previous = options.leading === false ? 0 : Date.now();
+      timeout = null;
+      fn.apply(context, args);
+      if (!timeout) {
+        context = null;
+        args = null;
+      }
+    }
+
     return function () {
       var now = Date.now();
-      if (now - last >= wait) {
-        last = now;
-        fn.apply(this, arguments);
+      if (!previous && options.leading === false) previous = now;
+      var remaining = wait - (now - previous);
+      context = this;
+      args = arguments;
+      if (remaining <= 0 || remaining > wait) {
+        if (timeout) {
+          clearTimeout(timeout);
+          timeout = null;
+        }
+        previous = now;
+        fn.apply(context, args);
+        if (!timeout) {
+          context = null;
+          args = null;
+        }
+      } else if (!timeout && options.trailing !== false) {
+        timeout = setTimeout(later, remaining);
       }
     };
   }
@@ -92,6 +126,21 @@
     }
   }
 
+  /**
+   * 将当前高亮链接滚入 .toc-content 可视区（相对视口比较容器与链接矩形，避免 ±150px 一步不到位）。
+   */
+  function autoScrollTocIntoView(container, link) {
+    if (!container || !link || !container.contains(link)) return;
+    var cr = container.getBoundingClientRect();
+    var lr = link.getBoundingClientRect();
+    var pad = TOC_INVIEW_PADDING;
+    if (lr.top < cr.top + pad) {
+      container.scrollTop -= cr.top + pad - lr.top;
+    } else if (lr.bottom > cr.bottom - pad) {
+      container.scrollTop += lr.bottom - (cr.bottom - pad);
+    }
+  }
+
   function init() {
     var cardTocLayout = document.getElementById('card-toc');
     var article = document.getElementById('article-container');
@@ -104,6 +153,9 @@
     var percentEl = cardTocLayout.querySelector('.toc-percentage');
     var mobileBtn = document.querySelector('[data-post-toc-trigger]');
 
+    /** 仅最后一次高亮更新后的 rAF 会执行侧栏滚动，避免 setTimeout(0) 乱序。 */
+    var tocLayoutGen = 0;
+
     function collectHeadings() {
       var list = article.querySelectorAll('h1,h2,h3,h4,h5,h6');
       return Array.prototype.slice.call(list).filter(function (heading) {
@@ -115,18 +167,6 @@
       tocContent.querySelectorAll('.active').forEach(function (el) {
         el.classList.remove('active');
       });
-    }
-
-    function autoScrollToc(item) {
-      if (!item) return;
-      var activePosition = item.getBoundingClientRect().top;
-      var sidebarScrollTop = tocContent.scrollTop;
-      if (activePosition > document.documentElement.clientHeight - 100) {
-        tocContent.scrollTop = sidebarScrollTop + 150;
-      }
-      if (activePosition < 100) {
-        tocContent.scrollTop = sidebarScrollTop - 150;
-      }
     }
 
     var lastActiveId = '';
@@ -161,18 +201,26 @@
         }
       }
 
-      setTimeout(function () {
-        autoScrollToc(activeLink);
-      }, 0);
+      tocLayoutGen += 1;
+      var gen = tocLayoutGen;
+      requestAnimationFrame(function () {
+        if (gen !== tocLayoutGen) return;
+        if (!activeLink.classList.contains('active')) return;
+        autoScrollTocIntoView(tocContent, activeLink);
+      });
     }
 
-    var onScroll = throttle(function () {
+    function applyScrollState() {
       var scrollTop = window.scrollY || document.documentElement.scrollTop;
       findHeadPosition(scrollTop);
       updateReadingPercent(scrollTop, percentEl);
-    }, THROTTLE_MS);
+    }
 
-    window.addEventListener('scroll', onScroll, { passive: true });
+    var onScrollThrottled = throttle(applyScrollState, THROTTLE_MS);
+
+    window.addEventListener('scroll', onScrollThrottled, { passive: true });
+    /* 快速滚动结束后补同步（Chrome 114+ / Firefox / Safari 18+；旧浏览器不触发即可） */
+    window.addEventListener('scrollend', applyScrollState, { passive: true });
 
     tocContent.addEventListener('click', function (e) {
       var target = e.target.closest('.toc-list-link');
@@ -226,9 +274,7 @@
       if (mobileBtn) mobileBtn.setAttribute('aria-expanded', 'false');
     });
 
-    var initialTop = window.scrollY || document.documentElement.scrollTop;
-    findHeadPosition(initialTop);
-    updateReadingPercent(initialTop, percentEl);
+    applyScrollState();
 
     window.addEventListener(
       'resize',
