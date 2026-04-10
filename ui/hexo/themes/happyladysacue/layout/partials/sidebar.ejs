@@ -21,6 +21,7 @@ const tags = site.tags && site.tags.toArray
   : [];
 
 const catColors = ['cat-color-0','cat-color-1','cat-color-2','cat-color-3','cat-color-4','cat-color-5'];
+const beehiveTax = site.data.beehive_taxonomy || {};
 %>
 <div class="page-sidebar">
 
@@ -93,7 +94,8 @@ const catColors = ['cat-color-0','cat-color-1','cat-color-2','cat-color-3','cat-
     <% if (tags.length) { %>
       <div class="tag-cloud">
         <% tags.forEach(function (tag) { %>
-          <a class="tag-pill" href="<%- url_for(tag.path) %>"><%= tag.name %></a>
+          <% var ac = beehiveTagColorHex(tag, beehiveTax); %>
+          <a class="tag-cloud-link<% if (!ac) { %> tag-cloud-link--muted<% } %>" href="<%- url_for(tag.path) %>" style="<%- beehiveTagCloudStyle(ac) %>"><%= tag.name %></a>
         <% }) %>
       </div>
     <% } else { %>

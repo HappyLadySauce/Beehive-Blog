@@ -44,42 +44,16 @@
   gap: 12px;
 }
 
-/* 标签 pill 卡片 */
-.taxonomy-pill-card {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  border-radius: 999px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-soft);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  font-size: 0.9rem;
+.taxonomy-open-grid--tag-cloud {
+  display: block;
 }
 
-.taxonomy-pill-card:hover {
-  transform: translateY(-3px) scale(1.04);
-  box-shadow: var(--shadow-card);
-  border-color: rgba(59, 130, 246, 0.35);
-  color: var(--accent);
-}
-
-.taxonomy-pill-card__name {
-  font-weight: 500;
-}
-
-.taxonomy-pill-card__count {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  background: rgba(0, 0, 0, 0.05);
-  padding: 2px 7px;
-  border-radius: 999px;
-}
-
-html[data-theme="dark"] .taxonomy-pill-card__count,
-html.dark .taxonomy-pill-card__count {
-  background: rgba(255, 255, 255, 0.08);
+.tag-cloud--page {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px 14px;
+  line-height: 1.6;
 }
 
 /* 分类卡片 */

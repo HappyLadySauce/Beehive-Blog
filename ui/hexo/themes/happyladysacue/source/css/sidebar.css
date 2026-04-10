@@ -146,38 +146,52 @@ html.dark .category-item:hover {
 .cat-color-4 { background: linear-gradient(135deg, #eab308, #f97316); }
 .cat-color-5 { background: linear-gradient(135deg, #6366f1, #3b82f6); }
 
-/* 标签云 pill */
+/* 标签云：无框文字链；字号统一，字色有 Beehive 时用内联 color */
 .tag-cloud {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  align-items: baseline;
+  gap: 8px 12px;
+  line-height: 1.55;
 }
 
-.tag-pill {
-  display: inline-flex;
-  padding: 5px 12px;
-  border-radius: 999px;
-  font-size: 0.82rem;
-  background: rgba(0, 0, 0, 0.05);
+/* 标签云/标签行：默认字色（有 Beehive 内联 color 时以内联为准，优先级高于本规则） */
+.tag-cloud a.tag-cloud-link,
+.tag-row a.tag-cloud-link {
   color: var(--text-muted);
-  transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease;
+}
+
+.tag-cloud-link {
+  display: inline;
+  padding: 0;
+  margin: 0;
   border: none;
+  background: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.2s ease, filter 0.2s ease;
 }
 
-html[data-theme="dark"] .tag-pill,
-html.dark .tag-pill {
-  background: rgba(255, 255, 255, 0.07);
+.tag-cloud-link--muted {
+  color: var(--text-muted);
 }
 
-.tag-pill:hover {
-  background: var(--grad-primary);
-  color: #fff;
-  transform: scale(1.08) translateY(-2px);
+.tag-cloud-link:hover {
+  text-decoration: underline;
+  filter: brightness(1.12);
+}
+
+.tag-cloud-link--muted:hover {
+  filter: none;
+  opacity: 0.95;
 }
 
 /* 文章页中的标签行 */
 .tag-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  align-items: baseline;
+  gap: 8px 14px;
+  line-height: 1.55;
 }

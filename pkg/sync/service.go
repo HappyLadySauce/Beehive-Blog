@@ -114,6 +114,10 @@ func (s *SyncService) SyncAll(ctx context.Context) (*SyncResult, error) {
 	res.PagesDeleted = pd
 	res.PageFiles = pfiles
 
+	if err := s.WriteBeehiveTaxonomyJSON(ctx); err != nil {
+		klog.ErrorS(err, "WriteBeehiveTaxonomyJSON after SyncAll")
+	}
+
 	if err := s.writeLastSyncMarker(ctx); err != nil {
 		return res, err
 	}

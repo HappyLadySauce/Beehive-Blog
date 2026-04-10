@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
+	apphexo "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/hexo"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/articlequery"
@@ -232,6 +233,7 @@ func (s *Service) AdminCreate(ctx context.Context, req *v1.CreateCategoryRequest
 		klog.ErrorS(err, "AdminCreate category")
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
+	apphexo.WriteHexoTaxonomyFile(ctx, s.svc)
 	b := toBrief(c)
 	return &b, http.StatusOK, nil
 }
@@ -286,15 +288,20 @@ func (s *Service) AdminUpdate(ctx context.Context, id int64, req *v1.UpdateCateg
 		updates["slug"] = sl
 	}
 
+	wrote := false
 	if len(updates) > 0 {
 		if err := s.svc.DB.WithContext(ctx).Model(&models.Category{}).Where("id = ?", id).Updates(updates).Error; err != nil {
 			klog.ErrorS(err, "AdminUpdate category")
 			return nil, http.StatusInternalServerError, errors.New("system error")
 		}
+		wrote = true
 	}
 
 	if err := s.svc.DB.WithContext(ctx).Where("id = ?", id).First(&c).Error; err != nil {
 		return nil, http.StatusInternalServerError, errors.New("system error")
+	}
+	if wrote {
+		apphexo.WriteHexoTaxonomyFile(ctx, s.svc)
 	}
 	b := toBrief(&c)
 	return &b, http.StatusOK, nil
@@ -327,5 +334,6 @@ func (s *Service) AdminDelete(ctx context.Context, id int64, force bool, _ *http
 	if err := tx.Commit().Error; err != nil {
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
+	apphexo.WriteHexoTaxonomyFile(ctx, s.svc)
 	return &v1.DeleteCategoryResponse{ID: id}, http.StatusOK, nil
 }

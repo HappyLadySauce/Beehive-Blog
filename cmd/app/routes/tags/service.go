@@ -8,10 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/articlequery"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
+	apphexo "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/hexo"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/articlequery"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/color"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/slug"
 	"gorm.io/gorm"
@@ -334,6 +335,7 @@ func (s *Service) AdminCreate(ctx context.Context, req *v1.CreateTagRequest, _ *
 		klog.ErrorS(err, "AdminCreate tag")
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
+	apphexo.WriteHexoTaxonomyFile(ctx, s.svc)
 	item := toItem(t)
 	return &item, http.StatusOK, nil
 }
@@ -395,14 +397,19 @@ func (s *Service) AdminUpdate(ctx context.Context, id int64, req *v1.UpdateTagRe
 		updates["slug"] = sl
 	}
 
+	wrote := false
 	if len(updates) > 0 {
 		if err := s.svc.DB.WithContext(ctx).Model(&models.Tag{}).Where("id = ?", id).Updates(updates).Error; err != nil {
 			klog.ErrorS(err, "AdminUpdate tag")
 			return nil, http.StatusInternalServerError, errors.New("system error")
 		}
+		wrote = true
 	}
 	if err := s.svc.DB.WithContext(ctx).Where("id = ?", id).First(&t).Error; err != nil {
 		return nil, http.StatusInternalServerError, errors.New("system error")
+	}
+	if wrote {
+		apphexo.WriteHexoTaxonomyFile(ctx, s.svc)
 	}
 	item := toItem(&t)
 	return &item, http.StatusOK, nil
@@ -441,5 +448,6 @@ func (s *Service) AdminDelete(ctx context.Context, id int64, force bool, _ *http
 	if err := tx.Commit().Error; err != nil {
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
+	apphexo.WriteHexoTaxonomyFile(ctx, s.svc)
 	return &v1.DeleteTagResponse{ID: id}, http.StatusOK, nil
 }

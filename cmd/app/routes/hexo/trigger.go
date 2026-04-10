@@ -50,6 +50,35 @@ const (
 	effRebuildAll
 )
 
+// WriteHexoTaxonomyFile 将当前库中标签/分类映射写入 Hexo source/_data/beehive_taxonomy.json。
+// 不依赖 auto_sync；标签/分类变更后调用，便于本地或下次 hexo g 使用。
+func WriteHexoTaxonomyFile(ctx context.Context, svcCtx *svc.ServiceContext) {
+	if svcCtx == nil {
+		return
+	}
+	eff, err := hexocfg.LoadEffective(ctx, svcCtx.DB, svcCtx.Config.HexoOptions)
+	if err != nil {
+		klog.ErrorS(err, "[hexo] LoadEffective for taxonomy file")
+		return
+	}
+	syncSvc, err := sync.NewSyncService(
+		eff.PostsDirAbs,
+		eff.GenerateWorkdirAbs,
+		eff.CleanArgs,
+		eff.GenerateArgs,
+		strings.TrimSpace(svcCtx.Config.StorageOptions.BaseURL),
+		svcCtx.DB,
+		svcCtx.Redis,
+	)
+	if err != nil {
+		klog.ErrorS(err, "[hexo] NewSyncService for taxonomy file")
+		return
+	}
+	if err := syncSvc.WriteBeehiveTaxonomyJSON(ctx); err != nil {
+		klog.ErrorS(err, "[hexo] WriteBeehiveTaxonomyJSON")
+	}
+}
+
 func maybeRunSync(
 	svcCtx *svc.ServiceContext,
 	mode effMode,

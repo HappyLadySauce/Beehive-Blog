@@ -1,0 +1,14 @@
+{
+  "tag_map": {
+    "网络系统管理": "wang-luo-xi-tong-guan-li-ji-neng-da-sai",
+    "虚拟系统": "xu-ni-xi-tong"
+  },
+  "category_map": {},
+  "tag_colors": {
+    "docker": "#2DAC24",
+    "kubernetes": "#6969BD",
+    "ubuntu": "#41A312",
+    "wang-luo-xi-tong-guan-li-ji-neng-da-sai": "#E6CF5A",
+    "xu-ni-xi-tong": "#51A831"
+  }
+}

@@ -1,6 +1,7 @@
 <%
 const tags = page.tags && page.tags.toArray ? page.tags.toArray() : [];
 const categories = page.categories && page.categories.toArray ? page.categories.toArray() : [];
+const beehiveTaxPost = site.data.beehive_taxonomy || {};
 const tocCfg = theme.toc || {};
 const tocNumber = tocCfg.number !== false;
 const tocExpand = tocCfg.expand === true;
@@ -40,7 +41,8 @@ const showPostHeroPost = !!covPost;
         <footer class="article-footer">
           <div class="tag-row">
             <% tags.forEach(function (tag) { %>
-              <a class="tag-pill" href="<%- url_for(tag.path) %>"># <%= tag.name %></a>
+              <% var acp = beehiveTagColorHex(tag, beehiveTaxPost); %>
+              <a class="tag-cloud-link<% if (!acp) { %> tag-cloud-link--muted<% } %>" href="<%- url_for(tag.path) %>" style="<%- beehiveTagCloudStyle(acp) %>"># <%= tag.name %></a>
             <% }) %>
           </div>
         </footer>

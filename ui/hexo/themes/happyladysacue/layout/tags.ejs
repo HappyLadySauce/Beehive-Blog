@@ -1,5 +1,6 @@
 <%
 const tags = site.tags && site.tags.toArray ? site.tags.toArray() : [];
+const beehiveTaxTagsPage = site.data.beehive_taxonomy || {};
 %>
 <div class="page-home">
   <div class="page-header-banner">
@@ -10,14 +11,14 @@ const tags = site.tags && site.tags.toArray ? site.tags.toArray() : [];
     </div>
   </div>
 
-  <div class="taxonomy-open-grid">
+  <div class="taxonomy-open-grid taxonomy-open-grid--tag-cloud">
     <% if (tags.length) { %>
-      <% tags.forEach(function (tag) { %>
-        <a class="taxonomy-pill-card" href="<%- url_for(tag.path) %>">
-          <span class="taxonomy-pill-card__name"># <%= tag.name %></span>
-          <span class="taxonomy-pill-card__count"><%= tag.length %></span>
-        </a>
-      <% }) %>
+      <div class="tag-cloud tag-cloud--page">
+        <% tags.forEach(function (tag) { %>
+          <% var act = beehiveTagColorHex(tag, beehiveTaxTagsPage); %>
+          <a class="tag-cloud-link<% if (!act) { %> tag-cloud-link--muted<% } %>" href="<%- url_for(tag.path) %>" style="<%- beehiveTagCloudStyle(act) %>"># <%= tag.name %></a>
+        <% }) %>
+      </div>
     <% } else { %>
       <p style="color:var(--text-muted);">暂无标签。</p>
     <% } %>

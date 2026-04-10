@@ -134,7 +134,7 @@
     var CARD_SELECTOR = [
       '.post-card',
       '.sidebar-card',
-      '.taxonomy-pill-card',
+      '.tag-cloud--page',
       '.taxonomy-cat-card',
       '.taxonomy-card',
       '.page-header-banner__inner',

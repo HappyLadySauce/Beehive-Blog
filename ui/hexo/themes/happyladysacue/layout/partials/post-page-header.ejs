@@ -9,6 +9,7 @@ const plain = String(page.content || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g
 const charCount = plain.length;
 const minRead = Math.max(1, Math.ceil(charCount / 350));
 const dateFmt = config.date_format || 'YYYY-MM-DD';
+const beehiveTaxHeader = site.data.beehive_taxonomy || {};
 %>
 <header id="page-header" class="post-bg">
   <%- partial('partials/nav', { inPageHeader: true }) %>
@@ -32,7 +33,8 @@ const dateFmt = config.date_format || 'YYYY-MM-DD';
         <% if (tags.length) { %>
           <span class="article-meta tags" aria-label="标签">
             <% tags.forEach(function (tag) { %>
-              <a class="article-meta__tags" href="<%- url_for(tag.path) %>">#<%= tag.name %></a>
+              <% var ach = beehiveTagColorHex(tag, beehiveTaxHeader); %>
+              <a class="article-meta__tags tag-cloud-link<% if (!ach) { %> tag-cloud-link--muted<% } %>" href="<%- url_for(tag.path) %>" style="<%- beehiveTagCloudStyle(ach) %>">#<%= tag.name %></a>
             <% }) %>
           </span>
         <% } %>

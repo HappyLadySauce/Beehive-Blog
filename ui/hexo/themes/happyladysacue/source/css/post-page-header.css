@@ -173,14 +173,25 @@ html.dark #page-header.post-bg .site-header--in-page-header.is-scrolled {
 }
 
 #page-header.post-bg a.article-meta__tags {
-  color: rgba(255, 255, 255, 0.88);
   font-size: 0.9rem;
   font-weight: 600;
   text-decoration: none;
+  /* 有 Beehive 色时由内联 color 覆盖下列默认 */
+  color: rgba(255, 255, 255, 0.88);
+}
+
+#page-header.post-bg a.article-meta__tags.tag-cloud-link--muted {
+  color: rgba(255, 255, 255, 0.72);
 }
 
 #page-header.post-bg a.article-meta__tags:hover {
   text-decoration: underline;
+  filter: brightness(1.12);
+}
+
+#page-header.post-bg a.article-meta__tags.tag-cloud-link--muted:hover {
+  filter: none;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 #page-header.post-bg .post-title {
