@@ -35,6 +35,7 @@ if (showPostHero) bodyClasses.push('has-post-hero');
     <%- partial('partials/footer') %>
   </div>
   <script src="<%- url_for('/js/theme.js') %>"></script>
+  <script src="<%- url_for('/js/post-toc.js') %>"></script>
   <script src="<%- url_for('/js/code-block-ui.js') %>"></script>
   <% if (theme.beehive && theme.beehive.enable_auth) { %>
     <script src="<%- url_for('/js/beehive-auth.js') %>"></script>

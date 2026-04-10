@@ -68,6 +68,11 @@ sidebar:
   categories: 8
   tag_count: 14
 
+# 文章目录（行为参考 hexo-theme-anzhiyu toc / scrollFnToDo）
+toc:
+  expand: false
+  number: true
+
 # 文章页大顶栏（对齐 anzhiyu #page-header.post-bg 结构，样式自写）
 post_header:
   enable: true

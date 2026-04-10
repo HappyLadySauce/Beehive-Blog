@@ -1,7 +1,10 @@
 <%
 const tags = page.tags && page.tags.toArray ? page.tags.toArray() : [];
 const categories = page.categories && page.categories.toArray ? page.categories.toArray() : [];
-const articleToc = toc(page.content || '', { class: 'toc-list', list_number: false, max_depth: 3 });
+const tocCfg = theme.toc || {};
+const tocNumber = tocCfg.number !== false;
+const tocExpand = tocCfg.expand === true;
+const articleToc = toc(page.content || '', { class: 'toc-list', list_number: tocNumber, max_depth: 3 });
 const phPost = theme.post_header || {};
 let covPost = '';
 if (phPost.enable !== false && page.top_img !== false) {
@@ -29,7 +32,7 @@ const showPostHeroPost = !!covPost;
       </header>
       <% } %>
 
-      <div class="article-content">
+      <div id="article-container" class="article-content">
         <%- page.content %>
       </div>
 
@@ -55,19 +58,35 @@ const showPostHeroPost = !!covPost;
 
     <aside class="article-aside">
       <% if (articleToc) { %>
-        <section class="sidebar-card">
-          <div class="sidebar-card__head">
-            <svg class="sidebar-card__head-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <div class="sticky_layout">
+        <div id="card-toc" class="card-widget">
+          <div class="item-headline">
+            <svg class="item-headline-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
               <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
             </svg>
-            <h3>目录</h3>
+            <span>文章目录</span>
+            <span class="toc-percentage" aria-hidden="true"></span>
           </div>
-          <div class="toc-wrap"><%- articleToc %></div>
-        </section>
+          <div class="toc-content<%- tocExpand ? ' is-expand' : '' %>">
+            <%- articleToc %>
+          </div>
+        </div>
+      </div>
+      <button type="button"
+              class="post-toc-mobile-trigger"
+              data-post-toc-trigger
+              aria-controls="card-toc"
+              aria-expanded="false"
+              aria-label="打开文章目录">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22" aria-hidden="true">
+          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+          <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+        </svg>
+      </button>
       <% } %>
 
-      <%- partial('partials/sidebar') %>
+      <%- partial('partials/sidebar', { hidePostAsideLists: true }) %>
     </aside>
   </div>
 </div>

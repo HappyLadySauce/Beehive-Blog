@@ -1,33 +1,29 @@
+<% var skipPostAsideLists = typeof hidePostAsideLists !== 'undefined' && hidePostAsideLists; %>
+<% if (!skipPostAsideLists) { %>
 <%
 const sidebarCfg = theme.sidebar || {};
 const popularCount = sidebarCfg.popular_count || 5;
 const categoryCount = sidebarCfg.categories || 8;
 const tagCount = sidebarCfg.tag_count || 12;
 
-// 获取文章（按日期降序）
 const allPostsArr = site.posts && site.posts.toArray
   ? site.posts.toArray().sort(function (a, b) { return b.date - a.date; })
   : [];
 
-// 热门文章：有浏览量则按浏览量排序，否则用最新文章代替
 const popularPosts = allPostsArr.slice(0, popularCount);
 
-// 分类
 const categories = site.categories && site.categories.toArray
   ? site.categories.toArray().slice(0, categoryCount)
   : [];
 
-// 标签
 const tags = site.tags && site.tags.toArray
   ? site.tags.toArray().slice(0, tagCount)
   : [];
 
-// 分类颜色循环
 const catColors = ['cat-color-0','cat-color-1','cat-color-2','cat-color-3','cat-color-4','cat-color-5'];
 %>
 <div class="page-sidebar">
 
-  <%# 1. 热门文章 %>
   <section class="sidebar-card">
     <div class="sidebar-card__head">
       <svg class="sidebar-card__head-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -63,7 +59,6 @@ const catColors = ['cat-color-0','cat-color-1','cat-color-2','cat-color-3','cat-
     <% } %>
   </section>
 
-  <%# 2. 分类 — 彩色圆点 %>
   <section class="sidebar-card">
     <div class="sidebar-card__head">
       <svg class="sidebar-card__head-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -88,7 +83,6 @@ const catColors = ['cat-color-0','cat-color-1','cat-color-2','cat-color-3','cat-
     <% } %>
   </section>
 
-  <%# 3. 标签云 — pill 悬停渐变 %>
   <section class="sidebar-card">
     <div class="sidebar-card__head">
       <svg class="sidebar-card__head-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -108,3 +102,4 @@ const catColors = ['cat-color-0','cat-color-1','cat-color-2','cat-color-3','cat-
   </section>
 
 </div>
+<% } %>

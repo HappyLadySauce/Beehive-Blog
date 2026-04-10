@@ -49,28 +49,17 @@
 .article-aside {
   display: grid;
   gap: 18px;
+  align-items: start;
 }
 
-.toc-list {
-  list-style: none;
-  padding-left: 0;
-  margin: 0;
-  font-size: 0.88rem;
-}
-
-.toc-list ol,
-.toc-list ul {
-  list-style: none;
-  padding-left: 14px;
-}
-
-.toc-list a {
-  color: var(--text-muted);
-  transition: color 0.2s ease;
-}
-
-.toc-list a:hover {
-  color: var(--accent);
+/*
+ * 与 .article-shell 的 align-items:start 组合时，grid 子项默认按内容收缩高度，
+ * aside 会只有目录卡片那么高，position:sticky 的「可粘区间」极短，滚两下目录就消失。
+ * 拉满行高后，侧栏与正文列同高，sticky 才能贯穿整篇文章滚动行程。
+ */
+.article-shell > .article-aside {
+  align-self: stretch;
+  min-width: 0;
 }
 
 .page-description {
