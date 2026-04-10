@@ -136,8 +136,11 @@ html.dark .article-content figure.highlight {
 }
 
 .article-content figure.highlight table {
-  display: block;
+  /* display:table 才稳定应用 table-layout:fixed；display:block 下列宽易仍随内容 */
+  display: table;
   width: 100%;
+  max-width: 100%;
+  table-layout: fixed;
   margin: 0;
   border: none;
   border-collapse: collapse;
@@ -150,9 +153,17 @@ html.dark .article-content figure.highlight {
   border-radius: 6px;
 }
 
+.article-content figure.highlight tbody {
+  background: var(--hl-bg);
+}
+
 .article-content figure.highlight tbody tr {
-  display: flex;
-  width: 100%;
+  /* 勿对 tr 使用 flex（易列宽随内容收缩）；覆盖 prose 斑马纹 */
+  background: transparent !important;
+}
+
+.article-content figure.highlight tbody tr:nth-child(even) {
+  background: transparent !important;
 }
 
 .article-content figure.highlight td {
@@ -162,7 +173,9 @@ html.dark .article-content figure.highlight {
 }
 
 .article-content figure.highlight .gutter {
-  flex: 0 0 auto;
+  width: 3.25rem;
+  min-width: 3.25rem;
+  max-width: 3.25rem;
   user-select: none;
 }
 
@@ -181,12 +194,13 @@ html.dark .article-content figure.highlight {
 }
 
 .article-content figure.highlight .code {
-  flex: 1 1 auto;
-  min-width: 0;
   background: var(--hl-bg);
 }
 
 .article-content figure.highlight .code pre {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
   margin: 0;
   padding: 8px 10px;
   border: none;
@@ -197,6 +211,24 @@ html.dark .article-content figure.highlight {
   font-size: var(--code-font-size);
   font-family: var(--font-mono) !important;
   overflow: visible;
+}
+
+/* 对齐 anzhiyu：内层 code 去底，避免仅文字条有背景、右侧透出异色 */
+.article-content figure.highlight .code pre code {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent !important;
+  color: inherit;
+  font-family: inherit !important;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.article-content figure.highlight .code pre code.hljs {
+  background: transparent !important;
 }
 
 .article-content figure.highlight .marked,
