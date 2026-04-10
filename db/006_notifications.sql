@@ -16,9 +16,9 @@ CREATE TABLE IF NOT EXISTS notifications (
     read_at TIMESTAMP
 );
 
-CREATE INDEX idx_notifications_user_id ON notifications(user_id);
-CREATE INDEX idx_notifications_is_read ON notifications(is_read);
-CREATE INDEX idx_notifications_created_at ON notifications(created_at);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_is_read ON notifications(is_read);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at);
 
 COMMENT ON TABLE notifications IS '站内通知表';
 
@@ -55,9 +55,9 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     UNIQUE (email, type, target_id)
 );
 
-CREATE INDEX idx_subscriptions_email ON subscriptions(email);
-CREATE INDEX idx_subscriptions_user_id ON subscriptions(user_id);
-CREATE INDEX idx_subscriptions_type ON subscriptions(type);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_email ON subscriptions(email);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_type ON subscriptions(type);
 
 COMMENT ON TABLE subscriptions IS '邮件订阅表';
 
@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS webhooks (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_webhooks_is_enabled ON webhooks(is_enabled);
+CREATE INDEX IF NOT EXISTS idx_webhooks_is_enabled ON webhooks(is_enabled);
 
 COMMENT ON TABLE webhooks IS 'Webhook配置表';
 
@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS webhook_logs (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_webhook_logs_webhook_id ON webhook_logs(webhook_id);
-CREATE INDEX idx_webhook_logs_created_at ON webhook_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_webhook_logs_webhook_id ON webhook_logs(webhook_id);
+CREATE INDEX IF NOT EXISTS idx_webhook_logs_created_at ON webhook_logs(created_at);
 
 COMMENT ON TABLE webhook_logs IS 'Webhook调用日志表';

@@ -31,7 +31,13 @@ INSERT INTO user_levels (level, name, required_exp, required_days, required_arti
 (3, '活跃读者', 300, 30, 30, '注册满30天 或 有效阅读30篇文章'),
 (4, '资深访客', 600, 90, 60, '注册满90天 或 有效阅读60篇文章'),
 (5, '博客达人', 1000, 180, 100, '注册满180天 或 有效阅读100篇文章'),
-(6, '资深博主', 2000, 365, 200, '注册满365天 或 有效阅读200篇文章');
+(6, '资深博主', 2000, 365, 200, '注册满365天 或 有效阅读200篇文章')
+ON CONFLICT (level) DO UPDATE SET
+    name = EXCLUDED.name,
+    required_exp = EXCLUDED.required_exp,
+    required_days = EXCLUDED.required_days,
+    required_articles = EXCLUDED.required_articles,
+    description = EXCLUDED.description;
 
 -- 默认分类
 INSERT INTO categories (name, slug, description, sort_order)
@@ -39,8 +45,11 @@ VALUES ('默认分类', 'default', '系统初始化自动创建的默认分类',
 ON CONFLICT (slug) DO NOTHING;
 
 -- 默认存储策略
-INSERT INTO storage_policies (name, type, is_default, base_url, upload_path, sort_order) VALUES
-('本地存储', 'local', TRUE, '/uploads', 'uploads', 1);
+INSERT INTO storage_policies (name, type, is_default, base_url, upload_path, sort_order)
+SELECT '本地存储', 'local', TRUE, '/uploads', 'uploads', 1
+WHERE NOT EXISTS (
+    SELECT 1 FROM storage_policies sp WHERE sp.type = 'local' AND sp.name = '本地存储'
+);
 
 -- 系统设置初始数据
 INSERT INTO settings (key, value, "group") VALUES
@@ -87,43 +96,77 @@ INSERT INTO settings (key, value, "group") VALUES
 ('hexo.auto_sync', 'false', 'hexo'),
 ('hexo.clean_args', '', 'hexo'),
 ('hexo.generate_args', '', 'hexo'),
-('hexo.rebuild_after_auto_sync', 'false', 'hexo');
+('hexo.rebuild_after_auto_sync', 'false', 'hexo')
+ON CONFLICT (key) DO NOTHING;
 
 -- 默认菜单
-INSERT INTO menus (name, location, sort_order, is_enabled) VALUES
-('顶部导航', 'header', 1, TRUE),
-('底部导航', 'footer', 1, TRUE);
+INSERT INTO menus (name, location, sort_order, is_enabled)
+SELECT v.name, v.location, v.sort_order, v.is_enabled
+FROM (VALUES
+    ('顶部导航', 'header', 1, TRUE),
+    ('底部导航', 'footer', 1, TRUE)
+) AS v(name, location, sort_order, is_enabled)
+WHERE NOT EXISTS (SELECT 1 FROM menus m WHERE m.location = v.location);
 
 -- 获取菜单ID并插入默认菜单项
 INSERT INTO menu_items (menu_id, name, type, url, sort_order, is_enabled)
 SELECT m.id, '首页', 'link', '/', 1, TRUE
-FROM menus m WHERE m.location = 'header';
+FROM menus m WHERE m.location = 'header'
+AND NOT EXISTS (
+    SELECT 1 FROM menu_items mi
+    WHERE mi.menu_id = m.id AND mi.name = '首页' AND mi.url = '/' AND mi.sort_order = 1
+);
 
 INSERT INTO menu_items (menu_id, name, type, url, sort_order, is_enabled)
 SELECT m.id, '分类', 'link', '/categories', 2, TRUE
-FROM menus m WHERE m.location = 'header';
+FROM menus m WHERE m.location = 'header'
+AND NOT EXISTS (
+    SELECT 1 FROM menu_items mi
+    WHERE mi.menu_id = m.id AND mi.name = '分类' AND mi.url = '/categories' AND mi.sort_order = 2
+);
 
 INSERT INTO menu_items (menu_id, name, type, url, sort_order, is_enabled)
 SELECT m.id, '标签', 'link', '/tags', 3, TRUE
-FROM menus m WHERE m.location = 'header';
+FROM menus m WHERE m.location = 'header'
+AND NOT EXISTS (
+    SELECT 1 FROM menu_items mi
+    WHERE mi.menu_id = m.id AND mi.name = '标签' AND mi.url = '/tags' AND mi.sort_order = 3
+);
 
 INSERT INTO menu_items (menu_id, name, type, url, sort_order, is_enabled)
 SELECT m.id, '关于', 'link', '/about', 4, TRUE
-FROM menus m WHERE m.location = 'header';
+FROM menus m WHERE m.location = 'header'
+AND NOT EXISTS (
+    SELECT 1 FROM menu_items mi
+    WHERE mi.menu_id = m.id AND mi.name = '关于' AND mi.url = '/about' AND mi.sort_order = 4
+);
 
 -- 底部菜单
 INSERT INTO menu_items (menu_id, name, type, url, sort_order, is_enabled)
 SELECT m.id, '首页', 'link', '/', 1, TRUE
-FROM menus m WHERE m.location = 'footer';
+FROM menus m WHERE m.location = 'footer'
+AND NOT EXISTS (
+    SELECT 1 FROM menu_items mi
+    WHERE mi.menu_id = m.id AND mi.name = '首页' AND mi.url = '/' AND mi.sort_order = 1
+);
 
 INSERT INTO menu_items (menu_id, name, type, url, sort_order, is_enabled)
 SELECT m.id, 'RSS', 'link', '/rss', 2, TRUE
-FROM menus m WHERE m.location = 'footer';
+FROM menus m WHERE m.location = 'footer'
+AND NOT EXISTS (
+    SELECT 1 FROM menu_items mi
+    WHERE mi.menu_id = m.id AND mi.name = 'RSS' AND mi.url = '/rss' AND mi.sort_order = 2
+);
 
 INSERT INTO menu_items (menu_id, name, type, url, sort_order, is_enabled)
 SELECT m.id, '站点地图', 'link', '/sitemap.xml', 3, TRUE
-FROM menus m WHERE m.location = 'footer';
+FROM menus m WHERE m.location = 'footer'
+AND NOT EXISTS (
+    SELECT 1 FROM menu_items mi
+    WHERE mi.menu_id = m.id AND mi.name = '站点地图' AND mi.url = '/sitemap.xml' AND mi.sort_order = 3
+);
 
 -- 默认主题
 INSERT INTO themes (name, slug, description, author, version, path, is_active, is_system) VALUES
-('默认主题', 'default', 'Beehive Blog 默认主题', 'Beehive', '1.0.0', 'themes/default', TRUE, TRUE);
+('默认主题', 'default', 'Beehive Blog 默认主题', 'Beehive', '1.0.0', 'themes/default', TRUE, TRUE)
+ON CONFLICT (slug) DO NOTHING;

@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS categories (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_categories_slug ON categories(slug);
+CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug);
 
 COMMENT ON TABLE categories IS '分类表';
 
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS tags (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_tags_slug ON tags(slug);
+CREATE INDEX IF NOT EXISTS idx_tags_slug ON tags(slug);
 
 COMMENT ON TABLE tags IS '标签表';
 
@@ -58,13 +58,13 @@ CREATE TABLE IF NOT EXISTS articles (
     deleted_at TIMESTAMP
 );
 
-CREATE INDEX idx_articles_slug ON articles(slug);
-CREATE INDEX idx_articles_status ON articles(status);
-CREATE INDEX idx_articles_author_id ON articles(author_id);
-CREATE INDEX idx_articles_category_id ON articles(category_id);
-CREATE INDEX idx_articles_published_at ON articles(published_at);
-CREATE INDEX idx_articles_is_pinned ON articles(is_pinned, pin_order DESC);
-CREATE INDEX idx_articles_deleted_at ON articles(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_articles_slug ON articles(slug);
+CREATE INDEX IF NOT EXISTS idx_articles_status ON articles(status);
+CREATE INDEX IF NOT EXISTS idx_articles_author_id ON articles(author_id);
+CREATE INDEX IF NOT EXISTS idx_articles_category_id ON articles(category_id);
+CREATE INDEX IF NOT EXISTS idx_articles_published_at ON articles(published_at);
+CREATE INDEX IF NOT EXISTS idx_articles_is_pinned ON articles(is_pinned, pin_order DESC);
+CREATE INDEX IF NOT EXISTS idx_articles_deleted_at ON articles(deleted_at);
 
 COMMENT ON TABLE articles IS '文章表';
 
@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS article_tags (
     PRIMARY KEY (article_id, tag_id)
 );
 
-CREATE INDEX idx_article_tags_tag_id ON article_tags(tag_id);
+CREATE INDEX IF NOT EXISTS idx_article_tags_tag_id ON article_tags(tag_id);
 
 COMMENT ON TABLE article_tags IS '文章标签关联表';
 
@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS article_versions (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_article_versions_article_id ON article_versions(article_id);
+CREATE INDEX IF NOT EXISTS idx_article_versions_article_id ON article_versions(article_id);
 
 COMMENT ON TABLE article_versions IS '文章版本历史表';
 
@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS article_likes (
     UNIQUE (article_id, user_id)
 );
 
-CREATE INDEX idx_article_likes_user_id ON article_likes(user_id);
+CREATE INDEX IF NOT EXISTS idx_article_likes_user_id ON article_likes(user_id);
 
 COMMENT ON TABLE article_likes IS '文章点赞表';
 
@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS user_favorites (
     UNIQUE (user_id, article_id)
 );
 
-CREATE INDEX idx_user_favorites_article_id ON user_favorites(article_id);
+CREATE INDEX IF NOT EXISTS idx_user_favorites_article_id ON user_favorites(article_id);
 
 COMMENT ON TABLE user_favorites IS '用户收藏表';
 
@@ -134,8 +134,8 @@ CREATE TABLE IF NOT EXISTS article_view_logs (
     viewed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_article_view_logs_article_id ON article_view_logs(article_id);
-CREATE INDEX idx_article_view_logs_user_id ON article_view_logs(user_id);
-CREATE INDEX idx_article_view_logs_viewed_at ON article_view_logs(viewed_at);
+CREATE INDEX IF NOT EXISTS idx_article_view_logs_article_id ON article_view_logs(article_id);
+CREATE INDEX IF NOT EXISTS idx_article_view_logs_user_id ON article_view_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_article_view_logs_viewed_at ON article_view_logs(viewed_at);
 
 COMMENT ON TABLE article_view_logs IS '文章浏览记录表';

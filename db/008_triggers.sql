@@ -12,55 +12,55 @@ END;
 $$ language 'plpgsql';
 
 -- 为需要的表创建更新时间触发器
-CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
+CREATE OR REPLACE TRIGGER update_users_updated_at BEFORE UPDATE ON users
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_categories_updated_at BEFORE UPDATE ON categories
+CREATE OR REPLACE TRIGGER update_categories_updated_at BEFORE UPDATE ON categories
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_tags_updated_at BEFORE UPDATE ON tags
+CREATE OR REPLACE TRIGGER update_tags_updated_at BEFORE UPDATE ON tags
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_articles_updated_at BEFORE UPDATE ON articles
+CREATE OR REPLACE TRIGGER update_articles_updated_at BEFORE UPDATE ON articles
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_comments_updated_at BEFORE UPDATE ON comments
+CREATE OR REPLACE TRIGGER update_comments_updated_at BEFORE UPDATE ON comments
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_settings_updated_at BEFORE UPDATE ON settings
+CREATE OR REPLACE TRIGGER update_settings_updated_at BEFORE UPDATE ON settings
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_links_updated_at BEFORE UPDATE ON links
+CREATE OR REPLACE TRIGGER update_links_updated_at BEFORE UPDATE ON links
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_themes_updated_at BEFORE UPDATE ON themes
+CREATE OR REPLACE TRIGGER update_themes_updated_at BEFORE UPDATE ON themes
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_menus_updated_at BEFORE UPDATE ON menus
+CREATE OR REPLACE TRIGGER update_menus_updated_at BEFORE UPDATE ON menus
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_menu_items_updated_at BEFORE UPDATE ON menu_items
+CREATE OR REPLACE TRIGGER update_menu_items_updated_at BEFORE UPDATE ON menu_items
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_pages_updated_at BEFORE UPDATE ON pages
+CREATE OR REPLACE TRIGGER update_pages_updated_at BEFORE UPDATE ON pages
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_storage_policies_updated_at BEFORE UPDATE ON storage_policies
+CREATE OR REPLACE TRIGGER update_storage_policies_updated_at BEFORE UPDATE ON storage_policies
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_attachment_groups_updated_at BEFORE UPDATE ON attachment_groups
+CREATE OR REPLACE TRIGGER update_attachment_groups_updated_at BEFORE UPDATE ON attachment_groups
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_attachments_updated_at BEFORE UPDATE ON attachments
+CREATE OR REPLACE TRIGGER update_attachments_updated_at BEFORE UPDATE ON attachments
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_webhooks_updated_at BEFORE UPDATE ON webhooks
+CREATE OR REPLACE TRIGGER update_webhooks_updated_at BEFORE UPDATE ON webhooks
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_subscriptions_updated_at BEFORE UPDATE ON subscriptions
+CREATE OR REPLACE TRIGGER update_subscriptions_updated_at BEFORE UPDATE ON subscriptions
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_notification_settings_updated_at BEFORE UPDATE ON notification_settings
+CREATE OR REPLACE TRIGGER update_notification_settings_updated_at BEFORE UPDATE ON notification_settings
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================
@@ -82,7 +82,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER update_tag_count AFTER INSERT OR DELETE ON article_tags
+CREATE OR REPLACE TRIGGER update_tag_count AFTER INSERT OR DELETE ON article_tags
     FOR EACH ROW EXECUTE FUNCTION update_tag_article_count();
 
 -- 更新分类文章计数
@@ -114,7 +114,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER update_category_count AFTER INSERT OR UPDATE OR DELETE ON articles
+CREATE OR REPLACE TRIGGER update_category_count AFTER INSERT OR UPDATE OR DELETE ON articles
     FOR EACH ROW EXECUTE FUNCTION update_category_article_count();
 
 -- 更新用户评论计数
@@ -136,7 +136,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER update_user_comment_count_trigger AFTER INSERT OR DELETE ON comments
+CREATE OR REPLACE TRIGGER update_user_comment_count_trigger AFTER INSERT OR DELETE ON comments
     FOR EACH ROW EXECUTE FUNCTION update_user_comment_count();
 
 -- 更新文章评论计数
@@ -154,7 +154,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER update_article_comment_count_trigger AFTER INSERT OR DELETE ON comments
+CREATE OR REPLACE TRIGGER update_article_comment_count_trigger AFTER INSERT OR DELETE ON comments
     FOR EACH ROW EXECUTE FUNCTION update_article_comment_count();
 
 -- 更新文章点赞计数
@@ -172,7 +172,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER update_article_like_count_trigger AFTER INSERT OR DELETE ON article_likes
+CREATE OR REPLACE TRIGGER update_article_like_count_trigger AFTER INSERT OR DELETE ON article_likes
     FOR EACH ROW EXECUTE FUNCTION update_article_like_count();
 
 -- 更新评论点赞计数
@@ -190,5 +190,5 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER update_comment_like_count_trigger AFTER INSERT OR DELETE ON comment_likes
+CREATE OR REPLACE TRIGGER update_comment_like_count_trigger AFTER INSERT OR DELETE ON comment_likes
     FOR EACH ROW EXECUTE FUNCTION update_comment_like_count();

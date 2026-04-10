@@ -16,8 +16,8 @@ CREATE TABLE IF NOT EXISTS storage_policies (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_storage_policies_type ON storage_policies(type);
-CREATE INDEX idx_storage_policies_is_default ON storage_policies(is_default);
+CREATE INDEX IF NOT EXISTS idx_storage_policies_type ON storage_policies(type);
+CREATE INDEX IF NOT EXISTS idx_storage_policies_is_default ON storage_policies(is_default);
 
 COMMENT ON TABLE storage_policies IS '存储策略表';
 
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS attachment_groups (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_attachment_groups_parent_id ON attachment_groups(parent_id);
+CREATE INDEX IF NOT EXISTS idx_attachment_groups_parent_id ON attachment_groups(parent_id);
 
 COMMENT ON TABLE attachment_groups IS '附件分组表';
 
@@ -58,12 +58,12 @@ CREATE TABLE IF NOT EXISTS attachments (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_attachments_type ON attachments(type);
-CREATE INDEX idx_attachments_policy_id ON attachments(policy_id);
-CREATE INDEX idx_attachments_group_id ON attachments(group_id);
-CREATE INDEX idx_attachments_parent_id ON attachments(parent_id);
-CREATE INDEX idx_attachments_uploaded_by ON attachments(uploaded_by);
-CREATE INDEX idx_attachments_created_at ON attachments(created_at);
+CREATE INDEX IF NOT EXISTS idx_attachments_type ON attachments(type);
+CREATE INDEX IF NOT EXISTS idx_attachments_policy_id ON attachments(policy_id);
+CREATE INDEX IF NOT EXISTS idx_attachments_group_id ON attachments(group_id);
+CREATE INDEX IF NOT EXISTS idx_attachments_parent_id ON attachments(parent_id);
+CREATE INDEX IF NOT EXISTS idx_attachments_uploaded_by ON attachments(uploaded_by);
+CREATE INDEX IF NOT EXISTS idx_attachments_created_at ON attachments(created_at);
 
 COMMENT ON TABLE attachments IS '附件表';
 COMMENT ON COLUMN attachments.parent_id IS '父附件 ID，非空表示派生自该根/父附件';
@@ -77,6 +77,6 @@ CREATE TABLE IF NOT EXISTS article_attachments (
     PRIMARY KEY (article_id, attachment_id)
 );
 
-CREATE INDEX idx_article_attachments_attachment_id ON article_attachments(attachment_id);
+CREATE INDEX IF NOT EXISTS idx_article_attachments_attachment_id ON article_attachments(attachment_id);
 
 COMMENT ON TABLE article_attachments IS '文章与附件引用关系（正文 URL）';

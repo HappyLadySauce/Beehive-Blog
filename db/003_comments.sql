@@ -18,10 +18,10 @@ CREATE TABLE IF NOT EXISTS comments (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_comments_article_id ON comments(article_id);
-CREATE INDEX idx_comments_user_id ON comments(user_id);
-CREATE INDEX idx_comments_parent_id ON comments(parent_id);
-CREATE INDEX idx_comments_status ON comments(status);
+CREATE INDEX IF NOT EXISTS idx_comments_article_id ON comments(article_id);
+CREATE INDEX IF NOT EXISTS idx_comments_user_id ON comments(user_id);
+CREATE INDEX IF NOT EXISTS idx_comments_parent_id ON comments(parent_id);
+CREATE INDEX IF NOT EXISTS idx_comments_status ON comments(status);
 
 COMMENT ON TABLE comments IS '评论表';
 
@@ -34,6 +34,6 @@ CREATE TABLE IF NOT EXISTS comment_likes (
     UNIQUE (comment_id, user_id)
 );
 
-CREATE INDEX idx_comment_likes_user_id ON comment_likes(user_id);
+CREATE INDEX IF NOT EXISTS idx_comment_likes_user_id ON comment_likes(user_id);
 
 COMMENT ON TABLE comment_likes IS '评论点赞表';

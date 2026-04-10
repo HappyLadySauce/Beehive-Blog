@@ -12,8 +12,8 @@ CREATE TABLE IF NOT EXISTS settings (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_settings_group ON settings("group");
-CREATE INDEX idx_settings_key ON settings(key);
+CREATE INDEX IF NOT EXISTS idx_settings_group ON settings("group");
+CREATE INDEX IF NOT EXISTS idx_settings_key ON settings(key);
 
 COMMENT ON TABLE settings IS '系统设置表';
 
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS links (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_links_is_enabled ON links(is_enabled);
+CREATE INDEX IF NOT EXISTS idx_links_is_enabled ON links(is_enabled);
 
 COMMENT ON TABLE links IS '友情链接表';
 
@@ -49,9 +49,9 @@ CREATE TABLE IF NOT EXISTS operation_logs (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_operation_logs_user_id ON operation_logs(user_id);
-CREATE INDEX idx_operation_logs_action ON operation_logs(action);
-CREATE INDEX idx_operation_logs_created_at ON operation_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_operation_logs_user_id ON operation_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_operation_logs_action ON operation_logs(action);
+CREATE INDEX IF NOT EXISTS idx_operation_logs_created_at ON operation_logs(created_at);
 
 COMMENT ON TABLE operation_logs IS '操作日志表';
 
@@ -66,8 +66,8 @@ CREATE TABLE IF NOT EXISTS backups (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_backups_type ON backups(type);
-CREATE INDEX idx_backups_created_at ON backups(created_at);
+CREATE INDEX IF NOT EXISTS idx_backups_type ON backups(type);
+CREATE INDEX IF NOT EXISTS idx_backups_created_at ON backups(created_at);
 
 COMMENT ON TABLE backups IS '数据备份记录表';
 
@@ -88,8 +88,8 @@ CREATE TABLE IF NOT EXISTS themes (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_themes_slug ON themes(slug);
-CREATE INDEX idx_themes_is_active ON themes(is_active);
+CREATE INDEX IF NOT EXISTS idx_themes_slug ON themes(slug);
+CREATE INDEX IF NOT EXISTS idx_themes_is_active ON themes(is_active);
 
 COMMENT ON TABLE themes IS '主题表';
 
@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS menus (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_menus_location ON menus(location);
+CREATE INDEX IF NOT EXISTS idx_menus_location ON menus(location);
 
 COMMENT ON TABLE menus IS '菜单表';
 
@@ -124,8 +124,8 @@ CREATE TABLE IF NOT EXISTS menu_items (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_menu_items_menu_id ON menu_items(menu_id);
-CREATE INDEX idx_menu_items_parent_id ON menu_items(parent_id);
+CREATE INDEX IF NOT EXISTS idx_menu_items_menu_id ON menu_items(menu_id);
+CREATE INDEX IF NOT EXISTS idx_menu_items_parent_id ON menu_items(parent_id);
 
 COMMENT ON TABLE menu_items IS '菜单项表';
 
@@ -144,8 +144,8 @@ CREATE TABLE IF NOT EXISTS pages (
     deleted_at TIMESTAMP
 );
 
-CREATE INDEX idx_pages_slug ON pages(slug);
-CREATE INDEX idx_pages_status ON pages(status);
-CREATE INDEX idx_pages_deleted_at ON pages(deleted_at);
+CREATE INDEX IF NOT EXISTS idx_pages_slug ON pages(slug);
+CREATE INDEX IF NOT EXISTS idx_pages_status ON pages(status);
+CREATE INDEX IF NOT EXISTS idx_pages_deleted_at ON pages(deleted_at);
 
 COMMENT ON TABLE pages IS '独立页面表';
