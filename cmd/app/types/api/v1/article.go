@@ -134,7 +134,8 @@ type UpdateArticleRequest struct {
 	TagIDs      []int64 `json:"tagIds"`
 	Status      *string `json:"status" binding:"omitempty,oneof=draft published archived private scheduled"`
 	PublishedAt *string `json:"publishedAt" binding:"omitempty"`
-	// AutoSave 为 true 时，内容变更写入「自动保存」单槽（覆盖同文唯一一条），不递增手动版本号。
+	// AutoSave 为 true 时，内容变更写入「自动保存」单槽（覆盖同文唯一一条），不递增手动版本号，
+	// 且不触发 Hexo 文件同步/重建。
 	AutoSave *bool `json:"autoSave"`
 }
 

@@ -1,14 +1,21 @@
 {
   "tag_map": {
-    "网络系统管理": "wang-luo-xi-tong-guan-li-ji-neng-da-sai",
-    "虚拟系统": "xu-ni-xi-tong"
+    "docker": "docker",
+    "fawf": "fawf",
+    "kubernetes": "kubernetes",
+    "ubuntu": "ubuntu",
+    "网络系统管理": "post-1775995878678091600",
+    "计算机网络": "post-1775995882999128400"
   },
-  "category_map": {},
+  "category_map": {
+    "默认分类": "default"
+  },
   "tag_colors": {
-    "docker": "#2DAC24",
-    "kubernetes": "#6969BD",
-    "ubuntu": "#41A312",
-    "wang-luo-xi-tong-guan-li-ji-neng-da-sai": "#E6CF5A",
-    "xu-ni-xi-tong": "#51A831"
+    "docker": "#1D15F1",
+    "fawf": "#3B82F6",
+    "kubernetes": "#F21F30",
+    "post-1775995878678091600": "#3B82F6",
+    "post-1775995882999128400": "#3B82F6",
+    "ubuntu": "#5D353F"
   }
 }

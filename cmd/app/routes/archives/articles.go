@@ -350,6 +350,7 @@ func (a *ArticleAdmin) UpdateArticle(ctx context.Context, articleID int64, req *
 	if req == nil {
 		return nil, http.StatusBadRequest, errors.New("invalid request")
 	}
+	autoSave := req.AutoSave != nil && *req.AutoSave
 	var art models.Article
 	if err := a.svc.DB.WithContext(ctx).Where("id = ? AND deleted_at IS NULL", articleID).First(&art).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -453,7 +454,6 @@ func (a *ArticleAdmin) UpdateArticle(ctx context.Context, articleID int64, req *
 
 	// 内容有实质变更时：手动保存递增版本；自动保存仅覆盖单槽快照。
 	if _, titleChanged := updates["title"]; titleChanged || updates["content"] != nil {
-		autoSave := req.AutoSave != nil && *req.AutoSave
 		var err error
 		if autoSave {
 			err = a.saveOrReplaceAutosaveSnapshot(ctx, tx, &art, art.AuthorID)
@@ -487,7 +487,10 @@ func (a *ArticleAdmin) UpdateArticle(ctx context.Context, articleID int64, req *
 		return nil, http.StatusInternalServerError, errors.New("system error")
 	}
 
-	routehexo.MaybeSyncArticle(a.svc, articleID)
+	// 自动保存仅更新 DB/快照，不触发 Hexo 文件同步与重建，避免编辑期高频开销。
+	if !autoSave {
+		routehexo.MaybeSyncArticle(a.svc, articleID)
+	}
 	content := art.Content
 	if req.Content != nil {
 		content = *req.Content

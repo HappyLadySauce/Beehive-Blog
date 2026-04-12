@@ -1,8 +1,8 @@
 ---
 title: 技能大赛国赛 Ubuntu + RKE2 + Karmada + Karmada-Dashboard(二开) + Hingress 方案
 slug: ubuntu-rke2-karmada-karmada-dashboard-hingress
-date: 2026-04-10T15:33:09.250559+08:00
-updated: 2026-04-10T15:33:09.251219+08:00
+date: 2026-04-12T12:11:32+08:00
+updated: 2026-04-12T20:12:22.506182+08:00
 categories:
   - 默认分类
 tags:
@@ -10,8 +10,8 @@ tags:
   - kubernetes
   - ubuntu
   - 网络系统管理
-  - 虚拟系统
-beehive_id: 3
+  - 计算机网络
+beehive_id: 6
 ---
 
 通过我的不断摸索，终于确定了 `Kubernetes` 多集群管理搭建的架构模型。
