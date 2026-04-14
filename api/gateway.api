@@ -1,0 +1,165 @@
+syntax = "v1"
+
+type RegisterRequest {
+	username string `json:"username"`
+	nickname string `json:"nickname,optional"`
+	email    string `json:"email"`
+	password string `json:"password"`
+}
+
+type LoginRequest {
+	account  string `json:"account"`
+	password string `json:"password"`
+}
+
+type RefreshRequest {
+	refreshToken string `json:"refreshToken"`
+}
+
+type UserProfile {
+	id       int64  `json:"id"`
+	username string `json:"username"`
+	nickname string `json:"nickname"`
+	email    string `json:"email"`
+	role     string `json:"role"`
+}
+
+type TokenData {
+	accessToken  string      `json:"accessToken"`
+	refreshToken string      `json:"refreshToken"`
+	expiresIn    int64       `json:"expiresIn"`
+	user         UserProfile `json:"user"`
+}
+
+type ContentSummary {
+	id          int64  `json:"id"`
+	contentType string `json:"type"`
+	title       string `json:"title"`
+	slug        string `json:"slug"`
+	summary     string `json:"summary"`
+	status      string `json:"status"`
+	visibility  string `json:"visibility"`
+	aiAccess    string `json:"aiAccess"`
+	publishedAt string `json:"publishedAt,optional"`
+}
+
+type ContentDetail {
+	id           int64  `json:"id"`
+	contentType  string `json:"type"`
+	title        string `json:"title"`
+	slug         string `json:"slug"`
+	summary      string `json:"summary"`
+	bodyMarkdown string `json:"bodyMarkdown"`
+	status       string `json:"status"`
+	visibility   string `json:"visibility"`
+	aiAccess     string `json:"aiAccess"`
+}
+
+type ContentListRequest {
+	page        int64  `form:"page,optional"`
+	pageSize    int64  `form:"pageSize,optional"`
+	contentType string `form:"type,optional"`
+	keyword     string `form:"keyword,optional"`
+	status      string `form:"status,optional"`
+}
+
+type ContentListResponse {
+	list []ContentSummary `json:"list"`
+}
+
+type ContentCreateRequest {
+	contentType  string `json:"type"`
+	title        string `json:"title"`
+	slug         string `json:"slug"`
+	summary      string `json:"summary,optional"`
+	bodyMarkdown string `json:"bodyMarkdown"`
+	visibility   string `json:"visibility,optional"`
+	aiAccess     string `json:"aiAccess,optional"`
+}
+
+type ContentUpdateRequest {
+	id           int64  `path:"id"`
+	title        string `json:"title,optional"`
+	summary      string `json:"summary,optional"`
+	bodyMarkdown string `json:"bodyMarkdown,optional"`
+	visibility   string `json:"visibility,optional"`
+	aiAccess     string `json:"aiAccess,optional"`
+}
+
+type StatusUpdateRequest {
+	id     int64  `path:"id"`
+	status string `json:"status"`
+}
+
+type ContentPathRequest {
+	id int64 `path:"id"`
+}
+
+type SearchRequest {
+	query       string `form:"query"`
+	page        int64  `form:"page,optional"`
+	pageSize    int64  `form:"pageSize,optional"`
+	contentType string `form:"type,optional"`
+}
+
+type SearchResultItem {
+	contentId   int64   `json:"contentId"`
+	contentType string  `json:"type"`
+	title       string  `json:"title"`
+	slug        string  `json:"slug"`
+	summary     string  `json:"summary"`
+	highlight   string  `json:"highlight"`
+	score       float64 `json:"score"`
+}
+
+type SearchResponse {
+	list []SearchResultItem `json:"list"`
+}
+
+type HealthResponse {
+	status  string `json:"status"`
+	service string `json:"service"`
+}
+
+@server (
+	prefix: /api/v2
+	group:  gateway
+)
+service gateway-api {
+	@handler Healthz
+	get /healthz returns (HealthResponse)
+
+	@handler Register
+	post /auth/register (RegisterRequest) returns (TokenData)
+
+	@handler Login
+	post /auth/login (LoginRequest) returns (TokenData)
+
+	@handler Refresh
+	post /auth/refresh (RefreshRequest) returns (TokenData)
+
+	@handler Me
+	get /auth/me returns (UserProfile)
+
+	@handler ListArticles
+	get /public/articles (ContentListRequest) returns (ContentListResponse)
+
+	@handler ListContents
+	get /studio/contents (ContentListRequest) returns (ContentListResponse)
+
+	@handler CreateContent
+	post /studio/contents (ContentCreateRequest) returns (ContentDetail)
+
+	@handler GetContent
+	get /studio/contents/:id (ContentPathRequest) returns (ContentDetail)
+
+	@handler UpdateContent
+	put /studio/contents/:id (ContentUpdateRequest) returns (ContentDetail)
+
+	@handler UpdateContentStatus
+	put /studio/contents/:id/status (StatusUpdateRequest) returns (ContentDetail)
+
+	@handler Query
+	get /search/query (SearchRequest) returns (SearchResponse)
+}
+

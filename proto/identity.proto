@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package identity;
+
+option go_package = "services/identity/pb";
+
+message UserProfile {
+  int64 id = 1;
+  string username = 2;
+  string nickname = 3;
+  string email = 4;
+  string role = 5;
+}
+
+message RegisterRequest {
+  string username = 1;
+  string nickname = 2;
+  string email = 3;
+  string password = 4;
+}
+
+message LoginRequest {
+  string account = 1;
+  string password = 2;
+}
+
+message RefreshRequest {
+  string refresh_token = 1;
+}
+
+message TokenReply {
+  string access_token = 1;
+  string refresh_token = 2;
+  int64 expires_in = 3;
+  UserProfile user = 4;
+}
+
+message GetUserRequest {
+  int64 user_id = 1;
+}
+
+service Identity {
+  rpc Register(RegisterRequest) returns (TokenReply);
+  rpc Login(LoginRequest) returns (TokenReply);
+  rpc Refresh(RefreshRequest) returns (TokenReply);
+  rpc GetUser(GetUserRequest) returns (UserProfile);
+}

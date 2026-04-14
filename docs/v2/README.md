@@ -19,14 +19,15 @@
 - [迁移计划](./v2-migration-plan.md)
 - [服务启动顺序与落地步骤](./v2-service-bootstrap-order.md)
 
+当前代码结构已经切换为：
 
-建议接下来继续补充：
+- `api/`
+- `proto/`
+- `services/`
+- `pkg/`
 
-- `v2-first-contract-drafts.md`
-- `v2-local-dev-setup.md`
+当前实现状态：
 
-当前文档推进顺序建议：
-
-1. 先固化领域模型、数据库和服务边界
-2. 再细化权限矩阵和 API DTO
-3. 最后进入 go-zero 工程骨架搭建
+- `gateway` 已按 go-zero API 结构生成
+- `identity/content/search` 已完成 proto 和目录收口
+- RPC 正式生成仍依赖 `protoc`

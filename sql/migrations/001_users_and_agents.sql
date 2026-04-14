@@ -1,0 +1,2 @@
+-- v2 migration placeholder
+-- See docs/v2/v2-database-schema.md for the first draft schema.

@@ -2,515 +2,305 @@
 
 ## 1. 目标
 
-本文件定义 v2 在 `go-zero` 框架下的推荐仓库结构、服务目录布局、共享模块组织方式，以及 `goctl` 的使用边界。
+本文件定义 v2 当前采用的仓库结构、go-zero 服务布局，以及 `goctl` 的实际使用方式。
 
-目标：
+当前原则已经收口：
 
-- 让文档中的服务边界可以直接映射到仓库
-- 让 `goctl` 生成代码和手写领域代码各归其位
-- 避免后期目录混乱
+- 对外只保留一个 API 服务：`gateway`
+- 核心业务服务统一走 RPC
+- 目录结构尽量贴近 `goctl` 生成结果
+- 不再预留 `domain/` / `repository/`
+- 共享代码统一放在 `pkg/`
 
-## 2. 设计原则
-
-### 2.1 用 go-zero 生成骨架，不用它主导领域设计
-
-先有领域模型和服务边界，再用 `goctl` 生成 API / RPC 骨架。
-
-不要先跑脚手架再倒推架构。
-
-### 2.2 单仓库，多服务
-
-v2 建议采用 monorepo。
-
-原因：
-
-- 当前服务边界已明确
-- 公共模型、事件、DTO、proto、配置需要共享
-- 搜索、AI、MCP、worker 之间协作紧密
-
-### 2.3 共享代码要严格收敛
-
-共享目录只放：
-
-- 通用库
-- 契约
-- 配置模型
-- 事件定义
-
-不要把业务逻辑塞进 shared。
-
-## 3. 推荐仓库结构
+## 2. 当前仓库结构
 
 ```text
 beehive-blog/
-  docs/
-    archive-v1/
-    v2/
-  docker/
-  deploy/
-    local/
-    staging/
-    production/
-  apps/
+  api/
+    gateway.api
+  proto/
+    identity.proto
+    content.proto
+    search.proto
+  services/
     gateway/
-    identity-service/
-    content-service/
-    review-service/
-    search-service/
-    agent-service/
-    indexer-worker/
-    mcp-server/
-  shared/
-    proto/
+    identity/
+    content/
+    search/
+    indexer/
+  pkg/
+    configs/
+    constants/
     contracts/
     events/
     libs/
-    configs/
-    constants/
-  scripts/
-    dev/
-    codegen/
-    db/
   sql/
     migrations/
     seeds/
+  scripts/
+    codegen/
+    dev/
+    db/
+  docker/
+  deploy/
+  docs/
 ```
 
-## 4. apps 目录建议
+## 3. 目录职责
 
-## 4.1 gateway
+### 3.1 `api/`
 
-用途：
+只放对外 HTTP 契约。
 
-- 对外 HTTP 入口
-- 聚合认证上下文
-- 路由分发
+第一阶段只有：
 
-推荐结构：
+- `gateway.api`
+
+后续即使增加更多业务能力，也优先继续收敛到 `gateway` 暴露，而不是给每个服务再开一套 HTTP。
+
+### 3.2 `proto/`
+
+放内部 RPC 契约。
+
+当前第一批 proto：
+
+- `identity.proto`
+- `content.proto`
+- `search.proto`
+
+后续补：
+
+- `review.proto`
+- `agent.proto`
+
+### 3.3 `services/`
+
+放服务实现。
+
+当前结构：
 
 ```text
-apps/gateway/
-  api/
-    gateway.api
-  cmd/
-    gateway/
-      main.go
+services/
+  gateway/   # go-zero API 服务
+  identity/  # go-zero RPC 服务
+  content/   # go-zero RPC 服务
+  search/    # go-zero RPC 服务
+  indexer/   # 异步 worker
+```
+
+### 3.4 `pkg/`
+
+放跨服务共享包。
+
+只允许放：
+
+- 常量
+- 通用响应结构
+- 事件 topic
+- 配置辅助结构
+- 真正通用的无业务歧义工具
+
+不要放：
+
+- 内容业务规则
+- 数据库写入逻辑
+- 服务专属逻辑
+
+## 4. 服务布局约定
+
+## 4.1 `services/gateway`
+
+`gateway` 使用标准 go-zero API 生成结构：
+
+```text
+services/gateway/
+  gateway.go
+  etc/
+    gateway-api.yaml
   internal/
     config/
     handler/
     logic/
     svc/
     types/
-  etc/
-    gateway.yaml
 ```
 
-## 4.2 identity-service
+它的职责是：
 
-建议拆成：
+- 对外唯一 HTTP 入口
+- JWT / 鉴权上下文注入
+- 调用内部 RPC 服务
+- 统一错误码和响应风格
 
-- `api/`：对外 HTTP 接口
-- `rpc/`：供内部服务调用的 RPC 接口
+它不负责：
 
-推荐结构：
+- 直接操作数据库
+- 承载核心业务规则
+
+## 4.2 `services/identity`
+
+`identity` 采用 go-zero RPC 风格：
 
 ```text
-apps/identity-service/
-  api/
-    identity.api
-  rpc/
-    identity.proto
-  cmd/
-    api/
-      main.go
-    rpc/
-      main.go
+services/identity/
+  beehiveblog.identity.go
+  identityservice/
+    identityservice.go
+  pb/
   internal/
-    api/
-      config/
-      handler/
-      logic/
-      svc/
-      types/
-    rpc/
-      server/
-      logic/
-      svc/
-  etc/
-    identity-api.yaml
-    identity-rpc.yaml
+    config/
+    logic/
+    model/
+    server/
+    svc/
 ```
 
-## 4.3 content-service
+职责：
 
-这是 v2 核心服务。
-
-推荐结构：
-
-```text
-apps/content-service/
-  api/
-    content.api
-  rpc/
-    content.proto
-  cmd/
-    api/
-      main.go
-    rpc/
-      main.go
-  internal/
-    api/
-      config/
-      handler/
-      logic/
-      svc/
-      types/
-    rpc/
-      server/
-      logic/
-      svc/
-    domain/
-    repository/
-  etc/
-    content-api.yaml
-    content-rpc.yaml
-```
+- 注册
+- 登录
+- token / refresh token
+- 当前用户上下文
+- agent client 身份
 
 说明：
 
-- `domain/` 放领域规则
-- `repository/` 放数据库访问适配
-- 不要把所有规则堆进 `logic/`
+- 这类结构应尽量由 `goctl rpc protoc` 生成
+- 当前仓库里已先放置占位骨架，正式生成仍依赖 `protoc`
 
-## 4.4 review-service
+## 4.3 `services/content`
 
-结构与 content-service 类似，但边界更小：
+结构与 `identity` 一致：
 
 ```text
-apps/review-service/
-  api/
-  rpc/
-  cmd/
+services/content/
+  beehiveblog.content.go
+  contentservice/
+    contentservice.go
+  pb/
   internal/
-    api/
-    rpc/
-    domain/
-    repository/
-  etc/
+    config/
+    logic/
+    model/
+    server/
+    svc/
 ```
 
-## 4.5 search-service
+职责：
 
-由于搜索既有对外接口，也有内部索引逻辑，建议结构如下：
+- 内容主实体
+- 内容版本
+- 标签
+- 关系
+- 附件
+- 评论
+
+注意：
+
+- 不再额外创建 `domain/` / `repository/`
+- 业务逻辑收敛在 `internal/logic`
+- 数据访问收敛在 `internal/model`
+
+## 4.4 `services/search`
+
+结构与 `identity` 一致：
 
 ```text
-apps/search-service/
-  api/
-    search.api
-  rpc/
-    search.proto
-  cmd/
-    api/
-      main.go
-    rpc/
-      main.go
+services/search/
+  beehiveblog.search.go
+  searchservice/
+    searchservice.go
+  pb/
   internal/
-    api/
-    rpc/
-    domain/
-    repository/
-    searchengine/
-  etc/
+    config/
+    logic/
+    model/
+    server/
+    svc/
 ```
 
-说明：
+职责：
 
-- `searchengine/` 用于封装 Meilisearch / Elasticsearch 客户端
-- 不要把搜索引擎 SDK 直接散落到业务逻辑里
+- 关键词检索
+- 搜索结果组装
+- related content
+- 搜索副本读取
 
-## 4.6 agent-service
+搜索引擎客户端如果后续需要封装，优先放在：
 
-建议结构：
+- `internal/svc`
+- 或独立成 `internal/model/search`
 
-```text
-apps/agent-service/
-  api/
-    agent.api
-  rpc/
-    agent.proto
-  cmd/
-    api/
-      main.go
-    rpc/
-      main.go
-  internal/
-    api/
-    rpc/
-    domain/
-    repository/
-    providers/
-    prompts/
-  etc/
-```
+不要提前造一层泛化目录。
 
-说明：
+## 4.5 `services/indexer`
 
-- `providers/` 放模型调用适配层
-- `prompts/` 放服务内 prompt 组装逻辑或引用共享模板
+worker 不强行套 API / RPC 生成结构。
 
-## 4.7 indexer-worker
-
-worker 不一定适合完整按 API/RPC 结构生成，建议手写为主。
-
-推荐结构：
+当前建议：
 
 ```text
-apps/indexer-worker/
-  cmd/
-    worker/
-      main.go
+services/indexer/
+  indexer.go
   internal/
     config/
     consumer/
     jobs/
     svc/
-    searchengine/
-    summarizer/
-  etc/
-    indexer-worker.yaml
 ```
 
-## 4.8 mcp-server
+职责：
 
-第二阶段补，建议结构：
+- 监听内容变更
+- 更新索引
+- 生成摘要或切片
 
-```text
-apps/mcp-server/
-  cmd/
-    server/
-      main.go
-  internal/
-    config/
-    tools/
-    resources/
-    svc/
-  etc/
-    mcp-server.yaml
-```
+## 5. `goctl` 使用方式
 
-## 5. shared 目录建议
+## 5.1 适合交给 `goctl`
 
-## 5.1 shared/proto
+- `gateway.api` -> API 服务骨架
+- `proto/*.proto` -> RPC 服务骨架
+- model 基础代码生成
 
-放跨服务 proto 定义与生成脚本。
+## 5.2 当前实际策略
 
-建议：
+第一阶段按下面方式落地：
 
-- 按服务分子目录
-- 不把业务实现放进 proto 目录
+1. 手写并固化 `api/` 与 `proto/`
+2. 用 `goctl api go` 生成 `services/gateway`
+3. 用 `goctl rpc protoc` 生成 `services/identity`、`services/content`、`services/search`
+4. 在生成结果上补业务实现
 
-## 5.2 shared/contracts
+## 5.3 当前阻塞
 
-放接口契约和 DTO 约定，例如：
+当前机器上 `goctl` 已安装，但 `protoc` 还未安装。
 
-- 通用分页结构
-- 错误码
-- 统一响应模型
+因此：
 
-## 5.3 shared/events
+- `gateway` 已经可以真实生成
+- RPC 服务当前仍是占位骨架
+- 要继续生成 RPC，必须先补 `protoc`
 
-放领域事件结构和 topic 命名常量。
+## 6. 为什么不再保留 `domain` / `repository`
 
-例如：
+原因很直接：
 
-- `content.go`
-- `review.go`
-- `agent.go`
+- 这不是 go-zero 默认生成风格
+- 当前阶段业务还没复杂到值得强行加层
+- 先把 RPC 契约、模型、服务边界跑通更重要
 
-## 5.4 shared/libs
+当前收口规则：
 
-放真正通用、无业务歧义的库，例如：
+- `handler` 只处理 HTTP 输入输出
+- `logic` 承担用例逻辑
+- `svc` 管依赖
+- `model` 管数据访问
 
-- 日志
-- trace
-- 时间工具
-- ID 生成
-- 密码工具
+后续如果某个服务真的出现复杂规则，再局部补抽象，而不是全仓库预埋。
 
-不要放：
+## 7. 当前结论
 
-- 具体内容业务规则
+v2 当前采用的落地结构是：
 
-## 5.5 shared/configs
-
-放配置结构体和配置加载公共逻辑。
-
-## 5.6 shared/constants
-
-放枚举常量：
-
-- role
-- status
-- visibility
-- ai_access
-- relation_type
-
-## 6. sql 目录建议
-
-## 6.1 migrations
-
-用于放正式迁移脚本：
-
-```text
-sql/migrations/
-  001_users_and_agents.sql
-  002_content_core.sql
-  003_content_profiles.sql
-  ...
-```
-
-## 6.2 seeds
-
-用于初始化数据，例如：
-
-- owner 账号初始化说明
-- 默认标签
-- 默认配置
-
-## 7. scripts 目录建议
-
-建议拆成：
-
-```text
-scripts/
-  codegen/
-  db/
-  dev/
-```
-
-### codegen
-
-放 `goctl` 相关脚本，例如：
-
-- 生成 API 骨架
-- 生成 RPC 骨架
-- 生成 model
-
-### db
-
-放数据库迁移、本地初始化脚本。
-
-### dev
-
-放本地开发辅助脚本，例如：
-
-- 一键启动依赖
-- 本地检查
-- 本地生成代码
-
-## 8. goctl 使用边界
-
-## 8.1 适合用 goctl 的地方
-
-- 新建 API 服务骨架
-- 新建 RPC 服务骨架
-- 生成 handler / logic / types
-- 生成 proto 对应代码
-- 生成 model 基础代码
-
-## 8.2 不适合完全依赖 goctl 的地方
-
-- 领域模型设计
-- 服务边界设计
-- 搜索引擎适配层
-- AI provider 适配层
-- MCP 工具封装
-- 复杂 worker 编排
-
-结论：
-
-`goctl` 是生成器，不是架构师。
-
-## 9. 推荐生成顺序
-
-建议按这个顺序起盘：
-
-1. 先手写目录骨架
-2. 再创建 `shared/`、`sql/`、`scripts/`
-3. 再为每个服务写 `api` / `proto`
-4. 再用 `goctl` 生成服务骨架
-5. 最后手工补 `domain/`、`repository/`、`searchengine/` 等目录
-
-## 10. 推荐的 goctl 落地策略
-
-### 第一阶段
-
-建议只对以下服务使用 goctl 生成完整骨架：
-
-- `gateway`
-- `identity-service`
-- `content-service`
-- `review-service`
-- `search-service`
-- `agent-service`
-
-### 对 worker
-
-建议手写，不强行套 goctl 风格。
-
-原因：
-
-- worker 更偏异步任务执行
-- 目录诉求和 API/RPC 服务不同
-
-## 11. 推荐的工程规范
-
-### 11.1 每个服务都必须有
-
-- `cmd/`
-- `etc/`
-- `internal/`
-
-### 11.2 核心服务建议额外有
-
-- `domain/`
-- `repository/`
-
-### 11.3 搜索服务建议额外有
-
-- `searchengine/`
-
-### 11.4 AI 服务建议额外有
-
-- `providers/`
-- `prompts/`
-
-## 12. 第一阶段最小仓库骨架
-
-如果要尽快进入开发，建议最小骨架如下：
-
-```text
-beehive-blog/
-  docs/
-  docker/
-  apps/
-    gateway/
-    identity-service/
-    content-service/
-    search-service/
-    indexer-worker/
-  shared/
-    events/
-    libs/
-    constants/
-  sql/
-    migrations/
-  scripts/
-    codegen/
-```
-
-## 13. 当前结论
-
-v2 在 go-zero 下最合理的落地方式是：
-
-**单仓库、多服务、共享契约收敛、API/RPC 用 goctl 生成、领域规则和异步任务逻辑手工组织。**
+**`api + proto + services + pkg`，其中 `gateway` 是唯一 API 服务，核心业务服务统一走 RPC，目录尽量贴近 go-zero 生成结果。**
