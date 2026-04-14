@@ -16,7 +16,7 @@ func HealthzHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 		l := gateway.NewHealthzLogic(r.Context(), svcCtx)
 		resp, err := l.Healthz()
 		if err != nil {
-			httpx.ErrorCtx(r.Context(), w, err)
+			writeError(r.Context(), w, err)
 		} else {
 			httpx.OkJsonCtx(r.Context(), w, resp)
 		}

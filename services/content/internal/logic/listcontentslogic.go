@@ -7,6 +7,8 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/services/content/pb"
 
 	"github.com/zeromicro/go-zero/core/logx"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type ListContentsLogic struct {
@@ -24,5 +26,9 @@ func NewListContentsLogic(ctx context.Context, svcCtx *svc.ServiceContext) *List
 }
 
 func (l *ListContentsLogic) ListContents(in *pb.ListContentsRequest) (*pb.ListContentsResponse, error) {
-	return l.svcCtx.Store.List(in, false), nil
+	out, err := l.svcCtx.Store.List(l.ctx, in, false)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return out, nil
 }

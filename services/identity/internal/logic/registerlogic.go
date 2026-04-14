@@ -36,7 +36,7 @@ func (l *RegisterLogic) Register(in *pb.RegisterRequest) (*pb.TokenReply, error)
 		return nil, status.Error(codes.InvalidArgument, "username, email and password are required")
 	}
 
-	user, accessToken, refreshToken, expiresIn, err := l.svcCtx.Store.Register(in.Username, in.Nickname, in.Email, in.Password)
+	user, accessToken, refreshToken, expiresIn, err := l.svcCtx.Store.Register(l.ctx, in.Username, in.Nickname, in.Email, in.Password)
 	if err != nil {
 		return nil, status.Error(codes.AlreadyExists, err.Error())
 	}

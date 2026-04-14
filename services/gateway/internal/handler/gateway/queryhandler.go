@@ -16,14 +16,14 @@ func QueryHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req types.SearchRequest
 		if err := httpx.Parse(r, &req); err != nil {
-			httpx.ErrorCtx(r.Context(), w, err)
+			writeError(r.Context(), w, err)
 			return
 		}
 
 		l := gateway.NewQueryLogic(r.Context(), svcCtx)
 		resp, err := l.Query(&req)
 		if err != nil {
-			httpx.ErrorCtx(r.Context(), w, err)
+			writeError(r.Context(), w, err)
 		} else {
 			httpx.OkJsonCtx(r.Context(), w, resp)
 		}

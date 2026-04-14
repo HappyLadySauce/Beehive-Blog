@@ -4,7 +4,6 @@
 package gateway
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/logic/gateway"
@@ -14,11 +13,10 @@ import (
 
 func MeHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), gateway.AuthHeaderContextKey, r.Header.Get("Authorization"))
-		l := gateway.NewMeLogic(ctx, svcCtx)
+		l := gateway.NewMeLogic(r.Context(), svcCtx)
 		resp, err := l.Me()
 		if err != nil {
-			httpx.ErrorCtx(r.Context(), w, err)
+			writeError(r.Context(), w, err)
 		} else {
 			httpx.OkJsonCtx(r.Context(), w, resp)
 		}

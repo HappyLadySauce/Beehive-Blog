@@ -26,7 +26,7 @@ func NewUpdateContentLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Upd
 }
 
 func (l *UpdateContentLogic) UpdateContent(in *pb.UpdateContentRequest) (*pb.ContentDetail, error) {
-	out, err := l.svcCtx.Store.Update(in)
+	out, err := l.svcCtx.Store.Update(l.ctx, in)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}

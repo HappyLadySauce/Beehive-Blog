@@ -30,7 +30,7 @@ func (l *GetUserLogic) GetUser(in *pb.GetUserRequest) (*pb.UserProfile, error) {
 		return nil, status.Error(codes.InvalidArgument, "user id is required")
 	}
 
-	user, err := l.svcCtx.Store.GetUser(in.UserId)
+	user, err := l.svcCtx.Store.GetUser(l.ctx, in.UserId)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}

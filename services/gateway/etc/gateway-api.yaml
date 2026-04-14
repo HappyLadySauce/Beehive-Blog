@@ -2,8 +2,29 @@ Name: gateway-api
 Host: 0.0.0.0
 Port: 8888
 IdentityRpc:
-  Target: 127.0.0.1:8081
+  Etcd:
+    Hosts:
+      - 127.0.0.1:2379
+    Key: identity.rpc
+  NonBlock: true
+  Timeout: 2000
 ContentRpc:
-  Target: 127.0.0.1:8082
+  Etcd:
+    Hosts:
+      - 127.0.0.1:2379
+    Key: content.rpc
+  NonBlock: true
+  Timeout: 2000
 SearchRpc:
-  Target: 127.0.0.1:8083
+  Etcd:
+    Hosts:
+      - 127.0.0.1:2379
+    Key: search.rpc
+  NonBlock: true
+  Timeout: 2000
+Auth:
+  AccessSecret: change-me-in-production
+RateLimit:
+  Enabled: true
+  RPS: 80
+  Burst: 160

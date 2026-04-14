@@ -9,6 +9,7 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/services/identity/internal/svc"
 	"github.com/HappyLadySauce/Beehive-Blog/services/identity/pb"
 
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/service"
 	"github.com/zeromicro/go-zero/zrpc"

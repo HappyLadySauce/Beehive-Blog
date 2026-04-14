@@ -16,14 +16,14 @@ func UpdateContentStatusHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req types.StatusUpdateRequest
 		if err := httpx.Parse(r, &req); err != nil {
-			httpx.ErrorCtx(r.Context(), w, err)
+			writeError(r.Context(), w, err)
 			return
 		}
 
 		l := gateway.NewUpdateContentStatusLogic(r.Context(), svcCtx)
 		resp, err := l.UpdateContentStatus(&req)
 		if err != nil {
-			httpx.ErrorCtx(r.Context(), w, err)
+			writeError(r.Context(), w, err)
 		} else {
 			httpx.OkJsonCtx(r.Context(), w, resp)
 		}

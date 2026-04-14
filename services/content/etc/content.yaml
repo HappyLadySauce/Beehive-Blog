@@ -1,6 +1,9 @@
 Name: content.rpc
-ListenOn: 0.0.0.0:8080
+ListenOn: 0.0.0.0:8082
 Etcd:
   Hosts:
   - 127.0.0.1:2379
   Key: content.rpc
+DB:
+  DriverName: pgx
+  DataSource: postgres://postgres:postgres@127.0.0.1:5432/beehive_blog?sslmode=disable

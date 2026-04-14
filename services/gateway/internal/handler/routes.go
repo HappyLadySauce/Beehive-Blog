@@ -7,75 +7,87 @@ import (
 	"net/http"
 
 	gateway "github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/handler/gateway"
+	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/middleware"
 	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/svc"
 
 	"github.com/zeromicro/go-zero/rest"
 )
 
 func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
+	authMiddleware := middleware.NewAuthMiddleware(serverCtx)
+	rateLimitMiddleware := middleware.NewRateLimitMiddleware(serverCtx.Config.RateLimit)
+
 	server.AddRoutes(
-		[]rest.Route{
-			{
-				Method:  http.MethodPost,
-				Path:    "/auth/login",
-				Handler: gateway.LoginHandler(serverCtx),
-			},
-			{
-				Method:  http.MethodGet,
-				Path:    "/auth/me",
-				Handler: gateway.MeHandler(serverCtx),
-			},
-			{
-				Method:  http.MethodPost,
-				Path:    "/auth/refresh",
-				Handler: gateway.RefreshHandler(serverCtx),
-			},
-			{
-				Method:  http.MethodPost,
-				Path:    "/auth/register",
-				Handler: gateway.RegisterHandler(serverCtx),
-			},
-			{
-				Method:  http.MethodGet,
-				Path:    "/healthz",
-				Handler: gateway.HealthzHandler(serverCtx),
-			},
-			{
-				Method:  http.MethodGet,
-				Path:    "/public/articles",
-				Handler: gateway.ListArticlesHandler(serverCtx),
-			},
-			{
-				Method:  http.MethodGet,
-				Path:    "/search/query",
-				Handler: gateway.QueryHandler(serverCtx),
-			},
-			{
-				Method:  http.MethodGet,
-				Path:    "/studio/contents",
-				Handler: gateway.ListContentsHandler(serverCtx),
-			},
-			{
-				Method:  http.MethodPost,
-				Path:    "/studio/contents",
-				Handler: gateway.CreateContentHandler(serverCtx),
-			},
-			{
-				Method:  http.MethodGet,
-				Path:    "/studio/contents/:id",
-				Handler: gateway.GetContentHandler(serverCtx),
-			},
-			{
-				Method:  http.MethodPut,
-				Path:    "/studio/contents/:id",
-				Handler: gateway.UpdateContentHandler(serverCtx),
-			},
-			{
-				Method:  http.MethodPut,
-				Path:    "/studio/contents/:id/status",
-				Handler: gateway.UpdateContentStatusHandler(serverCtx),
-			},
-		},
+		rest.WithMiddlewares([]rest.Middleware{rateLimitMiddleware.Handle},
+			[]rest.Route{
+				{
+					Method:  http.MethodPost,
+					Path:    "/auth/login",
+					Handler: gateway.LoginHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/auth/refresh",
+					Handler: gateway.RefreshHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/auth/register",
+					Handler: gateway.RegisterHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/healthz",
+					Handler: gateway.HealthzHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/public/articles",
+					Handler: gateway.ListArticlesHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/search/query",
+					Handler: gateway.QueryHandler(serverCtx),
+				},
+			}...),
+		rest.WithPrefix("/api/v2"),
+	)
+
+	server.AddRoutes(
+		rest.WithMiddlewares([]rest.Middleware{rateLimitMiddleware.Handle, authMiddleware.Handle},
+			[]rest.Route{
+				{
+					Method:  http.MethodGet,
+					Path:    "/auth/me",
+					Handler: gateway.MeHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/studio/contents",
+					Handler: gateway.ListContentsHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/studio/contents",
+					Handler: gateway.CreateContentHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/studio/contents/:id",
+					Handler: gateway.GetContentHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/studio/contents/:id",
+					Handler: gateway.UpdateContentHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/studio/contents/:id/status",
+					Handler: gateway.UpdateContentStatusHandler(serverCtx),
+				},
+			}...),
 		rest.WithPrefix("/api/v2"),
 	)
 }

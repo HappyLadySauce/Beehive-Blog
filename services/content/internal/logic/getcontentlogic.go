@@ -26,7 +26,7 @@ func NewGetContentLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetCon
 }
 
 func (l *GetContentLogic) GetContent(in *pb.GetContentRequest) (*pb.ContentDetail, error) {
-	out, err := l.svcCtx.Store.Get(in.GetId())
+	out, err := l.svcCtx.Store.Get(l.ctx, in.GetId())
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}

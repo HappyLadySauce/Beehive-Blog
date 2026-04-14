@@ -1,6 +1,17 @@
 Name: identity.rpc
-ListenOn: 0.0.0.0:8080
+ListenOn: 0.0.0.0:8081
 Etcd:
   Hosts:
   - 127.0.0.1:2379
   Key: identity.rpc
+DB:
+  DriverName: pgx
+  DataSource: postgres://postgres:postgres@127.0.0.1:5432/beehive_blog?sslmode=disable
+Redis:
+  Host: 127.0.0.1:6379
+  Type: node
+Auth:
+  AccessSecret: change-me-in-production
+  Issuer: beehive-blog
+  AccessTTL: 2h
+  RefreshTTL: 720h

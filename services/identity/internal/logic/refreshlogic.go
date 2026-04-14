@@ -31,7 +31,7 @@ func (l *RefreshLogic) Refresh(in *pb.RefreshRequest) (*pb.TokenReply, error) {
 		return nil, status.Error(codes.InvalidArgument, "refresh token is required")
 	}
 
-	user, accessToken, refreshToken, expiresIn, err := l.svcCtx.Store.Refresh(in.RefreshToken)
+	user, accessToken, refreshToken, expiresIn, err := l.svcCtx.Store.Refresh(l.ctx, in.RefreshToken)
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, err.Error())
 	}

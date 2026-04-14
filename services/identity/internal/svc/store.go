@@ -1,200 +1,222 @@
 package svc
 
 import (
-	"crypto/rand"
-	"crypto/sha256"
-	"encoding/base64"
+	"context"
 	"fmt"
+	"strconv"
 	"strings"
-	"sync"
 	"time"
+
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/libs/security"
+	"github.com/HappyLadySauce/Beehive-Blog/services/identity/internal/config"
+	"github.com/zeromicro/go-zero/core/stores/redis"
+	"github.com/zeromicro/go-zero/core/stores/sqlx"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type userRecord struct {
-	ID           int64
-	Username     string
-	Nickname     string
-	Email        string
-	Role         string
-	PasswordHash string
+	ID           int64  `db:"id"`
+	Username     string `db:"username"`
+	Nickname     string `db:"nickname"`
+	Email        string `db:"email"`
+	Role         string `db:"role"`
+	PasswordHash string `db:"password_hash"`
 }
 
-type memoryStore struct {
-	mu sync.RWMutex
-
-	nextUserID int64
-	usersByID  map[int64]*userRecord
-	accountIdx map[string]int64
-	refreshIdx map[string]int64
+type identityStore struct {
+	conn       sqlx.SqlConn
+	redis      *redis.Redis
+	authConfig config.AuthConf
 }
 
-func newMemoryStore() *memoryStore {
-	return &memoryStore{
-		nextUserID: 1,
-		usersByID:  make(map[int64]*userRecord),
-		accountIdx: make(map[string]int64),
-		refreshIdx: make(map[string]int64),
+func newIdentityStore(conn sqlx.SqlConn, redisClient *redis.Redis, authCfg config.AuthConf) (*identityStore, error) {
+	s := &identityStore{
+		conn:       conn,
+		redis:      redisClient,
+		authConfig: authCfg,
 	}
+	if err := s.ensureSchema(context.Background()); err != nil {
+		return nil, err
+	}
+	return s, nil
 }
 
-func (s *memoryStore) Register(username, nickname, email, password string) (*userRecord, string, string, int64, error) {
-	keyUsername := accountKey(username)
-	keyEmail := accountKey(email)
-	if keyUsername == "" || keyEmail == "" || strings.TrimSpace(password) == "" {
+func (s *identityStore) Register(ctx context.Context, username, nickname, email, password string) (*userRecord, string, string, int64, error) {
+	username = strings.TrimSpace(username)
+	email = strings.TrimSpace(email)
+	password = strings.TrimSpace(password)
+	if username == "" || email == "" || password == "" {
 		return nil, "", "", 0, fmt.Errorf("invalid register request")
 	}
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if _, ok := s.accountIdx[keyUsername]; ok {
-		return nil, "", "", 0, fmt.Errorf("username already exists")
+	if len(password) < 8 {
+		return nil, "", "", 0, fmt.Errorf("password too short")
 	}
-	if _, ok := s.accountIdx[keyEmail]; ok {
-		return nil, "", "", 0, fmt.Errorf("email already exists")
-	}
-
-	id := s.nextUserID
-	s.nextUserID++
-	if nickname == "" {
+	if nickname = strings.TrimSpace(nickname); nickname == "" {
 		nickname = username
 	}
 
-	user := &userRecord{
-		ID:           id,
-		Username:     username,
-		Nickname:     nickname,
-		Email:        email,
-		Role:         "owner",
-		PasswordHash: passwordDigest(password),
-	}
-
-	s.usersByID[id] = user
-	s.accountIdx[keyUsername] = id
-	s.accountIdx[keyEmail] = id
-
-	accessToken, expiresIn, err := buildAccessToken(id)
+	passwordHash, err := hashPassword(password)
 	if err != nil {
 		return nil, "", "", 0, err
 	}
-	refreshToken, err := buildRefreshToken(id)
+
+	var inserted userRecord
+	query := `
+INSERT INTO users (username, nickname, email, role, password_hash)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, username, nickname, email, role, password_hash`
+	if err = s.conn.QueryRowCtx(ctx, &inserted, query, username, nickname, email, "owner", passwordHash); err != nil {
+		if isUniqueViolation(err) {
+			return nil, "", "", 0, fmt.Errorf("username or email already exists")
+		}
+		return nil, "", "", 0, err
+	}
+
+	accessToken, expiresIn, err := security.IssueAccessToken(s.authConfig.AccessSecret, s.authConfig.Issuer, inserted.ID, s.authConfig.AccessTTL)
 	if err != nil {
 		return nil, "", "", 0, err
 	}
-	s.refreshIdx[refreshToken] = id
-
-	return copyUser(user), accessToken, refreshToken, expiresIn, nil
+	refreshToken, err := security.BuildRefreshToken()
+	if err != nil {
+		return nil, "", "", 0, err
+	}
+	if err = s.storeRefreshToken(ctx, refreshToken, inserted.ID); err != nil {
+		return nil, "", "", 0, err
+	}
+	return &inserted, accessToken, refreshToken, expiresIn, nil
 }
 
-func (s *memoryStore) Login(account, password string) (*userRecord, string, string, int64, error) {
-	key := accountKey(account)
-	if key == "" || strings.TrimSpace(password) == "" {
+func (s *identityStore) Login(ctx context.Context, account, password string) (*userRecord, string, string, int64, error) {
+	account = strings.TrimSpace(account)
+	password = strings.TrimSpace(password)
+	if account == "" || password == "" {
 		return nil, "", "", 0, fmt.Errorf("invalid login request")
 	}
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	uid, ok := s.accountIdx[key]
-	if !ok {
-		return nil, "", "", 0, fmt.Errorf("account not found")
+	var user userRecord
+	query := `
+SELECT id, username, nickname, email, role, password_hash
+FROM users
+WHERE lower(username) = lower($1) OR lower(email) = lower($1)
+LIMIT 1`
+	if err := s.conn.QueryRowCtx(ctx, &user, query, account); err != nil {
+		if err == sqlx.ErrNotFound {
+			return nil, "", "", 0, fmt.Errorf("account not found")
+		}
+		return nil, "", "", 0, err
 	}
-	user := s.usersByID[uid]
-	if user == nil || user.PasswordHash != passwordDigest(password) {
+	if err := verifyPassword(user.PasswordHash, password); err != nil {
 		return nil, "", "", 0, fmt.Errorf("invalid credentials")
 	}
 
-	accessToken, expiresIn, err := buildAccessToken(user.ID)
+	accessToken, expiresIn, err := security.IssueAccessToken(s.authConfig.AccessSecret, s.authConfig.Issuer, user.ID, s.authConfig.AccessTTL)
 	if err != nil {
 		return nil, "", "", 0, err
 	}
-	refreshToken, err := buildRefreshToken(user.ID)
+	refreshToken, err := security.BuildRefreshToken()
 	if err != nil {
 		return nil, "", "", 0, err
 	}
-	s.refreshIdx[refreshToken] = user.ID
-
-	return copyUser(user), accessToken, refreshToken, expiresIn, nil
+	if err = s.storeRefreshToken(ctx, refreshToken, user.ID); err != nil {
+		return nil, "", "", 0, err
+	}
+	return &user, accessToken, refreshToken, expiresIn, nil
 }
 
-func (s *memoryStore) Refresh(refreshToken string) (*userRecord, string, string, int64, error) {
-	if strings.TrimSpace(refreshToken) == "" {
+func (s *identityStore) Refresh(ctx context.Context, refreshToken string) (*userRecord, string, string, int64, error) {
+	refreshToken = strings.TrimSpace(refreshToken)
+	if refreshToken == "" {
 		return nil, "", "", 0, fmt.Errorf("empty refresh token")
 	}
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	userID, ok := s.refreshIdx[refreshToken]
-	if !ok {
+	rawUserID, err := s.redis.GetDelCtx(ctx, refreshTokenKey(refreshToken))
+	if err != nil || rawUserID == "" {
 		return nil, "", "", 0, fmt.Errorf("refresh token invalid")
 	}
-	user := s.usersByID[userID]
-	if user == nil {
-		return nil, "", "", 0, fmt.Errorf("user not found")
+	userID, err := strconv.ParseInt(rawUserID, 10, 64)
+	if err != nil || userID <= 0 {
+		return nil, "", "", 0, fmt.Errorf("refresh token invalid")
 	}
-	delete(s.refreshIdx, refreshToken)
 
-	accessToken, expiresIn, err := buildAccessToken(user.ID)
+	user, err := s.GetUser(ctx, userID)
 	if err != nil {
 		return nil, "", "", 0, err
 	}
-	newRefreshToken, err := buildRefreshToken(user.ID)
+	accessToken, expiresIn, err := security.IssueAccessToken(s.authConfig.AccessSecret, s.authConfig.Issuer, user.ID, s.authConfig.AccessTTL)
 	if err != nil {
 		return nil, "", "", 0, err
 	}
-	s.refreshIdx[newRefreshToken] = user.ID
-
-	return copyUser(user), accessToken, newRefreshToken, expiresIn, nil
+	newRefreshToken, err := security.BuildRefreshToken()
+	if err != nil {
+		return nil, "", "", 0, err
+	}
+	if err = s.storeRefreshToken(ctx, newRefreshToken, user.ID); err != nil {
+		return nil, "", "", 0, err
+	}
+	return user, accessToken, newRefreshToken, expiresIn, nil
 }
 
-func (s *memoryStore) GetUser(userID int64) (*userRecord, error) {
+func (s *identityStore) GetUser(ctx context.Context, userID int64) (*userRecord, error) {
 	if userID <= 0 {
 		return nil, fmt.Errorf("invalid user id")
 	}
 
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	user, ok := s.usersByID[userID]
-	if !ok {
-		return nil, fmt.Errorf("user not found")
+	var user userRecord
+	query := `
+SELECT id, username, nickname, email, role, password_hash
+FROM users
+WHERE id = $1
+LIMIT 1`
+	if err := s.conn.QueryRowCtx(ctx, &user, query, userID); err != nil {
+		if err == sqlx.ErrNotFound {
+			return nil, fmt.Errorf("user not found")
+		}
+		return nil, err
 	}
-	return copyUser(user), nil
+	return &user, nil
 }
 
-func accountKey(v string) string {
-	return strings.ToLower(strings.TrimSpace(v))
+func (s *identityStore) ensureSchema(ctx context.Context) error {
+	const query = `
+CREATE TABLE IF NOT EXISTS users (
+	id BIGSERIAL PRIMARY KEY,
+	username VARCHAR(64) NOT NULL UNIQUE,
+	nickname VARCHAR(128) NOT NULL,
+	email VARCHAR(255) NOT NULL UNIQUE,
+	role VARCHAR(32) NOT NULL DEFAULT 'owner',
+	password_hash VARCHAR(255) NOT NULL,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+)`
+	_, err := s.conn.ExecCtx(ctx, query)
+	return err
 }
 
-func passwordDigest(raw string) string {
-	sum := sha256.Sum256([]byte(raw))
-	return base64.RawURLEncoding.EncodeToString(sum[:])
-}
-
-func buildAccessToken(userID int64) (string, int64, error) {
-	return buildToken("acc", userID, 7200)
-}
-
-func buildRefreshToken(userID int64) (string, error) {
-	token, _, err := buildToken("ref", userID, 86400*30)
-	return token, err
-}
-
-func buildToken(prefix string, userID int64, ttlSeconds int64) (string, int64, error) {
-	buf := make([]byte, 18)
-	if _, err := rand.Read(buf); err != nil {
-		return "", 0, err
+func (s *identityStore) storeRefreshToken(ctx context.Context, token string, userID int64) error {
+	ttl := int(s.authConfig.RefreshTTL.Seconds())
+	if ttl <= 0 {
+		ttl = int((30 * 24 * time.Hour).Seconds())
 	}
-	expiresIn := time.Now().Unix() + ttlSeconds
-	token := fmt.Sprintf("%s.%d.%d.%s", prefix, userID, expiresIn, base64.RawURLEncoding.EncodeToString(buf))
-	return token, expiresIn, nil
+	return s.redis.SetexCtx(ctx, refreshTokenKey(token), strconv.FormatInt(userID, 10), ttl)
 }
 
-func copyUser(in *userRecord) *userRecord {
-	if in == nil {
-		return nil
+func hashPassword(raw string) (string, error) {
+	hashed, err := bcrypt.GenerateFromPassword([]byte(raw), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
 	}
-	out := *in
-	return &out
+	return string(hashed), nil
+}
+
+func verifyPassword(hashed, raw string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hashed), []byte(raw))
+}
+
+func refreshTokenKey(token string) string {
+	return "identity:refresh:" + token
+}
+
+func isUniqueViolation(err error) bool {
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "duplicate key") || strings.Contains(msg, "unique constraint")
 }

@@ -34,7 +34,7 @@ func (l *LoginLogic) Login(in *pb.LoginRequest) (*pb.TokenReply, error) {
 		return nil, status.Error(codes.InvalidArgument, "account and password are required")
 	}
 
-	user, accessToken, refreshToken, expiresIn, err := l.svcCtx.Store.Login(in.Account, in.Password)
+	user, accessToken, refreshToken, expiresIn, err := l.svcCtx.Store.Login(l.ctx, in.Account, in.Password)
 	if err != nil {
 		return nil, status.Error(codes.Unauthenticated, err.Error())
 	}

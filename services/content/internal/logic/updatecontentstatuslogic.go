@@ -26,7 +26,7 @@ func NewUpdateContentStatusLogic(ctx context.Context, svcCtx *svc.ServiceContext
 }
 
 func (l *UpdateContentStatusLogic) UpdateContentStatus(in *pb.UpdateStatusRequest) (*pb.ContentDetail, error) {
-	out, err := l.svcCtx.Store.UpdateStatus(in)
+	out, err := l.svcCtx.Store.UpdateStatus(l.ctx, in)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}

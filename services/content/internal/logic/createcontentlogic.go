@@ -26,7 +26,7 @@ func NewCreateContentLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Cre
 }
 
 func (l *CreateContentLogic) CreateContent(in *pb.CreateContentRequest) (*pb.ContentDetail, error) {
-	out, err := l.svcCtx.Store.Create(in)
+	out, err := l.svcCtx.Store.Create(l.ctx, in)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
