@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/types/common"
 	"github.com/gin-gonic/gin"
 	"k8s.io/klog/v2"
 )

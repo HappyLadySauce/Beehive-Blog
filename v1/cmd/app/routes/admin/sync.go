@@ -6,11 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
-	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/hexocfg"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/sync"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/svc"
+	v1 "github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/types/api/v1"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/types/common"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/pkg/hexocfg"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/pkg/sync"
 	"github.com/gin-gonic/gin"
 )
 

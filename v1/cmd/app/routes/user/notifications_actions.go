@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
-	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/models"
+	v1 "github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/types/api/v1"
 	"gorm.io/gorm"
 	"k8s.io/klog/v2"
 )

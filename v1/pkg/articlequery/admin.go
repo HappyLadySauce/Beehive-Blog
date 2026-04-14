@@ -5,7 +5,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/models"
 	"gorm.io/gorm"
 )
 

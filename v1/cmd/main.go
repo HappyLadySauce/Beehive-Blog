@@ -8,7 +8,7 @@ import (
 
 	"k8s.io/component-base/cli"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app"
 )
 
 const (

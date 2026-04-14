@@ -9,18 +9,18 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/models"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/pkg/options"
 	"gorm.io/gorm"
 )
 
 // Settings keys (settings.key is globally unique).
 const (
-	KeyHexoDir                 = "hexo.hexo_dir" // read-only from YAML; not stored in DB
-	KeyAutoSync                = "hexo.auto_sync"
-	KeyCleanArgs               = "hexo.clean_args"
-	KeyGenerateArgs            = "hexo.generate_args"
-	KeyRebuildAfterAutoSync    = "hexo.rebuild_after_auto_sync"
+	KeyHexoDir              = "hexo.hexo_dir" // read-only from YAML; not stored in DB
+	KeyAutoSync             = "hexo.auto_sync"
+	KeyCleanArgs            = "hexo.clean_args"
+	KeyGenerateArgs         = "hexo.generate_args"
+	KeyRebuildAfterAutoSync = "hexo.rebuild_after_auto_sync"
 )
 
 // EffectiveHexo is the resolved config for Hexo sync and subprocess invocations.

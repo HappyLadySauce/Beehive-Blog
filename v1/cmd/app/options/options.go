@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/component-base/cli/flag"
 
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/pkg/options"
 )
 
 // Options holds the options for the application

@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/homedir"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/pkg/utils/homedir"
 )
 
 const (

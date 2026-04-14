@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
-	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/models"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/svc"
+	v1 "github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/types/api/v1"
 	"gorm.io/gorm"
 	"k8s.io/klog/v2"
 )

@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/color"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/models"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/pkg/utils/color"
 )
 
 const defaultHexoTagColor = "#3B82F6"

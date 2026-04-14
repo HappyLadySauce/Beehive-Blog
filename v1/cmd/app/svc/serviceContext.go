@@ -8,14 +8,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/mailer"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/models"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/pkg/mailer"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"k8s.io/klog/v2"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/options"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/options"
 )
 
 // ServiceContext 服务上下文

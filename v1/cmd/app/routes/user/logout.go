@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strings"
 
-	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
-	authutil "github.com/HappyLadySauce/Beehive-Blog/pkg/utils/auth"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/jwt"
+	v1 "github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/types/api/v1"
+	authutil "github.com/HappyLadySauce/Beehive-Blog/v1/pkg/utils/auth"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/pkg/utils/jwt"
 	"k8s.io/klog/v2"
 )
 

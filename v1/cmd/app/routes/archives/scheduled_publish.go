@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
-	routehexo "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/hexo"
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/scheduler"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/models"
+	routehexo "github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/routes/hexo"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/svc"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/pkg/scheduler"
 )
 
 // RegisterScheduledPublishJob 将「到期定时文章改为已发布」注册到 Runner。

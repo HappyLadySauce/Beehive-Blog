@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/hexocfg"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/sync"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/models"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/svc"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/pkg/hexocfg"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/pkg/sync"
 	"k8s.io/klog/v2"
 )
 

@@ -9,8 +9,8 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/markdownfrontmatter"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/models"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/pkg/markdownfrontmatter"
 	"gopkg.in/yaml.v3"
 )
 

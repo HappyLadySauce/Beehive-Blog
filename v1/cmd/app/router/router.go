@@ -7,8 +7,8 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
-	_ "github.com/HappyLadySauce/Beehive-Blog/api/swagger/docs"
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middlewares"
+	_ "github.com/HappyLadySauce/Beehive-Blog/v1/api/swagger/docs"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/middlewares"
 )
 
 var (

@@ -17,12 +17,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
-	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/attachmentref"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/models"
+	v1 "github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/types/api/v1"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/pkg/attachmentref"
+	ico "github.com/Kodeworks/golang-image-ico"
 	"github.com/disintegration/imaging"
 	gwebp "github.com/gen2brain/webp"
-	ico "github.com/Kodeworks/golang-image-ico"
 	"gorm.io/gorm"
 	"k8s.io/klog/v2"
 

@@ -9,10 +9,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"k8s.io/klog/v2"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middlewares"
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
-	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/middlewares"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/svc"
+	v1 "github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/types/api/v1"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/types/common"
 )
 
 // HandleUpload godoc

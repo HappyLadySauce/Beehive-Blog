@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/models"
 )
 
 // SyncAllPages 全量同步已发布页面并清理 beehive-pages 下孤儿目录。

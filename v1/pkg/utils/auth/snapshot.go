@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/models"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
@@ -41,4 +41,3 @@ func SyncUserAuthSnapshot(ctx context.Context, rdb *redis.Client, db *gorm.DB, t
 	}
 	return rdb.Expire(ctx, authCacheKey, ttl).Err()
 }
-

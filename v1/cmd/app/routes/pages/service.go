@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
-	routehexo "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/hexo"
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
-	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/slug"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/models"
+	routehexo "github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/routes/hexo"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/svc"
+	v1 "github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/types/api/v1"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/pkg/utils/slug"
 	"gorm.io/gorm"
 	"k8s.io/klog/v2"
 )

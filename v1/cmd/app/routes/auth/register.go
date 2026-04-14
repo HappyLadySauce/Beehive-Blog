@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/models"
-	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
-	authutil "github.com/HappyLadySauce/Beehive-Blog/pkg/utils/auth"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/jwt"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/passwd"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/models"
+	v1 "github.com/HappyLadySauce/Beehive-Blog/v1/cmd/app/types/api/v1"
+	authutil "github.com/HappyLadySauce/Beehive-Blog/v1/pkg/utils/auth"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/pkg/utils/jwt"
+	"github.com/HappyLadySauce/Beehive-Blog/v1/pkg/utils/passwd"
 	"gorm.io/gorm"
 	"k8s.io/klog/v2"
 )
