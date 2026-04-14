@@ -1,0 +1,19 @@
+{
+  "tag_map": {
+    "docker": "docker",
+    "kubernetes": "kubernetes",
+    "ubuntu": "ubuntu",
+    "wang-luo-xi-tong-guan-li-ji-neng-da-sai": "wang-luo-xi-tong-guan-li-ji-neng-da-sai",
+    "xu-ni-xi-tong": "xu-ni-xi-tong"
+  },
+  "category_map": {
+    "默认分类": "default"
+  },
+  "tag_colors": {
+    "docker": "#B01DCE",
+    "kubernetes": "#FB6FA9",
+    "ubuntu": "#D1BE57",
+    "wang-luo-xi-tong-guan-li-ji-neng-da-sai": "#0A0BFB",
+    "xu-ni-xi-tong": "#3DD701"
+  }
+}
