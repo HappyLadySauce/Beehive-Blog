@@ -31,7 +31,21 @@ func NewRefreshLogic(ctx context.Context, svcCtx *svc.ServiceContext) *RefreshLo
 }
 
 func (l *RefreshLogic) Refresh(req *types.RefreshRequest) (resp *types.TokenData, err error) {
-	if req == nil || strings.TrimSpace(req.RefreshToken) == "" {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+	fields := map[string]any{
+		"refresh_token": maskToken(req.RefreshToken),
+	}
+	defer func() {
+		if err != nil {
+			auditFailure(l.ctx, "auth.refresh", err, fields)
+			return
+		}
+		auditSuccess(l.ctx, "auth.refresh", fields)
+	}()
+
+	if strings.TrimSpace(req.RefreshToken) == "" {
 		return nil, status.Error(codes.InvalidArgument, "refreshToken is required")
 	}
 

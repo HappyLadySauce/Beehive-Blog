@@ -5,12 +5,15 @@ package gateway
 
 import (
 	"context"
+	"strings"
 
 	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/svc"
 	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/types"
 	identityrpc "github.com/HappyLadySauce/Beehive-Blog/services/identity/identity"
 
 	"github.com/zeromicro/go-zero/core/logx"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type RegisterLogic struct {
@@ -28,6 +31,26 @@ func NewRegisterLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Register
 }
 
 func (l *RegisterLogic) Register(req *types.RegisterRequest) (resp *types.TokenData, err error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	fields := map[string]any{
+		"username": maskAccount(req.Username),
+		"email":    maskEmail(req.Email),
+	}
+	defer func() {
+		if err != nil {
+			auditFailure(l.ctx, "auth.register", err, fields)
+			return
+		}
+		auditSuccess(l.ctx, "auth.register", fields)
+	}()
+
+	if strings.TrimSpace(req.Username) == "" || strings.TrimSpace(req.Email) == "" || strings.TrimSpace(req.Password) == "" {
+		return nil, status.Error(codes.InvalidArgument, "username, email and password are required")
+	}
+
 	out, err := l.svcCtx.Identity.Register(l.ctx, &identityrpc.RegisterRequest{
 		Username: req.Username,
 		Nickname: req.Nickname,

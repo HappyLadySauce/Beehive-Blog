@@ -7,9 +7,9 @@ import (
 	"context"
 	"strings"
 
+	contentrpc "github.com/HappyLadySauce/Beehive-Blog/services/content/content"
 	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/svc"
 	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/types"
-	contentrpc "github.com/HappyLadySauce/Beehive-Blog/services/content/content"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"google.golang.org/grpc/codes"
@@ -31,7 +31,24 @@ func NewCreateContentLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Cre
 }
 
 func (l *CreateContentLogic) CreateContent(req *types.ContentCreateRequest) (resp *types.ContentDetail, err error) {
-	if req == nil || strings.TrimSpace(req.ContentType) == "" || strings.TrimSpace(req.Title) == "" || strings.TrimSpace(req.Slug) == "" {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+	userID, _ := parseAccessTokenUserIDFromContext(l.ctx)
+	fields := map[string]any{
+		"user_id": userID,
+		"type":    req.ContentType,
+		"slug":    req.Slug,
+	}
+	defer func() {
+		if err != nil {
+			auditFailure(l.ctx, "content.create", err, fields)
+			return
+		}
+		auditSuccess(l.ctx, "content.create", fields)
+	}()
+
+	if strings.TrimSpace(req.ContentType) == "" || strings.TrimSpace(req.Title) == "" || strings.TrimSpace(req.Slug) == "" {
 		return nil, status.Error(codes.InvalidArgument, "type/title/slug are required")
 	}
 

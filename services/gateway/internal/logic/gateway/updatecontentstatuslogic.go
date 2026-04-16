@@ -7,9 +7,9 @@ import (
 	"context"
 	"strings"
 
+	contentrpc "github.com/HappyLadySauce/Beehive-Blog/services/content/content"
 	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/svc"
 	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/types"
-	contentrpc "github.com/HappyLadySauce/Beehive-Blog/services/content/content"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"google.golang.org/grpc/codes"
@@ -31,7 +31,24 @@ func NewUpdateContentStatusLogic(ctx context.Context, svcCtx *svc.ServiceContext
 }
 
 func (l *UpdateContentStatusLogic) UpdateContentStatus(req *types.StatusUpdateRequest) (resp *types.ContentDetail, err error) {
-	if req == nil || req.Id <= 0 || strings.TrimSpace(req.Status) == "" {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+	userID, _ := parseAccessTokenUserIDFromContext(l.ctx)
+	fields := map[string]any{
+		"user_id":    userID,
+		"content_id": req.Id,
+		"status":     req.Status,
+	}
+	defer func() {
+		if err != nil {
+			auditFailure(l.ctx, "content.update_status", err, fields)
+			return
+		}
+		auditSuccess(l.ctx, "content.update_status", fields)
+	}()
+
+	if req.Id <= 0 || strings.TrimSpace(req.Status) == "" {
 		return nil, status.Error(codes.InvalidArgument, "id and status are required")
 	}
 

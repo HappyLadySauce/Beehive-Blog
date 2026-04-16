@@ -46,12 +46,21 @@ func (s *contentStore) Create(ctx context.Context, in *pb.CreateContentRequest) 
 		return nil, fmt.Errorf("type/title/slug are required")
 	}
 
+	visibility := defaultIfEmpty(in.Visibility, "private")
+	aiAccess := defaultIfEmpty(in.AiAccess, "denied")
+	if !isAllowedVisibility(visibility) {
+		return nil, fmt.Errorf("invalid visibility")
+	}
+	if !isAllowedAiAccess(aiAccess) {
+		return nil, fmt.Errorf("invalid ai_access")
+	}
+
 	var out contentRecord
 	query := `
 INSERT INTO content_items (type, title, slug, summary, body_markdown, status, visibility, ai_access)
 VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7)
 RETURNING id, type, title, slug, summary, body_markdown, status, visibility, ai_access, published_at`
-	if err := s.conn.QueryRowCtx(ctx, &out, query, typ, title, slug, in.Summary, in.BodyMarkdown, defaultIfEmpty(in.Visibility, "private"), defaultIfEmpty(in.AiAccess, "denied")); err != nil {
+	if err := s.conn.QueryRowCtx(ctx, &out, query, typ, title, slug, in.Summary, in.BodyMarkdown, visibility, aiAccess); err != nil {
 		if isUniqueViolation(err) {
 			return nil, fmt.Errorf("slug already exists")
 		}
@@ -79,6 +88,15 @@ func (s *contentStore) Update(ctx context.Context, in *pb.UpdateContentRequest) 
 	if in == nil || in.Id <= 0 {
 		return nil, fmt.Errorf("invalid request")
 	}
+	visibility := strings.TrimSpace(in.Visibility)
+	aiAccess := strings.TrimSpace(in.AiAccess)
+	if visibility != "" && !isAllowedVisibility(visibility) {
+		return nil, fmt.Errorf("invalid visibility")
+	}
+	if aiAccess != "" && !isAllowedAiAccess(aiAccess) {
+		return nil, fmt.Errorf("invalid ai_access")
+	}
+
 	query := `
 UPDATE content_items
 SET
@@ -89,7 +107,7 @@ SET
 	ai_access = CASE WHEN $6 <> '' THEN $6 ELSE ai_access END,
 	updated_at = NOW()
 WHERE id = $1`
-	if _, err := s.conn.ExecCtx(ctx, query, in.Id, strings.TrimSpace(in.Title), in.Summary, in.BodyMarkdown, strings.TrimSpace(in.Visibility), strings.TrimSpace(in.AiAccess)); err != nil {
+	if _, err := s.conn.ExecCtx(ctx, query, in.Id, strings.TrimSpace(in.Title), in.Summary, in.BodyMarkdown, visibility, aiAccess); err != nil {
 		return nil, err
 	}
 	return s.Get(ctx, in.Id)
@@ -100,6 +118,9 @@ func (s *contentStore) UpdateStatus(ctx context.Context, in *pb.UpdateStatusRequ
 		return nil, fmt.Errorf("invalid request")
 	}
 	status := strings.TrimSpace(in.Status)
+	if !isAllowedStatus(status) {
+		return nil, fmt.Errorf("invalid status")
+	}
 	query := `
 UPDATE content_items
 SET
@@ -234,4 +255,31 @@ func formatTime(t *time.Time) string {
 func isUniqueViolation(err error) bool {
 	msg := strings.ToLower(err.Error())
 	return strings.Contains(msg, "duplicate key") || strings.Contains(msg, "unique constraint")
+}
+
+func isAllowedVisibility(v string) bool {
+	switch v {
+	case "public", "member", "private":
+		return true
+	default:
+		return false
+	}
+}
+
+func isAllowedAiAccess(v string) bool {
+	switch v {
+	case "allowed", "denied":
+		return true
+	default:
+		return false
+	}
+}
+
+func isAllowedStatus(v string) bool {
+	switch v {
+	case "draft", "review", "published", "archived":
+		return true
+	default:
+		return false
+	}
 }

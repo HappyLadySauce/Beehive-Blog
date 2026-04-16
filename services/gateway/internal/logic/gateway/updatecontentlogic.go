@@ -7,9 +7,9 @@ import (
 	"context"
 	"strings"
 
+	contentrpc "github.com/HappyLadySauce/Beehive-Blog/services/content/content"
 	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/svc"
 	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/types"
-	contentrpc "github.com/HappyLadySauce/Beehive-Blog/services/content/content"
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"google.golang.org/grpc/codes"
@@ -31,7 +31,23 @@ func NewUpdateContentLogic(ctx context.Context, svcCtx *svc.ServiceContext) *Upd
 }
 
 func (l *UpdateContentLogic) UpdateContent(req *types.ContentUpdateRequest) (resp *types.ContentDetail, err error) {
-	if req == nil || req.Id <= 0 {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+	userID, _ := parseAccessTokenUserIDFromContext(l.ctx)
+	fields := map[string]any{
+		"user_id":    userID,
+		"content_id": req.Id,
+	}
+	defer func() {
+		if err != nil {
+			auditFailure(l.ctx, "content.update", err, fields)
+			return
+		}
+		auditSuccess(l.ctx, "content.update", fields)
+	}()
+
+	if req.Id <= 0 {
 		return nil, status.Error(codes.InvalidArgument, "id is required")
 	}
 	if strings.TrimSpace(req.Title) == "" &&

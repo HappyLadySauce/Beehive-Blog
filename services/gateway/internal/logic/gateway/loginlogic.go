@@ -31,7 +31,21 @@ func NewLoginLogic(ctx context.Context, svcCtx *svc.ServiceContext) *LoginLogic 
 }
 
 func (l *LoginLogic) Login(req *types.LoginRequest) (resp *types.TokenData, err error) {
-	if req == nil || strings.TrimSpace(req.Account) == "" || strings.TrimSpace(req.Password) == "" {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+	fields := map[string]any{
+		"account": maskAccount(req.Account),
+	}
+	defer func() {
+		if err != nil {
+			auditFailure(l.ctx, "auth.login", err, fields)
+			return
+		}
+		auditSuccess(l.ctx, "auth.login", fields)
+	}()
+
+	if strings.TrimSpace(req.Account) == "" || strings.TrimSpace(req.Password) == "" {
 		return nil, status.Error(codes.InvalidArgument, "account and password are required")
 	}
 
