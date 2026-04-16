@@ -52,3 +52,63 @@ func (s *ContentServer) UpdateContentStatus(ctx context.Context, in *pb.UpdateSt
 	l := logic.NewUpdateContentStatusLogic(ctx, s.svcCtx)
 	return l.UpdateContentStatus(in)
 }
+
+func (s *ContentServer) ListTags(ctx context.Context, in *pb.Empty) (*pb.ListTagsResponse, error) {
+	l := logic.NewListTagsLogic(ctx, s.svcCtx)
+	return l.ListTags(in)
+}
+
+func (s *ContentServer) CreateTag(ctx context.Context, in *pb.CreateTagRequest) (*pb.Tag, error) {
+	l := logic.NewCreateTagLogic(ctx, s.svcCtx)
+	return l.CreateTag(in)
+}
+
+func (s *ContentServer) DeleteTag(ctx context.Context, in *pb.DeleteTagRequest) (*pb.Empty, error) {
+	l := logic.NewDeleteTagLogic(ctx, s.svcCtx)
+	return l.DeleteTag(in)
+}
+
+func (s *ContentServer) ListRelations(ctx context.Context, in *pb.ListRelationsRequest) (*pb.ListRelationsResponse, error) {
+	l := logic.NewListRelationsLogic(ctx, s.svcCtx)
+	return l.ListRelations(in)
+}
+
+func (s *ContentServer) CreateRelation(ctx context.Context, in *pb.CreateRelationRequest) (*pb.Relation, error) {
+	l := logic.NewCreateRelationLogic(ctx, s.svcCtx)
+	return l.CreateRelation(in)
+}
+
+func (s *ContentServer) DeleteRelation(ctx context.Context, in *pb.DeleteRelationRequest) (*pb.Empty, error) {
+	l := logic.NewDeleteRelationLogic(ctx, s.svcCtx)
+	return l.DeleteRelation(in)
+}
+
+func (s *ContentServer) ListAttachments(ctx context.Context, in *pb.ListAttachmentsRequest) (*pb.ListAttachmentsResponse, error) {
+	l := logic.NewListAttachmentsLogic(ctx, s.svcCtx)
+	return l.ListAttachments(in)
+}
+
+func (s *ContentServer) CreateAttachment(ctx context.Context, in *pb.CreateAttachmentRequest) (*pb.Attachment, error) {
+	l := logic.NewCreateAttachmentLogic(ctx, s.svcCtx)
+	return l.CreateAttachment(in)
+}
+
+func (s *ContentServer) DeleteAttachment(ctx context.Context, in *pb.DeleteAttachmentRequest) (*pb.Empty, error) {
+	l := logic.NewDeleteAttachmentLogic(ctx, s.svcCtx)
+	return l.DeleteAttachment(in)
+}
+
+func (s *ContentServer) ListComments(ctx context.Context, in *pb.ListCommentsRequest) (*pb.ListCommentsResponse, error) {
+	l := logic.NewListCommentsLogic(ctx, s.svcCtx)
+	return l.ListComments(in)
+}
+
+func (s *ContentServer) CreateComment(ctx context.Context, in *pb.CreateCommentRequest) (*pb.Comment, error) {
+	l := logic.NewCreateCommentLogic(ctx, s.svcCtx)
+	return l.CreateComment(in)
+}
+
+func (s *ContentServer) UpdateCommentStatus(ctx context.Context, in *pb.UpdateCommentStatusRequest) (*pb.Comment, error) {
+	l := logic.NewUpdateCommentStatusLogic(ctx, s.svcCtx)
+	return l.UpdateCommentStatus(in)
+}

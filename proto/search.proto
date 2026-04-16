@@ -9,6 +9,7 @@ message SearchRequest {
   int64 page = 2;
   int64 page_size = 3;
   string type = 4;
+  string scope = 5;
 }
 
 message SearchResultItem {
@@ -25,6 +26,36 @@ message SearchResponse {
   repeated SearchResultItem list = 1;
 }
 
+message UpsertDocumentRequest {
+  int64 content_id = 1;
+  string type = 2;
+  string title = 3;
+  string slug = 4;
+  string summary = 5;
+  string body_markdown = 6;
+  string status = 7;
+  string visibility = 8;
+  string ai_access = 9;
+}
+
+message IndexDocument {
+  int64 content_id = 1;
+  string type = 2;
+  string title = 3;
+  string slug = 4;
+  string status = 5;
+  string visibility = 6;
+  string indexed_at = 7;
+}
+
+message DeleteDocumentRequest {
+  int64 content_id = 1;
+}
+
+message Empty {}
+
 service Search {
   rpc Query(SearchRequest) returns (SearchResponse);
+  rpc UpsertDocument(UpsertDocumentRequest) returns (IndexDocument);
+  rpc DeleteDocument(DeleteDocumentRequest) returns (Empty);
 }

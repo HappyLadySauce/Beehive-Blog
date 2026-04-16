@@ -8,6 +8,7 @@ import (
 type contextKey string
 
 const AuthUserIDContextKey contextKey = "auth_user_id"
+const RequestIDContextKey contextKey = "request_id"
 
 func parseAccessTokenUserIDFromContext(ctx context.Context) (int64, error) {
 	if ctx == nil {
@@ -19,4 +20,25 @@ func parseAccessTokenUserIDFromContext(ctx context.Context) (int64, error) {
 		return 0, fmt.Errorf("missing user id in context")
 	}
 	return userID, nil
+}
+
+func userIDFromContext(ctx context.Context) (int64, bool) {
+	if ctx == nil {
+		return 0, false
+	}
+	v := ctx.Value(AuthUserIDContextKey)
+	userID, ok := v.(int64)
+	if !ok || userID <= 0 {
+		return 0, false
+	}
+	return userID, true
+}
+
+func requestIDFromContext(ctx context.Context) string {
+	if ctx == nil {
+		return ""
+	}
+	v := ctx.Value(RequestIDContextKey)
+	requestID, _ := v.(string)
+	return requestID
 }

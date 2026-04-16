@@ -875,6 +875,13 @@ RAG 和检索都必须遵循内容可见性：
 
 在这两份文档定下来之前，不建议直接实现 RAG。
 
+## 15.1 当前已实现基线（2026-04-16）
+
+- 已有 `search_documents`、`content_chunks`、`content_summaries`、`rag_answer_logs` 表。
+- 已有搜索 RPC：`Query`、`UpsertDocument`、`DeleteDocument`。
+- 已有网关能力：公开搜索、Studio 搜索、按内容重建索引、删除索引。
+- 内容写操作（创建/更新/状态变更）已异步触发索引更新。
+
 ## 16. 参考资料
 
 以下资料用于校验技术判断：

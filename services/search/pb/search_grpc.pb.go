@@ -19,7 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	Search_Query_FullMethodName = "/search.Search/Query"
+	Search_Query_FullMethodName          = "/search.Search/Query"
+	Search_UpsertDocument_FullMethodName = "/search.Search/UpsertDocument"
+	Search_DeleteDocument_FullMethodName = "/search.Search/DeleteDocument"
 )
 
 // SearchClient is the client API for Search service.
@@ -27,6 +29,8 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SearchClient interface {
 	Query(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
+	UpsertDocument(ctx context.Context, in *UpsertDocumentRequest, opts ...grpc.CallOption) (*IndexDocument, error)
+	DeleteDocument(ctx context.Context, in *DeleteDocumentRequest, opts ...grpc.CallOption) (*Empty, error)
 }
 
 type searchClient struct {
@@ -47,11 +51,33 @@ func (c *searchClient) Query(ctx context.Context, in *SearchRequest, opts ...grp
 	return out, nil
 }
 
+func (c *searchClient) UpsertDocument(ctx context.Context, in *UpsertDocumentRequest, opts ...grpc.CallOption) (*IndexDocument, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(IndexDocument)
+	err := c.cc.Invoke(ctx, Search_UpsertDocument_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *searchClient) DeleteDocument(ctx context.Context, in *DeleteDocumentRequest, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, Search_DeleteDocument_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SearchServer is the server API for Search service.
 // All implementations must embed UnimplementedSearchServer
 // for forward compatibility.
 type SearchServer interface {
 	Query(context.Context, *SearchRequest) (*SearchResponse, error)
+	UpsertDocument(context.Context, *UpsertDocumentRequest) (*IndexDocument, error)
+	DeleteDocument(context.Context, *DeleteDocumentRequest) (*Empty, error)
 	mustEmbedUnimplementedSearchServer()
 }
 
@@ -64,6 +90,12 @@ type UnimplementedSearchServer struct{}
 
 func (UnimplementedSearchServer) Query(context.Context, *SearchRequest) (*SearchResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Query not implemented")
+}
+func (UnimplementedSearchServer) UpsertDocument(context.Context, *UpsertDocumentRequest) (*IndexDocument, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpsertDocument not implemented")
+}
+func (UnimplementedSearchServer) DeleteDocument(context.Context, *DeleteDocumentRequest) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteDocument not implemented")
 }
 func (UnimplementedSearchServer) mustEmbedUnimplementedSearchServer() {}
 func (UnimplementedSearchServer) testEmbeddedByValue()                {}
@@ -104,6 +136,42 @@ func _Search_Query_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Search_UpsertDocument_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpsertDocumentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SearchServer).UpsertDocument(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Search_UpsertDocument_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SearchServer).UpsertDocument(ctx, req.(*UpsertDocumentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Search_DeleteDocument_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteDocumentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SearchServer).DeleteDocument(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Search_DeleteDocument_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SearchServer).DeleteDocument(ctx, req.(*DeleteDocumentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Search_ServiceDesc is the grpc.ServiceDesc for Search service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -114,6 +182,14 @@ var Search_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Query",
 			Handler:    _Search_Query_Handler,
+		},
+		{
+			MethodName: "UpsertDocument",
+			Handler:    _Search_UpsertDocument_Handler,
+		},
+		{
+			MethodName: "DeleteDocument",
+			Handler:    _Search_DeleteDocument_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

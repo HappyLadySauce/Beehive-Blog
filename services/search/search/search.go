@@ -14,12 +14,18 @@ import (
 )
 
 type (
-	SearchRequest    = pb.SearchRequest
-	SearchResponse   = pb.SearchResponse
-	SearchResultItem = pb.SearchResultItem
+	SearchRequest         = pb.SearchRequest
+	SearchResponse        = pb.SearchResponse
+	SearchResultItem      = pb.SearchResultItem
+	UpsertDocumentRequest = pb.UpsertDocumentRequest
+	IndexDocument         = pb.IndexDocument
+	DeleteDocumentRequest = pb.DeleteDocumentRequest
+	Empty                 = pb.Empty
 
 	Search interface {
 		Query(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error)
+		UpsertDocument(ctx context.Context, in *UpsertDocumentRequest, opts ...grpc.CallOption) (*IndexDocument, error)
+		DeleteDocument(ctx context.Context, in *DeleteDocumentRequest, opts ...grpc.CallOption) (*Empty, error)
 	}
 
 	defaultSearch struct {
@@ -36,4 +42,14 @@ func NewSearch(cli zrpc.Client) Search {
 func (m *defaultSearch) Query(ctx context.Context, in *SearchRequest, opts ...grpc.CallOption) (*SearchResponse, error) {
 	client := pb.NewSearchClient(m.cli.Conn())
 	return client.Query(ctx, in, opts...)
+}
+
+func (m *defaultSearch) UpsertDocument(ctx context.Context, in *UpsertDocumentRequest, opts ...grpc.CallOption) (*IndexDocument, error) {
+	client := pb.NewSearchClient(m.cli.Conn())
+	return client.UpsertDocument(ctx, in, opts...)
+}
+
+func (m *defaultSearch) DeleteDocument(ctx context.Context, in *DeleteDocumentRequest, opts ...grpc.CallOption) (*Empty, error) {
+	client := pb.NewSearchClient(m.cli.Conn())
+	return client.DeleteDocument(ctx, in, opts...)
 }

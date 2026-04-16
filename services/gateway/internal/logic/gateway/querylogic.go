@@ -35,11 +35,17 @@ func (l *QueryLogic) Query(req *types.SearchRequest) (resp *types.SearchResponse
 		return nil, status.Error(codes.InvalidArgument, "query is required")
 	}
 
+	scope := "public"
+	if userID, ok := userIDFromContext(l.ctx); ok && userID > 0 {
+		scope = "owner"
+	}
+
 	out, err := l.svcCtx.Search.Query(l.ctx, &searchrpc.SearchRequest{
 		Query:    req.Query,
 		Page:     req.Page,
 		PageSize: req.PageSize,
 		Type:     req.ContentType,
+		Scope:    scope,
 	})
 	if err != nil {
 		return nil, err

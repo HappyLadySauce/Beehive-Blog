@@ -127,6 +127,13 @@
 - `POST /rebuild/:contentId`
 - `POST /rebuild-all`
 
+当前网关已落地接口（2026-04-16）：
+
+- `GET /api/v2/search/query`（公开搜索，仅返回 `published + public`）
+- `GET /api/v2/studio/search/query`（Studio 搜索，owner 作用域）
+- `POST /api/v2/studio/search/index/contents/:id`（按内容重建索引）
+- `DELETE /api/v2/studio/search/index/contents/:id`（删除索引文档）
+
 ## 7. Agent APIs
 
 建议前缀：

@@ -25,6 +25,18 @@ const (
 	Content_GetContent_FullMethodName          = "/content.Content/GetContent"
 	Content_UpdateContent_FullMethodName       = "/content.Content/UpdateContent"
 	Content_UpdateContentStatus_FullMethodName = "/content.Content/UpdateContentStatus"
+	Content_ListTags_FullMethodName            = "/content.Content/ListTags"
+	Content_CreateTag_FullMethodName           = "/content.Content/CreateTag"
+	Content_DeleteTag_FullMethodName           = "/content.Content/DeleteTag"
+	Content_ListRelations_FullMethodName       = "/content.Content/ListRelations"
+	Content_CreateRelation_FullMethodName      = "/content.Content/CreateRelation"
+	Content_DeleteRelation_FullMethodName      = "/content.Content/DeleteRelation"
+	Content_ListAttachments_FullMethodName     = "/content.Content/ListAttachments"
+	Content_CreateAttachment_FullMethodName    = "/content.Content/CreateAttachment"
+	Content_DeleteAttachment_FullMethodName    = "/content.Content/DeleteAttachment"
+	Content_ListComments_FullMethodName        = "/content.Content/ListComments"
+	Content_CreateComment_FullMethodName       = "/content.Content/CreateComment"
+	Content_UpdateCommentStatus_FullMethodName = "/content.Content/UpdateCommentStatus"
 )
 
 // ContentClient is the client API for Content service.
@@ -37,6 +49,18 @@ type ContentClient interface {
 	GetContent(ctx context.Context, in *GetContentRequest, opts ...grpc.CallOption) (*ContentDetail, error)
 	UpdateContent(ctx context.Context, in *UpdateContentRequest, opts ...grpc.CallOption) (*ContentDetail, error)
 	UpdateContentStatus(ctx context.Context, in *UpdateStatusRequest, opts ...grpc.CallOption) (*ContentDetail, error)
+	ListTags(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ListTagsResponse, error)
+	CreateTag(ctx context.Context, in *CreateTagRequest, opts ...grpc.CallOption) (*Tag, error)
+	DeleteTag(ctx context.Context, in *DeleteTagRequest, opts ...grpc.CallOption) (*Empty, error)
+	ListRelations(ctx context.Context, in *ListRelationsRequest, opts ...grpc.CallOption) (*ListRelationsResponse, error)
+	CreateRelation(ctx context.Context, in *CreateRelationRequest, opts ...grpc.CallOption) (*Relation, error)
+	DeleteRelation(ctx context.Context, in *DeleteRelationRequest, opts ...grpc.CallOption) (*Empty, error)
+	ListAttachments(ctx context.Context, in *ListAttachmentsRequest, opts ...grpc.CallOption) (*ListAttachmentsResponse, error)
+	CreateAttachment(ctx context.Context, in *CreateAttachmentRequest, opts ...grpc.CallOption) (*Attachment, error)
+	DeleteAttachment(ctx context.Context, in *DeleteAttachmentRequest, opts ...grpc.CallOption) (*Empty, error)
+	ListComments(ctx context.Context, in *ListCommentsRequest, opts ...grpc.CallOption) (*ListCommentsResponse, error)
+	CreateComment(ctx context.Context, in *CreateCommentRequest, opts ...grpc.CallOption) (*Comment, error)
+	UpdateCommentStatus(ctx context.Context, in *UpdateCommentStatusRequest, opts ...grpc.CallOption) (*Comment, error)
 }
 
 type contentClient struct {
@@ -107,6 +131,126 @@ func (c *contentClient) UpdateContentStatus(ctx context.Context, in *UpdateStatu
 	return out, nil
 }
 
+func (c *contentClient) ListTags(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ListTagsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListTagsResponse)
+	err := c.cc.Invoke(ctx, Content_ListTags_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contentClient) CreateTag(ctx context.Context, in *CreateTagRequest, opts ...grpc.CallOption) (*Tag, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Tag)
+	err := c.cc.Invoke(ctx, Content_CreateTag_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contentClient) DeleteTag(ctx context.Context, in *DeleteTagRequest, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, Content_DeleteTag_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contentClient) ListRelations(ctx context.Context, in *ListRelationsRequest, opts ...grpc.CallOption) (*ListRelationsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListRelationsResponse)
+	err := c.cc.Invoke(ctx, Content_ListRelations_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contentClient) CreateRelation(ctx context.Context, in *CreateRelationRequest, opts ...grpc.CallOption) (*Relation, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Relation)
+	err := c.cc.Invoke(ctx, Content_CreateRelation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contentClient) DeleteRelation(ctx context.Context, in *DeleteRelationRequest, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, Content_DeleteRelation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contentClient) ListAttachments(ctx context.Context, in *ListAttachmentsRequest, opts ...grpc.CallOption) (*ListAttachmentsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListAttachmentsResponse)
+	err := c.cc.Invoke(ctx, Content_ListAttachments_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contentClient) CreateAttachment(ctx context.Context, in *CreateAttachmentRequest, opts ...grpc.CallOption) (*Attachment, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Attachment)
+	err := c.cc.Invoke(ctx, Content_CreateAttachment_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contentClient) DeleteAttachment(ctx context.Context, in *DeleteAttachmentRequest, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, Content_DeleteAttachment_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contentClient) ListComments(ctx context.Context, in *ListCommentsRequest, opts ...grpc.CallOption) (*ListCommentsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListCommentsResponse)
+	err := c.cc.Invoke(ctx, Content_ListComments_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contentClient) CreateComment(ctx context.Context, in *CreateCommentRequest, opts ...grpc.CallOption) (*Comment, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Comment)
+	err := c.cc.Invoke(ctx, Content_CreateComment_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contentClient) UpdateCommentStatus(ctx context.Context, in *UpdateCommentStatusRequest, opts ...grpc.CallOption) (*Comment, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Comment)
+	err := c.cc.Invoke(ctx, Content_UpdateCommentStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ContentServer is the server API for Content service.
 // All implementations must embed UnimplementedContentServer
 // for forward compatibility.
@@ -117,6 +261,18 @@ type ContentServer interface {
 	GetContent(context.Context, *GetContentRequest) (*ContentDetail, error)
 	UpdateContent(context.Context, *UpdateContentRequest) (*ContentDetail, error)
 	UpdateContentStatus(context.Context, *UpdateStatusRequest) (*ContentDetail, error)
+	ListTags(context.Context, *Empty) (*ListTagsResponse, error)
+	CreateTag(context.Context, *CreateTagRequest) (*Tag, error)
+	DeleteTag(context.Context, *DeleteTagRequest) (*Empty, error)
+	ListRelations(context.Context, *ListRelationsRequest) (*ListRelationsResponse, error)
+	CreateRelation(context.Context, *CreateRelationRequest) (*Relation, error)
+	DeleteRelation(context.Context, *DeleteRelationRequest) (*Empty, error)
+	ListAttachments(context.Context, *ListAttachmentsRequest) (*ListAttachmentsResponse, error)
+	CreateAttachment(context.Context, *CreateAttachmentRequest) (*Attachment, error)
+	DeleteAttachment(context.Context, *DeleteAttachmentRequest) (*Empty, error)
+	ListComments(context.Context, *ListCommentsRequest) (*ListCommentsResponse, error)
+	CreateComment(context.Context, *CreateCommentRequest) (*Comment, error)
+	UpdateCommentStatus(context.Context, *UpdateCommentStatusRequest) (*Comment, error)
 	mustEmbedUnimplementedContentServer()
 }
 
@@ -144,6 +300,42 @@ func (UnimplementedContentServer) UpdateContent(context.Context, *UpdateContentR
 }
 func (UnimplementedContentServer) UpdateContentStatus(context.Context, *UpdateStatusRequest) (*ContentDetail, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateContentStatus not implemented")
+}
+func (UnimplementedContentServer) ListTags(context.Context, *Empty) (*ListTagsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListTags not implemented")
+}
+func (UnimplementedContentServer) CreateTag(context.Context, *CreateTagRequest) (*Tag, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateTag not implemented")
+}
+func (UnimplementedContentServer) DeleteTag(context.Context, *DeleteTagRequest) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteTag not implemented")
+}
+func (UnimplementedContentServer) ListRelations(context.Context, *ListRelationsRequest) (*ListRelationsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListRelations not implemented")
+}
+func (UnimplementedContentServer) CreateRelation(context.Context, *CreateRelationRequest) (*Relation, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateRelation not implemented")
+}
+func (UnimplementedContentServer) DeleteRelation(context.Context, *DeleteRelationRequest) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteRelation not implemented")
+}
+func (UnimplementedContentServer) ListAttachments(context.Context, *ListAttachmentsRequest) (*ListAttachmentsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListAttachments not implemented")
+}
+func (UnimplementedContentServer) CreateAttachment(context.Context, *CreateAttachmentRequest) (*Attachment, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateAttachment not implemented")
+}
+func (UnimplementedContentServer) DeleteAttachment(context.Context, *DeleteAttachmentRequest) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteAttachment not implemented")
+}
+func (UnimplementedContentServer) ListComments(context.Context, *ListCommentsRequest) (*ListCommentsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListComments not implemented")
+}
+func (UnimplementedContentServer) CreateComment(context.Context, *CreateCommentRequest) (*Comment, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateComment not implemented")
+}
+func (UnimplementedContentServer) UpdateCommentStatus(context.Context, *UpdateCommentStatusRequest) (*Comment, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateCommentStatus not implemented")
 }
 func (UnimplementedContentServer) mustEmbedUnimplementedContentServer() {}
 func (UnimplementedContentServer) testEmbeddedByValue()                 {}
@@ -274,6 +466,222 @@ func _Content_UpdateContentStatus_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Content_ListTags_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServer).ListTags(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Content_ListTags_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServer).ListTags(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Content_CreateTag_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateTagRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServer).CreateTag(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Content_CreateTag_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServer).CreateTag(ctx, req.(*CreateTagRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Content_DeleteTag_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteTagRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServer).DeleteTag(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Content_DeleteTag_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServer).DeleteTag(ctx, req.(*DeleteTagRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Content_ListRelations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListRelationsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServer).ListRelations(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Content_ListRelations_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServer).ListRelations(ctx, req.(*ListRelationsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Content_CreateRelation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateRelationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServer).CreateRelation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Content_CreateRelation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServer).CreateRelation(ctx, req.(*CreateRelationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Content_DeleteRelation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRelationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServer).DeleteRelation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Content_DeleteRelation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServer).DeleteRelation(ctx, req.(*DeleteRelationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Content_ListAttachments_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListAttachmentsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServer).ListAttachments(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Content_ListAttachments_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServer).ListAttachments(ctx, req.(*ListAttachmentsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Content_CreateAttachment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateAttachmentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServer).CreateAttachment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Content_CreateAttachment_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServer).CreateAttachment(ctx, req.(*CreateAttachmentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Content_DeleteAttachment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteAttachmentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServer).DeleteAttachment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Content_DeleteAttachment_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServer).DeleteAttachment(ctx, req.(*DeleteAttachmentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Content_ListComments_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListCommentsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServer).ListComments(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Content_ListComments_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServer).ListComments(ctx, req.(*ListCommentsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Content_CreateComment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateCommentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServer).CreateComment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Content_CreateComment_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServer).CreateComment(ctx, req.(*CreateCommentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Content_UpdateCommentStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateCommentStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServer).UpdateCommentStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Content_UpdateCommentStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServer).UpdateCommentStatus(ctx, req.(*UpdateCommentStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Content_ServiceDesc is the grpc.ServiceDesc for Content service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -304,6 +712,54 @@ var Content_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateContentStatus",
 			Handler:    _Content_UpdateContentStatus_Handler,
+		},
+		{
+			MethodName: "ListTags",
+			Handler:    _Content_ListTags_Handler,
+		},
+		{
+			MethodName: "CreateTag",
+			Handler:    _Content_CreateTag_Handler,
+		},
+		{
+			MethodName: "DeleteTag",
+			Handler:    _Content_DeleteTag_Handler,
+		},
+		{
+			MethodName: "ListRelations",
+			Handler:    _Content_ListRelations_Handler,
+		},
+		{
+			MethodName: "CreateRelation",
+			Handler:    _Content_CreateRelation_Handler,
+		},
+		{
+			MethodName: "DeleteRelation",
+			Handler:    _Content_DeleteRelation_Handler,
+		},
+		{
+			MethodName: "ListAttachments",
+			Handler:    _Content_ListAttachments_Handler,
+		},
+		{
+			MethodName: "CreateAttachment",
+			Handler:    _Content_CreateAttachment_Handler,
+		},
+		{
+			MethodName: "DeleteAttachment",
+			Handler:    _Content_DeleteAttachment_Handler,
+		},
+		{
+			MethodName: "ListComments",
+			Handler:    _Content_ListComments_Handler,
+		},
+		{
+			MethodName: "CreateComment",
+			Handler:    _Content_CreateComment_Handler,
+		},
+		{
+			MethodName: "UpdateCommentStatus",
+			Handler:    _Content_UpdateCommentStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

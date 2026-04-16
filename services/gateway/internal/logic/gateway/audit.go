@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/zeromicro/go-zero/core/logx"
@@ -17,6 +18,18 @@ func auditFailure(ctx context.Context, action string, err error, fields map[stri
 	fields = cloneFields(fields)
 	fields["error"] = sanitizeError(err)
 	logx.WithContext(ctx).Errorf("audit action=%s result=failure %s", action, serializeFields(fields))
+}
+
+func auditRPC(ctx context.Context, action, rpcMethod string, startedAt time.Time, err error, fields map[string]any) {
+	fields = cloneFields(fields)
+	fields["rpc_method"] = rpcMethod
+	fields["request_id"] = requestIDFromContext(ctx)
+	fields["latency_ms"] = time.Since(startedAt).Milliseconds()
+	if err != nil {
+		auditFailure(ctx, action, err, fields)
+		return
+	}
+	auditSuccess(ctx, action, fields)
 }
 
 func serializeFields(fields map[string]any) string {

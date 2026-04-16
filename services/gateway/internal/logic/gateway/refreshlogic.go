@@ -6,6 +6,7 @@ package gateway
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/svc"
 	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/types"
@@ -37,12 +38,9 @@ func (l *RefreshLogic) Refresh(req *types.RefreshRequest) (resp *types.TokenData
 	fields := map[string]any{
 		"refresh_token": maskToken(req.RefreshToken),
 	}
+	startedAt := time.Now()
 	defer func() {
-		if err != nil {
-			auditFailure(l.ctx, "auth.refresh", err, fields)
-			return
-		}
-		auditSuccess(l.ctx, "auth.refresh", fields)
+		auditRPC(l.ctx, "auth.refresh", "identity.Refresh", startedAt, err, fields)
 	}()
 
 	if strings.TrimSpace(req.RefreshToken) == "" {

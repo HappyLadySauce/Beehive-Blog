@@ -6,6 +6,7 @@ package gateway
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/svc"
 	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/types"
@@ -39,12 +40,9 @@ func (l *RegisterLogic) Register(req *types.RegisterRequest) (resp *types.TokenD
 		"username": maskAccount(req.Username),
 		"email":    maskEmail(req.Email),
 	}
+	startedAt := time.Now()
 	defer func() {
-		if err != nil {
-			auditFailure(l.ctx, "auth.register", err, fields)
-			return
-		}
-		auditSuccess(l.ctx, "auth.register", fields)
+		auditRPC(l.ctx, "auth.register", "identity.Register", startedAt, err, fields)
 	}()
 
 	if strings.TrimSpace(req.Username) == "" || strings.TrimSpace(req.Email) == "" || strings.TrimSpace(req.Password) == "" {

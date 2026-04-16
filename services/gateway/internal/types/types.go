@@ -104,6 +104,20 @@ type SearchResultItem struct {
 	Score       float64 `json:"score"`
 }
 
+type SearchIndexPathRequest struct {
+	Id int64 `path:"id"`
+}
+
+type SearchIndexDocument struct {
+	ContentId   int64  `json:"contentId"`
+	ContentType string `json:"type"`
+	Title       string `json:"title"`
+	Slug        string `json:"slug"`
+	Status      string `json:"status"`
+	Visibility  string `json:"visibility"`
+	IndexedAt   string `json:"indexedAt"`
+}
+
 type StatusUpdateRequest struct {
 	Id     int64  `path:"id"`
 	Status string `json:"status"`
@@ -122,4 +136,130 @@ type UserProfile struct {
 	Nickname string `json:"nickname"`
 	Email    string `json:"email"`
 	Role     string `json:"role"`
+}
+
+type Tag struct {
+	Id          int64  `json:"id"`
+	Name        string `json:"name"`
+	Slug        string `json:"slug"`
+	Color       string `json:"color"`
+	Description string `json:"description"`
+}
+
+type TagListResponse struct {
+	List []Tag `json:"list"`
+}
+
+type CreateTagRequest struct {
+	Name        string `json:"name"`
+	Slug        string `json:"slug"`
+	Color       string `json:"color,optional"`
+	Description string `json:"description,optional"`
+}
+
+type TagPathRequest struct {
+	Id int64 `path:"id"`
+}
+
+type Relation struct {
+	Id              int64  `json:"id"`
+	SourceContentId int64  `json:"sourceContentId"`
+	TargetContentId int64  `json:"targetContentId"`
+	RelationType    string `json:"relationType"`
+	Weight          int32  `json:"weight"`
+	Note            string `json:"note"`
+}
+
+type RelationListResponse struct {
+	List []Relation `json:"list"`
+}
+
+type ContentRelationsPathRequest struct {
+	Id int64 `path:"id"`
+}
+
+type CreateRelationRequest struct {
+	ContentId       int64  `path:"id"`
+	TargetContentId int64  `json:"targetContentId"`
+	RelationType    string `json:"relationType"`
+	Weight          int32  `json:"weight,optional"`
+	Note            string `json:"note,optional"`
+}
+
+type RelationPathRequest struct {
+	Id int64 `path:"id"`
+}
+
+type Attachment struct {
+	Id              int64  `json:"id"`
+	ContentId       int64  `json:"contentId"`
+	StorageProvider string `json:"storageProvider"`
+	Bucket          string `json:"bucket"`
+	ObjectKey       string `json:"objectKey"`
+	FileName        string `json:"fileName"`
+	MimeType        string `json:"mimeType"`
+	Ext             string `json:"ext"`
+	SizeBytes       int64  `json:"sizeBytes"`
+	UsageType       string `json:"usageType"`
+}
+
+type AttachmentListRequest struct {
+	ContentId int64 `form:"contentId,optional"`
+	Page      int64 `form:"page,optional"`
+	PageSize  int64 `form:"pageSize,optional"`
+}
+
+type AttachmentListResponse struct {
+	List []Attachment `json:"list"`
+}
+
+type CreateAttachmentRequest struct {
+	ContentId       int64  `json:"contentId"`
+	StorageProvider string `json:"storageProvider,optional"`
+	Bucket          string `json:"bucket,optional"`
+	ObjectKey       string `json:"objectKey"`
+	FileName        string `json:"fileName"`
+	MimeType        string `json:"mimeType,optional"`
+	Ext             string `json:"ext,optional"`
+	SizeBytes       int64  `json:"sizeBytes,optional"`
+	UsageType       string `json:"usageType,optional"`
+}
+
+type AttachmentPathRequest struct {
+	Id int64 `path:"id"`
+}
+
+type Comment struct {
+	Id              int64  `json:"id"`
+	ContentId       int64  `json:"contentId"`
+	ParentCommentId int64  `json:"parentCommentId"`
+	AuthorName      string `json:"authorName"`
+	AuthorEmail     string `json:"authorEmail"`
+	BodyMarkdown    string `json:"bodyMarkdown"`
+	Status          string `json:"status"`
+	ModerationNote  string `json:"moderationNote"`
+}
+
+type CommentListRequest struct {
+	ContentId int64 `path:"id"`
+	Page      int64 `form:"page,optional"`
+	PageSize  int64 `form:"pageSize,optional"`
+}
+
+type CommentListResponse struct {
+	List []Comment `json:"list"`
+}
+
+type CreateCommentRequest struct {
+	ContentId       int64  `path:"id"`
+	ParentCommentId int64  `json:"parentCommentId,optional"`
+	AuthorName      string `json:"authorName,optional"`
+	AuthorEmail     string `json:"authorEmail,optional"`
+	BodyMarkdown    string `json:"bodyMarkdown"`
+}
+
+type UpdateCommentStatusRequest struct {
+	Id             int64  `path:"id"`
+	Status         string `json:"status"`
+	ModerationNote string `json:"moderationNote,optional"`
 }

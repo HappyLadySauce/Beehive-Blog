@@ -4,3 +4,6 @@ Etcd:
   Hosts:
   - 127.0.0.1:2379
   Key: search.rpc
+DB:
+  DriverName: pgx
+  DataSource: postgres://postgres:postgres@127.0.0.1:5432/beehive_blog?sslmode=disable

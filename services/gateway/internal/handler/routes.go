@@ -16,9 +16,10 @@ import (
 func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	authMiddleware := middleware.NewAuthMiddleware(serverCtx)
 	rateLimitMiddleware := middleware.NewRateLimitMiddleware(serverCtx.Config.RateLimit)
+	requestIDMiddleware := middleware.NewRequestIDMiddleware()
 
 	server.AddRoutes(
-		rest.WithMiddlewares([]rest.Middleware{rateLimitMiddleware.Handle},
+		rest.WithMiddlewares([]rest.Middleware{requestIDMiddleware.Handle, rateLimitMiddleware.Handle},
 			[]rest.Route{
 				{
 					Method:  http.MethodPost,
@@ -55,7 +56,7 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	)
 
 	server.AddRoutes(
-		rest.WithMiddlewares([]rest.Middleware{rateLimitMiddleware.Handle, authMiddleware.Handle},
+		rest.WithMiddlewares([]rest.Middleware{requestIDMiddleware.Handle, rateLimitMiddleware.Handle, authMiddleware.Handle},
 			[]rest.Route{
 				{
 					Method:  http.MethodGet,
@@ -86,6 +87,81 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 					Method:  http.MethodPut,
 					Path:    "/studio/contents/:id/status",
 					Handler: gateway.UpdateContentStatusHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/studio/tags",
+					Handler: gateway.ListTagsHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/studio/tags",
+					Handler: gateway.CreateTagHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/studio/tags/:id",
+					Handler: gateway.DeleteTagHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/studio/contents/:id/relations",
+					Handler: gateway.ListRelationsHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/studio/contents/:id/relations",
+					Handler: gateway.CreateRelationHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/studio/relations/:id",
+					Handler: gateway.DeleteRelationHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/studio/attachments",
+					Handler: gateway.ListAttachmentsHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/studio/attachments",
+					Handler: gateway.CreateAttachmentHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/studio/attachments/:id",
+					Handler: gateway.DeleteAttachmentHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/studio/contents/:id/comments",
+					Handler: gateway.ListCommentsHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/studio/contents/:id/comments",
+					Handler: gateway.CreateCommentHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPut,
+					Path:    "/studio/comments/:id/status",
+					Handler: gateway.UpdateCommentStatusHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/studio/search/query",
+					Handler: gateway.QueryHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/studio/search/index/contents/:id",
+					Handler: gateway.ReindexContentHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodDelete,
+					Path:    "/studio/search/index/contents/:id",
+					Handler: gateway.DeleteSearchIndexHandler(serverCtx),
 				},
 			}...),
 		rest.WithPrefix("/api/v2"),

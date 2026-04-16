@@ -6,6 +6,7 @@ package gateway
 import (
 	"context"
 	"strings"
+	"time"
 
 	contentrpc "github.com/HappyLadySauce/Beehive-Blog/services/content/content"
 	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/svc"
@@ -40,12 +41,9 @@ func (l *CreateContentLogic) CreateContent(req *types.ContentCreateRequest) (res
 		"type":    req.ContentType,
 		"slug":    req.Slug,
 	}
+	startedAt := time.Now()
 	defer func() {
-		if err != nil {
-			auditFailure(l.ctx, "content.create", err, fields)
-			return
-		}
-		auditSuccess(l.ctx, "content.create", fields)
+		auditRPC(l.ctx, "content.create", "content.CreateContent", startedAt, err, fields)
 	}()
 
 	if strings.TrimSpace(req.ContentType) == "" || strings.TrimSpace(req.Title) == "" || strings.TrimSpace(req.Slug) == "" {
@@ -64,5 +62,6 @@ func (l *CreateContentLogic) CreateContent(req *types.ContentCreateRequest) (res
 	if err != nil {
 		return nil, err
 	}
+	triggerAsyncIndexUpsert(l.ctx, l.svcCtx.Search, out)
 	return toContentDetail(out), nil
 }

@@ -68,6 +68,134 @@ message GetContentRequest {
   int64 id = 1;
 }
 
+message Empty {}
+
+message Tag {
+  int64 id = 1;
+  string name = 2;
+  string slug = 3;
+  string color = 4;
+  string description = 5;
+}
+
+message ListTagsResponse {
+  repeated Tag list = 1;
+}
+
+message CreateTagRequest {
+  string name = 1;
+  string slug = 2;
+  string color = 3;
+  string description = 4;
+}
+
+message DeleteTagRequest {
+  int64 id = 1;
+}
+
+message Relation {
+  int64 id = 1;
+  int64 source_content_id = 2;
+  int64 target_content_id = 3;
+  string relation_type = 4;
+  int32 weight = 5;
+  string note = 6;
+}
+
+message ListRelationsRequest {
+  int64 content_id = 1;
+}
+
+message ListRelationsResponse {
+  repeated Relation list = 1;
+}
+
+message CreateRelationRequest {
+  int64 source_content_id = 1;
+  int64 target_content_id = 2;
+  string relation_type = 3;
+  int32 weight = 4;
+  string note = 5;
+}
+
+message DeleteRelationRequest {
+  int64 id = 1;
+}
+
+message Attachment {
+  int64 id = 1;
+  int64 content_id = 2;
+  string storage_provider = 3;
+  string bucket = 4;
+  string object_key = 5;
+  string file_name = 6;
+  string mime_type = 7;
+  string ext = 8;
+  int64 size_bytes = 9;
+  string usage_type = 10;
+}
+
+message ListAttachmentsRequest {
+  int64 content_id = 1;
+  int64 page = 2;
+  int64 page_size = 3;
+}
+
+message ListAttachmentsResponse {
+  repeated Attachment list = 1;
+}
+
+message CreateAttachmentRequest {
+  int64 content_id = 1;
+  string storage_provider = 2;
+  string bucket = 3;
+  string object_key = 4;
+  string file_name = 5;
+  string mime_type = 6;
+  string ext = 7;
+  int64 size_bytes = 8;
+  string usage_type = 9;
+}
+
+message DeleteAttachmentRequest {
+  int64 id = 1;
+}
+
+message Comment {
+  int64 id = 1;
+  int64 content_id = 2;
+  int64 parent_comment_id = 3;
+  string author_name = 4;
+  string author_email = 5;
+  string body_markdown = 6;
+  string status = 7;
+  string moderation_note = 8;
+}
+
+message ListCommentsRequest {
+  int64 content_id = 1;
+  int64 page = 2;
+  int64 page_size = 3;
+}
+
+message ListCommentsResponse {
+  repeated Comment list = 1;
+}
+
+message CreateCommentRequest {
+  int64 content_id = 1;
+  int64 parent_comment_id = 2;
+  string author_name = 3;
+  string author_email = 4;
+  string body_markdown = 5;
+}
+
+message UpdateCommentStatusRequest {
+  int64 id = 1;
+  string status = 2;
+  string moderation_note = 3;
+}
+
 service Content {
   rpc ListPublicArticles(ListContentsRequest) returns (ListContentsResponse);
   rpc ListContents(ListContentsRequest) returns (ListContentsResponse);
@@ -75,4 +203,16 @@ service Content {
   rpc GetContent(GetContentRequest) returns (ContentDetail);
   rpc UpdateContent(UpdateContentRequest) returns (ContentDetail);
   rpc UpdateContentStatus(UpdateStatusRequest) returns (ContentDetail);
+  rpc ListTags(Empty) returns (ListTagsResponse);
+  rpc CreateTag(CreateTagRequest) returns (Tag);
+  rpc DeleteTag(DeleteTagRequest) returns (Empty);
+  rpc ListRelations(ListRelationsRequest) returns (ListRelationsResponse);
+  rpc CreateRelation(CreateRelationRequest) returns (Relation);
+  rpc DeleteRelation(DeleteRelationRequest) returns (Empty);
+  rpc ListAttachments(ListAttachmentsRequest) returns (ListAttachmentsResponse);
+  rpc CreateAttachment(CreateAttachmentRequest) returns (Attachment);
+  rpc DeleteAttachment(DeleteAttachmentRequest) returns (Empty);
+  rpc ListComments(ListCommentsRequest) returns (ListCommentsResponse);
+  rpc CreateComment(CreateCommentRequest) returns (Comment);
+  rpc UpdateCommentStatus(UpdateCommentStatusRequest) returns (Comment);
 }

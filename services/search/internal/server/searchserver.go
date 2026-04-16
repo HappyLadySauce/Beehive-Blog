@@ -27,3 +27,13 @@ func (s *SearchServer) Query(ctx context.Context, in *pb.SearchRequest) (*pb.Sea
 	l := logic.NewQueryLogic(ctx, s.svcCtx)
 	return l.Query(in)
 }
+
+func (s *SearchServer) UpsertDocument(ctx context.Context, in *pb.UpsertDocumentRequest) (*pb.IndexDocument, error) {
+	l := logic.NewUpsertDocumentLogic(ctx, s.svcCtx)
+	return l.UpsertDocument(in)
+}
+
+func (s *SearchServer) DeleteDocument(ctx context.Context, in *pb.DeleteDocumentRequest) (*pb.Empty, error) {
+	l := logic.NewDeleteDocumentLogic(ctx, s.svcCtx)
+	return l.DeleteDocument(in)
+}

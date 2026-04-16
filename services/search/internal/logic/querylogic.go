@@ -29,19 +29,6 @@ func (l *QueryLogic) Query(in *pb.SearchRequest) (*pb.SearchResponse, error) {
 	if query == "" {
 		return &pb.SearchResponse{List: []*pb.SearchResultItem{}}, nil
 	}
-
-	// Temporary bootstrap behavior before indexer + search engine integration.
-	return &pb.SearchResponse{
-		List: []*pb.SearchResultItem{
-			{
-				ContentId:  0,
-				Type:       "note",
-				Title:      "Search bootstrap result",
-				Slug:       "search-bootstrap-result",
-				Summary:    "Search service is online and waiting for indexed content.",
-				Highlight:  query,
-				Score:      1,
-			},
-		},
-	}, nil
+	in.Query = query
+	return l.svcCtx.Store.Query(l.ctx, in)
 }

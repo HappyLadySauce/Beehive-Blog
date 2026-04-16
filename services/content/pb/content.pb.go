@@ -629,6 +629,1278 @@ func (x *GetContentRequest) GetId() int64 {
 	return 0
 }
 
+type Empty struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Empty) Reset() {
+	*x = Empty{}
+	mi := &file_proto_content_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Empty) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Empty) ProtoMessage() {}
+
+func (x *Empty) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Empty.ProtoReflect.Descriptor instead.
+func (*Empty) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{8}
+}
+
+type Tag struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Slug          string                 `protobuf:"bytes,3,opt,name=slug,proto3" json:"slug,omitempty"`
+	Color         string                 `protobuf:"bytes,4,opt,name=color,proto3" json:"color,omitempty"`
+	Description   string                 `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Tag) Reset() {
+	*x = Tag{}
+	mi := &file_proto_content_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Tag) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Tag) ProtoMessage() {}
+
+func (x *Tag) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Tag.ProtoReflect.Descriptor instead.
+func (*Tag) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *Tag) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *Tag) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Tag) GetSlug() string {
+	if x != nil {
+		return x.Slug
+	}
+	return ""
+}
+
+func (x *Tag) GetColor() string {
+	if x != nil {
+		return x.Color
+	}
+	return ""
+}
+
+func (x *Tag) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+type ListTagsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	List          []*Tag                 `protobuf:"bytes,1,rep,name=list,proto3" json:"list,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListTagsResponse) Reset() {
+	*x = ListTagsResponse{}
+	mi := &file_proto_content_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListTagsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListTagsResponse) ProtoMessage() {}
+
+func (x *ListTagsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListTagsResponse.ProtoReflect.Descriptor instead.
+func (*ListTagsResponse) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ListTagsResponse) GetList() []*Tag {
+	if x != nil {
+		return x.List
+	}
+	return nil
+}
+
+type CreateTagRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Slug          string                 `protobuf:"bytes,2,opt,name=slug,proto3" json:"slug,omitempty"`
+	Color         string                 `protobuf:"bytes,3,opt,name=color,proto3" json:"color,omitempty"`
+	Description   string                 `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateTagRequest) Reset() {
+	*x = CreateTagRequest{}
+	mi := &file_proto_content_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateTagRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateTagRequest) ProtoMessage() {}
+
+func (x *CreateTagRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateTagRequest.ProtoReflect.Descriptor instead.
+func (*CreateTagRequest) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *CreateTagRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *CreateTagRequest) GetSlug() string {
+	if x != nil {
+		return x.Slug
+	}
+	return ""
+}
+
+func (x *CreateTagRequest) GetColor() string {
+	if x != nil {
+		return x.Color
+	}
+	return ""
+}
+
+func (x *CreateTagRequest) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+type DeleteTagRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteTagRequest) Reset() {
+	*x = DeleteTagRequest{}
+	mi := &file_proto_content_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteTagRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteTagRequest) ProtoMessage() {}
+
+func (x *DeleteTagRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteTagRequest.ProtoReflect.Descriptor instead.
+func (*DeleteTagRequest) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *DeleteTagRequest) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+type Relation struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Id              int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	SourceContentId int64                  `protobuf:"varint,2,opt,name=source_content_id,json=sourceContentId,proto3" json:"source_content_id,omitempty"`
+	TargetContentId int64                  `protobuf:"varint,3,opt,name=target_content_id,json=targetContentId,proto3" json:"target_content_id,omitempty"`
+	RelationType    string                 `protobuf:"bytes,4,opt,name=relation_type,json=relationType,proto3" json:"relation_type,omitempty"`
+	Weight          int32                  `protobuf:"varint,5,opt,name=weight,proto3" json:"weight,omitempty"`
+	Note            string                 `protobuf:"bytes,6,opt,name=note,proto3" json:"note,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *Relation) Reset() {
+	*x = Relation{}
+	mi := &file_proto_content_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Relation) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Relation) ProtoMessage() {}
+
+func (x *Relation) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Relation.ProtoReflect.Descriptor instead.
+func (*Relation) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *Relation) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *Relation) GetSourceContentId() int64 {
+	if x != nil {
+		return x.SourceContentId
+	}
+	return 0
+}
+
+func (x *Relation) GetTargetContentId() int64 {
+	if x != nil {
+		return x.TargetContentId
+	}
+	return 0
+}
+
+func (x *Relation) GetRelationType() string {
+	if x != nil {
+		return x.RelationType
+	}
+	return ""
+}
+
+func (x *Relation) GetWeight() int32 {
+	if x != nil {
+		return x.Weight
+	}
+	return 0
+}
+
+func (x *Relation) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
+type ListRelationsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ContentId     int64                  `protobuf:"varint,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListRelationsRequest) Reset() {
+	*x = ListRelationsRequest{}
+	mi := &file_proto_content_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListRelationsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListRelationsRequest) ProtoMessage() {}
+
+func (x *ListRelationsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListRelationsRequest.ProtoReflect.Descriptor instead.
+func (*ListRelationsRequest) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *ListRelationsRequest) GetContentId() int64 {
+	if x != nil {
+		return x.ContentId
+	}
+	return 0
+}
+
+type ListRelationsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	List          []*Relation            `protobuf:"bytes,1,rep,name=list,proto3" json:"list,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListRelationsResponse) Reset() {
+	*x = ListRelationsResponse{}
+	mi := &file_proto_content_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListRelationsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListRelationsResponse) ProtoMessage() {}
+
+func (x *ListRelationsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListRelationsResponse.ProtoReflect.Descriptor instead.
+func (*ListRelationsResponse) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *ListRelationsResponse) GetList() []*Relation {
+	if x != nil {
+		return x.List
+	}
+	return nil
+}
+
+type CreateRelationRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	SourceContentId int64                  `protobuf:"varint,1,opt,name=source_content_id,json=sourceContentId,proto3" json:"source_content_id,omitempty"`
+	TargetContentId int64                  `protobuf:"varint,2,opt,name=target_content_id,json=targetContentId,proto3" json:"target_content_id,omitempty"`
+	RelationType    string                 `protobuf:"bytes,3,opt,name=relation_type,json=relationType,proto3" json:"relation_type,omitempty"`
+	Weight          int32                  `protobuf:"varint,4,opt,name=weight,proto3" json:"weight,omitempty"`
+	Note            string                 `protobuf:"bytes,5,opt,name=note,proto3" json:"note,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *CreateRelationRequest) Reset() {
+	*x = CreateRelationRequest{}
+	mi := &file_proto_content_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateRelationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateRelationRequest) ProtoMessage() {}
+
+func (x *CreateRelationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateRelationRequest.ProtoReflect.Descriptor instead.
+func (*CreateRelationRequest) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *CreateRelationRequest) GetSourceContentId() int64 {
+	if x != nil {
+		return x.SourceContentId
+	}
+	return 0
+}
+
+func (x *CreateRelationRequest) GetTargetContentId() int64 {
+	if x != nil {
+		return x.TargetContentId
+	}
+	return 0
+}
+
+func (x *CreateRelationRequest) GetRelationType() string {
+	if x != nil {
+		return x.RelationType
+	}
+	return ""
+}
+
+func (x *CreateRelationRequest) GetWeight() int32 {
+	if x != nil {
+		return x.Weight
+	}
+	return 0
+}
+
+func (x *CreateRelationRequest) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
+type DeleteRelationRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteRelationRequest) Reset() {
+	*x = DeleteRelationRequest{}
+	mi := &file_proto_content_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteRelationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteRelationRequest) ProtoMessage() {}
+
+func (x *DeleteRelationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteRelationRequest.ProtoReflect.Descriptor instead.
+func (*DeleteRelationRequest) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *DeleteRelationRequest) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+type Attachment struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Id              int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	ContentId       int64                  `protobuf:"varint,2,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`
+	StorageProvider string                 `protobuf:"bytes,3,opt,name=storage_provider,json=storageProvider,proto3" json:"storage_provider,omitempty"`
+	Bucket          string                 `protobuf:"bytes,4,opt,name=bucket,proto3" json:"bucket,omitempty"`
+	ObjectKey       string                 `protobuf:"bytes,5,opt,name=object_key,json=objectKey,proto3" json:"object_key,omitempty"`
+	FileName        string                 `protobuf:"bytes,6,opt,name=file_name,json=fileName,proto3" json:"file_name,omitempty"`
+	MimeType        string                 `protobuf:"bytes,7,opt,name=mime_type,json=mimeType,proto3" json:"mime_type,omitempty"`
+	Ext             string                 `protobuf:"bytes,8,opt,name=ext,proto3" json:"ext,omitempty"`
+	SizeBytes       int64                  `protobuf:"varint,9,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
+	UsageType       string                 `protobuf:"bytes,10,opt,name=usage_type,json=usageType,proto3" json:"usage_type,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *Attachment) Reset() {
+	*x = Attachment{}
+	mi := &file_proto_content_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Attachment) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Attachment) ProtoMessage() {}
+
+func (x *Attachment) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Attachment.ProtoReflect.Descriptor instead.
+func (*Attachment) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *Attachment) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *Attachment) GetContentId() int64 {
+	if x != nil {
+		return x.ContentId
+	}
+	return 0
+}
+
+func (x *Attachment) GetStorageProvider() string {
+	if x != nil {
+		return x.StorageProvider
+	}
+	return ""
+}
+
+func (x *Attachment) GetBucket() string {
+	if x != nil {
+		return x.Bucket
+	}
+	return ""
+}
+
+func (x *Attachment) GetObjectKey() string {
+	if x != nil {
+		return x.ObjectKey
+	}
+	return ""
+}
+
+func (x *Attachment) GetFileName() string {
+	if x != nil {
+		return x.FileName
+	}
+	return ""
+}
+
+func (x *Attachment) GetMimeType() string {
+	if x != nil {
+		return x.MimeType
+	}
+	return ""
+}
+
+func (x *Attachment) GetExt() string {
+	if x != nil {
+		return x.Ext
+	}
+	return ""
+}
+
+func (x *Attachment) GetSizeBytes() int64 {
+	if x != nil {
+		return x.SizeBytes
+	}
+	return 0
+}
+
+func (x *Attachment) GetUsageType() string {
+	if x != nil {
+		return x.UsageType
+	}
+	return ""
+}
+
+type ListAttachmentsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ContentId     int64                  `protobuf:"varint,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`
+	Page          int64                  `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`
+	PageSize      int64                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAttachmentsRequest) Reset() {
+	*x = ListAttachmentsRequest{}
+	mi := &file_proto_content_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAttachmentsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAttachmentsRequest) ProtoMessage() {}
+
+func (x *ListAttachmentsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAttachmentsRequest.ProtoReflect.Descriptor instead.
+func (*ListAttachmentsRequest) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *ListAttachmentsRequest) GetContentId() int64 {
+	if x != nil {
+		return x.ContentId
+	}
+	return 0
+}
+
+func (x *ListAttachmentsRequest) GetPage() int64 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+func (x *ListAttachmentsRequest) GetPageSize() int64 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+type ListAttachmentsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	List          []*Attachment          `protobuf:"bytes,1,rep,name=list,proto3" json:"list,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAttachmentsResponse) Reset() {
+	*x = ListAttachmentsResponse{}
+	mi := &file_proto_content_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAttachmentsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAttachmentsResponse) ProtoMessage() {}
+
+func (x *ListAttachmentsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAttachmentsResponse.ProtoReflect.Descriptor instead.
+func (*ListAttachmentsResponse) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *ListAttachmentsResponse) GetList() []*Attachment {
+	if x != nil {
+		return x.List
+	}
+	return nil
+}
+
+type CreateAttachmentRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	ContentId       int64                  `protobuf:"varint,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`
+	StorageProvider string                 `protobuf:"bytes,2,opt,name=storage_provider,json=storageProvider,proto3" json:"storage_provider,omitempty"`
+	Bucket          string                 `protobuf:"bytes,3,opt,name=bucket,proto3" json:"bucket,omitempty"`
+	ObjectKey       string                 `protobuf:"bytes,4,opt,name=object_key,json=objectKey,proto3" json:"object_key,omitempty"`
+	FileName        string                 `protobuf:"bytes,5,opt,name=file_name,json=fileName,proto3" json:"file_name,omitempty"`
+	MimeType        string                 `protobuf:"bytes,6,opt,name=mime_type,json=mimeType,proto3" json:"mime_type,omitempty"`
+	Ext             string                 `protobuf:"bytes,7,opt,name=ext,proto3" json:"ext,omitempty"`
+	SizeBytes       int64                  `protobuf:"varint,8,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
+	UsageType       string                 `protobuf:"bytes,9,opt,name=usage_type,json=usageType,proto3" json:"usage_type,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *CreateAttachmentRequest) Reset() {
+	*x = CreateAttachmentRequest{}
+	mi := &file_proto_content_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateAttachmentRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateAttachmentRequest) ProtoMessage() {}
+
+func (x *CreateAttachmentRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateAttachmentRequest.ProtoReflect.Descriptor instead.
+func (*CreateAttachmentRequest) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *CreateAttachmentRequest) GetContentId() int64 {
+	if x != nil {
+		return x.ContentId
+	}
+	return 0
+}
+
+func (x *CreateAttachmentRequest) GetStorageProvider() string {
+	if x != nil {
+		return x.StorageProvider
+	}
+	return ""
+}
+
+func (x *CreateAttachmentRequest) GetBucket() string {
+	if x != nil {
+		return x.Bucket
+	}
+	return ""
+}
+
+func (x *CreateAttachmentRequest) GetObjectKey() string {
+	if x != nil {
+		return x.ObjectKey
+	}
+	return ""
+}
+
+func (x *CreateAttachmentRequest) GetFileName() string {
+	if x != nil {
+		return x.FileName
+	}
+	return ""
+}
+
+func (x *CreateAttachmentRequest) GetMimeType() string {
+	if x != nil {
+		return x.MimeType
+	}
+	return ""
+}
+
+func (x *CreateAttachmentRequest) GetExt() string {
+	if x != nil {
+		return x.Ext
+	}
+	return ""
+}
+
+func (x *CreateAttachmentRequest) GetSizeBytes() int64 {
+	if x != nil {
+		return x.SizeBytes
+	}
+	return 0
+}
+
+func (x *CreateAttachmentRequest) GetUsageType() string {
+	if x != nil {
+		return x.UsageType
+	}
+	return ""
+}
+
+type DeleteAttachmentRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteAttachmentRequest) Reset() {
+	*x = DeleteAttachmentRequest{}
+	mi := &file_proto_content_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteAttachmentRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteAttachmentRequest) ProtoMessage() {}
+
+func (x *DeleteAttachmentRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteAttachmentRequest.ProtoReflect.Descriptor instead.
+func (*DeleteAttachmentRequest) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *DeleteAttachmentRequest) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+type Comment struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Id              int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	ContentId       int64                  `protobuf:"varint,2,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`
+	ParentCommentId int64                  `protobuf:"varint,3,opt,name=parent_comment_id,json=parentCommentId,proto3" json:"parent_comment_id,omitempty"`
+	AuthorName      string                 `protobuf:"bytes,4,opt,name=author_name,json=authorName,proto3" json:"author_name,omitempty"`
+	AuthorEmail     string                 `protobuf:"bytes,5,opt,name=author_email,json=authorEmail,proto3" json:"author_email,omitempty"`
+	BodyMarkdown    string                 `protobuf:"bytes,6,opt,name=body_markdown,json=bodyMarkdown,proto3" json:"body_markdown,omitempty"`
+	Status          string                 `protobuf:"bytes,7,opt,name=status,proto3" json:"status,omitempty"`
+	ModerationNote  string                 `protobuf:"bytes,8,opt,name=moderation_note,json=moderationNote,proto3" json:"moderation_note,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *Comment) Reset() {
+	*x = Comment{}
+	mi := &file_proto_content_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Comment) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Comment) ProtoMessage() {}
+
+func (x *Comment) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Comment.ProtoReflect.Descriptor instead.
+func (*Comment) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *Comment) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *Comment) GetContentId() int64 {
+	if x != nil {
+		return x.ContentId
+	}
+	return 0
+}
+
+func (x *Comment) GetParentCommentId() int64 {
+	if x != nil {
+		return x.ParentCommentId
+	}
+	return 0
+}
+
+func (x *Comment) GetAuthorName() string {
+	if x != nil {
+		return x.AuthorName
+	}
+	return ""
+}
+
+func (x *Comment) GetAuthorEmail() string {
+	if x != nil {
+		return x.AuthorEmail
+	}
+	return ""
+}
+
+func (x *Comment) GetBodyMarkdown() string {
+	if x != nil {
+		return x.BodyMarkdown
+	}
+	return ""
+}
+
+func (x *Comment) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *Comment) GetModerationNote() string {
+	if x != nil {
+		return x.ModerationNote
+	}
+	return ""
+}
+
+type ListCommentsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ContentId     int64                  `protobuf:"varint,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`
+	Page          int64                  `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`
+	PageSize      int64                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListCommentsRequest) Reset() {
+	*x = ListCommentsRequest{}
+	mi := &file_proto_content_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListCommentsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListCommentsRequest) ProtoMessage() {}
+
+func (x *ListCommentsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListCommentsRequest.ProtoReflect.Descriptor instead.
+func (*ListCommentsRequest) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *ListCommentsRequest) GetContentId() int64 {
+	if x != nil {
+		return x.ContentId
+	}
+	return 0
+}
+
+func (x *ListCommentsRequest) GetPage() int64 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+func (x *ListCommentsRequest) GetPageSize() int64 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+type ListCommentsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	List          []*Comment             `protobuf:"bytes,1,rep,name=list,proto3" json:"list,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListCommentsResponse) Reset() {
+	*x = ListCommentsResponse{}
+	mi := &file_proto_content_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListCommentsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListCommentsResponse) ProtoMessage() {}
+
+func (x *ListCommentsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListCommentsResponse.ProtoReflect.Descriptor instead.
+func (*ListCommentsResponse) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *ListCommentsResponse) GetList() []*Comment {
+	if x != nil {
+		return x.List
+	}
+	return nil
+}
+
+type CreateCommentRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	ContentId       int64                  `protobuf:"varint,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`
+	ParentCommentId int64                  `protobuf:"varint,2,opt,name=parent_comment_id,json=parentCommentId,proto3" json:"parent_comment_id,omitempty"`
+	AuthorName      string                 `protobuf:"bytes,3,opt,name=author_name,json=authorName,proto3" json:"author_name,omitempty"`
+	AuthorEmail     string                 `protobuf:"bytes,4,opt,name=author_email,json=authorEmail,proto3" json:"author_email,omitempty"`
+	BodyMarkdown    string                 `protobuf:"bytes,5,opt,name=body_markdown,json=bodyMarkdown,proto3" json:"body_markdown,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *CreateCommentRequest) Reset() {
+	*x = CreateCommentRequest{}
+	mi := &file_proto_content_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateCommentRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateCommentRequest) ProtoMessage() {}
+
+func (x *CreateCommentRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateCommentRequest.ProtoReflect.Descriptor instead.
+func (*CreateCommentRequest) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *CreateCommentRequest) GetContentId() int64 {
+	if x != nil {
+		return x.ContentId
+	}
+	return 0
+}
+
+func (x *CreateCommentRequest) GetParentCommentId() int64 {
+	if x != nil {
+		return x.ParentCommentId
+	}
+	return 0
+}
+
+func (x *CreateCommentRequest) GetAuthorName() string {
+	if x != nil {
+		return x.AuthorName
+	}
+	return ""
+}
+
+func (x *CreateCommentRequest) GetAuthorEmail() string {
+	if x != nil {
+		return x.AuthorEmail
+	}
+	return ""
+}
+
+func (x *CreateCommentRequest) GetBodyMarkdown() string {
+	if x != nil {
+		return x.BodyMarkdown
+	}
+	return ""
+}
+
+type UpdateCommentStatusRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Id             int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Status         string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
+	ModerationNote string                 `protobuf:"bytes,3,opt,name=moderation_note,json=moderationNote,proto3" json:"moderation_note,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *UpdateCommentStatusRequest) Reset() {
+	*x = UpdateCommentStatusRequest{}
+	mi := &file_proto_content_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateCommentStatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateCommentStatusRequest) ProtoMessage() {}
+
+func (x *UpdateCommentStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateCommentStatusRequest.ProtoReflect.Descriptor instead.
+func (*UpdateCommentStatusRequest) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *UpdateCommentStatusRequest) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *UpdateCommentStatusRequest) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *UpdateCommentStatusRequest) GetModerationNote() string {
+	if x != nil {
+		return x.ModerationNote
+	}
+	return ""
+}
+
 var File_proto_content_proto protoreflect.FileDescriptor
 
 const file_proto_content_proto_rawDesc = "" +
@@ -689,7 +1961,114 @@ const file_proto_content_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\"#\n" +
 	"\x11GetContentRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id2\xc8\x03\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\"\a\n" +
+	"\x05Empty\"u\n" +
+	"\x03Tag\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
+	"\x04slug\x18\x03 \x01(\tR\x04slug\x12\x14\n" +
+	"\x05color\x18\x04 \x01(\tR\x05color\x12 \n" +
+	"\vdescription\x18\x05 \x01(\tR\vdescription\"4\n" +
+	"\x10ListTagsResponse\x12 \n" +
+	"\x04list\x18\x01 \x03(\v2\f.content.TagR\x04list\"r\n" +
+	"\x10CreateTagRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
+	"\x04slug\x18\x02 \x01(\tR\x04slug\x12\x14\n" +
+	"\x05color\x18\x03 \x01(\tR\x05color\x12 \n" +
+	"\vdescription\x18\x04 \x01(\tR\vdescription\"\"\n" +
+	"\x10DeleteTagRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\"\xc3\x01\n" +
+	"\bRelation\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12*\n" +
+	"\x11source_content_id\x18\x02 \x01(\x03R\x0fsourceContentId\x12*\n" +
+	"\x11target_content_id\x18\x03 \x01(\x03R\x0ftargetContentId\x12#\n" +
+	"\rrelation_type\x18\x04 \x01(\tR\frelationType\x12\x16\n" +
+	"\x06weight\x18\x05 \x01(\x05R\x06weight\x12\x12\n" +
+	"\x04note\x18\x06 \x01(\tR\x04note\"5\n" +
+	"\x14ListRelationsRequest\x12\x1d\n" +
+	"\n" +
+	"content_id\x18\x01 \x01(\x03R\tcontentId\">\n" +
+	"\x15ListRelationsResponse\x12%\n" +
+	"\x04list\x18\x01 \x03(\v2\x11.content.RelationR\x04list\"\xc0\x01\n" +
+	"\x15CreateRelationRequest\x12*\n" +
+	"\x11source_content_id\x18\x01 \x01(\x03R\x0fsourceContentId\x12*\n" +
+	"\x11target_content_id\x18\x02 \x01(\x03R\x0ftargetContentId\x12#\n" +
+	"\rrelation_type\x18\x03 \x01(\tR\frelationType\x12\x16\n" +
+	"\x06weight\x18\x04 \x01(\x05R\x06weight\x12\x12\n" +
+	"\x04note\x18\x05 \x01(\tR\x04note\"'\n" +
+	"\x15DeleteRelationRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\"\xa7\x02\n" +
+	"\n" +
+	"Attachment\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1d\n" +
+	"\n" +
+	"content_id\x18\x02 \x01(\x03R\tcontentId\x12)\n" +
+	"\x10storage_provider\x18\x03 \x01(\tR\x0fstorageProvider\x12\x16\n" +
+	"\x06bucket\x18\x04 \x01(\tR\x06bucket\x12\x1d\n" +
+	"\n" +
+	"object_key\x18\x05 \x01(\tR\tobjectKey\x12\x1b\n" +
+	"\tfile_name\x18\x06 \x01(\tR\bfileName\x12\x1b\n" +
+	"\tmime_type\x18\a \x01(\tR\bmimeType\x12\x10\n" +
+	"\x03ext\x18\b \x01(\tR\x03ext\x12\x1d\n" +
+	"\n" +
+	"size_bytes\x18\t \x01(\x03R\tsizeBytes\x12\x1d\n" +
+	"\n" +
+	"usage_type\x18\n" +
+	" \x01(\tR\tusageType\"h\n" +
+	"\x16ListAttachmentsRequest\x12\x1d\n" +
+	"\n" +
+	"content_id\x18\x01 \x01(\x03R\tcontentId\x12\x12\n" +
+	"\x04page\x18\x02 \x01(\x03R\x04page\x12\x1b\n" +
+	"\tpage_size\x18\x03 \x01(\x03R\bpageSize\"B\n" +
+	"\x17ListAttachmentsResponse\x12'\n" +
+	"\x04list\x18\x01 \x03(\v2\x13.content.AttachmentR\x04list\"\xa4\x02\n" +
+	"\x17CreateAttachmentRequest\x12\x1d\n" +
+	"\n" +
+	"content_id\x18\x01 \x01(\x03R\tcontentId\x12)\n" +
+	"\x10storage_provider\x18\x02 \x01(\tR\x0fstorageProvider\x12\x16\n" +
+	"\x06bucket\x18\x03 \x01(\tR\x06bucket\x12\x1d\n" +
+	"\n" +
+	"object_key\x18\x04 \x01(\tR\tobjectKey\x12\x1b\n" +
+	"\tfile_name\x18\x05 \x01(\tR\bfileName\x12\x1b\n" +
+	"\tmime_type\x18\x06 \x01(\tR\bmimeType\x12\x10\n" +
+	"\x03ext\x18\a \x01(\tR\x03ext\x12\x1d\n" +
+	"\n" +
+	"size_bytes\x18\b \x01(\x03R\tsizeBytes\x12\x1d\n" +
+	"\n" +
+	"usage_type\x18\t \x01(\tR\tusageType\")\n" +
+	"\x17DeleteAttachmentRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\"\x8e\x02\n" +
+	"\aComment\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1d\n" +
+	"\n" +
+	"content_id\x18\x02 \x01(\x03R\tcontentId\x12*\n" +
+	"\x11parent_comment_id\x18\x03 \x01(\x03R\x0fparentCommentId\x12\x1f\n" +
+	"\vauthor_name\x18\x04 \x01(\tR\n" +
+	"authorName\x12!\n" +
+	"\fauthor_email\x18\x05 \x01(\tR\vauthorEmail\x12#\n" +
+	"\rbody_markdown\x18\x06 \x01(\tR\fbodyMarkdown\x12\x16\n" +
+	"\x06status\x18\a \x01(\tR\x06status\x12'\n" +
+	"\x0fmoderation_note\x18\b \x01(\tR\x0emoderationNote\"e\n" +
+	"\x13ListCommentsRequest\x12\x1d\n" +
+	"\n" +
+	"content_id\x18\x01 \x01(\x03R\tcontentId\x12\x12\n" +
+	"\x04page\x18\x02 \x01(\x03R\x04page\x12\x1b\n" +
+	"\tpage_size\x18\x03 \x01(\x03R\bpageSize\"<\n" +
+	"\x14ListCommentsResponse\x12$\n" +
+	"\x04list\x18\x01 \x03(\v2\x10.content.CommentR\x04list\"\xca\x01\n" +
+	"\x14CreateCommentRequest\x12\x1d\n" +
+	"\n" +
+	"content_id\x18\x01 \x01(\x03R\tcontentId\x12*\n" +
+	"\x11parent_comment_id\x18\x02 \x01(\x03R\x0fparentCommentId\x12\x1f\n" +
+	"\vauthor_name\x18\x03 \x01(\tR\n" +
+	"authorName\x12!\n" +
+	"\fauthor_email\x18\x04 \x01(\tR\vauthorEmail\x12#\n" +
+	"\rbody_markdown\x18\x05 \x01(\tR\fbodyMarkdown\"m\n" +
+	"\x1aUpdateCommentStatusRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\x12'\n" +
+	"\x0fmoderation_note\x18\x03 \x01(\tR\x0emoderationNote2\x88\n" +
+	"\n" +
 	"\aContent\x12Q\n" +
 	"\x12ListPublicArticles\x12\x1c.content.ListContentsRequest\x1a\x1d.content.ListContentsResponse\x12K\n" +
 	"\fListContents\x12\x1c.content.ListContentsRequest\x1a\x1d.content.ListContentsResponse\x12F\n" +
@@ -697,7 +2076,19 @@ const file_proto_content_proto_rawDesc = "" +
 	"\n" +
 	"GetContent\x12\x1a.content.GetContentRequest\x1a\x16.content.ContentDetail\x12F\n" +
 	"\rUpdateContent\x12\x1d.content.UpdateContentRequest\x1a\x16.content.ContentDetail\x12K\n" +
-	"\x13UpdateContentStatus\x12\x1c.content.UpdateStatusRequest\x1a\x16.content.ContentDetailB\x15Z\x13services/content/pbb\x06proto3"
+	"\x13UpdateContentStatus\x12\x1c.content.UpdateStatusRequest\x1a\x16.content.ContentDetail\x125\n" +
+	"\bListTags\x12\x0e.content.Empty\x1a\x19.content.ListTagsResponse\x124\n" +
+	"\tCreateTag\x12\x19.content.CreateTagRequest\x1a\f.content.Tag\x126\n" +
+	"\tDeleteTag\x12\x19.content.DeleteTagRequest\x1a\x0e.content.Empty\x12N\n" +
+	"\rListRelations\x12\x1d.content.ListRelationsRequest\x1a\x1e.content.ListRelationsResponse\x12C\n" +
+	"\x0eCreateRelation\x12\x1e.content.CreateRelationRequest\x1a\x11.content.Relation\x12@\n" +
+	"\x0eDeleteRelation\x12\x1e.content.DeleteRelationRequest\x1a\x0e.content.Empty\x12T\n" +
+	"\x0fListAttachments\x12\x1f.content.ListAttachmentsRequest\x1a .content.ListAttachmentsResponse\x12I\n" +
+	"\x10CreateAttachment\x12 .content.CreateAttachmentRequest\x1a\x13.content.Attachment\x12D\n" +
+	"\x10DeleteAttachment\x12 .content.DeleteAttachmentRequest\x1a\x0e.content.Empty\x12K\n" +
+	"\fListComments\x12\x1c.content.ListCommentsRequest\x1a\x1d.content.ListCommentsResponse\x12@\n" +
+	"\rCreateComment\x12\x1d.content.CreateCommentRequest\x1a\x10.content.Comment\x12L\n" +
+	"\x13UpdateCommentStatus\x12#.content.UpdateCommentStatusRequest\x1a\x10.content.CommentB\x15Z\x13services/content/pbb\x06proto3"
 
 var (
 	file_proto_content_proto_rawDescOnce sync.Once
@@ -711,36 +2102,84 @@ func file_proto_content_proto_rawDescGZIP() []byte {
 	return file_proto_content_proto_rawDescData
 }
 
-var file_proto_content_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_proto_content_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
 var file_proto_content_proto_goTypes = []any{
-	(*ContentSummary)(nil),       // 0: content.ContentSummary
-	(*ContentDetail)(nil),        // 1: content.ContentDetail
-	(*ListContentsRequest)(nil),  // 2: content.ListContentsRequest
-	(*ListContentsResponse)(nil), // 3: content.ListContentsResponse
-	(*CreateContentRequest)(nil), // 4: content.CreateContentRequest
-	(*UpdateContentRequest)(nil), // 5: content.UpdateContentRequest
-	(*UpdateStatusRequest)(nil),  // 6: content.UpdateStatusRequest
-	(*GetContentRequest)(nil),    // 7: content.GetContentRequest
+	(*ContentSummary)(nil),             // 0: content.ContentSummary
+	(*ContentDetail)(nil),              // 1: content.ContentDetail
+	(*ListContentsRequest)(nil),        // 2: content.ListContentsRequest
+	(*ListContentsResponse)(nil),       // 3: content.ListContentsResponse
+	(*CreateContentRequest)(nil),       // 4: content.CreateContentRequest
+	(*UpdateContentRequest)(nil),       // 5: content.UpdateContentRequest
+	(*UpdateStatusRequest)(nil),        // 6: content.UpdateStatusRequest
+	(*GetContentRequest)(nil),          // 7: content.GetContentRequest
+	(*Empty)(nil),                      // 8: content.Empty
+	(*Tag)(nil),                        // 9: content.Tag
+	(*ListTagsResponse)(nil),           // 10: content.ListTagsResponse
+	(*CreateTagRequest)(nil),           // 11: content.CreateTagRequest
+	(*DeleteTagRequest)(nil),           // 12: content.DeleteTagRequest
+	(*Relation)(nil),                   // 13: content.Relation
+	(*ListRelationsRequest)(nil),       // 14: content.ListRelationsRequest
+	(*ListRelationsResponse)(nil),      // 15: content.ListRelationsResponse
+	(*CreateRelationRequest)(nil),      // 16: content.CreateRelationRequest
+	(*DeleteRelationRequest)(nil),      // 17: content.DeleteRelationRequest
+	(*Attachment)(nil),                 // 18: content.Attachment
+	(*ListAttachmentsRequest)(nil),     // 19: content.ListAttachmentsRequest
+	(*ListAttachmentsResponse)(nil),    // 20: content.ListAttachmentsResponse
+	(*CreateAttachmentRequest)(nil),    // 21: content.CreateAttachmentRequest
+	(*DeleteAttachmentRequest)(nil),    // 22: content.DeleteAttachmentRequest
+	(*Comment)(nil),                    // 23: content.Comment
+	(*ListCommentsRequest)(nil),        // 24: content.ListCommentsRequest
+	(*ListCommentsResponse)(nil),       // 25: content.ListCommentsResponse
+	(*CreateCommentRequest)(nil),       // 26: content.CreateCommentRequest
+	(*UpdateCommentStatusRequest)(nil), // 27: content.UpdateCommentStatusRequest
 }
 var file_proto_content_proto_depIdxs = []int32{
-	0, // 0: content.ListContentsResponse.list:type_name -> content.ContentSummary
-	2, // 1: content.Content.ListPublicArticles:input_type -> content.ListContentsRequest
-	2, // 2: content.Content.ListContents:input_type -> content.ListContentsRequest
-	4, // 3: content.Content.CreateContent:input_type -> content.CreateContentRequest
-	7, // 4: content.Content.GetContent:input_type -> content.GetContentRequest
-	5, // 5: content.Content.UpdateContent:input_type -> content.UpdateContentRequest
-	6, // 6: content.Content.UpdateContentStatus:input_type -> content.UpdateStatusRequest
-	3, // 7: content.Content.ListPublicArticles:output_type -> content.ListContentsResponse
-	3, // 8: content.Content.ListContents:output_type -> content.ListContentsResponse
-	1, // 9: content.Content.CreateContent:output_type -> content.ContentDetail
-	1, // 10: content.Content.GetContent:output_type -> content.ContentDetail
-	1, // 11: content.Content.UpdateContent:output_type -> content.ContentDetail
-	1, // 12: content.Content.UpdateContentStatus:output_type -> content.ContentDetail
-	7, // [7:13] is the sub-list for method output_type
-	1, // [1:7] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	0,  // 0: content.ListContentsResponse.list:type_name -> content.ContentSummary
+	9,  // 1: content.ListTagsResponse.list:type_name -> content.Tag
+	13, // 2: content.ListRelationsResponse.list:type_name -> content.Relation
+	18, // 3: content.ListAttachmentsResponse.list:type_name -> content.Attachment
+	23, // 4: content.ListCommentsResponse.list:type_name -> content.Comment
+	2,  // 5: content.Content.ListPublicArticles:input_type -> content.ListContentsRequest
+	2,  // 6: content.Content.ListContents:input_type -> content.ListContentsRequest
+	4,  // 7: content.Content.CreateContent:input_type -> content.CreateContentRequest
+	7,  // 8: content.Content.GetContent:input_type -> content.GetContentRequest
+	5,  // 9: content.Content.UpdateContent:input_type -> content.UpdateContentRequest
+	6,  // 10: content.Content.UpdateContentStatus:input_type -> content.UpdateStatusRequest
+	8,  // 11: content.Content.ListTags:input_type -> content.Empty
+	11, // 12: content.Content.CreateTag:input_type -> content.CreateTagRequest
+	12, // 13: content.Content.DeleteTag:input_type -> content.DeleteTagRequest
+	14, // 14: content.Content.ListRelations:input_type -> content.ListRelationsRequest
+	16, // 15: content.Content.CreateRelation:input_type -> content.CreateRelationRequest
+	17, // 16: content.Content.DeleteRelation:input_type -> content.DeleteRelationRequest
+	19, // 17: content.Content.ListAttachments:input_type -> content.ListAttachmentsRequest
+	21, // 18: content.Content.CreateAttachment:input_type -> content.CreateAttachmentRequest
+	22, // 19: content.Content.DeleteAttachment:input_type -> content.DeleteAttachmentRequest
+	24, // 20: content.Content.ListComments:input_type -> content.ListCommentsRequest
+	26, // 21: content.Content.CreateComment:input_type -> content.CreateCommentRequest
+	27, // 22: content.Content.UpdateCommentStatus:input_type -> content.UpdateCommentStatusRequest
+	3,  // 23: content.Content.ListPublicArticles:output_type -> content.ListContentsResponse
+	3,  // 24: content.Content.ListContents:output_type -> content.ListContentsResponse
+	1,  // 25: content.Content.CreateContent:output_type -> content.ContentDetail
+	1,  // 26: content.Content.GetContent:output_type -> content.ContentDetail
+	1,  // 27: content.Content.UpdateContent:output_type -> content.ContentDetail
+	1,  // 28: content.Content.UpdateContentStatus:output_type -> content.ContentDetail
+	10, // 29: content.Content.ListTags:output_type -> content.ListTagsResponse
+	9,  // 30: content.Content.CreateTag:output_type -> content.Tag
+	8,  // 31: content.Content.DeleteTag:output_type -> content.Empty
+	15, // 32: content.Content.ListRelations:output_type -> content.ListRelationsResponse
+	13, // 33: content.Content.CreateRelation:output_type -> content.Relation
+	8,  // 34: content.Content.DeleteRelation:output_type -> content.Empty
+	20, // 35: content.Content.ListAttachments:output_type -> content.ListAttachmentsResponse
+	18, // 36: content.Content.CreateAttachment:output_type -> content.Attachment
+	8,  // 37: content.Content.DeleteAttachment:output_type -> content.Empty
+	25, // 38: content.Content.ListComments:output_type -> content.ListCommentsResponse
+	23, // 39: content.Content.CreateComment:output_type -> content.Comment
+	23, // 40: content.Content.UpdateCommentStatus:output_type -> content.Comment
+	23, // [23:41] is the sub-list for method output_type
+	5,  // [5:23] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_proto_content_proto_init() }
@@ -754,7 +2193,7 @@ func file_proto_content_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_content_proto_rawDesc), len(file_proto_content_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   28,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

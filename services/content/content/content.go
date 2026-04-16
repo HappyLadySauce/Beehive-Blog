@@ -14,14 +14,34 @@ import (
 )
 
 type (
-	ContentDetail        = pb.ContentDetail
-	ContentSummary       = pb.ContentSummary
-	CreateContentRequest = pb.CreateContentRequest
-	GetContentRequest    = pb.GetContentRequest
-	ListContentsRequest  = pb.ListContentsRequest
-	ListContentsResponse = pb.ListContentsResponse
-	UpdateContentRequest = pb.UpdateContentRequest
-	UpdateStatusRequest  = pb.UpdateStatusRequest
+	Attachment                 = pb.Attachment
+	Comment                    = pb.Comment
+	ContentDetail              = pb.ContentDetail
+	ContentSummary             = pb.ContentSummary
+	CreateContentRequest       = pb.CreateContentRequest
+	CreateAttachmentRequest    = pb.CreateAttachmentRequest
+	CreateCommentRequest       = pb.CreateCommentRequest
+	CreateRelationRequest      = pb.CreateRelationRequest
+	CreateTagRequest           = pb.CreateTagRequest
+	DeleteAttachmentRequest    = pb.DeleteAttachmentRequest
+	DeleteRelationRequest      = pb.DeleteRelationRequest
+	DeleteTagRequest           = pb.DeleteTagRequest
+	Empty                      = pb.Empty
+	GetContentRequest          = pb.GetContentRequest
+	ListAttachmentsRequest     = pb.ListAttachmentsRequest
+	ListAttachmentsResponse    = pb.ListAttachmentsResponse
+	ListCommentsRequest        = pb.ListCommentsRequest
+	ListCommentsResponse       = pb.ListCommentsResponse
+	ListContentsRequest        = pb.ListContentsRequest
+	ListContentsResponse       = pb.ListContentsResponse
+	ListRelationsRequest       = pb.ListRelationsRequest
+	ListRelationsResponse      = pb.ListRelationsResponse
+	ListTagsResponse           = pb.ListTagsResponse
+	Relation                   = pb.Relation
+	Tag                        = pb.Tag
+	UpdateCommentStatusRequest = pb.UpdateCommentStatusRequest
+	UpdateContentRequest       = pb.UpdateContentRequest
+	UpdateStatusRequest        = pb.UpdateStatusRequest
 
 	Content interface {
 		ListPublicArticles(ctx context.Context, in *ListContentsRequest, opts ...grpc.CallOption) (*ListContentsResponse, error)
@@ -30,6 +50,18 @@ type (
 		GetContent(ctx context.Context, in *GetContentRequest, opts ...grpc.CallOption) (*ContentDetail, error)
 		UpdateContent(ctx context.Context, in *UpdateContentRequest, opts ...grpc.CallOption) (*ContentDetail, error)
 		UpdateContentStatus(ctx context.Context, in *UpdateStatusRequest, opts ...grpc.CallOption) (*ContentDetail, error)
+		ListTags(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ListTagsResponse, error)
+		CreateTag(ctx context.Context, in *CreateTagRequest, opts ...grpc.CallOption) (*Tag, error)
+		DeleteTag(ctx context.Context, in *DeleteTagRequest, opts ...grpc.CallOption) (*Empty, error)
+		ListRelations(ctx context.Context, in *ListRelationsRequest, opts ...grpc.CallOption) (*ListRelationsResponse, error)
+		CreateRelation(ctx context.Context, in *CreateRelationRequest, opts ...grpc.CallOption) (*Relation, error)
+		DeleteRelation(ctx context.Context, in *DeleteRelationRequest, opts ...grpc.CallOption) (*Empty, error)
+		ListAttachments(ctx context.Context, in *ListAttachmentsRequest, opts ...grpc.CallOption) (*ListAttachmentsResponse, error)
+		CreateAttachment(ctx context.Context, in *CreateAttachmentRequest, opts ...grpc.CallOption) (*Attachment, error)
+		DeleteAttachment(ctx context.Context, in *DeleteAttachmentRequest, opts ...grpc.CallOption) (*Empty, error)
+		ListComments(ctx context.Context, in *ListCommentsRequest, opts ...grpc.CallOption) (*ListCommentsResponse, error)
+		CreateComment(ctx context.Context, in *CreateCommentRequest, opts ...grpc.CallOption) (*Comment, error)
+		UpdateCommentStatus(ctx context.Context, in *UpdateCommentStatusRequest, opts ...grpc.CallOption) (*Comment, error)
 	}
 
 	defaultContent struct {
@@ -71,4 +103,64 @@ func (m *defaultContent) UpdateContent(ctx context.Context, in *UpdateContentReq
 func (m *defaultContent) UpdateContentStatus(ctx context.Context, in *UpdateStatusRequest, opts ...grpc.CallOption) (*ContentDetail, error) {
 	client := pb.NewContentClient(m.cli.Conn())
 	return client.UpdateContentStatus(ctx, in, opts...)
+}
+
+func (m *defaultContent) ListTags(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*ListTagsResponse, error) {
+	client := pb.NewContentClient(m.cli.Conn())
+	return client.ListTags(ctx, in, opts...)
+}
+
+func (m *defaultContent) CreateTag(ctx context.Context, in *CreateTagRequest, opts ...grpc.CallOption) (*Tag, error) {
+	client := pb.NewContentClient(m.cli.Conn())
+	return client.CreateTag(ctx, in, opts...)
+}
+
+func (m *defaultContent) DeleteTag(ctx context.Context, in *DeleteTagRequest, opts ...grpc.CallOption) (*Empty, error) {
+	client := pb.NewContentClient(m.cli.Conn())
+	return client.DeleteTag(ctx, in, opts...)
+}
+
+func (m *defaultContent) ListRelations(ctx context.Context, in *ListRelationsRequest, opts ...grpc.CallOption) (*ListRelationsResponse, error) {
+	client := pb.NewContentClient(m.cli.Conn())
+	return client.ListRelations(ctx, in, opts...)
+}
+
+func (m *defaultContent) CreateRelation(ctx context.Context, in *CreateRelationRequest, opts ...grpc.CallOption) (*Relation, error) {
+	client := pb.NewContentClient(m.cli.Conn())
+	return client.CreateRelation(ctx, in, opts...)
+}
+
+func (m *defaultContent) DeleteRelation(ctx context.Context, in *DeleteRelationRequest, opts ...grpc.CallOption) (*Empty, error) {
+	client := pb.NewContentClient(m.cli.Conn())
+	return client.DeleteRelation(ctx, in, opts...)
+}
+
+func (m *defaultContent) ListAttachments(ctx context.Context, in *ListAttachmentsRequest, opts ...grpc.CallOption) (*ListAttachmentsResponse, error) {
+	client := pb.NewContentClient(m.cli.Conn())
+	return client.ListAttachments(ctx, in, opts...)
+}
+
+func (m *defaultContent) CreateAttachment(ctx context.Context, in *CreateAttachmentRequest, opts ...grpc.CallOption) (*Attachment, error) {
+	client := pb.NewContentClient(m.cli.Conn())
+	return client.CreateAttachment(ctx, in, opts...)
+}
+
+func (m *defaultContent) DeleteAttachment(ctx context.Context, in *DeleteAttachmentRequest, opts ...grpc.CallOption) (*Empty, error) {
+	client := pb.NewContentClient(m.cli.Conn())
+	return client.DeleteAttachment(ctx, in, opts...)
+}
+
+func (m *defaultContent) ListComments(ctx context.Context, in *ListCommentsRequest, opts ...grpc.CallOption) (*ListCommentsResponse, error) {
+	client := pb.NewContentClient(m.cli.Conn())
+	return client.ListComments(ctx, in, opts...)
+}
+
+func (m *defaultContent) CreateComment(ctx context.Context, in *CreateCommentRequest, opts ...grpc.CallOption) (*Comment, error) {
+	client := pb.NewContentClient(m.cli.Conn())
+	return client.CreateComment(ctx, in, opts...)
+}
+
+func (m *defaultContent) UpdateCommentStatus(ctx context.Context, in *UpdateCommentStatusRequest, opts ...grpc.CallOption) (*Comment, error) {
+	client := pb.NewContentClient(m.cli.Conn())
+	return client.UpdateCommentStatus(ctx, in, opts...)
 }

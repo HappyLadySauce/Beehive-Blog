@@ -6,6 +6,7 @@ package gateway
 import (
 	"context"
 	"strings"
+	"time"
 
 	contentrpc "github.com/HappyLadySauce/Beehive-Blog/services/content/content"
 	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/svc"
@@ -40,12 +41,9 @@ func (l *UpdateContentStatusLogic) UpdateContentStatus(req *types.StatusUpdateRe
 		"content_id": req.Id,
 		"status":     req.Status,
 	}
+	startedAt := time.Now()
 	defer func() {
-		if err != nil {
-			auditFailure(l.ctx, "content.update_status", err, fields)
-			return
-		}
-		auditSuccess(l.ctx, "content.update_status", fields)
+		auditRPC(l.ctx, "content.update_status", "content.UpdateContentStatus", startedAt, err, fields)
 	}()
 
 	if req.Id <= 0 || strings.TrimSpace(req.Status) == "" {
@@ -59,5 +57,6 @@ func (l *UpdateContentStatusLogic) UpdateContentStatus(req *types.StatusUpdateRe
 	if err != nil {
 		return nil, err
 	}
+	triggerAsyncIndexUpsert(l.ctx, l.svcCtx.Search, out)
 	return toContentDetail(out), nil
 }

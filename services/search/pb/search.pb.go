@@ -27,6 +27,7 @@ type SearchRequest struct {
 	Page          int64                  `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`
 	PageSize      int64                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	Type          string                 `protobuf:"bytes,4,opt,name=type,proto3" json:"type,omitempty"`
+	Scope         string                 `protobuf:"bytes,5,opt,name=scope,proto3" json:"scope,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -85,6 +86,13 @@ func (x *SearchRequest) GetPageSize() int64 {
 func (x *SearchRequest) GetType() string {
 	if x != nil {
 		return x.Type
+	}
+	return ""
+}
+
+func (x *SearchRequest) GetScope() string {
+	if x != nil {
+		return x.Scope
 	}
 	return ""
 }
@@ -225,16 +233,297 @@ func (x *SearchResponse) GetList() []*SearchResultItem {
 	return nil
 }
 
+type UpsertDocumentRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ContentId     int64                  `protobuf:"varint,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`
+	Type          string                 `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
+	Title         string                 `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
+	Slug          string                 `protobuf:"bytes,4,opt,name=slug,proto3" json:"slug,omitempty"`
+	Summary       string                 `protobuf:"bytes,5,opt,name=summary,proto3" json:"summary,omitempty"`
+	BodyMarkdown  string                 `protobuf:"bytes,6,opt,name=body_markdown,json=bodyMarkdown,proto3" json:"body_markdown,omitempty"`
+	Status        string                 `protobuf:"bytes,7,opt,name=status,proto3" json:"status,omitempty"`
+	Visibility    string                 `protobuf:"bytes,8,opt,name=visibility,proto3" json:"visibility,omitempty"`
+	AiAccess      string                 `protobuf:"bytes,9,opt,name=ai_access,json=aiAccess,proto3" json:"ai_access,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpsertDocumentRequest) Reset() {
+	*x = UpsertDocumentRequest{}
+	mi := &file_proto_search_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpsertDocumentRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpsertDocumentRequest) ProtoMessage() {}
+
+func (x *UpsertDocumentRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_search_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpsertDocumentRequest.ProtoReflect.Descriptor instead.
+func (*UpsertDocumentRequest) Descriptor() ([]byte, []int) {
+	return file_proto_search_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *UpsertDocumentRequest) GetContentId() int64 {
+	if x != nil {
+		return x.ContentId
+	}
+	return 0
+}
+
+func (x *UpsertDocumentRequest) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *UpsertDocumentRequest) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *UpsertDocumentRequest) GetSlug() string {
+	if x != nil {
+		return x.Slug
+	}
+	return ""
+}
+
+func (x *UpsertDocumentRequest) GetSummary() string {
+	if x != nil {
+		return x.Summary
+	}
+	return ""
+}
+
+func (x *UpsertDocumentRequest) GetBodyMarkdown() string {
+	if x != nil {
+		return x.BodyMarkdown
+	}
+	return ""
+}
+
+func (x *UpsertDocumentRequest) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *UpsertDocumentRequest) GetVisibility() string {
+	if x != nil {
+		return x.Visibility
+	}
+	return ""
+}
+
+func (x *UpsertDocumentRequest) GetAiAccess() string {
+	if x != nil {
+		return x.AiAccess
+	}
+	return ""
+}
+
+type IndexDocument struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ContentId     int64                  `protobuf:"varint,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`
+	Type          string                 `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
+	Title         string                 `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
+	Slug          string                 `protobuf:"bytes,4,opt,name=slug,proto3" json:"slug,omitempty"`
+	Status        string                 `protobuf:"bytes,5,opt,name=status,proto3" json:"status,omitempty"`
+	Visibility    string                 `protobuf:"bytes,6,opt,name=visibility,proto3" json:"visibility,omitempty"`
+	IndexedAt     string                 `protobuf:"bytes,7,opt,name=indexed_at,json=indexedAt,proto3" json:"indexed_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IndexDocument) Reset() {
+	*x = IndexDocument{}
+	mi := &file_proto_search_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IndexDocument) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IndexDocument) ProtoMessage() {}
+
+func (x *IndexDocument) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_search_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IndexDocument.ProtoReflect.Descriptor instead.
+func (*IndexDocument) Descriptor() ([]byte, []int) {
+	return file_proto_search_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *IndexDocument) GetContentId() int64 {
+	if x != nil {
+		return x.ContentId
+	}
+	return 0
+}
+
+func (x *IndexDocument) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *IndexDocument) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *IndexDocument) GetSlug() string {
+	if x != nil {
+		return x.Slug
+	}
+	return ""
+}
+
+func (x *IndexDocument) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *IndexDocument) GetVisibility() string {
+	if x != nil {
+		return x.Visibility
+	}
+	return ""
+}
+
+func (x *IndexDocument) GetIndexedAt() string {
+	if x != nil {
+		return x.IndexedAt
+	}
+	return ""
+}
+
+type DeleteDocumentRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ContentId     int64                  `protobuf:"varint,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteDocumentRequest) Reset() {
+	*x = DeleteDocumentRequest{}
+	mi := &file_proto_search_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteDocumentRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteDocumentRequest) ProtoMessage() {}
+
+func (x *DeleteDocumentRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_search_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteDocumentRequest.ProtoReflect.Descriptor instead.
+func (*DeleteDocumentRequest) Descriptor() ([]byte, []int) {
+	return file_proto_search_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *DeleteDocumentRequest) GetContentId() int64 {
+	if x != nil {
+		return x.ContentId
+	}
+	return 0
+}
+
+type Empty struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Empty) Reset() {
+	*x = Empty{}
+	mi := &file_proto_search_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Empty) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Empty) ProtoMessage() {}
+
+func (x *Empty) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_search_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Empty.ProtoReflect.Descriptor instead.
+func (*Empty) Descriptor() ([]byte, []int) {
+	return file_proto_search_proto_rawDescGZIP(), []int{6}
+}
+
 var File_proto_search_proto protoreflect.FileDescriptor
 
 const file_proto_search_proto_rawDesc = "" +
 	"\n" +
-	"\x12proto/search.proto\x12\x06search\"j\n" +
+	"\x12proto/search.proto\x12\x06search\"\x80\x01\n" +
 	"\rSearchRequest\x12\x14\n" +
 	"\x05query\x18\x01 \x01(\tR\x05query\x12\x12\n" +
 	"\x04page\x18\x02 \x01(\x03R\x04page\x12\x1b\n" +
 	"\tpage_size\x18\x03 \x01(\x03R\bpageSize\x12\x12\n" +
-	"\x04type\x18\x04 \x01(\tR\x04type\"\xbd\x01\n" +
+	"\x04type\x18\x04 \x01(\tR\x04type\x12\x14\n" +
+	"\x05scope\x18\x05 \x01(\tR\x05scope\"\xbd\x01\n" +
 	"\x10SearchResultItem\x12\x1d\n" +
 	"\n" +
 	"content_id\x18\x01 \x01(\x03R\tcontentId\x12\x12\n" +
@@ -245,9 +534,40 @@ const file_proto_search_proto_rawDesc = "" +
 	"\thighlight\x18\x06 \x01(\tR\thighlight\x12\x14\n" +
 	"\x05score\x18\a \x01(\x01R\x05score\">\n" +
 	"\x0eSearchResponse\x12,\n" +
-	"\x04list\x18\x01 \x03(\v2\x18.search.SearchResultItemR\x04list2@\n" +
+	"\x04list\x18\x01 \x03(\v2\x18.search.SearchResultItemR\x04list\"\x88\x02\n" +
+	"\x15UpsertDocumentRequest\x12\x1d\n" +
+	"\n" +
+	"content_id\x18\x01 \x01(\x03R\tcontentId\x12\x12\n" +
+	"\x04type\x18\x02 \x01(\tR\x04type\x12\x14\n" +
+	"\x05title\x18\x03 \x01(\tR\x05title\x12\x12\n" +
+	"\x04slug\x18\x04 \x01(\tR\x04slug\x12\x18\n" +
+	"\asummary\x18\x05 \x01(\tR\asummary\x12#\n" +
+	"\rbody_markdown\x18\x06 \x01(\tR\fbodyMarkdown\x12\x16\n" +
+	"\x06status\x18\a \x01(\tR\x06status\x12\x1e\n" +
+	"\n" +
+	"visibility\x18\b \x01(\tR\n" +
+	"visibility\x12\x1b\n" +
+	"\tai_access\x18\t \x01(\tR\baiAccess\"\xc3\x01\n" +
+	"\rIndexDocument\x12\x1d\n" +
+	"\n" +
+	"content_id\x18\x01 \x01(\x03R\tcontentId\x12\x12\n" +
+	"\x04type\x18\x02 \x01(\tR\x04type\x12\x14\n" +
+	"\x05title\x18\x03 \x01(\tR\x05title\x12\x12\n" +
+	"\x04slug\x18\x04 \x01(\tR\x04slug\x12\x16\n" +
+	"\x06status\x18\x05 \x01(\tR\x06status\x12\x1e\n" +
+	"\n" +
+	"visibility\x18\x06 \x01(\tR\n" +
+	"visibility\x12\x1d\n" +
+	"\n" +
+	"indexed_at\x18\a \x01(\tR\tindexedAt\"6\n" +
+	"\x15DeleteDocumentRequest\x12\x1d\n" +
+	"\n" +
+	"content_id\x18\x01 \x01(\x03R\tcontentId\"\a\n" +
+	"\x05Empty2\xc8\x01\n" +
 	"\x06Search\x126\n" +
-	"\x05Query\x12\x15.search.SearchRequest\x1a\x16.search.SearchResponseB\x14Z\x12services/search/pbb\x06proto3"
+	"\x05Query\x12\x15.search.SearchRequest\x1a\x16.search.SearchResponse\x12F\n" +
+	"\x0eUpsertDocument\x12\x1d.search.UpsertDocumentRequest\x1a\x15.search.IndexDocument\x12>\n" +
+	"\x0eDeleteDocument\x12\x1d.search.DeleteDocumentRequest\x1a\r.search.EmptyB\x14Z\x12services/search/pbb\x06proto3"
 
 var (
 	file_proto_search_proto_rawDescOnce sync.Once
@@ -261,18 +581,26 @@ func file_proto_search_proto_rawDescGZIP() []byte {
 	return file_proto_search_proto_rawDescData
 }
 
-var file_proto_search_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_proto_search_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_proto_search_proto_goTypes = []any{
-	(*SearchRequest)(nil),    // 0: search.SearchRequest
-	(*SearchResultItem)(nil), // 1: search.SearchResultItem
-	(*SearchResponse)(nil),   // 2: search.SearchResponse
+	(*SearchRequest)(nil),         // 0: search.SearchRequest
+	(*SearchResultItem)(nil),      // 1: search.SearchResultItem
+	(*SearchResponse)(nil),        // 2: search.SearchResponse
+	(*UpsertDocumentRequest)(nil), // 3: search.UpsertDocumentRequest
+	(*IndexDocument)(nil),         // 4: search.IndexDocument
+	(*DeleteDocumentRequest)(nil), // 5: search.DeleteDocumentRequest
+	(*Empty)(nil),                 // 6: search.Empty
 }
 var file_proto_search_proto_depIdxs = []int32{
 	1, // 0: search.SearchResponse.list:type_name -> search.SearchResultItem
 	0, // 1: search.Search.Query:input_type -> search.SearchRequest
-	2, // 2: search.Search.Query:output_type -> search.SearchResponse
-	2, // [2:3] is the sub-list for method output_type
-	1, // [1:2] is the sub-list for method input_type
+	3, // 2: search.Search.UpsertDocument:input_type -> search.UpsertDocumentRequest
+	5, // 3: search.Search.DeleteDocument:input_type -> search.DeleteDocumentRequest
+	2, // 4: search.Search.Query:output_type -> search.SearchResponse
+	4, // 5: search.Search.UpsertDocument:output_type -> search.IndexDocument
+	6, // 6: search.Search.DeleteDocument:output_type -> search.Empty
+	4, // [4:7] is the sub-list for method output_type
+	1, // [1:4] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
 	1, // [1:1] is the sub-list for extension extendee
 	0, // [0:1] is the sub-list for field type_name
@@ -289,7 +617,7 @@ func file_proto_search_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_search_proto_rawDesc), len(file_proto_search_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

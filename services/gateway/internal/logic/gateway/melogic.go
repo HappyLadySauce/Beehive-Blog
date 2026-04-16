@@ -5,6 +5,7 @@ package gateway
 
 import (
 	"context"
+	"time"
 
 	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/svc"
 	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/types"
@@ -30,17 +31,21 @@ func NewMeLogic(ctx context.Context, svcCtx *svc.ServiceContext) *MeLogic {
 }
 
 func (l *MeLogic) Me() (resp *types.UserProfile, err error) {
+	startedAt := time.Now()
+	fields := map[string]any{}
+	defer func() {
+		auditRPC(l.ctx, "auth.me", "identity.GetUser", startedAt, err, fields)
+	}()
+
 	userID, err := parseAccessTokenUserIDFromContext(l.ctx)
 	if err != nil {
-		auditFailure(l.ctx, "auth.me", err, map[string]any{})
 		return nil, status.Error(codes.Unauthenticated, "invalid authorization token")
 	}
+	fields["user_id"] = userID
 
 	out, err := l.svcCtx.Identity.GetUser(l.ctx, &identityrpc.GetUserRequest{UserId: userID})
 	if err != nil {
-		auditFailure(l.ctx, "auth.me", err, map[string]any{"user_id": userID})
 		return nil, err
 	}
-	auditSuccess(l.ctx, "auth.me", map[string]any{"user_id": userID})
 	return toUserProfile(out), nil
 }
