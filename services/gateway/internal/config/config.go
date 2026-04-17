@@ -18,6 +18,10 @@ type RateLimitConf struct {
 	Burst   int     `json:",default=100"`
 }
 
+type AccessLogConf struct {
+	SlowRequestWarnThresholdMs int64 `json:",default=500"`
+}
+
 type Config struct {
 	rest.RestConf
 	IdentityRpc zrpc.RpcClientConf
@@ -25,4 +29,5 @@ type Config struct {
 	SearchRpc   zrpc.RpcClientConf
 	Auth        AuthConf
 	RateLimit   RateLimitConf
+	AccessLog   AccessLogConf
 }

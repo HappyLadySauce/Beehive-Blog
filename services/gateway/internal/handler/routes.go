@@ -17,9 +17,10 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	authMiddleware := middleware.NewAuthMiddleware(serverCtx)
 	rateLimitMiddleware := middleware.NewRateLimitMiddleware(serverCtx.Config.RateLimit)
 	requestIDMiddleware := middleware.NewRequestIDMiddleware()
+	accessLogMiddleware := middleware.NewAccessLogMiddleware(serverCtx.Config.AccessLog)
 
 	server.AddRoutes(
-		rest.WithMiddlewares([]rest.Middleware{requestIDMiddleware.Handle, rateLimitMiddleware.Handle},
+		rest.WithMiddlewares([]rest.Middleware{requestIDMiddleware.Handle, rateLimitMiddleware.Handle, accessLogMiddleware.Handle},
 			[]rest.Route{
 				{
 					Method:  http.MethodPost,
@@ -56,7 +57,7 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 	)
 
 	server.AddRoutes(
-		rest.WithMiddlewares([]rest.Middleware{requestIDMiddleware.Handle, rateLimitMiddleware.Handle, authMiddleware.Handle},
+		rest.WithMiddlewares([]rest.Middleware{requestIDMiddleware.Handle, rateLimitMiddleware.Handle, authMiddleware.Handle, accessLogMiddleware.Handle},
 			[]rest.Route{
 				{
 					Method:  http.MethodGet,

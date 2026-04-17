@@ -28,3 +28,5 @@ RateLimit:
   Enabled: true
   RPS: 80
   Burst: 160
+AccessLog:
+  SlowRequestWarnThresholdMs: 500

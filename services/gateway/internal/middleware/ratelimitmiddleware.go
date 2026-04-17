@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/config"
-	"github.com/zeromicro/go-zero/rest/httpx"
 	"golang.org/x/time/rate"
 )
 
@@ -55,10 +54,7 @@ func (m *RateLimitMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 		key := clientKey(r)
 		limiter := m.getLimiter(key)
 		if !limiter.Allow() {
-			httpx.WriteJsonCtx(r.Context(), w, http.StatusTooManyRequests, map[string]any{
-				"code":    "RATE_LIMITED",
-				"message": "too many requests",
-			})
+			writeJSONError(r.Context(), w, http.StatusTooManyRequests, "RATE_LIMITED", "too many requests")
 			return
 		}
 		next(w, r)

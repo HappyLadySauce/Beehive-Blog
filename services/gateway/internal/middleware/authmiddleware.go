@@ -7,7 +7,6 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/libs/security"
 	gwlogic "github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/logic/gateway"
 	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/svc"
-	"github.com/zeromicro/go-zero/rest/httpx"
 )
 
 type AuthMiddleware struct {
@@ -22,19 +21,13 @@ func (m *AuthMiddleware) Handle(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		token, err := security.ExtractBearerToken(r.Header.Get("Authorization"))
 		if err != nil {
-			httpx.WriteJsonCtx(r.Context(), w, http.StatusUnauthorized, map[string]any{
-				"code":    "AUTH_REQUIRED",
-				"message": "authorization is required",
-			})
+			writeJSONError(r.Context(), w, http.StatusUnauthorized, "AUTH_REQUIRED", "authorization is required")
 			return
 		}
 
 		userID, err := security.ParseAccessToken(m.svcCtx.Config.Auth.AccessSecret, token)
 		if err != nil {
-			httpx.WriteJsonCtx(r.Context(), w, http.StatusUnauthorized, map[string]any{
-				"code":    "AUTH_INVALID",
-				"message": "invalid access token",
-			})
+			writeJSONError(r.Context(), w, http.StatusUnauthorized, "AUTH_INVALID", "invalid access token")
 			return
 		}
 
