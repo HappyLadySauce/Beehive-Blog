@@ -18,7 +18,7 @@ import (
 
 func main() {
 	var (
-		dsn           = flag.String("dsn", envOrDefault("DB_DSN", "postgres://postgres:postgres@127.0.0.1:5432/beehive_blog?sslmode=disable"), "postgres dsn")
+		dsn           = flag.String("dsn", envOrDefault("DB_DSN", "postgres://Beehive-Blog:Beehive-Blog@127.0.0.1:5432/Beehive-Blog?sslmode=disable"), "postgres dsn")
 		migrationsDir = flag.String("dir", "sql/migrations", "migrations directory")
 	)
 	flag.Parse()
