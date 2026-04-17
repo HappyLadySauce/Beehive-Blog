@@ -1,5 +1,5 @@
 param(
-    [switch]$SkipGateway,
+    [switch]$WithGateway,
     [switch]$SkipRpc,
     [switch]$SkipCheck
 )
@@ -29,13 +29,17 @@ $rpcScript = Join-Path $PSScriptRoot "gen-rpc.ps1"
 $checkScript = Join-Path $PSScriptRoot "check-contract-sync.ps1"
 $protoDir = Join-Path $repoRoot "proto"
 
-if (-not $SkipGateway) {
+if ($WithGateway) {
     Invoke-Step -Name "Generate gateway from api/gateway.api" -Action {
         & $gatewayScript
         if ($LASTEXITCODE -ne 0) {
             throw "gateway generation failed"
         }
     }
+}
+else {
+    Write-Host ""
+    Write-Host "skip gateway generation by default (pass -WithGateway to enable)." -ForegroundColor Yellow
 }
 
 if (-not $SkipRpc) {

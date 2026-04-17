@@ -19,7 +19,8 @@ Do not run generation ad hoc without updating the corresponding contract files f
   - `./scripts/codegen/check-contract-sync.ps1`
 - Generate + sync-check in one command:
   - `./scripts/codegen/sync-all.ps1`
-  - Optional flags: `-SkipGateway`, `-SkipRpc`, `-SkipCheck`
+  - Optional flags: `-WithGateway`, `-SkipRpc`, `-SkipCheck`
+  - Note: gateway generation is skipped by default to avoid overwriting hand-maintained middleware wiring in `routes.go`.
 
 `check-contract-sync.ps1` validates:
 
