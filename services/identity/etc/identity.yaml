@@ -6,7 +6,7 @@ Etcd:
   Key: identity.rpc
 DB:
   DriverName: pgx
-  DataSource: postgres://postgres:postgres@127.0.0.1:5432/beehive_blog?sslmode=disable
+  DataSource: postgres://Beehive-Blog:Beehive-Blog@127.0.0.1:5432/Beehive-Blog?sslmode=disable
 Redis:
   Host: 127.0.0.1:6379
   Type: node
