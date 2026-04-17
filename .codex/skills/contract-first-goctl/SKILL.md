@@ -24,10 +24,18 @@ Never start by editing generated transport files first.
 
 ## Regeneration
 
-- Gateway API generation:
-  - `goctl api go --api api/gateway.api --dir services/gateway`
-- RPC generation:
-  - `scripts/codegen/gen-rpc.ps1 -ProtoFile proto/<service>.proto -OutputDir services/<service>`
+- Daily command (recommended):
+  - `./scripts/codegen/sync-all.ps1`
+- Full regeneration including gateway:
+  - `./scripts/codegen/sync-all.ps1 -WithGateway`
+- Contract check only:
+  - `./scripts/codegen/check-contract-sync.ps1`
+
+Script behavior:
+
+- `sync-all.ps1` runs RPC generation + contract sync check by default.
+- `sync-all.ps1` skips gateway generation by default to protect hand-maintained middleware wiring in `services/gateway/internal/handler/routes.go`.
+- Use `-WithGateway` only when you intentionally regenerate gateway transport files.
 
 Repository caveat:
 
@@ -50,6 +58,6 @@ Do not move business rules into request parsing handlers.
 1. Confirm every route in `api/gateway.api` exists in `services/gateway/internal/handler/routes.go`.
 2. Confirm route request/response types match `services/gateway/internal/types/types.go`.
 3. Confirm gateway logic calls matching RPC methods in `services/*/*` clients.
-4. Run compile/tests (`go test ./...` or scoped packages).
+4. Run compile/tests (`go test ./services/...` or scoped packages).
 
 If build-cache permissions fail in local environment, still verify generation logs and compile scope as far as possible.
