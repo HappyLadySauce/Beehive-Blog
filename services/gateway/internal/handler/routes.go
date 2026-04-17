@@ -151,7 +151,7 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				{
 					Method:  http.MethodGet,
 					Path:    "/studio/search/query",
-					Handler: gateway.QueryHandler(serverCtx),
+					Handler: gateway.StudioQueryHandler(serverCtx),
 				},
 				{
 					Method:  http.MethodPost,

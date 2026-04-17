@@ -121,6 +121,146 @@ type HealthResponse {
 	service string `json:"service"`
 }
 
+type Tag {
+	id          int64  `json:"id"`
+	name        string `json:"name"`
+	slug        string `json:"slug"`
+	color       string `json:"color"`
+	description string `json:"description"`
+}
+
+type TagListResponse {
+	list []Tag `json:"list"`
+}
+
+type CreateTagRequest {
+	name        string `json:"name"`
+	slug        string `json:"slug"`
+	color       string `json:"color,optional"`
+	description string `json:"description,optional"`
+}
+
+type TagPathRequest {
+	id int64 `path:"id"`
+}
+
+type Relation {
+	id              int64  `json:"id"`
+	sourceContentId int64  `json:"sourceContentId"`
+	targetContentId int64  `json:"targetContentId"`
+	relationType    string `json:"relationType"`
+	weight          int32  `json:"weight"`
+	note            string `json:"note"`
+}
+
+type RelationListResponse {
+	list []Relation `json:"list"`
+}
+
+type ContentRelationsPathRequest {
+	id int64 `path:"id"`
+}
+
+type CreateRelationRequest {
+	contentId       int64  `path:"id"`
+	targetContentId int64  `json:"targetContentId"`
+	relationType    string `json:"relationType"`
+	weight          int32  `json:"weight,optional"`
+	note            string `json:"note,optional"`
+}
+
+type RelationPathRequest {
+	id int64 `path:"id"`
+}
+
+type Attachment {
+	id              int64  `json:"id"`
+	contentId       int64  `json:"contentId"`
+	storageProvider string `json:"storageProvider"`
+	bucket          string `json:"bucket"`
+	objectKey       string `json:"objectKey"`
+	fileName        string `json:"fileName"`
+	mimeType        string `json:"mimeType"`
+	ext             string `json:"ext"`
+	sizeBytes       int64  `json:"sizeBytes"`
+	usageType       string `json:"usageType"`
+}
+
+type AttachmentListRequest {
+	contentId int64 `form:"contentId,optional"`
+	page      int64 `form:"page,optional"`
+	pageSize  int64 `form:"pageSize,optional"`
+}
+
+type AttachmentListResponse {
+	list []Attachment `json:"list"`
+}
+
+type CreateAttachmentRequest {
+	contentId       int64  `json:"contentId"`
+	storageProvider string `json:"storageProvider,optional"`
+	bucket          string `json:"bucket,optional"`
+	objectKey       string `json:"objectKey"`
+	fileName        string `json:"fileName"`
+	mimeType        string `json:"mimeType,optional"`
+	ext             string `json:"ext,optional"`
+	sizeBytes       int64  `json:"sizeBytes,optional"`
+	usageType       string `json:"usageType,optional"`
+}
+
+type AttachmentPathRequest {
+	id int64 `path:"id"`
+}
+
+type Comment {
+	id              int64  `json:"id"`
+	contentId       int64  `json:"contentId"`
+	parentCommentId int64  `json:"parentCommentId"`
+	authorName      string `json:"authorName"`
+	authorEmail     string `json:"authorEmail"`
+	bodyMarkdown    string `json:"bodyMarkdown"`
+	status          string `json:"status"`
+	moderationNote  string `json:"moderationNote"`
+}
+
+type CommentListRequest {
+	contentId int64 `path:"id"`
+	page      int64 `form:"page,optional"`
+	pageSize  int64 `form:"pageSize,optional"`
+}
+
+type CommentListResponse {
+	list []Comment `json:"list"`
+}
+
+type CreateCommentRequest {
+	contentId       int64  `path:"id"`
+	parentCommentId int64  `json:"parentCommentId,optional"`
+	authorName      string `json:"authorName,optional"`
+	authorEmail     string `json:"authorEmail,optional"`
+	bodyMarkdown    string `json:"bodyMarkdown"`
+}
+
+type UpdateCommentStatusRequest {
+	id             int64  `path:"id"`
+	status         string `json:"status"`
+	moderationNote string `json:"moderationNote,optional"`
+}
+
+type SearchIndexPathRequest {
+	id int64 `path:"id"`
+}
+
+type SearchIndexDocument {
+	contentId   int64  `json:"contentId"`
+	contentType string `json:"type"`
+	title       string `json:"title"`
+	slug        string `json:"slug"`
+	status      string `json:"status"`
+	visibility  string `json:"visibility"`
+	indexedAt   string `json:"indexedAt"`
+}
+
 @server (
 	prefix: /api/v2
 	group:  gateway
@@ -161,5 +301,50 @@ service gateway-api {
 
 	@handler Query
 	get /search/query (SearchRequest) returns (SearchResponse)
+
+	@handler ListTags
+	get /studio/tags returns (TagListResponse)
+
+	@handler CreateTag
+	post /studio/tags (CreateTagRequest) returns (Tag)
+
+	@handler DeleteTag
+	delete /studio/tags/:id (TagPathRequest)
+
+	@handler ListRelations
+	get /studio/contents/:id/relations (ContentRelationsPathRequest) returns (RelationListResponse)
+
+	@handler CreateRelation
+	post /studio/contents/:id/relations (CreateRelationRequest) returns (Relation)
+
+	@handler DeleteRelation
+	delete /studio/relations/:id (RelationPathRequest)
+
+	@handler ListAttachments
+	get /studio/attachments (AttachmentListRequest) returns (AttachmentListResponse)
+
+	@handler CreateAttachment
+	post /studio/attachments (CreateAttachmentRequest) returns (Attachment)
+
+	@handler DeleteAttachment
+	delete /studio/attachments/:id (AttachmentPathRequest)
+
+	@handler ListComments
+	get /studio/contents/:id/comments (CommentListRequest) returns (CommentListResponse)
+
+	@handler CreateComment
+	post /studio/contents/:id/comments (CreateCommentRequest) returns (Comment)
+
+	@handler UpdateCommentStatus
+	put /studio/comments/:id/status (UpdateCommentStatusRequest) returns (Comment)
+
+	@handler StudioQuery
+	get /studio/search/query (SearchRequest) returns (SearchResponse)
+
+	@handler ReindexContent
+	post /studio/search/index/contents/:id (SearchIndexPathRequest) returns (SearchIndexDocument)
+
+	@handler DeleteSearchIndex
+	delete /studio/search/index/contents/:id (SearchIndexPathRequest)
 }
 
