@@ -10,7 +10,8 @@ DB:
 Redis:
   Host: 127.0.0.1:6379
   Type: node
-Auth:
+  Key: identity
+IdentityAuth:
   AccessSecret: change-me-in-production
   Issuer: beehive-blog
   AccessTTL: 2h

@@ -3,7 +3,6 @@ package config
 import (
 	"time"
 
-	"github.com/zeromicro/go-zero/core/stores/redis"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"github.com/zeromicro/go-zero/zrpc"
 )
@@ -17,7 +16,6 @@ type AuthConf struct {
 
 type Config struct {
 	zrpc.RpcServerConf
-	DB    sqlx.SqlConf
-	Redis redis.RedisConf
-	Auth  AuthConf
+	DB           sqlx.SqlConf
+	IdentityAuth AuthConf `json:"IdentityAuth"`
 }

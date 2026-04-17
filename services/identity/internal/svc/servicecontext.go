@@ -13,7 +13,7 @@ type ServiceContext struct {
 func NewServiceContext(c config.Config) *ServiceContext {
 	conn := sqlx.MustNewConn(c.DB)
 	redisClient := c.Redis.NewRedis()
-	store, err := newIdentityStore(conn, redisClient, c.Auth)
+	store, err := newIdentityStore(conn, redisClient, c.IdentityAuth)
 	if err != nil {
 		panic(err)
 	}
