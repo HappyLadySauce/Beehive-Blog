@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package indexer;
+
+option go_package = "services/indexer/pb";
+
+message SyncOutboxRequest {
+  int64 batch_size = 1;
+}
+
+message SyncOutboxResponse {
+  int64 picked = 1;
+  int64 succeeded = 2;
+  int64 failed = 3;
+}
+
+message Empty {}
+
+message HealthResponse {
+  string service = 1;
+  string status = 2;
+}
+
+service Indexer {
+  rpc SyncOutbox(SyncOutboxRequest) returns (SyncOutboxResponse);
+  rpc Health(Empty) returns (HealthResponse);
+}

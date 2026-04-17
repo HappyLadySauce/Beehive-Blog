@@ -16,10 +16,14 @@ Apply this workflow for every interface change.
 
 Never start by editing generated transport files first.
 
+This rule also applies to internal services and background workers.  
+If a new internal capability is introduced (for example indexer, scheduler, consumer), define a minimal `proto/*.proto` contract first, generate with goctl, then implement business logic on top of generated skeletons.
+
 ## Contract Update
 
 - For HTTP gateway changes, edit `api/gateway.api`.
 - For internal RPC changes, edit `proto/*.proto`.
+- For new internal services (even non-public worker services), create `proto/<service>.proto` first.
 - Keep field names and semantics aligned across API DTO and proto messages.
 
 ## Regeneration
@@ -53,11 +57,17 @@ After regeneration, update business layers as needed:
 
 Do not move business rules into request parsing handlers.
 
+For internal worker-style services:
+
+- Keep contract entrypoints minimal (for example `Health`, `Sync/RunOnce`).
+- Put loop/poll/retry logic in business layer packages (for example `internal/worker`, `internal/svc`), not in generated server stubs.
+
 ## Verification Checklist
 
 1. Confirm every route in `api/gateway.api` exists in `services/gateway/internal/handler/routes.go`.
 2. Confirm route request/response types match `services/gateway/internal/types/types.go`.
 3. Confirm gateway logic calls matching RPC methods in `services/*/*` clients.
 4. Run compile/tests (`go test ./services/...` or scoped packages).
+5. For any new service directory under `services/*`, confirm there is a matching contract file in `proto/*.proto` and generated `pb/*` files.
 
 If build-cache permissions fail in local environment, still verify generation logs and compile scope as far as possible.

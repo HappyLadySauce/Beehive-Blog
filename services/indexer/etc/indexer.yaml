@@ -1,0 +1,28 @@
+Name: indexer.worker
+ListenOn: 0.0.0.0:8084
+Etcd:
+  Hosts:
+    - 127.0.0.1:2379
+  Key: indexer.rpc
+DB:
+  DriverName: pgx
+  DataSource: postgres://Beehive-Blog:Beehive-Blog@127.0.0.1:5432/Beehive-Blog?sslmode=disable
+ContentRpc:
+  Etcd:
+    Hosts:
+      - 127.0.0.1:2379
+    Key: content.rpc
+  NonBlock: true
+  Timeout: 2000
+SearchRpc:
+  Etcd:
+    Hosts:
+      - 127.0.0.1:2379
+    Key: search.rpc
+  NonBlock: true
+  Timeout: 2000
+Worker:
+  PollInterval: 2s
+  BatchSize: 20
+  MaxAttempts: 8
+  RetryBackoff: 5s

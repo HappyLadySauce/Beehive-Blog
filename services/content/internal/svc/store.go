@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/events"
 	"github.com/HappyLadySauce/Beehive-Blog/services/content/pb"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
@@ -107,6 +108,9 @@ RETURNING id, type, title, slug, summary, body_markdown, status, visibility, ai_
 		}
 		return nil, err
 	}
+	if err := s.publishContentEvent(ctx, events.TopicContentCreated, out.ID); err != nil {
+		return nil, err
+	}
 	return toDetail(&out), nil
 }
 
@@ -151,7 +155,14 @@ WHERE id = $1`
 	if _, err := s.conn.ExecCtx(ctx, query, in.Id, strings.TrimSpace(in.Title), in.Summary, in.BodyMarkdown, visibility, aiAccess); err != nil {
 		return nil, err
 	}
-	return s.Get(ctx, in.Id)
+	out, err := s.Get(ctx, in.Id)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.publishContentEvent(ctx, events.TopicContentUpdated, in.Id); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (s *contentStore) UpdateStatus(ctx context.Context, in *pb.UpdateStatusRequest) (*pb.ContentDetail, error) {
@@ -172,7 +183,14 @@ WHERE id = $1`
 	if _, err := s.conn.ExecCtx(ctx, query, in.Id, status); err != nil {
 		return nil, err
 	}
-	return s.Get(ctx, in.Id)
+	out, err := s.Get(ctx, in.Id)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.publishContentEvent(ctx, events.TopicContentStatusChanged, in.Id); err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (s *contentStore) List(ctx context.Context, in *pb.ListContentsRequest, publicOnly bool) (*pb.ListContentsResponse, error) {
@@ -631,4 +649,15 @@ func isAllowedStatus(v string) bool {
 	default:
 		return false
 	}
+}
+
+func (s *contentStore) publishContentEvent(ctx context.Context, eventType string, contentID int64) error {
+	if strings.TrimSpace(eventType) == "" || contentID <= 0 {
+		return fmt.Errorf("invalid outbox event")
+	}
+	query := `
+INSERT INTO event_outbox (event_type, resource_type, resource_id, payload, status, attempts, next_retry_at, last_error)
+VALUES ($1, 'content_item', $2, '{}'::jsonb, 'pending', 0, NOW(), '')`
+	_, err := s.conn.ExecCtx(ctx, query, eventType, contentID)
+	return err
 }
