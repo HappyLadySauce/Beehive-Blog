@@ -27,6 +27,7 @@ type (
 	DeleteRelationRequest      = pb.DeleteRelationRequest
 	DeleteTagRequest           = pb.DeleteTagRequest
 	Empty                      = pb.Empty
+	ExperienceProfile          = pb.ExperienceProfile
 	GetContentRequest          = pb.GetContentRequest
 	ListAttachmentsRequest     = pb.ListAttachmentsRequest
 	ListAttachmentsResponse    = pb.ListAttachmentsResponse
@@ -37,8 +38,11 @@ type (
 	ListRelationsRequest       = pb.ListRelationsRequest
 	ListRelationsResponse      = pb.ListRelationsResponse
 	ListTagsResponse           = pb.ListTagsResponse
+	PortfolioProfile           = pb.PortfolioProfile
+	ProjectProfile             = pb.ProjectProfile
 	Relation                   = pb.Relation
 	Tag                        = pb.Tag
+	TimelineEventProfile       = pb.TimelineEventProfile
 	UpdateCommentStatusRequest = pb.UpdateCommentStatusRequest
 	UpdateContentRequest       = pb.UpdateContentRequest
 	UpdateStatusRequest        = pb.UpdateStatusRequest

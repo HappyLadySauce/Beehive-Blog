@@ -44,15 +44,46 @@ type ContentSummary {
 }
 
 type ContentDetail {
-	id           int64  `json:"id"`
-	contentType  string `json:"type"`
-	title        string `json:"title"`
-	slug         string `json:"slug"`
-	summary      string `json:"summary"`
-	bodyMarkdown string `json:"bodyMarkdown"`
-	status       string `json:"status"`
-	visibility   string `json:"visibility"`
-	aiAccess     string `json:"aiAccess"`
+	id                   int64                `json:"id"`
+	contentType          string               `json:"type"`
+	title                string               `json:"title"`
+	slug                 string               `json:"slug"`
+	summary              string               `json:"summary"`
+	bodyMarkdown         string               `json:"bodyMarkdown"`
+	status               string               `json:"status"`
+	visibility           string               `json:"visibility"`
+	aiAccess             string               `json:"aiAccess"`
+	projectProfile       ProjectProfile       `json:"projectProfile,optional"`
+	experienceProfile    ExperienceProfile    `json:"experienceProfile,optional"`
+	timelineEventProfile TimelineEventProfile `json:"timelineEventProfile,optional"`
+	portfolioProfile     PortfolioProfile     `json:"portfolioProfile,optional"`
+}
+
+type ProjectProfile {
+	projectName string `json:"projectName,optional"`
+	stack       string `json:"stack,optional"`
+	repoUrl     string `json:"repoUrl,optional"`
+	demoUrl     string `json:"demoUrl,optional"`
+	startedAt   string `json:"startedAt,optional"`
+	endedAt     string `json:"endedAt,optional"`
+}
+
+type ExperienceProfile {
+	orgName   string `json:"orgName,optional"`
+	roleName  string `json:"roleName,optional"`
+	location  string `json:"location,optional"`
+	startedAt string `json:"startedAt,optional"`
+	endedAt   string `json:"endedAt,optional"`
+}
+
+type TimelineEventProfile {
+	eventTime     string `json:"eventTime,optional"`
+	eventCategory string `json:"eventCategory,optional"`
+}
+
+type PortfolioProfile {
+	artifactType string `json:"artifactType,optional"`
+	externalLink string `json:"externalLink,optional"`
 }
 
 type ContentListRequest {
@@ -68,22 +99,30 @@ type ContentListResponse {
 }
 
 type ContentCreateRequest {
-	contentType  string `json:"type"`
-	title        string `json:"title"`
-	slug         string `json:"slug"`
-	summary      string `json:"summary,optional"`
-	bodyMarkdown string `json:"bodyMarkdown"`
-	visibility   string `json:"visibility,optional"`
-	aiAccess     string `json:"aiAccess,optional"`
+	contentType          string               `json:"type"`
+	title                string               `json:"title"`
+	slug                 string               `json:"slug"`
+	summary              string               `json:"summary,optional"`
+	bodyMarkdown         string               `json:"bodyMarkdown"`
+	visibility           string               `json:"visibility,optional"`
+	aiAccess             string               `json:"aiAccess,optional"`
+	projectProfile       ProjectProfile       `json:"projectProfile,optional"`
+	experienceProfile    ExperienceProfile    `json:"experienceProfile,optional"`
+	timelineEventProfile TimelineEventProfile `json:"timelineEventProfile,optional"`
+	portfolioProfile     PortfolioProfile     `json:"portfolioProfile,optional"`
 }
 
 type ContentUpdateRequest {
-	id           int64  `path:"id"`
-	title        string `json:"title,optional"`
-	summary      string `json:"summary,optional"`
-	bodyMarkdown string `json:"bodyMarkdown,optional"`
-	visibility   string `json:"visibility,optional"`
-	aiAccess     string `json:"aiAccess,optional"`
+	id                   int64                `path:"id"`
+	title                string               `json:"title,optional"`
+	summary              string               `json:"summary,optional"`
+	bodyMarkdown         string               `json:"bodyMarkdown,optional"`
+	visibility           string               `json:"visibility,optional"`
+	aiAccess             string               `json:"aiAccess,optional"`
+	projectProfile       ProjectProfile       `json:"projectProfile,optional"`
+	experienceProfile    ExperienceProfile    `json:"experienceProfile,optional"`
+	timelineEventProfile TimelineEventProfile `json:"timelineEventProfile,optional"`
+	portfolioProfile     PortfolioProfile     `json:"portfolioProfile,optional"`
 }
 
 type StatusUpdateRequest {

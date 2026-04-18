@@ -43,15 +43,113 @@ func toContentDetail(in *contentrpc.ContentDetail) *types.ContentDetail {
 		return &types.ContentDetail{}
 	}
 	return &types.ContentDetail{
-		Id:           in.Id,
-		ContentType:  in.Type,
-		Title:        in.Title,
-		Slug:         in.Slug,
-		Summary:      in.Summary,
-		BodyMarkdown: in.BodyMarkdown,
-		Status:       in.Status,
-		Visibility:   in.Visibility,
-		AiAccess:     in.AiAccess,
+		Id:                   in.Id,
+		ContentType:          in.Type,
+		Title:                in.Title,
+		Slug:                 in.Slug,
+		Summary:              in.Summary,
+		BodyMarkdown:         in.BodyMarkdown,
+		Status:               in.Status,
+		Visibility:           in.Visibility,
+		AiAccess:             in.AiAccess,
+		ProjectProfile:       toProjectProfileHTTP(in.ProjectProfile),
+		ExperienceProfile:    toExperienceProfileHTTP(in.ExperienceProfile),
+		TimelineEventProfile: toTimelineEventProfileHTTP(in.TimelineEventProfile),
+		PortfolioProfile:     toPortfolioProfileHTTP(in.PortfolioProfile),
+	}
+}
+
+func toProjectProfileHTTP(in *contentrpc.ProjectProfile) *types.ProjectProfile {
+	if in == nil {
+		return nil
+	}
+	return &types.ProjectProfile{
+		ProjectName: in.ProjectName,
+		Stack:       in.Stack,
+		RepoUrl:     in.RepoUrl,
+		DemoUrl:     in.DemoUrl,
+		StartedAt:   in.StartedAt,
+		EndedAt:     in.EndedAt,
+	}
+}
+
+func toExperienceProfileHTTP(in *contentrpc.ExperienceProfile) *types.ExperienceProfile {
+	if in == nil {
+		return nil
+	}
+	return &types.ExperienceProfile{
+		OrgName:   in.OrgName,
+		RoleName:  in.RoleName,
+		Location:  in.Location,
+		StartedAt: in.StartedAt,
+		EndedAt:   in.EndedAt,
+	}
+}
+
+func toTimelineEventProfileHTTP(in *contentrpc.TimelineEventProfile) *types.TimelineEventProfile {
+	if in == nil {
+		return nil
+	}
+	return &types.TimelineEventProfile{
+		EventTime:     in.EventTime,
+		EventCategory: in.EventCategory,
+	}
+}
+
+func toPortfolioProfileHTTP(in *contentrpc.PortfolioProfile) *types.PortfolioProfile {
+	if in == nil {
+		return nil
+	}
+	return &types.PortfolioProfile{
+		ArtifactType: in.ArtifactType,
+		ExternalLink: in.ExternalLink,
+	}
+}
+
+func toProjectProfileRPC(in *types.ProjectProfile) *contentrpc.ProjectProfile {
+	if in == nil {
+		return nil
+	}
+	return &contentrpc.ProjectProfile{
+		ProjectName: in.ProjectName,
+		Stack:       in.Stack,
+		RepoUrl:     in.RepoUrl,
+		DemoUrl:     in.DemoUrl,
+		StartedAt:   in.StartedAt,
+		EndedAt:     in.EndedAt,
+	}
+}
+
+func toExperienceProfileRPC(in *types.ExperienceProfile) *contentrpc.ExperienceProfile {
+	if in == nil {
+		return nil
+	}
+	return &contentrpc.ExperienceProfile{
+		OrgName:   in.OrgName,
+		RoleName:  in.RoleName,
+		Location:  in.Location,
+		StartedAt: in.StartedAt,
+		EndedAt:   in.EndedAt,
+	}
+}
+
+func toTimelineEventProfileRPC(in *types.TimelineEventProfile) *contentrpc.TimelineEventProfile {
+	if in == nil {
+		return nil
+	}
+	return &contentrpc.TimelineEventProfile{
+		EventTime:     in.EventTime,
+		EventCategory: in.EventCategory,
+	}
+}
+
+func toPortfolioProfileRPC(in *types.PortfolioProfile) *contentrpc.PortfolioProfile {
+	if in == nil {
+		return nil
+	}
+	return &contentrpc.PortfolioProfile{
+		ArtifactType: in.ArtifactType,
+		ExternalLink: in.ExternalLink,
 	}
 }
 

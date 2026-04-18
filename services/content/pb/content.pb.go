@@ -130,18 +130,22 @@ func (x *ContentSummary) GetPublishedAt() string {
 }
 
 type ContentDetail struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Type          string                 `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
-	Title         string                 `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
-	Slug          string                 `protobuf:"bytes,4,opt,name=slug,proto3" json:"slug,omitempty"`
-	Summary       string                 `protobuf:"bytes,5,opt,name=summary,proto3" json:"summary,omitempty"`
-	BodyMarkdown  string                 `protobuf:"bytes,6,opt,name=body_markdown,json=bodyMarkdown,proto3" json:"body_markdown,omitempty"`
-	Status        string                 `protobuf:"bytes,7,opt,name=status,proto3" json:"status,omitempty"`
-	Visibility    string                 `protobuf:"bytes,8,opt,name=visibility,proto3" json:"visibility,omitempty"`
-	AiAccess      string                 `protobuf:"bytes,9,opt,name=ai_access,json=aiAccess,proto3" json:"ai_access,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	Id                   int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Type                 string                 `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
+	Title                string                 `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
+	Slug                 string                 `protobuf:"bytes,4,opt,name=slug,proto3" json:"slug,omitempty"`
+	Summary              string                 `protobuf:"bytes,5,opt,name=summary,proto3" json:"summary,omitempty"`
+	BodyMarkdown         string                 `protobuf:"bytes,6,opt,name=body_markdown,json=bodyMarkdown,proto3" json:"body_markdown,omitempty"`
+	Status               string                 `protobuf:"bytes,7,opt,name=status,proto3" json:"status,omitempty"`
+	Visibility           string                 `protobuf:"bytes,8,opt,name=visibility,proto3" json:"visibility,omitempty"`
+	AiAccess             string                 `protobuf:"bytes,9,opt,name=ai_access,json=aiAccess,proto3" json:"ai_access,omitempty"`
+	ProjectProfile       *ProjectProfile        `protobuf:"bytes,10,opt,name=project_profile,json=projectProfile,proto3" json:"project_profile,omitempty"`
+	ExperienceProfile    *ExperienceProfile     `protobuf:"bytes,11,opt,name=experience_profile,json=experienceProfile,proto3" json:"experience_profile,omitempty"`
+	TimelineEventProfile *TimelineEventProfile  `protobuf:"bytes,12,opt,name=timeline_event_profile,json=timelineEventProfile,proto3" json:"timeline_event_profile,omitempty"`
+	PortfolioProfile     *PortfolioProfile      `protobuf:"bytes,13,opt,name=portfolio_profile,json=portfolioProfile,proto3" json:"portfolio_profile,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *ContentDetail) Reset() {
@@ -235,6 +239,34 @@ func (x *ContentDetail) GetAiAccess() string {
 		return x.AiAccess
 	}
 	return ""
+}
+
+func (x *ContentDetail) GetProjectProfile() *ProjectProfile {
+	if x != nil {
+		return x.ProjectProfile
+	}
+	return nil
+}
+
+func (x *ContentDetail) GetExperienceProfile() *ExperienceProfile {
+	if x != nil {
+		return x.ExperienceProfile
+	}
+	return nil
+}
+
+func (x *ContentDetail) GetTimelineEventProfile() *TimelineEventProfile {
+	if x != nil {
+		return x.TimelineEventProfile
+	}
+	return nil
+}
+
+func (x *ContentDetail) GetPortfolioProfile() *PortfolioProfile {
+	if x != nil {
+		return x.PortfolioProfile
+	}
+	return nil
 }
 
 type ListContentsRequest struct {
@@ -358,16 +390,20 @@ func (x *ListContentsResponse) GetList() []*ContentSummary {
 }
 
 type CreateContentRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Type          string                 `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
-	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	Slug          string                 `protobuf:"bytes,3,opt,name=slug,proto3" json:"slug,omitempty"`
-	Summary       string                 `protobuf:"bytes,4,opt,name=summary,proto3" json:"summary,omitempty"`
-	BodyMarkdown  string                 `protobuf:"bytes,5,opt,name=body_markdown,json=bodyMarkdown,proto3" json:"body_markdown,omitempty"`
-	Visibility    string                 `protobuf:"bytes,6,opt,name=visibility,proto3" json:"visibility,omitempty"`
-	AiAccess      string                 `protobuf:"bytes,7,opt,name=ai_access,json=aiAccess,proto3" json:"ai_access,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	Type                 string                 `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
+	Title                string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Slug                 string                 `protobuf:"bytes,3,opt,name=slug,proto3" json:"slug,omitempty"`
+	Summary              string                 `protobuf:"bytes,4,opt,name=summary,proto3" json:"summary,omitempty"`
+	BodyMarkdown         string                 `protobuf:"bytes,5,opt,name=body_markdown,json=bodyMarkdown,proto3" json:"body_markdown,omitempty"`
+	Visibility           string                 `protobuf:"bytes,6,opt,name=visibility,proto3" json:"visibility,omitempty"`
+	AiAccess             string                 `protobuf:"bytes,7,opt,name=ai_access,json=aiAccess,proto3" json:"ai_access,omitempty"`
+	ProjectProfile       *ProjectProfile        `protobuf:"bytes,8,opt,name=project_profile,json=projectProfile,proto3" json:"project_profile,omitempty"`
+	ExperienceProfile    *ExperienceProfile     `protobuf:"bytes,9,opt,name=experience_profile,json=experienceProfile,proto3" json:"experience_profile,omitempty"`
+	TimelineEventProfile *TimelineEventProfile  `protobuf:"bytes,10,opt,name=timeline_event_profile,json=timelineEventProfile,proto3" json:"timeline_event_profile,omitempty"`
+	PortfolioProfile     *PortfolioProfile      `protobuf:"bytes,11,opt,name=portfolio_profile,json=portfolioProfile,proto3" json:"portfolio_profile,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *CreateContentRequest) Reset() {
@@ -449,16 +485,48 @@ func (x *CreateContentRequest) GetAiAccess() string {
 	return ""
 }
 
+func (x *CreateContentRequest) GetProjectProfile() *ProjectProfile {
+	if x != nil {
+		return x.ProjectProfile
+	}
+	return nil
+}
+
+func (x *CreateContentRequest) GetExperienceProfile() *ExperienceProfile {
+	if x != nil {
+		return x.ExperienceProfile
+	}
+	return nil
+}
+
+func (x *CreateContentRequest) GetTimelineEventProfile() *TimelineEventProfile {
+	if x != nil {
+		return x.TimelineEventProfile
+	}
+	return nil
+}
+
+func (x *CreateContentRequest) GetPortfolioProfile() *PortfolioProfile {
+	if x != nil {
+		return x.PortfolioProfile
+	}
+	return nil
+}
+
 type UpdateContentRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	Summary       string                 `protobuf:"bytes,3,opt,name=summary,proto3" json:"summary,omitempty"`
-	BodyMarkdown  string                 `protobuf:"bytes,4,opt,name=body_markdown,json=bodyMarkdown,proto3" json:"body_markdown,omitempty"`
-	Visibility    string                 `protobuf:"bytes,5,opt,name=visibility,proto3" json:"visibility,omitempty"`
-	AiAccess      string                 `protobuf:"bytes,6,opt,name=ai_access,json=aiAccess,proto3" json:"ai_access,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	Id                   int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Title                string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Summary              string                 `protobuf:"bytes,3,opt,name=summary,proto3" json:"summary,omitempty"`
+	BodyMarkdown         string                 `protobuf:"bytes,4,opt,name=body_markdown,json=bodyMarkdown,proto3" json:"body_markdown,omitempty"`
+	Visibility           string                 `protobuf:"bytes,5,opt,name=visibility,proto3" json:"visibility,omitempty"`
+	AiAccess             string                 `protobuf:"bytes,6,opt,name=ai_access,json=aiAccess,proto3" json:"ai_access,omitempty"`
+	ProjectProfile       *ProjectProfile        `protobuf:"bytes,7,opt,name=project_profile,json=projectProfile,proto3" json:"project_profile,omitempty"`
+	ExperienceProfile    *ExperienceProfile     `protobuf:"bytes,8,opt,name=experience_profile,json=experienceProfile,proto3" json:"experience_profile,omitempty"`
+	TimelineEventProfile *TimelineEventProfile  `protobuf:"bytes,9,opt,name=timeline_event_profile,json=timelineEventProfile,proto3" json:"timeline_event_profile,omitempty"`
+	PortfolioProfile     *PortfolioProfile      `protobuf:"bytes,10,opt,name=portfolio_profile,json=portfolioProfile,proto3" json:"portfolio_profile,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *UpdateContentRequest) Reset() {
@@ -531,6 +599,34 @@ func (x *UpdateContentRequest) GetAiAccess() string {
 		return x.AiAccess
 	}
 	return ""
+}
+
+func (x *UpdateContentRequest) GetProjectProfile() *ProjectProfile {
+	if x != nil {
+		return x.ProjectProfile
+	}
+	return nil
+}
+
+func (x *UpdateContentRequest) GetExperienceProfile() *ExperienceProfile {
+	if x != nil {
+		return x.ExperienceProfile
+	}
+	return nil
+}
+
+func (x *UpdateContentRequest) GetTimelineEventProfile() *TimelineEventProfile {
+	if x != nil {
+		return x.TimelineEventProfile
+	}
+	return nil
+}
+
+func (x *UpdateContentRequest) GetPortfolioProfile() *PortfolioProfile {
+	if x != nil {
+		return x.PortfolioProfile
+	}
+	return nil
 }
 
 type UpdateStatusRequest struct {
@@ -665,6 +761,270 @@ func (*Empty) Descriptor() ([]byte, []int) {
 	return file_proto_content_proto_rawDescGZIP(), []int{8}
 }
 
+type ProjectProfile struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ProjectName   string                 `protobuf:"bytes,1,opt,name=project_name,json=projectName,proto3" json:"project_name,omitempty"`
+	Stack         string                 `protobuf:"bytes,2,opt,name=stack,proto3" json:"stack,omitempty"`
+	RepoUrl       string                 `protobuf:"bytes,3,opt,name=repo_url,json=repoUrl,proto3" json:"repo_url,omitempty"`
+	DemoUrl       string                 `protobuf:"bytes,4,opt,name=demo_url,json=demoUrl,proto3" json:"demo_url,omitempty"`
+	StartedAt     string                 `protobuf:"bytes,5,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	EndedAt       string                 `protobuf:"bytes,6,opt,name=ended_at,json=endedAt,proto3" json:"ended_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ProjectProfile) Reset() {
+	*x = ProjectProfile{}
+	mi := &file_proto_content_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ProjectProfile) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProjectProfile) ProtoMessage() {}
+
+func (x *ProjectProfile) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProjectProfile.ProtoReflect.Descriptor instead.
+func (*ProjectProfile) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ProjectProfile) GetProjectName() string {
+	if x != nil {
+		return x.ProjectName
+	}
+	return ""
+}
+
+func (x *ProjectProfile) GetStack() string {
+	if x != nil {
+		return x.Stack
+	}
+	return ""
+}
+
+func (x *ProjectProfile) GetRepoUrl() string {
+	if x != nil {
+		return x.RepoUrl
+	}
+	return ""
+}
+
+func (x *ProjectProfile) GetDemoUrl() string {
+	if x != nil {
+		return x.DemoUrl
+	}
+	return ""
+}
+
+func (x *ProjectProfile) GetStartedAt() string {
+	if x != nil {
+		return x.StartedAt
+	}
+	return ""
+}
+
+func (x *ProjectProfile) GetEndedAt() string {
+	if x != nil {
+		return x.EndedAt
+	}
+	return ""
+}
+
+type ExperienceProfile struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OrgName       string                 `protobuf:"bytes,1,opt,name=org_name,json=orgName,proto3" json:"org_name,omitempty"`
+	RoleName      string                 `protobuf:"bytes,2,opt,name=role_name,json=roleName,proto3" json:"role_name,omitempty"`
+	Location      string                 `protobuf:"bytes,3,opt,name=location,proto3" json:"location,omitempty"`
+	StartedAt     string                 `protobuf:"bytes,4,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	EndedAt       string                 `protobuf:"bytes,5,opt,name=ended_at,json=endedAt,proto3" json:"ended_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExperienceProfile) Reset() {
+	*x = ExperienceProfile{}
+	mi := &file_proto_content_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExperienceProfile) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExperienceProfile) ProtoMessage() {}
+
+func (x *ExperienceProfile) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExperienceProfile.ProtoReflect.Descriptor instead.
+func (*ExperienceProfile) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ExperienceProfile) GetOrgName() string {
+	if x != nil {
+		return x.OrgName
+	}
+	return ""
+}
+
+func (x *ExperienceProfile) GetRoleName() string {
+	if x != nil {
+		return x.RoleName
+	}
+	return ""
+}
+
+func (x *ExperienceProfile) GetLocation() string {
+	if x != nil {
+		return x.Location
+	}
+	return ""
+}
+
+func (x *ExperienceProfile) GetStartedAt() string {
+	if x != nil {
+		return x.StartedAt
+	}
+	return ""
+}
+
+func (x *ExperienceProfile) GetEndedAt() string {
+	if x != nil {
+		return x.EndedAt
+	}
+	return ""
+}
+
+type TimelineEventProfile struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	EventTime     string                 `protobuf:"bytes,1,opt,name=event_time,json=eventTime,proto3" json:"event_time,omitempty"`
+	EventCategory string                 `protobuf:"bytes,2,opt,name=event_category,json=eventCategory,proto3" json:"event_category,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TimelineEventProfile) Reset() {
+	*x = TimelineEventProfile{}
+	mi := &file_proto_content_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TimelineEventProfile) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TimelineEventProfile) ProtoMessage() {}
+
+func (x *TimelineEventProfile) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TimelineEventProfile.ProtoReflect.Descriptor instead.
+func (*TimelineEventProfile) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *TimelineEventProfile) GetEventTime() string {
+	if x != nil {
+		return x.EventTime
+	}
+	return ""
+}
+
+func (x *TimelineEventProfile) GetEventCategory() string {
+	if x != nil {
+		return x.EventCategory
+	}
+	return ""
+}
+
+type PortfolioProfile struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ArtifactType  string                 `protobuf:"bytes,1,opt,name=artifact_type,json=artifactType,proto3" json:"artifact_type,omitempty"`
+	ExternalLink  string                 `protobuf:"bytes,2,opt,name=external_link,json=externalLink,proto3" json:"external_link,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PortfolioProfile) Reset() {
+	*x = PortfolioProfile{}
+	mi := &file_proto_content_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PortfolioProfile) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PortfolioProfile) ProtoMessage() {}
+
+func (x *PortfolioProfile) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PortfolioProfile.ProtoReflect.Descriptor instead.
+func (*PortfolioProfile) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *PortfolioProfile) GetArtifactType() string {
+	if x != nil {
+		return x.ArtifactType
+	}
+	return ""
+}
+
+func (x *PortfolioProfile) GetExternalLink() string {
+	if x != nil {
+		return x.ExternalLink
+	}
+	return ""
+}
+
 type Tag struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -678,7 +1038,7 @@ type Tag struct {
 
 func (x *Tag) Reset() {
 	*x = Tag{}
-	mi := &file_proto_content_proto_msgTypes[9]
+	mi := &file_proto_content_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -690,7 +1050,7 @@ func (x *Tag) String() string {
 func (*Tag) ProtoMessage() {}
 
 func (x *Tag) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[9]
+	mi := &file_proto_content_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -703,7 +1063,7 @@ func (x *Tag) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Tag.ProtoReflect.Descriptor instead.
 func (*Tag) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{9}
+	return file_proto_content_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *Tag) GetId() int64 {
@@ -750,7 +1110,7 @@ type ListTagsResponse struct {
 
 func (x *ListTagsResponse) Reset() {
 	*x = ListTagsResponse{}
-	mi := &file_proto_content_proto_msgTypes[10]
+	mi := &file_proto_content_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -762,7 +1122,7 @@ func (x *ListTagsResponse) String() string {
 func (*ListTagsResponse) ProtoMessage() {}
 
 func (x *ListTagsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[10]
+	mi := &file_proto_content_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -775,7 +1135,7 @@ func (x *ListTagsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTagsResponse.ProtoReflect.Descriptor instead.
 func (*ListTagsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{10}
+	return file_proto_content_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ListTagsResponse) GetList() []*Tag {
@@ -797,7 +1157,7 @@ type CreateTagRequest struct {
 
 func (x *CreateTagRequest) Reset() {
 	*x = CreateTagRequest{}
-	mi := &file_proto_content_proto_msgTypes[11]
+	mi := &file_proto_content_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -809,7 +1169,7 @@ func (x *CreateTagRequest) String() string {
 func (*CreateTagRequest) ProtoMessage() {}
 
 func (x *CreateTagRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[11]
+	mi := &file_proto_content_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -822,7 +1182,7 @@ func (x *CreateTagRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTagRequest.ProtoReflect.Descriptor instead.
 func (*CreateTagRequest) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{11}
+	return file_proto_content_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *CreateTagRequest) GetName() string {
@@ -862,7 +1222,7 @@ type DeleteTagRequest struct {
 
 func (x *DeleteTagRequest) Reset() {
 	*x = DeleteTagRequest{}
-	mi := &file_proto_content_proto_msgTypes[12]
+	mi := &file_proto_content_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -874,7 +1234,7 @@ func (x *DeleteTagRequest) String() string {
 func (*DeleteTagRequest) ProtoMessage() {}
 
 func (x *DeleteTagRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[12]
+	mi := &file_proto_content_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -887,7 +1247,7 @@ func (x *DeleteTagRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTagRequest.ProtoReflect.Descriptor instead.
 func (*DeleteTagRequest) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{12}
+	return file_proto_content_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *DeleteTagRequest) GetId() int64 {
@@ -911,7 +1271,7 @@ type Relation struct {
 
 func (x *Relation) Reset() {
 	*x = Relation{}
-	mi := &file_proto_content_proto_msgTypes[13]
+	mi := &file_proto_content_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -923,7 +1283,7 @@ func (x *Relation) String() string {
 func (*Relation) ProtoMessage() {}
 
 func (x *Relation) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[13]
+	mi := &file_proto_content_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -936,7 +1296,7 @@ func (x *Relation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Relation.ProtoReflect.Descriptor instead.
 func (*Relation) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{13}
+	return file_proto_content_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *Relation) GetId() int64 {
@@ -990,7 +1350,7 @@ type ListRelationsRequest struct {
 
 func (x *ListRelationsRequest) Reset() {
 	*x = ListRelationsRequest{}
-	mi := &file_proto_content_proto_msgTypes[14]
+	mi := &file_proto_content_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1002,7 +1362,7 @@ func (x *ListRelationsRequest) String() string {
 func (*ListRelationsRequest) ProtoMessage() {}
 
 func (x *ListRelationsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[14]
+	mi := &file_proto_content_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1015,7 +1375,7 @@ func (x *ListRelationsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRelationsRequest.ProtoReflect.Descriptor instead.
 func (*ListRelationsRequest) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{14}
+	return file_proto_content_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ListRelationsRequest) GetContentId() int64 {
@@ -1034,7 +1394,7 @@ type ListRelationsResponse struct {
 
 func (x *ListRelationsResponse) Reset() {
 	*x = ListRelationsResponse{}
-	mi := &file_proto_content_proto_msgTypes[15]
+	mi := &file_proto_content_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1046,7 +1406,7 @@ func (x *ListRelationsResponse) String() string {
 func (*ListRelationsResponse) ProtoMessage() {}
 
 func (x *ListRelationsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[15]
+	mi := &file_proto_content_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1059,7 +1419,7 @@ func (x *ListRelationsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRelationsResponse.ProtoReflect.Descriptor instead.
 func (*ListRelationsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{15}
+	return file_proto_content_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ListRelationsResponse) GetList() []*Relation {
@@ -1082,7 +1442,7 @@ type CreateRelationRequest struct {
 
 func (x *CreateRelationRequest) Reset() {
 	*x = CreateRelationRequest{}
-	mi := &file_proto_content_proto_msgTypes[16]
+	mi := &file_proto_content_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1094,7 +1454,7 @@ func (x *CreateRelationRequest) String() string {
 func (*CreateRelationRequest) ProtoMessage() {}
 
 func (x *CreateRelationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[16]
+	mi := &file_proto_content_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1107,7 +1467,7 @@ func (x *CreateRelationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateRelationRequest.ProtoReflect.Descriptor instead.
 func (*CreateRelationRequest) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{16}
+	return file_proto_content_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *CreateRelationRequest) GetSourceContentId() int64 {
@@ -1154,7 +1514,7 @@ type DeleteRelationRequest struct {
 
 func (x *DeleteRelationRequest) Reset() {
 	*x = DeleteRelationRequest{}
-	mi := &file_proto_content_proto_msgTypes[17]
+	mi := &file_proto_content_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1166,7 +1526,7 @@ func (x *DeleteRelationRequest) String() string {
 func (*DeleteRelationRequest) ProtoMessage() {}
 
 func (x *DeleteRelationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[17]
+	mi := &file_proto_content_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1179,7 +1539,7 @@ func (x *DeleteRelationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRelationRequest.ProtoReflect.Descriptor instead.
 func (*DeleteRelationRequest) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{17}
+	return file_proto_content_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *DeleteRelationRequest) GetId() int64 {
@@ -1207,7 +1567,7 @@ type Attachment struct {
 
 func (x *Attachment) Reset() {
 	*x = Attachment{}
-	mi := &file_proto_content_proto_msgTypes[18]
+	mi := &file_proto_content_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1219,7 +1579,7 @@ func (x *Attachment) String() string {
 func (*Attachment) ProtoMessage() {}
 
 func (x *Attachment) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[18]
+	mi := &file_proto_content_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1232,7 +1592,7 @@ func (x *Attachment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Attachment.ProtoReflect.Descriptor instead.
 func (*Attachment) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{18}
+	return file_proto_content_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *Attachment) GetId() int64 {
@@ -1316,7 +1676,7 @@ type ListAttachmentsRequest struct {
 
 func (x *ListAttachmentsRequest) Reset() {
 	*x = ListAttachmentsRequest{}
-	mi := &file_proto_content_proto_msgTypes[19]
+	mi := &file_proto_content_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1328,7 +1688,7 @@ func (x *ListAttachmentsRequest) String() string {
 func (*ListAttachmentsRequest) ProtoMessage() {}
 
 func (x *ListAttachmentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[19]
+	mi := &file_proto_content_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1341,7 +1701,7 @@ func (x *ListAttachmentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAttachmentsRequest.ProtoReflect.Descriptor instead.
 func (*ListAttachmentsRequest) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{19}
+	return file_proto_content_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *ListAttachmentsRequest) GetContentId() int64 {
@@ -1374,7 +1734,7 @@ type ListAttachmentsResponse struct {
 
 func (x *ListAttachmentsResponse) Reset() {
 	*x = ListAttachmentsResponse{}
-	mi := &file_proto_content_proto_msgTypes[20]
+	mi := &file_proto_content_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1386,7 +1746,7 @@ func (x *ListAttachmentsResponse) String() string {
 func (*ListAttachmentsResponse) ProtoMessage() {}
 
 func (x *ListAttachmentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[20]
+	mi := &file_proto_content_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1399,7 +1759,7 @@ func (x *ListAttachmentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAttachmentsResponse.ProtoReflect.Descriptor instead.
 func (*ListAttachmentsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{20}
+	return file_proto_content_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *ListAttachmentsResponse) GetList() []*Attachment {
@@ -1426,7 +1786,7 @@ type CreateAttachmentRequest struct {
 
 func (x *CreateAttachmentRequest) Reset() {
 	*x = CreateAttachmentRequest{}
-	mi := &file_proto_content_proto_msgTypes[21]
+	mi := &file_proto_content_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1438,7 +1798,7 @@ func (x *CreateAttachmentRequest) String() string {
 func (*CreateAttachmentRequest) ProtoMessage() {}
 
 func (x *CreateAttachmentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[21]
+	mi := &file_proto_content_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1451,7 +1811,7 @@ func (x *CreateAttachmentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAttachmentRequest.ProtoReflect.Descriptor instead.
 func (*CreateAttachmentRequest) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{21}
+	return file_proto_content_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *CreateAttachmentRequest) GetContentId() int64 {
@@ -1526,7 +1886,7 @@ type DeleteAttachmentRequest struct {
 
 func (x *DeleteAttachmentRequest) Reset() {
 	*x = DeleteAttachmentRequest{}
-	mi := &file_proto_content_proto_msgTypes[22]
+	mi := &file_proto_content_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1538,7 +1898,7 @@ func (x *DeleteAttachmentRequest) String() string {
 func (*DeleteAttachmentRequest) ProtoMessage() {}
 
 func (x *DeleteAttachmentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[22]
+	mi := &file_proto_content_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1551,7 +1911,7 @@ func (x *DeleteAttachmentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAttachmentRequest.ProtoReflect.Descriptor instead.
 func (*DeleteAttachmentRequest) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{22}
+	return file_proto_content_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *DeleteAttachmentRequest) GetId() int64 {
@@ -1577,7 +1937,7 @@ type Comment struct {
 
 func (x *Comment) Reset() {
 	*x = Comment{}
-	mi := &file_proto_content_proto_msgTypes[23]
+	mi := &file_proto_content_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1589,7 +1949,7 @@ func (x *Comment) String() string {
 func (*Comment) ProtoMessage() {}
 
 func (x *Comment) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[23]
+	mi := &file_proto_content_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1602,7 +1962,7 @@ func (x *Comment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Comment.ProtoReflect.Descriptor instead.
 func (*Comment) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{23}
+	return file_proto_content_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *Comment) GetId() int64 {
@@ -1672,7 +2032,7 @@ type ListCommentsRequest struct {
 
 func (x *ListCommentsRequest) Reset() {
 	*x = ListCommentsRequest{}
-	mi := &file_proto_content_proto_msgTypes[24]
+	mi := &file_proto_content_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1684,7 +2044,7 @@ func (x *ListCommentsRequest) String() string {
 func (*ListCommentsRequest) ProtoMessage() {}
 
 func (x *ListCommentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[24]
+	mi := &file_proto_content_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1697,7 +2057,7 @@ func (x *ListCommentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCommentsRequest.ProtoReflect.Descriptor instead.
 func (*ListCommentsRequest) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{24}
+	return file_proto_content_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ListCommentsRequest) GetContentId() int64 {
@@ -1730,7 +2090,7 @@ type ListCommentsResponse struct {
 
 func (x *ListCommentsResponse) Reset() {
 	*x = ListCommentsResponse{}
-	mi := &file_proto_content_proto_msgTypes[25]
+	mi := &file_proto_content_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1742,7 +2102,7 @@ func (x *ListCommentsResponse) String() string {
 func (*ListCommentsResponse) ProtoMessage() {}
 
 func (x *ListCommentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[25]
+	mi := &file_proto_content_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1755,7 +2115,7 @@ func (x *ListCommentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCommentsResponse.ProtoReflect.Descriptor instead.
 func (*ListCommentsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{25}
+	return file_proto_content_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *ListCommentsResponse) GetList() []*Comment {
@@ -1778,7 +2138,7 @@ type CreateCommentRequest struct {
 
 func (x *CreateCommentRequest) Reset() {
 	*x = CreateCommentRequest{}
-	mi := &file_proto_content_proto_msgTypes[26]
+	mi := &file_proto_content_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1790,7 +2150,7 @@ func (x *CreateCommentRequest) String() string {
 func (*CreateCommentRequest) ProtoMessage() {}
 
 func (x *CreateCommentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[26]
+	mi := &file_proto_content_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1803,7 +2163,7 @@ func (x *CreateCommentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateCommentRequest.ProtoReflect.Descriptor instead.
 func (*CreateCommentRequest) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{26}
+	return file_proto_content_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *CreateCommentRequest) GetContentId() int64 {
@@ -1852,7 +2212,7 @@ type UpdateCommentStatusRequest struct {
 
 func (x *UpdateCommentStatusRequest) Reset() {
 	*x = UpdateCommentStatusRequest{}
-	mi := &file_proto_content_proto_msgTypes[27]
+	mi := &file_proto_content_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1864,7 +2224,7 @@ func (x *UpdateCommentStatusRequest) String() string {
 func (*UpdateCommentStatusRequest) ProtoMessage() {}
 
 func (x *UpdateCommentStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[27]
+	mi := &file_proto_content_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1877,7 +2237,7 @@ func (x *UpdateCommentStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateCommentStatusRequest.ProtoReflect.Descriptor instead.
 func (*UpdateCommentStatusRequest) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{27}
+	return file_proto_content_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *UpdateCommentStatusRequest) GetId() int64 {
@@ -1917,7 +2277,7 @@ const file_proto_content_proto_rawDesc = "" +
 	"visibility\x18\a \x01(\tR\n" +
 	"visibility\x12\x1b\n" +
 	"\tai_access\x18\b \x01(\tR\baiAccess\x12!\n" +
-	"\fpublished_at\x18\t \x01(\tR\vpublishedAt\"\xf1\x01\n" +
+	"\fpublished_at\x18\t \x01(\tR\vpublishedAt\"\x9b\x04\n" +
 	"\rContentDetail\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12\x14\n" +
@@ -1929,7 +2289,12 @@ const file_proto_content_proto_rawDesc = "" +
 	"\n" +
 	"visibility\x18\b \x01(\tR\n" +
 	"visibility\x12\x1b\n" +
-	"\tai_access\x18\t \x01(\tR\baiAccess\"\x8c\x01\n" +
+	"\tai_access\x18\t \x01(\tR\baiAccess\x12@\n" +
+	"\x0fproject_profile\x18\n" +
+	" \x01(\v2\x17.content.ProjectProfileR\x0eprojectProfile\x12I\n" +
+	"\x12experience_profile\x18\v \x01(\v2\x1a.content.ExperienceProfileR\x11experienceProfile\x12S\n" +
+	"\x16timeline_event_profile\x18\f \x01(\v2\x1d.content.TimelineEventProfileR\x14timelineEventProfile\x12F\n" +
+	"\x11portfolio_profile\x18\r \x01(\v2\x19.content.PortfolioProfileR\x10portfolioProfile\"\x8c\x01\n" +
 	"\x13ListContentsRequest\x12\x12\n" +
 	"\x04page\x18\x01 \x01(\x03R\x04page\x12\x1b\n" +
 	"\tpage_size\x18\x02 \x01(\x03R\bpageSize\x12\x12\n" +
@@ -1937,7 +2302,7 @@ const file_proto_content_proto_rawDesc = "" +
 	"\akeyword\x18\x04 \x01(\tR\akeyword\x12\x16\n" +
 	"\x06status\x18\x05 \x01(\tR\x06status\"C\n" +
 	"\x14ListContentsResponse\x12+\n" +
-	"\x04list\x18\x01 \x03(\v2\x17.content.ContentSummaryR\x04list\"\xd0\x01\n" +
+	"\x04list\x18\x01 \x03(\v2\x17.content.ContentSummaryR\x04list\"\xfa\x03\n" +
 	"\x14CreateContentRequest\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x12\n" +
@@ -1947,7 +2312,12 @@ const file_proto_content_proto_rawDesc = "" +
 	"\n" +
 	"visibility\x18\x06 \x01(\tR\n" +
 	"visibility\x12\x1b\n" +
-	"\tai_access\x18\a \x01(\tR\baiAccess\"\xb8\x01\n" +
+	"\tai_access\x18\a \x01(\tR\baiAccess\x12@\n" +
+	"\x0fproject_profile\x18\b \x01(\v2\x17.content.ProjectProfileR\x0eprojectProfile\x12I\n" +
+	"\x12experience_profile\x18\t \x01(\v2\x1a.content.ExperienceProfileR\x11experienceProfile\x12S\n" +
+	"\x16timeline_event_profile\x18\n" +
+	" \x01(\v2\x1d.content.TimelineEventProfileR\x14timelineEventProfile\x12F\n" +
+	"\x11portfolio_profile\x18\v \x01(\v2\x19.content.PortfolioProfileR\x10portfolioProfile\"\xe2\x03\n" +
 	"\x14UpdateContentRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x18\n" +
@@ -1956,13 +2326,40 @@ const file_proto_content_proto_rawDesc = "" +
 	"\n" +
 	"visibility\x18\x05 \x01(\tR\n" +
 	"visibility\x12\x1b\n" +
-	"\tai_access\x18\x06 \x01(\tR\baiAccess\"=\n" +
+	"\tai_access\x18\x06 \x01(\tR\baiAccess\x12@\n" +
+	"\x0fproject_profile\x18\a \x01(\v2\x17.content.ProjectProfileR\x0eprojectProfile\x12I\n" +
+	"\x12experience_profile\x18\b \x01(\v2\x1a.content.ExperienceProfileR\x11experienceProfile\x12S\n" +
+	"\x16timeline_event_profile\x18\t \x01(\v2\x1d.content.TimelineEventProfileR\x14timelineEventProfile\x12F\n" +
+	"\x11portfolio_profile\x18\n" +
+	" \x01(\v2\x19.content.PortfolioProfileR\x10portfolioProfile\"=\n" +
 	"\x13UpdateStatusRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\"#\n" +
 	"\x11GetContentRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\"\a\n" +
-	"\x05Empty\"u\n" +
+	"\x05Empty\"\xb9\x01\n" +
+	"\x0eProjectProfile\x12!\n" +
+	"\fproject_name\x18\x01 \x01(\tR\vprojectName\x12\x14\n" +
+	"\x05stack\x18\x02 \x01(\tR\x05stack\x12\x19\n" +
+	"\brepo_url\x18\x03 \x01(\tR\arepoUrl\x12\x19\n" +
+	"\bdemo_url\x18\x04 \x01(\tR\ademoUrl\x12\x1d\n" +
+	"\n" +
+	"started_at\x18\x05 \x01(\tR\tstartedAt\x12\x19\n" +
+	"\bended_at\x18\x06 \x01(\tR\aendedAt\"\xa1\x01\n" +
+	"\x11ExperienceProfile\x12\x19\n" +
+	"\borg_name\x18\x01 \x01(\tR\aorgName\x12\x1b\n" +
+	"\trole_name\x18\x02 \x01(\tR\broleName\x12\x1a\n" +
+	"\blocation\x18\x03 \x01(\tR\blocation\x12\x1d\n" +
+	"\n" +
+	"started_at\x18\x04 \x01(\tR\tstartedAt\x12\x19\n" +
+	"\bended_at\x18\x05 \x01(\tR\aendedAt\"\\\n" +
+	"\x14TimelineEventProfile\x12\x1d\n" +
+	"\n" +
+	"event_time\x18\x01 \x01(\tR\teventTime\x12%\n" +
+	"\x0eevent_category\x18\x02 \x01(\tR\reventCategory\"\\\n" +
+	"\x10PortfolioProfile\x12#\n" +
+	"\rartifact_type\x18\x01 \x01(\tR\fartifactType\x12#\n" +
+	"\rexternal_link\x18\x02 \x01(\tR\fexternalLink\"u\n" +
 	"\x03Tag\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
@@ -2102,7 +2499,7 @@ func file_proto_content_proto_rawDescGZIP() []byte {
 	return file_proto_content_proto_rawDescData
 }
 
-var file_proto_content_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
+var file_proto_content_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
 var file_proto_content_proto_goTypes = []any{
 	(*ContentSummary)(nil),             // 0: content.ContentSummary
 	(*ContentDetail)(nil),              // 1: content.ContentDetail
@@ -2113,73 +2510,89 @@ var file_proto_content_proto_goTypes = []any{
 	(*UpdateStatusRequest)(nil),        // 6: content.UpdateStatusRequest
 	(*GetContentRequest)(nil),          // 7: content.GetContentRequest
 	(*Empty)(nil),                      // 8: content.Empty
-	(*Tag)(nil),                        // 9: content.Tag
-	(*ListTagsResponse)(nil),           // 10: content.ListTagsResponse
-	(*CreateTagRequest)(nil),           // 11: content.CreateTagRequest
-	(*DeleteTagRequest)(nil),           // 12: content.DeleteTagRequest
-	(*Relation)(nil),                   // 13: content.Relation
-	(*ListRelationsRequest)(nil),       // 14: content.ListRelationsRequest
-	(*ListRelationsResponse)(nil),      // 15: content.ListRelationsResponse
-	(*CreateRelationRequest)(nil),      // 16: content.CreateRelationRequest
-	(*DeleteRelationRequest)(nil),      // 17: content.DeleteRelationRequest
-	(*Attachment)(nil),                 // 18: content.Attachment
-	(*ListAttachmentsRequest)(nil),     // 19: content.ListAttachmentsRequest
-	(*ListAttachmentsResponse)(nil),    // 20: content.ListAttachmentsResponse
-	(*CreateAttachmentRequest)(nil),    // 21: content.CreateAttachmentRequest
-	(*DeleteAttachmentRequest)(nil),    // 22: content.DeleteAttachmentRequest
-	(*Comment)(nil),                    // 23: content.Comment
-	(*ListCommentsRequest)(nil),        // 24: content.ListCommentsRequest
-	(*ListCommentsResponse)(nil),       // 25: content.ListCommentsResponse
-	(*CreateCommentRequest)(nil),       // 26: content.CreateCommentRequest
-	(*UpdateCommentStatusRequest)(nil), // 27: content.UpdateCommentStatusRequest
+	(*ProjectProfile)(nil),             // 9: content.ProjectProfile
+	(*ExperienceProfile)(nil),          // 10: content.ExperienceProfile
+	(*TimelineEventProfile)(nil),       // 11: content.TimelineEventProfile
+	(*PortfolioProfile)(nil),           // 12: content.PortfolioProfile
+	(*Tag)(nil),                        // 13: content.Tag
+	(*ListTagsResponse)(nil),           // 14: content.ListTagsResponse
+	(*CreateTagRequest)(nil),           // 15: content.CreateTagRequest
+	(*DeleteTagRequest)(nil),           // 16: content.DeleteTagRequest
+	(*Relation)(nil),                   // 17: content.Relation
+	(*ListRelationsRequest)(nil),       // 18: content.ListRelationsRequest
+	(*ListRelationsResponse)(nil),      // 19: content.ListRelationsResponse
+	(*CreateRelationRequest)(nil),      // 20: content.CreateRelationRequest
+	(*DeleteRelationRequest)(nil),      // 21: content.DeleteRelationRequest
+	(*Attachment)(nil),                 // 22: content.Attachment
+	(*ListAttachmentsRequest)(nil),     // 23: content.ListAttachmentsRequest
+	(*ListAttachmentsResponse)(nil),    // 24: content.ListAttachmentsResponse
+	(*CreateAttachmentRequest)(nil),    // 25: content.CreateAttachmentRequest
+	(*DeleteAttachmentRequest)(nil),    // 26: content.DeleteAttachmentRequest
+	(*Comment)(nil),                    // 27: content.Comment
+	(*ListCommentsRequest)(nil),        // 28: content.ListCommentsRequest
+	(*ListCommentsResponse)(nil),       // 29: content.ListCommentsResponse
+	(*CreateCommentRequest)(nil),       // 30: content.CreateCommentRequest
+	(*UpdateCommentStatusRequest)(nil), // 31: content.UpdateCommentStatusRequest
 }
 var file_proto_content_proto_depIdxs = []int32{
-	0,  // 0: content.ListContentsResponse.list:type_name -> content.ContentSummary
-	9,  // 1: content.ListTagsResponse.list:type_name -> content.Tag
-	13, // 2: content.ListRelationsResponse.list:type_name -> content.Relation
-	18, // 3: content.ListAttachmentsResponse.list:type_name -> content.Attachment
-	23, // 4: content.ListCommentsResponse.list:type_name -> content.Comment
-	2,  // 5: content.Content.ListPublicArticles:input_type -> content.ListContentsRequest
-	2,  // 6: content.Content.ListContents:input_type -> content.ListContentsRequest
-	4,  // 7: content.Content.CreateContent:input_type -> content.CreateContentRequest
-	7,  // 8: content.Content.GetContent:input_type -> content.GetContentRequest
-	5,  // 9: content.Content.UpdateContent:input_type -> content.UpdateContentRequest
-	6,  // 10: content.Content.UpdateContentStatus:input_type -> content.UpdateStatusRequest
-	8,  // 11: content.Content.ListTags:input_type -> content.Empty
-	11, // 12: content.Content.CreateTag:input_type -> content.CreateTagRequest
-	12, // 13: content.Content.DeleteTag:input_type -> content.DeleteTagRequest
-	14, // 14: content.Content.ListRelations:input_type -> content.ListRelationsRequest
-	16, // 15: content.Content.CreateRelation:input_type -> content.CreateRelationRequest
-	17, // 16: content.Content.DeleteRelation:input_type -> content.DeleteRelationRequest
-	19, // 17: content.Content.ListAttachments:input_type -> content.ListAttachmentsRequest
-	21, // 18: content.Content.CreateAttachment:input_type -> content.CreateAttachmentRequest
-	22, // 19: content.Content.DeleteAttachment:input_type -> content.DeleteAttachmentRequest
-	24, // 20: content.Content.ListComments:input_type -> content.ListCommentsRequest
-	26, // 21: content.Content.CreateComment:input_type -> content.CreateCommentRequest
-	27, // 22: content.Content.UpdateCommentStatus:input_type -> content.UpdateCommentStatusRequest
-	3,  // 23: content.Content.ListPublicArticles:output_type -> content.ListContentsResponse
-	3,  // 24: content.Content.ListContents:output_type -> content.ListContentsResponse
-	1,  // 25: content.Content.CreateContent:output_type -> content.ContentDetail
-	1,  // 26: content.Content.GetContent:output_type -> content.ContentDetail
-	1,  // 27: content.Content.UpdateContent:output_type -> content.ContentDetail
-	1,  // 28: content.Content.UpdateContentStatus:output_type -> content.ContentDetail
-	10, // 29: content.Content.ListTags:output_type -> content.ListTagsResponse
-	9,  // 30: content.Content.CreateTag:output_type -> content.Tag
-	8,  // 31: content.Content.DeleteTag:output_type -> content.Empty
-	15, // 32: content.Content.ListRelations:output_type -> content.ListRelationsResponse
-	13, // 33: content.Content.CreateRelation:output_type -> content.Relation
-	8,  // 34: content.Content.DeleteRelation:output_type -> content.Empty
-	20, // 35: content.Content.ListAttachments:output_type -> content.ListAttachmentsResponse
-	18, // 36: content.Content.CreateAttachment:output_type -> content.Attachment
-	8,  // 37: content.Content.DeleteAttachment:output_type -> content.Empty
-	25, // 38: content.Content.ListComments:output_type -> content.ListCommentsResponse
-	23, // 39: content.Content.CreateComment:output_type -> content.Comment
-	23, // 40: content.Content.UpdateCommentStatus:output_type -> content.Comment
-	23, // [23:41] is the sub-list for method output_type
-	5,  // [5:23] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	9,  // 0: content.ContentDetail.project_profile:type_name -> content.ProjectProfile
+	10, // 1: content.ContentDetail.experience_profile:type_name -> content.ExperienceProfile
+	11, // 2: content.ContentDetail.timeline_event_profile:type_name -> content.TimelineEventProfile
+	12, // 3: content.ContentDetail.portfolio_profile:type_name -> content.PortfolioProfile
+	0,  // 4: content.ListContentsResponse.list:type_name -> content.ContentSummary
+	9,  // 5: content.CreateContentRequest.project_profile:type_name -> content.ProjectProfile
+	10, // 6: content.CreateContentRequest.experience_profile:type_name -> content.ExperienceProfile
+	11, // 7: content.CreateContentRequest.timeline_event_profile:type_name -> content.TimelineEventProfile
+	12, // 8: content.CreateContentRequest.portfolio_profile:type_name -> content.PortfolioProfile
+	9,  // 9: content.UpdateContentRequest.project_profile:type_name -> content.ProjectProfile
+	10, // 10: content.UpdateContentRequest.experience_profile:type_name -> content.ExperienceProfile
+	11, // 11: content.UpdateContentRequest.timeline_event_profile:type_name -> content.TimelineEventProfile
+	12, // 12: content.UpdateContentRequest.portfolio_profile:type_name -> content.PortfolioProfile
+	13, // 13: content.ListTagsResponse.list:type_name -> content.Tag
+	17, // 14: content.ListRelationsResponse.list:type_name -> content.Relation
+	22, // 15: content.ListAttachmentsResponse.list:type_name -> content.Attachment
+	27, // 16: content.ListCommentsResponse.list:type_name -> content.Comment
+	2,  // 17: content.Content.ListPublicArticles:input_type -> content.ListContentsRequest
+	2,  // 18: content.Content.ListContents:input_type -> content.ListContentsRequest
+	4,  // 19: content.Content.CreateContent:input_type -> content.CreateContentRequest
+	7,  // 20: content.Content.GetContent:input_type -> content.GetContentRequest
+	5,  // 21: content.Content.UpdateContent:input_type -> content.UpdateContentRequest
+	6,  // 22: content.Content.UpdateContentStatus:input_type -> content.UpdateStatusRequest
+	8,  // 23: content.Content.ListTags:input_type -> content.Empty
+	15, // 24: content.Content.CreateTag:input_type -> content.CreateTagRequest
+	16, // 25: content.Content.DeleteTag:input_type -> content.DeleteTagRequest
+	18, // 26: content.Content.ListRelations:input_type -> content.ListRelationsRequest
+	20, // 27: content.Content.CreateRelation:input_type -> content.CreateRelationRequest
+	21, // 28: content.Content.DeleteRelation:input_type -> content.DeleteRelationRequest
+	23, // 29: content.Content.ListAttachments:input_type -> content.ListAttachmentsRequest
+	25, // 30: content.Content.CreateAttachment:input_type -> content.CreateAttachmentRequest
+	26, // 31: content.Content.DeleteAttachment:input_type -> content.DeleteAttachmentRequest
+	28, // 32: content.Content.ListComments:input_type -> content.ListCommentsRequest
+	30, // 33: content.Content.CreateComment:input_type -> content.CreateCommentRequest
+	31, // 34: content.Content.UpdateCommentStatus:input_type -> content.UpdateCommentStatusRequest
+	3,  // 35: content.Content.ListPublicArticles:output_type -> content.ListContentsResponse
+	3,  // 36: content.Content.ListContents:output_type -> content.ListContentsResponse
+	1,  // 37: content.Content.CreateContent:output_type -> content.ContentDetail
+	1,  // 38: content.Content.GetContent:output_type -> content.ContentDetail
+	1,  // 39: content.Content.UpdateContent:output_type -> content.ContentDetail
+	1,  // 40: content.Content.UpdateContentStatus:output_type -> content.ContentDetail
+	14, // 41: content.Content.ListTags:output_type -> content.ListTagsResponse
+	13, // 42: content.Content.CreateTag:output_type -> content.Tag
+	8,  // 43: content.Content.DeleteTag:output_type -> content.Empty
+	19, // 44: content.Content.ListRelations:output_type -> content.ListRelationsResponse
+	17, // 45: content.Content.CreateRelation:output_type -> content.Relation
+	8,  // 46: content.Content.DeleteRelation:output_type -> content.Empty
+	24, // 47: content.Content.ListAttachments:output_type -> content.ListAttachmentsResponse
+	22, // 48: content.Content.CreateAttachment:output_type -> content.Attachment
+	8,  // 49: content.Content.DeleteAttachment:output_type -> content.Empty
+	29, // 50: content.Content.ListComments:output_type -> content.ListCommentsResponse
+	27, // 51: content.Content.CreateComment:output_type -> content.Comment
+	27, // 52: content.Content.UpdateCommentStatus:output_type -> content.Comment
+	35, // [35:53] is the sub-list for method output_type
+	17, // [17:35] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_proto_content_proto_init() }
@@ -2193,7 +2606,7 @@ func file_proto_content_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_content_proto_rawDesc), len(file_proto_content_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   28,
+			NumMessages:   32,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

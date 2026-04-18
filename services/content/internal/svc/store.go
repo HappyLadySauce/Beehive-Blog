@@ -24,6 +24,37 @@ type contentRecord struct {
 	PublishedAt  *time.Time `db:"published_at"`
 }
 
+type projectProfileRecord struct {
+	ContentID   int64      `db:"content_id"`
+	ProjectName string     `db:"project_name"`
+	Stack       string     `db:"stack"`
+	RepoURL     string     `db:"repo_url"`
+	DemoURL     string     `db:"demo_url"`
+	StartedAt   *time.Time `db:"started_at"`
+	EndedAt     *time.Time `db:"ended_at"`
+}
+
+type experienceProfileRecord struct {
+	ContentID int64      `db:"content_id"`
+	OrgName   string     `db:"org_name"`
+	RoleName  string     `db:"role_name"`
+	Location  string     `db:"location"`
+	StartedAt *time.Time `db:"started_at"`
+	EndedAt   *time.Time `db:"ended_at"`
+}
+
+type timelineEventProfileRecord struct {
+	ContentID     int64      `db:"content_id"`
+	EventTime     *time.Time `db:"event_time"`
+	EventCategory string     `db:"event_category"`
+}
+
+type portfolioProfileRecord struct {
+	ContentID    int64  `db:"content_id"`
+	ArtifactType string `db:"artifact_type"`
+	ExternalLink string `db:"external_link"`
+}
+
 type tagRecord struct {
 	ID          int64  `db:"id"`
 	Name        string `db:"name"`
@@ -65,6 +96,17 @@ type commentRecord struct {
 	ModerationNote string `db:"moderation_note"`
 }
 
+const (
+	contentTypeArticle    = "article"
+	contentTypeNote       = "note"
+	contentTypeProject    = "project"
+	contentTypeExperience = "experience"
+	contentTypeTimeline   = "timeline_event"
+	contentTypePortfolio  = "portfolio"
+	contentTypePage       = "page"
+	contentTypeInsight    = "insight"
+)
+
 type contentStore struct {
 	conn sqlx.SqlConn
 }
@@ -81,11 +123,17 @@ func (s *contentStore) Create(ctx context.Context, in *pb.CreateContentRequest) 
 	if in == nil {
 		return nil, fmt.Errorf("empty request")
 	}
-	typ := strings.TrimSpace(in.Type)
+	typ := normalizeContentType(in.Type)
 	title := strings.TrimSpace(in.Title)
 	slug := strings.TrimSpace(in.Slug)
 	if typ == "" || title == "" || slug == "" {
 		return nil, fmt.Errorf("type/title/slug are required")
+	}
+	if !isAllowedContentType(typ) {
+		return nil, fmt.Errorf("invalid content type")
+	}
+	if err := validateProfilePayloadByType(typ, in.ProjectProfile, in.ExperienceProfile, in.TimelineEventProfile, in.PortfolioProfile); err != nil {
+		return nil, err
 	}
 
 	visibility := defaultIfEmpty(in.Visibility, "private")
@@ -108,10 +156,13 @@ RETURNING id, type, title, slug, summary, body_markdown, status, visibility, ai_
 		}
 		return nil, err
 	}
+	if err := s.upsertProfileByType(ctx, out.ID, typ, in.ProjectProfile, in.ExperienceProfile, in.TimelineEventProfile, in.PortfolioProfile); err != nil {
+		return nil, err
+	}
 	if err := s.publishContentEvent(ctx, events.TopicContentCreated, out.ID); err != nil {
 		return nil, err
 	}
-	return toDetail(&out), nil
+	return s.Get(ctx, out.ID)
 }
 
 func (s *contentStore) Get(ctx context.Context, id int64) (*pb.ContentDetail, error) {
@@ -126,7 +177,11 @@ func (s *contentStore) Get(ctx context.Context, id int64) (*pb.ContentDetail, er
 		}
 		return nil, err
 	}
-	return toDetail(&out), nil
+	detail := toDetail(&out)
+	if err := s.fillProfileDetail(ctx, detail); err != nil {
+		return nil, err
+	}
+	return detail, nil
 }
 
 func (s *contentStore) Update(ctx context.Context, in *pb.UpdateContentRequest) (*pb.ContentDetail, error) {
@@ -141,6 +196,13 @@ func (s *contentStore) Update(ctx context.Context, in *pb.UpdateContentRequest) 
 	if aiAccess != "" && !isAllowedAiAccess(aiAccess) {
 		return nil, fmt.Errorf("invalid ai_access")
 	}
+	contentType, err := s.getContentType(ctx, in.Id)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateProfilePayloadByType(contentType, in.ProjectProfile, in.ExperienceProfile, in.TimelineEventProfile, in.PortfolioProfile); err != nil {
+		return nil, err
+	}
 
 	query := `
 UPDATE content_items
@@ -154,6 +216,11 @@ SET
 WHERE id = $1`
 	if _, err := s.conn.ExecCtx(ctx, query, in.Id, strings.TrimSpace(in.Title), in.Summary, in.BodyMarkdown, visibility, aiAccess); err != nil {
 		return nil, err
+	}
+	if hasAnyProfile(in.ProjectProfile, in.ExperienceProfile, in.TimelineEventProfile, in.PortfolioProfile) {
+		if err := s.upsertProfileByType(ctx, in.Id, contentType, in.ProjectProfile, in.ExperienceProfile, in.TimelineEventProfile, in.PortfolioProfile); err != nil {
+			return nil, err
+		}
 	}
 	out, err := s.Get(ctx, in.Id)
 	if err != nil {
@@ -191,6 +258,178 @@ WHERE id = $1`
 		return nil, err
 	}
 	return out, nil
+}
+
+func (s *contentStore) getContentType(ctx context.Context, contentID int64) (string, error) {
+	var contentType string
+	if err := s.conn.QueryRowCtx(ctx, &contentType, `SELECT type FROM content_items WHERE id = $1 LIMIT 1`, contentID); err != nil {
+		if err == sqlx.ErrNotFound {
+			return "", fmt.Errorf("content not found")
+		}
+		return "", err
+	}
+	contentType = normalizeContentType(contentType)
+	if !isAllowedContentType(contentType) {
+		return "", fmt.Errorf("invalid content type")
+	}
+	return contentType, nil
+}
+
+func (s *contentStore) fillProfileDetail(ctx context.Context, detail *pb.ContentDetail) error {
+	if detail == nil {
+		return nil
+	}
+	switch normalizeContentType(detail.Type) {
+	case contentTypeProject:
+		var row projectProfileRecord
+		if err := s.conn.QueryRowCtx(ctx, &row, `SELECT content_id, project_name, stack, repo_url, demo_url, started_at, ended_at FROM project_profiles WHERE content_id = $1 LIMIT 1`, detail.Id); err != nil {
+			if err == sqlx.ErrNotFound {
+				return nil
+			}
+			return err
+		}
+		detail.ProjectProfile = &pb.ProjectProfile{
+			ProjectName: row.ProjectName,
+			Stack:       row.Stack,
+			RepoUrl:     row.RepoURL,
+			DemoUrl:     row.DemoURL,
+			StartedAt:   formatDate(row.StartedAt),
+			EndedAt:     formatDate(row.EndedAt),
+		}
+	case contentTypeExperience:
+		var row experienceProfileRecord
+		if err := s.conn.QueryRowCtx(ctx, &row, `SELECT content_id, org_name, role_name, location, started_at, ended_at FROM experience_profiles WHERE content_id = $1 LIMIT 1`, detail.Id); err != nil {
+			if err == sqlx.ErrNotFound {
+				return nil
+			}
+			return err
+		}
+		detail.ExperienceProfile = &pb.ExperienceProfile{
+			OrgName:   row.OrgName,
+			RoleName:  row.RoleName,
+			Location:  row.Location,
+			StartedAt: formatDate(row.StartedAt),
+			EndedAt:   formatDate(row.EndedAt),
+		}
+	case contentTypeTimeline:
+		var row timelineEventProfileRecord
+		if err := s.conn.QueryRowCtx(ctx, &row, `SELECT content_id, event_time, event_category FROM timeline_event_profiles WHERE content_id = $1 LIMIT 1`, detail.Id); err != nil {
+			if err == sqlx.ErrNotFound {
+				return nil
+			}
+			return err
+		}
+		detail.TimelineEventProfile = &pb.TimelineEventProfile{
+			EventTime:     formatTime(row.EventTime),
+			EventCategory: row.EventCategory,
+		}
+	case contentTypePortfolio:
+		var row portfolioProfileRecord
+		if err := s.conn.QueryRowCtx(ctx, &row, `SELECT content_id, artifact_type, external_link FROM portfolio_profiles WHERE content_id = $1 LIMIT 1`, detail.Id); err != nil {
+			if err == sqlx.ErrNotFound {
+				return nil
+			}
+			return err
+		}
+		detail.PortfolioProfile = &pb.PortfolioProfile{
+			ArtifactType: row.ArtifactType,
+			ExternalLink: row.ExternalLink,
+		}
+	}
+	return nil
+}
+
+func (s *contentStore) upsertProfileByType(ctx context.Context, contentID int64, contentType string, project *pb.ProjectProfile, experience *pb.ExperienceProfile, timeline *pb.TimelineEventProfile, portfolio *pb.PortfolioProfile) error {
+	switch normalizeContentType(contentType) {
+	case contentTypeProject:
+		if project == nil {
+			_, err := s.conn.ExecCtx(ctx, `INSERT INTO project_profiles(content_id) VALUES ($1) ON CONFLICT (content_id) DO NOTHING`, contentID)
+			return err
+		}
+		_, err := s.conn.ExecCtx(ctx, `
+INSERT INTO project_profiles(content_id, project_name, stack, repo_url, demo_url, started_at, ended_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, NULLIF($6, '')::date, NULLIF($7, '')::date, NOW())
+ON CONFLICT (content_id) DO UPDATE
+SET
+	project_name = EXCLUDED.project_name,
+	stack = EXCLUDED.stack,
+	repo_url = EXCLUDED.repo_url,
+	demo_url = EXCLUDED.demo_url,
+	started_at = EXCLUDED.started_at,
+	ended_at = EXCLUDED.ended_at,
+	updated_at = NOW()`,
+			contentID,
+			strings.TrimSpace(project.ProjectName),
+			strings.TrimSpace(project.Stack),
+			strings.TrimSpace(project.RepoUrl),
+			strings.TrimSpace(project.DemoUrl),
+			strings.TrimSpace(project.StartedAt),
+			strings.TrimSpace(project.EndedAt),
+		)
+		return err
+	case contentTypeExperience:
+		if experience == nil {
+			_, err := s.conn.ExecCtx(ctx, `INSERT INTO experience_profiles(content_id) VALUES ($1) ON CONFLICT (content_id) DO NOTHING`, contentID)
+			return err
+		}
+		_, err := s.conn.ExecCtx(ctx, `
+INSERT INTO experience_profiles(content_id, org_name, role_name, location, started_at, ended_at, updated_at)
+VALUES ($1, $2, $3, $4, NULLIF($5, '')::date, NULLIF($6, '')::date, NOW())
+ON CONFLICT (content_id) DO UPDATE
+SET
+	org_name = EXCLUDED.org_name,
+	role_name = EXCLUDED.role_name,
+	location = EXCLUDED.location,
+	started_at = EXCLUDED.started_at,
+	ended_at = EXCLUDED.ended_at,
+	updated_at = NOW()`,
+			contentID,
+			strings.TrimSpace(experience.OrgName),
+			strings.TrimSpace(experience.RoleName),
+			strings.TrimSpace(experience.Location),
+			strings.TrimSpace(experience.StartedAt),
+			strings.TrimSpace(experience.EndedAt),
+		)
+		return err
+	case contentTypeTimeline:
+		if timeline == nil {
+			_, err := s.conn.ExecCtx(ctx, `INSERT INTO timeline_event_profiles(content_id) VALUES ($1) ON CONFLICT (content_id) DO NOTHING`, contentID)
+			return err
+		}
+		_, err := s.conn.ExecCtx(ctx, `
+INSERT INTO timeline_event_profiles(content_id, event_time, event_category, updated_at)
+VALUES ($1, NULLIF($2, '')::timestamptz, $3, NOW())
+ON CONFLICT (content_id) DO UPDATE
+SET
+	event_time = EXCLUDED.event_time,
+	event_category = EXCLUDED.event_category,
+	updated_at = NOW()`,
+			contentID,
+			strings.TrimSpace(timeline.EventTime),
+			strings.TrimSpace(timeline.EventCategory),
+		)
+		return err
+	case contentTypePortfolio:
+		if portfolio == nil {
+			_, err := s.conn.ExecCtx(ctx, `INSERT INTO portfolio_profiles(content_id) VALUES ($1) ON CONFLICT (content_id) DO NOTHING`, contentID)
+			return err
+		}
+		_, err := s.conn.ExecCtx(ctx, `
+INSERT INTO portfolio_profiles(content_id, artifact_type, external_link, updated_at)
+VALUES ($1, $2, $3, NOW())
+ON CONFLICT (content_id) DO UPDATE
+SET
+	artifact_type = EXCLUDED.artifact_type,
+	external_link = EXCLUDED.external_link,
+	updated_at = NOW()`,
+			contentID,
+			strings.TrimSpace(portfolio.ArtifactType),
+			strings.TrimSpace(portfolio.ExternalLink),
+		)
+		return err
+	default:
+		return nil
+	}
 }
 
 func (s *contentStore) List(ctx context.Context, in *pb.ListContentsRequest, publicOnly bool) (*pb.ListContentsResponse, error) {
@@ -599,6 +838,10 @@ func defaultIfEmpty(v, fallback string) string {
 	return v
 }
 
+func normalizeContentType(v string) string {
+	return strings.ToLower(strings.TrimSpace(v))
+}
+
 func normalizePage(page, pageSize int64) (int64, int64) {
 	if page <= 0 {
 		page = 1
@@ -617,6 +860,13 @@ func formatTime(t *time.Time) string {
 		return ""
 	}
 	return t.UTC().Format(time.RFC3339)
+}
+
+func formatDate(t *time.Time) string {
+	if t == nil {
+		return ""
+	}
+	return t.UTC().Format("2006-01-02")
 }
 
 func isUniqueViolation(err error) bool {
@@ -649,6 +899,50 @@ func isAllowedStatus(v string) bool {
 	default:
 		return false
 	}
+}
+
+func isAllowedContentType(v string) bool {
+	switch normalizeContentType(v) {
+	case contentTypeArticle, contentTypeNote, contentTypeProject, contentTypeExperience, contentTypeTimeline, contentTypePortfolio, contentTypePage, contentTypeInsight:
+		return true
+	default:
+		return false
+	}
+}
+
+func hasAnyProfile(project *pb.ProjectProfile, experience *pb.ExperienceProfile, timeline *pb.TimelineEventProfile, portfolio *pb.PortfolioProfile) bool {
+	return project != nil || experience != nil || timeline != nil || portfolio != nil
+}
+
+func validateProfilePayloadByType(contentType string, project *pb.ProjectProfile, experience *pb.ExperienceProfile, timeline *pb.TimelineEventProfile, portfolio *pb.PortfolioProfile) error {
+	contentType = normalizeContentType(contentType)
+	switch contentType {
+	case contentTypeProject:
+		if experience != nil || timeline != nil || portfolio != nil {
+			return fmt.Errorf("project only accepts project_profile")
+		}
+	case contentTypeExperience:
+		if project != nil || timeline != nil || portfolio != nil {
+			return fmt.Errorf("experience only accepts experience_profile")
+		}
+	case contentTypeTimeline:
+		if project != nil || experience != nil || portfolio != nil {
+			return fmt.Errorf("timeline_event only accepts timeline_event_profile")
+		}
+	case contentTypePortfolio:
+		if project != nil || experience != nil || timeline != nil {
+			return fmt.Errorf("portfolio only accepts portfolio_profile")
+		}
+	case contentTypePage:
+		if hasAnyProfile(project, experience, timeline, portfolio) {
+			return fmt.Errorf("page does not accept profile payload")
+		}
+	default:
+		if hasAnyProfile(project, experience, timeline, portfolio) {
+			return fmt.Errorf("content type does not accept profile payload")
+		}
+	}
+	return nil
 }
 
 func (s *contentStore) publishContentEvent(ctx context.Context, eventType string, contentID int64) error {

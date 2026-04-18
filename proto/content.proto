@@ -26,6 +26,10 @@ message ContentDetail {
   string status = 7;
   string visibility = 8;
   string ai_access = 9;
+  ProjectProfile project_profile = 10;
+  ExperienceProfile experience_profile = 11;
+  TimelineEventProfile timeline_event_profile = 12;
+  PortfolioProfile portfolio_profile = 13;
 }
 
 message ListContentsRequest {
@@ -48,6 +52,10 @@ message CreateContentRequest {
   string body_markdown = 5;
   string visibility = 6;
   string ai_access = 7;
+  ProjectProfile project_profile = 8;
+  ExperienceProfile experience_profile = 9;
+  TimelineEventProfile timeline_event_profile = 10;
+  PortfolioProfile portfolio_profile = 11;
 }
 
 message UpdateContentRequest {
@@ -57,6 +65,10 @@ message UpdateContentRequest {
   string body_markdown = 4;
   string visibility = 5;
   string ai_access = 6;
+  ProjectProfile project_profile = 7;
+  ExperienceProfile experience_profile = 8;
+  TimelineEventProfile timeline_event_profile = 9;
+  PortfolioProfile portfolio_profile = 10;
 }
 
 message UpdateStatusRequest {
@@ -69,6 +81,33 @@ message GetContentRequest {
 }
 
 message Empty {}
+
+message ProjectProfile {
+  string project_name = 1;
+  string stack = 2;
+  string repo_url = 3;
+  string demo_url = 4;
+  string started_at = 5;
+  string ended_at = 6;
+}
+
+message ExperienceProfile {
+  string org_name = 1;
+  string role_name = 2;
+  string location = 3;
+  string started_at = 4;
+  string ended_at = 5;
+}
+
+message TimelineEventProfile {
+  string event_time = 1;
+  string event_category = 2;
+}
+
+message PortfolioProfile {
+  string artifact_type = 1;
+  string external_link = 2;
+}
 
 message Tag {
   int64 id = 1;

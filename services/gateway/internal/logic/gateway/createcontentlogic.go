@@ -51,13 +51,17 @@ func (l *CreateContentLogic) CreateContent(req *types.ContentCreateRequest) (res
 	}
 
 	out, err := l.svcCtx.Content.CreateContent(l.ctx, &contentrpc.CreateContentRequest{
-		Type:         req.ContentType,
-		Title:        req.Title,
-		Slug:         req.Slug,
-		Summary:      req.Summary,
-		BodyMarkdown: req.BodyMarkdown,
-		Visibility:   req.Visibility,
-		AiAccess:     req.AiAccess,
+		Type:                 req.ContentType,
+		Title:                req.Title,
+		Slug:                 req.Slug,
+		Summary:              req.Summary,
+		BodyMarkdown:         req.BodyMarkdown,
+		Visibility:           req.Visibility,
+		AiAccess:             req.AiAccess,
+		ProjectProfile:       toProjectProfileRPC(req.ProjectProfile),
+		ExperienceProfile:    toExperienceProfileRPC(req.ExperienceProfile),
+		TimelineEventProfile: toTimelineEventProfileRPC(req.TimelineEventProfile),
+		PortfolioProfile:     toPortfolioProfileRPC(req.PortfolioProfile),
 	})
 	if err != nil {
 		return nil, err

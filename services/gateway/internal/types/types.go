@@ -4,25 +4,33 @@
 package types
 
 type ContentCreateRequest struct {
-	ContentType  string `json:"type"`
-	Title        string `json:"title"`
-	Slug         string `json:"slug"`
-	Summary      string `json:"summary,optional"`
-	BodyMarkdown string `json:"bodyMarkdown"`
-	Visibility   string `json:"visibility,optional"`
-	AiAccess     string `json:"aiAccess,optional"`
+	ContentType          string                `json:"type"`
+	Title                string                `json:"title"`
+	Slug                 string                `json:"slug"`
+	Summary              string                `json:"summary,optional"`
+	BodyMarkdown         string                `json:"bodyMarkdown"`
+	Visibility           string                `json:"visibility,optional"`
+	AiAccess             string                `json:"aiAccess,optional"`
+	ProjectProfile       *ProjectProfile       `json:"projectProfile,optional"`
+	ExperienceProfile    *ExperienceProfile    `json:"experienceProfile,optional"`
+	TimelineEventProfile *TimelineEventProfile `json:"timelineEventProfile,optional"`
+	PortfolioProfile     *PortfolioProfile     `json:"portfolioProfile,optional"`
 }
 
 type ContentDetail struct {
-	Id           int64  `json:"id"`
-	ContentType  string `json:"type"`
-	Title        string `json:"title"`
-	Slug         string `json:"slug"`
-	Summary      string `json:"summary"`
-	BodyMarkdown string `json:"bodyMarkdown"`
-	Status       string `json:"status"`
-	Visibility   string `json:"visibility"`
-	AiAccess     string `json:"aiAccess"`
+	Id                   int64                 `json:"id"`
+	ContentType          string                `json:"type"`
+	Title                string                `json:"title"`
+	Slug                 string                `json:"slug"`
+	Summary              string                `json:"summary"`
+	BodyMarkdown         string                `json:"bodyMarkdown"`
+	Status               string                `json:"status"`
+	Visibility           string                `json:"visibility"`
+	AiAccess             string                `json:"aiAccess"`
+	ProjectProfile       *ProjectProfile       `json:"projectProfile,optional"`
+	ExperienceProfile    *ExperienceProfile    `json:"experienceProfile,optional"`
+	TimelineEventProfile *TimelineEventProfile `json:"timelineEventProfile,optional"`
+	PortfolioProfile     *PortfolioProfile     `json:"portfolioProfile,optional"`
 }
 
 type ContentListRequest struct {
@@ -50,12 +58,43 @@ type ContentSummary struct {
 }
 
 type ContentUpdateRequest struct {
-	Id           int64  `path:"id"`
-	Title        string `json:"title,optional"`
-	Summary      string `json:"summary,optional"`
-	BodyMarkdown string `json:"bodyMarkdown,optional"`
-	Visibility   string `json:"visibility,optional"`
-	AiAccess     string `json:"aiAccess,optional"`
+	Id                   int64                 `path:"id"`
+	Title                string                `json:"title,optional"`
+	Summary              string                `json:"summary,optional"`
+	BodyMarkdown         string                `json:"bodyMarkdown,optional"`
+	Visibility           string                `json:"visibility,optional"`
+	AiAccess             string                `json:"aiAccess,optional"`
+	ProjectProfile       *ProjectProfile       `json:"projectProfile,optional"`
+	ExperienceProfile    *ExperienceProfile    `json:"experienceProfile,optional"`
+	TimelineEventProfile *TimelineEventProfile `json:"timelineEventProfile,optional"`
+	PortfolioProfile     *PortfolioProfile     `json:"portfolioProfile,optional"`
+}
+
+type ProjectProfile struct {
+	ProjectName string `json:"projectName,optional"`
+	Stack       string `json:"stack,optional"`
+	RepoUrl     string `json:"repoUrl,optional"`
+	DemoUrl     string `json:"demoUrl,optional"`
+	StartedAt   string `json:"startedAt,optional"`
+	EndedAt     string `json:"endedAt,optional"`
+}
+
+type ExperienceProfile struct {
+	OrgName   string `json:"orgName,optional"`
+	RoleName  string `json:"roleName,optional"`
+	Location  string `json:"location,optional"`
+	StartedAt string `json:"startedAt,optional"`
+	EndedAt   string `json:"endedAt,optional"`
+}
+
+type TimelineEventProfile struct {
+	EventTime     string `json:"eventTime,optional"`
+	EventCategory string `json:"eventCategory,optional"`
+}
+
+type PortfolioProfile struct {
+	ArtifactType string `json:"artifactType,optional"`
+	ExternalLink string `json:"externalLink,optional"`
 }
 
 type ContentPathRequest struct {

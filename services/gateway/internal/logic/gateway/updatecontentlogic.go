@@ -52,21 +52,30 @@ func (l *UpdateContentLogic) UpdateContent(req *types.ContentUpdateRequest) (res
 		strings.TrimSpace(req.Summary) == "" &&
 		strings.TrimSpace(req.BodyMarkdown) == "" &&
 		strings.TrimSpace(req.Visibility) == "" &&
-		strings.TrimSpace(req.AiAccess) == "" {
+		strings.TrimSpace(req.AiAccess) == "" &&
+		!hasAnyContentProfile(req.ProjectProfile, req.ExperienceProfile, req.TimelineEventProfile, req.PortfolioProfile) {
 		return nil, status.Error(codes.InvalidArgument, "no updates provided")
 	}
 
 	out, err := l.svcCtx.Content.UpdateContent(l.ctx, &contentrpc.UpdateContentRequest{
-		Id:           req.Id,
-		Title:        req.Title,
-		Summary:      req.Summary,
-		BodyMarkdown: req.BodyMarkdown,
-		Visibility:   req.Visibility,
-		AiAccess:     req.AiAccess,
+		Id:                   req.Id,
+		Title:                req.Title,
+		Summary:              req.Summary,
+		BodyMarkdown:         req.BodyMarkdown,
+		Visibility:           req.Visibility,
+		AiAccess:             req.AiAccess,
+		ProjectProfile:       toProjectProfileRPC(req.ProjectProfile),
+		ExperienceProfile:    toExperienceProfileRPC(req.ExperienceProfile),
+		TimelineEventProfile: toTimelineEventProfileRPC(req.TimelineEventProfile),
+		PortfolioProfile:     toPortfolioProfileRPC(req.PortfolioProfile),
 	})
 	if err != nil {
 		return nil, err
 	}
 	triggerAsyncIndexUpsert(l.ctx, l.svcCtx.Search, out)
 	return toContentDetail(out), nil
+}
+
+func hasAnyContentProfile(project *types.ProjectProfile, experience *types.ExperienceProfile, timeline *types.TimelineEventProfile, portfolio *types.PortfolioProfile) bool {
+	return project != nil || experience != nil || timeline != nil || portfolio != nil
 }
