@@ -15,6 +15,7 @@ type ContentCreateRequest struct {
 	ExperienceProfile    *ExperienceProfile    `json:"experienceProfile,optional"`
 	TimelineEventProfile *TimelineEventProfile `json:"timelineEventProfile,optional"`
 	PortfolioProfile     *PortfolioProfile     `json:"portfolioProfile,optional"`
+	ChangeNote           string                `json:"changeNote,optional"`
 }
 
 type ContentDetail struct {
@@ -68,6 +69,7 @@ type ContentUpdateRequest struct {
 	ExperienceProfile    *ExperienceProfile    `json:"experienceProfile,optional"`
 	TimelineEventProfile *TimelineEventProfile `json:"timelineEventProfile,optional"`
 	PortfolioProfile     *PortfolioProfile     `json:"portfolioProfile,optional"`
+	ChangeNote           string                `json:"changeNote,optional"`
 }
 
 type ProjectProfile struct {
@@ -99,6 +101,93 @@ type PortfolioProfile struct {
 
 type ContentPathRequest struct {
 	Id int64 `path:"id"`
+}
+
+type RevisionPathRequest struct {
+	Id         int64 `path:"id"`
+	RevisionId int64 `path:"revisionId"`
+}
+
+type RevisionListRequest struct {
+	Id       int64 `path:"id"`
+	Page     int64 `form:"page,optional"`
+	PageSize int64 `form:"pageSize,optional"`
+}
+
+type RevisionSummary struct {
+	Id         int64  `json:"id"`
+	ContentId  int64  `json:"contentId"`
+	Version    int64  `json:"version"`
+	Title      string `json:"title"`
+	Summary    string `json:"summary"`
+	ChangeNote string `json:"changeNote"`
+	CreatedBy  int64  `json:"createdBy"`
+	CreatedAt  string `json:"createdAt"`
+}
+
+type RevisionDetail struct {
+	Id           int64  `json:"id"`
+	ContentId    int64  `json:"contentId"`
+	Version      int64  `json:"version"`
+	Title        string `json:"title"`
+	Summary      string `json:"summary"`
+	BodyMarkdown string `json:"bodyMarkdown"`
+	ChangeNote   string `json:"changeNote"`
+	CreatedBy    int64  `json:"createdBy"`
+	CreatedAt    string `json:"createdAt"`
+}
+
+type Pagination struct {
+	Page      int64 `json:"page"`
+	PageSize  int64 `json:"pageSize"`
+	Total     int64 `json:"total"`
+	TotalPage int64 `json:"totalPage"`
+}
+
+type RevisionListResponse struct {
+	List       []RevisionSummary `json:"list"`
+	Pagination Pagination        `json:"pagination"`
+}
+
+type ReviewTask struct {
+	Id              int64  `json:"id"`
+	ContentId       int64  `json:"contentId"`
+	RevisionId      int64  `json:"revisionId"`
+	SubmitterUserId int64  `json:"submitterUserId"`
+	ReviewerUserId  int64  `json:"reviewerUserId"`
+	SourceType      string `json:"sourceType"`
+	Status          string `json:"status"`
+	Priority        int32  `json:"priority"`
+	Note            string `json:"note"`
+	DecidedAt       string `json:"decidedAt,optional"`
+	CreatedAt       string `json:"createdAt"`
+	UpdatedAt       string `json:"updatedAt"`
+}
+
+type ReviewListRequest struct {
+	Page     int64  `form:"page,optional"`
+	PageSize int64  `form:"pageSize,optional"`
+	Status   string `form:"status,optional"`
+}
+
+type ReviewListResponse struct {
+	List       []ReviewTask `json:"list"`
+	Pagination Pagination   `json:"pagination"`
+}
+
+type ContentReviewSubmitRequest struct {
+	Id       int64  `path:"id"`
+	Note     string `json:"note,optional"`
+	Priority int32  `json:"priority,optional"`
+}
+
+type ReviewPathRequest struct {
+	Id int64 `path:"id"`
+}
+
+type ReviewDecisionRequest struct {
+	Id     int64  `path:"id"`
+	Reason string `json:"reason,optional"`
 }
 
 type HealthResponse struct {

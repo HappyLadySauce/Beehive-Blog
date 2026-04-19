@@ -62,6 +62,7 @@ func (l *CreateContentLogic) CreateContent(req *types.ContentCreateRequest) (res
 		ExperienceProfile:    toExperienceProfileRPC(req.ExperienceProfile),
 		TimelineEventProfile: toTimelineEventProfileRPC(req.TimelineEventProfile),
 		PortfolioProfile:     toPortfolioProfileRPC(req.PortfolioProfile),
+		ChangeNote:           req.ChangeNote,
 	})
 	if err != nil {
 		return nil, err

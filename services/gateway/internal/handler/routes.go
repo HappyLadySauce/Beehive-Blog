@@ -91,6 +91,41 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 				},
 				{
 					Method:  http.MethodGet,
+					Path:    "/studio/contents/:id/revisions",
+					Handler: gateway.ListRevisionsHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/studio/contents/:id/revisions/:revisionId",
+					Handler: gateway.GetRevisionHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/studio/contents/:id/revisions/:revisionId/restore",
+					Handler: gateway.RestoreRevisionHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
+					Path:    "/studio/reviews",
+					Handler: gateway.ListReviewsHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/studio/contents/:id/reviews/submit",
+					Handler: gateway.SubmitReviewHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/studio/reviews/:id/approve",
+					Handler: gateway.ApproveReviewHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodPost,
+					Path:    "/studio/reviews/:id/reject",
+					Handler: gateway.RejectReviewHandler(serverCtx),
+				},
+				{
+					Method:  http.MethodGet,
 					Path:    "/studio/tags",
 					Handler: gateway.ListTagsHandler(serverCtx),
 				},

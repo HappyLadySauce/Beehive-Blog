@@ -68,6 +68,7 @@ func (l *UpdateContentLogic) UpdateContent(req *types.ContentUpdateRequest) (res
 		ExperienceProfile:    toExperienceProfileRPC(req.ExperienceProfile),
 		TimelineEventProfile: toTimelineEventProfileRPC(req.TimelineEventProfile),
 		PortfolioProfile:     toPortfolioProfileRPC(req.PortfolioProfile),
+		ChangeNote:           req.ChangeNote,
 	})
 	if err != nil {
 		return nil, err

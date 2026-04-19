@@ -402,6 +402,7 @@ type CreateContentRequest struct {
 	ExperienceProfile    *ExperienceProfile     `protobuf:"bytes,9,opt,name=experience_profile,json=experienceProfile,proto3" json:"experience_profile,omitempty"`
 	TimelineEventProfile *TimelineEventProfile  `protobuf:"bytes,10,opt,name=timeline_event_profile,json=timelineEventProfile,proto3" json:"timeline_event_profile,omitempty"`
 	PortfolioProfile     *PortfolioProfile      `protobuf:"bytes,11,opt,name=portfolio_profile,json=portfolioProfile,proto3" json:"portfolio_profile,omitempty"`
+	ChangeNote           string                 `protobuf:"bytes,12,opt,name=change_note,json=changeNote,proto3" json:"change_note,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -513,6 +514,13 @@ func (x *CreateContentRequest) GetPortfolioProfile() *PortfolioProfile {
 	return nil
 }
 
+func (x *CreateContentRequest) GetChangeNote() string {
+	if x != nil {
+		return x.ChangeNote
+	}
+	return ""
+}
+
 type UpdateContentRequest struct {
 	state                protoimpl.MessageState `protogen:"open.v1"`
 	Id                   int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -525,6 +533,7 @@ type UpdateContentRequest struct {
 	ExperienceProfile    *ExperienceProfile     `protobuf:"bytes,8,opt,name=experience_profile,json=experienceProfile,proto3" json:"experience_profile,omitempty"`
 	TimelineEventProfile *TimelineEventProfile  `protobuf:"bytes,9,opt,name=timeline_event_profile,json=timelineEventProfile,proto3" json:"timeline_event_profile,omitempty"`
 	PortfolioProfile     *PortfolioProfile      `protobuf:"bytes,10,opt,name=portfolio_profile,json=portfolioProfile,proto3" json:"portfolio_profile,omitempty"`
+	ChangeNote           string                 `protobuf:"bytes,11,opt,name=change_note,json=changeNote,proto3" json:"change_note,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -627,6 +636,13 @@ func (x *UpdateContentRequest) GetPortfolioProfile() *PortfolioProfile {
 		return x.PortfolioProfile
 	}
 	return nil
+}
+
+func (x *UpdateContentRequest) GetChangeNote() string {
+	if x != nil {
+		return x.ChangeNote
+	}
+	return ""
 }
 
 type UpdateStatusRequest struct {
@@ -1025,6 +1041,910 @@ func (x *PortfolioProfile) GetExternalLink() string {
 	return ""
 }
 
+type RevisionSummary struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	ContentId     int64                  `protobuf:"varint,2,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`
+	Version       int64                  `protobuf:"varint,3,opt,name=version,proto3" json:"version,omitempty"`
+	Title         string                 `protobuf:"bytes,4,opt,name=title,proto3" json:"title,omitempty"`
+	Summary       string                 `protobuf:"bytes,5,opt,name=summary,proto3" json:"summary,omitempty"`
+	ChangeNote    string                 `protobuf:"bytes,6,opt,name=change_note,json=changeNote,proto3" json:"change_note,omitempty"`
+	CreatedBy     int64                  `protobuf:"varint,7,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevisionSummary) Reset() {
+	*x = RevisionSummary{}
+	mi := &file_proto_content_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevisionSummary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevisionSummary) ProtoMessage() {}
+
+func (x *RevisionSummary) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevisionSummary.ProtoReflect.Descriptor instead.
+func (*RevisionSummary) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *RevisionSummary) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *RevisionSummary) GetContentId() int64 {
+	if x != nil {
+		return x.ContentId
+	}
+	return 0
+}
+
+func (x *RevisionSummary) GetVersion() int64 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+func (x *RevisionSummary) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *RevisionSummary) GetSummary() string {
+	if x != nil {
+		return x.Summary
+	}
+	return ""
+}
+
+func (x *RevisionSummary) GetChangeNote() string {
+	if x != nil {
+		return x.ChangeNote
+	}
+	return ""
+}
+
+func (x *RevisionSummary) GetCreatedBy() int64 {
+	if x != nil {
+		return x.CreatedBy
+	}
+	return 0
+}
+
+func (x *RevisionSummary) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
+}
+
+type RevisionDetail struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	ContentId     int64                  `protobuf:"varint,2,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`
+	Version       int64                  `protobuf:"varint,3,opt,name=version,proto3" json:"version,omitempty"`
+	Title         string                 `protobuf:"bytes,4,opt,name=title,proto3" json:"title,omitempty"`
+	Summary       string                 `protobuf:"bytes,5,opt,name=summary,proto3" json:"summary,omitempty"`
+	BodyMarkdown  string                 `protobuf:"bytes,6,opt,name=body_markdown,json=bodyMarkdown,proto3" json:"body_markdown,omitempty"`
+	ChangeNote    string                 `protobuf:"bytes,7,opt,name=change_note,json=changeNote,proto3" json:"change_note,omitempty"`
+	CreatedBy     int64                  `protobuf:"varint,8,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
+	CreatedAt     string                 `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevisionDetail) Reset() {
+	*x = RevisionDetail{}
+	mi := &file_proto_content_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevisionDetail) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevisionDetail) ProtoMessage() {}
+
+func (x *RevisionDetail) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevisionDetail.ProtoReflect.Descriptor instead.
+func (*RevisionDetail) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *RevisionDetail) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *RevisionDetail) GetContentId() int64 {
+	if x != nil {
+		return x.ContentId
+	}
+	return 0
+}
+
+func (x *RevisionDetail) GetVersion() int64 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+func (x *RevisionDetail) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *RevisionDetail) GetSummary() string {
+	if x != nil {
+		return x.Summary
+	}
+	return ""
+}
+
+func (x *RevisionDetail) GetBodyMarkdown() string {
+	if x != nil {
+		return x.BodyMarkdown
+	}
+	return ""
+}
+
+func (x *RevisionDetail) GetChangeNote() string {
+	if x != nil {
+		return x.ChangeNote
+	}
+	return ""
+}
+
+func (x *RevisionDetail) GetCreatedBy() int64 {
+	if x != nil {
+		return x.CreatedBy
+	}
+	return 0
+}
+
+func (x *RevisionDetail) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
+}
+
+type RevisionListRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ContentId     int64                  `protobuf:"varint,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`
+	Page          int64                  `protobuf:"varint,2,opt,name=page,proto3" json:"page,omitempty"`
+	PageSize      int64                  `protobuf:"varint,3,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevisionListRequest) Reset() {
+	*x = RevisionListRequest{}
+	mi := &file_proto_content_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevisionListRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevisionListRequest) ProtoMessage() {}
+
+func (x *RevisionListRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevisionListRequest.ProtoReflect.Descriptor instead.
+func (*RevisionListRequest) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *RevisionListRequest) GetContentId() int64 {
+	if x != nil {
+		return x.ContentId
+	}
+	return 0
+}
+
+func (x *RevisionListRequest) GetPage() int64 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+func (x *RevisionListRequest) GetPageSize() int64 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+type RevisionListResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	List          []*RevisionSummary     `protobuf:"bytes,1,rep,name=list,proto3" json:"list,omitempty"`
+	Total         int64                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
+	TotalPages    int64                  `protobuf:"varint,3,opt,name=total_pages,json=totalPages,proto3" json:"total_pages,omitempty"`
+	Page          int64                  `protobuf:"varint,4,opt,name=page,proto3" json:"page,omitempty"`
+	PageSize      int64                  `protobuf:"varint,5,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevisionListResponse) Reset() {
+	*x = RevisionListResponse{}
+	mi := &file_proto_content_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevisionListResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevisionListResponse) ProtoMessage() {}
+
+func (x *RevisionListResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevisionListResponse.ProtoReflect.Descriptor instead.
+func (*RevisionListResponse) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *RevisionListResponse) GetList() []*RevisionSummary {
+	if x != nil {
+		return x.List
+	}
+	return nil
+}
+
+func (x *RevisionListResponse) GetTotal() int64 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+func (x *RevisionListResponse) GetTotalPages() int64 {
+	if x != nil {
+		return x.TotalPages
+	}
+	return 0
+}
+
+func (x *RevisionListResponse) GetPage() int64 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+func (x *RevisionListResponse) GetPageSize() int64 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+type GetRevisionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ContentId     int64                  `protobuf:"varint,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`
+	RevisionId    int64                  `protobuf:"varint,2,opt,name=revision_id,json=revisionId,proto3" json:"revision_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetRevisionRequest) Reset() {
+	*x = GetRevisionRequest{}
+	mi := &file_proto_content_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetRevisionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetRevisionRequest) ProtoMessage() {}
+
+func (x *GetRevisionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetRevisionRequest.ProtoReflect.Descriptor instead.
+func (*GetRevisionRequest) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *GetRevisionRequest) GetContentId() int64 {
+	if x != nil {
+		return x.ContentId
+	}
+	return 0
+}
+
+func (x *GetRevisionRequest) GetRevisionId() int64 {
+	if x != nil {
+		return x.RevisionId
+	}
+	return 0
+}
+
+type RestoreRevisionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ContentId     int64                  `protobuf:"varint,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`
+	RevisionId    int64                  `protobuf:"varint,2,opt,name=revision_id,json=revisionId,proto3" json:"revision_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RestoreRevisionRequest) Reset() {
+	*x = RestoreRevisionRequest{}
+	mi := &file_proto_content_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RestoreRevisionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RestoreRevisionRequest) ProtoMessage() {}
+
+func (x *RestoreRevisionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RestoreRevisionRequest.ProtoReflect.Descriptor instead.
+func (*RestoreRevisionRequest) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *RestoreRevisionRequest) GetContentId() int64 {
+	if x != nil {
+		return x.ContentId
+	}
+	return 0
+}
+
+func (x *RestoreRevisionRequest) GetRevisionId() int64 {
+	if x != nil {
+		return x.RevisionId
+	}
+	return 0
+}
+
+type ReviewTask struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Id              int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	ContentId       int64                  `protobuf:"varint,2,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`
+	RevisionId      int64                  `protobuf:"varint,3,opt,name=revision_id,json=revisionId,proto3" json:"revision_id,omitempty"`
+	SubmitterUserId int64                  `protobuf:"varint,4,opt,name=submitter_user_id,json=submitterUserId,proto3" json:"submitter_user_id,omitempty"`
+	ReviewerUserId  int64                  `protobuf:"varint,5,opt,name=reviewer_user_id,json=reviewerUserId,proto3" json:"reviewer_user_id,omitempty"`
+	SourceType      string                 `protobuf:"bytes,6,opt,name=source_type,json=sourceType,proto3" json:"source_type,omitempty"`
+	Status          string                 `protobuf:"bytes,7,opt,name=status,proto3" json:"status,omitempty"`
+	Priority        int32                  `protobuf:"varint,8,opt,name=priority,proto3" json:"priority,omitempty"`
+	Note            string                 `protobuf:"bytes,9,opt,name=note,proto3" json:"note,omitempty"`
+	DecidedAt       string                 `protobuf:"bytes,10,opt,name=decided_at,json=decidedAt,proto3" json:"decided_at,omitempty"`
+	CreatedAt       string                 `protobuf:"bytes,11,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt       string                 `protobuf:"bytes,12,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *ReviewTask) Reset() {
+	*x = ReviewTask{}
+	mi := &file_proto_content_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReviewTask) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReviewTask) ProtoMessage() {}
+
+func (x *ReviewTask) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReviewTask.ProtoReflect.Descriptor instead.
+func (*ReviewTask) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *ReviewTask) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *ReviewTask) GetContentId() int64 {
+	if x != nil {
+		return x.ContentId
+	}
+	return 0
+}
+
+func (x *ReviewTask) GetRevisionId() int64 {
+	if x != nil {
+		return x.RevisionId
+	}
+	return 0
+}
+
+func (x *ReviewTask) GetSubmitterUserId() int64 {
+	if x != nil {
+		return x.SubmitterUserId
+	}
+	return 0
+}
+
+func (x *ReviewTask) GetReviewerUserId() int64 {
+	if x != nil {
+		return x.ReviewerUserId
+	}
+	return 0
+}
+
+func (x *ReviewTask) GetSourceType() string {
+	if x != nil {
+		return x.SourceType
+	}
+	return ""
+}
+
+func (x *ReviewTask) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+func (x *ReviewTask) GetPriority() int32 {
+	if x != nil {
+		return x.Priority
+	}
+	return 0
+}
+
+func (x *ReviewTask) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
+func (x *ReviewTask) GetDecidedAt() string {
+	if x != nil {
+		return x.DecidedAt
+	}
+	return ""
+}
+
+func (x *ReviewTask) GetCreatedAt() string {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return ""
+}
+
+func (x *ReviewTask) GetUpdatedAt() string {
+	if x != nil {
+		return x.UpdatedAt
+	}
+	return ""
+}
+
+type ReviewListRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Page          int64                  `protobuf:"varint,1,opt,name=page,proto3" json:"page,omitempty"`
+	PageSize      int64                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	Status        string                 `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReviewListRequest) Reset() {
+	*x = ReviewListRequest{}
+	mi := &file_proto_content_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReviewListRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReviewListRequest) ProtoMessage() {}
+
+func (x *ReviewListRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReviewListRequest.ProtoReflect.Descriptor instead.
+func (*ReviewListRequest) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *ReviewListRequest) GetPage() int64 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+func (x *ReviewListRequest) GetPageSize() int64 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+func (x *ReviewListRequest) GetStatus() string {
+	if x != nil {
+		return x.Status
+	}
+	return ""
+}
+
+type ReviewListResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	List          []*ReviewTask          `protobuf:"bytes,1,rep,name=list,proto3" json:"list,omitempty"`
+	Total         int64                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
+	TotalPages    int64                  `protobuf:"varint,3,opt,name=total_pages,json=totalPages,proto3" json:"total_pages,omitempty"`
+	Page          int64                  `protobuf:"varint,4,opt,name=page,proto3" json:"page,omitempty"`
+	PageSize      int64                  `protobuf:"varint,5,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReviewListResponse) Reset() {
+	*x = ReviewListResponse{}
+	mi := &file_proto_content_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReviewListResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReviewListResponse) ProtoMessage() {}
+
+func (x *ReviewListResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReviewListResponse.ProtoReflect.Descriptor instead.
+func (*ReviewListResponse) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *ReviewListResponse) GetList() []*ReviewTask {
+	if x != nil {
+		return x.List
+	}
+	return nil
+}
+
+func (x *ReviewListResponse) GetTotal() int64 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+func (x *ReviewListResponse) GetTotalPages() int64 {
+	if x != nil {
+		return x.TotalPages
+	}
+	return 0
+}
+
+func (x *ReviewListResponse) GetPage() int64 {
+	if x != nil {
+		return x.Page
+	}
+	return 0
+}
+
+func (x *ReviewListResponse) GetPageSize() int64 {
+	if x != nil {
+		return x.PageSize
+	}
+	return 0
+}
+
+type SubmitReviewRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	ContentId       int64                  `protobuf:"varint,1,opt,name=content_id,json=contentId,proto3" json:"content_id,omitempty"`
+	Note            string                 `protobuf:"bytes,2,opt,name=note,proto3" json:"note,omitempty"`
+	Priority        int32                  `protobuf:"varint,3,opt,name=priority,proto3" json:"priority,omitempty"`
+	SubmitterUserId int64                  `protobuf:"varint,4,opt,name=submitter_user_id,json=submitterUserId,proto3" json:"submitter_user_id,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *SubmitReviewRequest) Reset() {
+	*x = SubmitReviewRequest{}
+	mi := &file_proto_content_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SubmitReviewRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SubmitReviewRequest) ProtoMessage() {}
+
+func (x *SubmitReviewRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SubmitReviewRequest.ProtoReflect.Descriptor instead.
+func (*SubmitReviewRequest) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *SubmitReviewRequest) GetContentId() int64 {
+	if x != nil {
+		return x.ContentId
+	}
+	return 0
+}
+
+func (x *SubmitReviewRequest) GetNote() string {
+	if x != nil {
+		return x.Note
+	}
+	return ""
+}
+
+func (x *SubmitReviewRequest) GetPriority() int32 {
+	if x != nil {
+		return x.Priority
+	}
+	return 0
+}
+
+func (x *SubmitReviewRequest) GetSubmitterUserId() int64 {
+	if x != nil {
+		return x.SubmitterUserId
+	}
+	return 0
+}
+
+type ApproveReviewRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Id             int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Reason         string                 `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	ReviewerUserId int64                  `protobuf:"varint,3,opt,name=reviewer_user_id,json=reviewerUserId,proto3" json:"reviewer_user_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ApproveReviewRequest) Reset() {
+	*x = ApproveReviewRequest{}
+	mi := &file_proto_content_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApproveReviewRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApproveReviewRequest) ProtoMessage() {}
+
+func (x *ApproveReviewRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApproveReviewRequest.ProtoReflect.Descriptor instead.
+func (*ApproveReviewRequest) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *ApproveReviewRequest) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *ApproveReviewRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+func (x *ApproveReviewRequest) GetReviewerUserId() int64 {
+	if x != nil {
+		return x.ReviewerUserId
+	}
+	return 0
+}
+
+type RejectReviewRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Id             int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Reason         string                 `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	ReviewerUserId int64                  `protobuf:"varint,3,opt,name=reviewer_user_id,json=reviewerUserId,proto3" json:"reviewer_user_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *RejectReviewRequest) Reset() {
+	*x = RejectReviewRequest{}
+	mi := &file_proto_content_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RejectReviewRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RejectReviewRequest) ProtoMessage() {}
+
+func (x *RejectReviewRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_content_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RejectReviewRequest.ProtoReflect.Descriptor instead.
+func (*RejectReviewRequest) Descriptor() ([]byte, []int) {
+	return file_proto_content_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *RejectReviewRequest) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *RejectReviewRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+func (x *RejectReviewRequest) GetReviewerUserId() int64 {
+	if x != nil {
+		return x.ReviewerUserId
+	}
+	return 0
+}
+
 type Tag struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -1038,7 +1958,7 @@ type Tag struct {
 
 func (x *Tag) Reset() {
 	*x = Tag{}
-	mi := &file_proto_content_proto_msgTypes[13]
+	mi := &file_proto_content_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1050,7 +1970,7 @@ func (x *Tag) String() string {
 func (*Tag) ProtoMessage() {}
 
 func (x *Tag) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[13]
+	mi := &file_proto_content_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1063,7 +1983,7 @@ func (x *Tag) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Tag.ProtoReflect.Descriptor instead.
 func (*Tag) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{13}
+	return file_proto_content_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *Tag) GetId() int64 {
@@ -1110,7 +2030,7 @@ type ListTagsResponse struct {
 
 func (x *ListTagsResponse) Reset() {
 	*x = ListTagsResponse{}
-	mi := &file_proto_content_proto_msgTypes[14]
+	mi := &file_proto_content_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1122,7 +2042,7 @@ func (x *ListTagsResponse) String() string {
 func (*ListTagsResponse) ProtoMessage() {}
 
 func (x *ListTagsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[14]
+	mi := &file_proto_content_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1135,7 +2055,7 @@ func (x *ListTagsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListTagsResponse.ProtoReflect.Descriptor instead.
 func (*ListTagsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{14}
+	return file_proto_content_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *ListTagsResponse) GetList() []*Tag {
@@ -1157,7 +2077,7 @@ type CreateTagRequest struct {
 
 func (x *CreateTagRequest) Reset() {
 	*x = CreateTagRequest{}
-	mi := &file_proto_content_proto_msgTypes[15]
+	mi := &file_proto_content_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1169,7 +2089,7 @@ func (x *CreateTagRequest) String() string {
 func (*CreateTagRequest) ProtoMessage() {}
 
 func (x *CreateTagRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[15]
+	mi := &file_proto_content_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1182,7 +2102,7 @@ func (x *CreateTagRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateTagRequest.ProtoReflect.Descriptor instead.
 func (*CreateTagRequest) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{15}
+	return file_proto_content_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *CreateTagRequest) GetName() string {
@@ -1222,7 +2142,7 @@ type DeleteTagRequest struct {
 
 func (x *DeleteTagRequest) Reset() {
 	*x = DeleteTagRequest{}
-	mi := &file_proto_content_proto_msgTypes[16]
+	mi := &file_proto_content_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1234,7 +2154,7 @@ func (x *DeleteTagRequest) String() string {
 func (*DeleteTagRequest) ProtoMessage() {}
 
 func (x *DeleteTagRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[16]
+	mi := &file_proto_content_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1247,7 +2167,7 @@ func (x *DeleteTagRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteTagRequest.ProtoReflect.Descriptor instead.
 func (*DeleteTagRequest) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{16}
+	return file_proto_content_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *DeleteTagRequest) GetId() int64 {
@@ -1271,7 +2191,7 @@ type Relation struct {
 
 func (x *Relation) Reset() {
 	*x = Relation{}
-	mi := &file_proto_content_proto_msgTypes[17]
+	mi := &file_proto_content_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1283,7 +2203,7 @@ func (x *Relation) String() string {
 func (*Relation) ProtoMessage() {}
 
 func (x *Relation) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[17]
+	mi := &file_proto_content_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1296,7 +2216,7 @@ func (x *Relation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Relation.ProtoReflect.Descriptor instead.
 func (*Relation) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{17}
+	return file_proto_content_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *Relation) GetId() int64 {
@@ -1350,7 +2270,7 @@ type ListRelationsRequest struct {
 
 func (x *ListRelationsRequest) Reset() {
 	*x = ListRelationsRequest{}
-	mi := &file_proto_content_proto_msgTypes[18]
+	mi := &file_proto_content_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1362,7 +2282,7 @@ func (x *ListRelationsRequest) String() string {
 func (*ListRelationsRequest) ProtoMessage() {}
 
 func (x *ListRelationsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[18]
+	mi := &file_proto_content_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1375,7 +2295,7 @@ func (x *ListRelationsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRelationsRequest.ProtoReflect.Descriptor instead.
 func (*ListRelationsRequest) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{18}
+	return file_proto_content_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ListRelationsRequest) GetContentId() int64 {
@@ -1394,7 +2314,7 @@ type ListRelationsResponse struct {
 
 func (x *ListRelationsResponse) Reset() {
 	*x = ListRelationsResponse{}
-	mi := &file_proto_content_proto_msgTypes[19]
+	mi := &file_proto_content_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1406,7 +2326,7 @@ func (x *ListRelationsResponse) String() string {
 func (*ListRelationsResponse) ProtoMessage() {}
 
 func (x *ListRelationsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[19]
+	mi := &file_proto_content_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1419,7 +2339,7 @@ func (x *ListRelationsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRelationsResponse.ProtoReflect.Descriptor instead.
 func (*ListRelationsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{19}
+	return file_proto_content_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *ListRelationsResponse) GetList() []*Relation {
@@ -1442,7 +2362,7 @@ type CreateRelationRequest struct {
 
 func (x *CreateRelationRequest) Reset() {
 	*x = CreateRelationRequest{}
-	mi := &file_proto_content_proto_msgTypes[20]
+	mi := &file_proto_content_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1454,7 +2374,7 @@ func (x *CreateRelationRequest) String() string {
 func (*CreateRelationRequest) ProtoMessage() {}
 
 func (x *CreateRelationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[20]
+	mi := &file_proto_content_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1467,7 +2387,7 @@ func (x *CreateRelationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateRelationRequest.ProtoReflect.Descriptor instead.
 func (*CreateRelationRequest) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{20}
+	return file_proto_content_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *CreateRelationRequest) GetSourceContentId() int64 {
@@ -1514,7 +2434,7 @@ type DeleteRelationRequest struct {
 
 func (x *DeleteRelationRequest) Reset() {
 	*x = DeleteRelationRequest{}
-	mi := &file_proto_content_proto_msgTypes[21]
+	mi := &file_proto_content_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1526,7 +2446,7 @@ func (x *DeleteRelationRequest) String() string {
 func (*DeleteRelationRequest) ProtoMessage() {}
 
 func (x *DeleteRelationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[21]
+	mi := &file_proto_content_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1539,7 +2459,7 @@ func (x *DeleteRelationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRelationRequest.ProtoReflect.Descriptor instead.
 func (*DeleteRelationRequest) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{21}
+	return file_proto_content_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *DeleteRelationRequest) GetId() int64 {
@@ -1567,7 +2487,7 @@ type Attachment struct {
 
 func (x *Attachment) Reset() {
 	*x = Attachment{}
-	mi := &file_proto_content_proto_msgTypes[22]
+	mi := &file_proto_content_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1579,7 +2499,7 @@ func (x *Attachment) String() string {
 func (*Attachment) ProtoMessage() {}
 
 func (x *Attachment) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[22]
+	mi := &file_proto_content_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1592,7 +2512,7 @@ func (x *Attachment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Attachment.ProtoReflect.Descriptor instead.
 func (*Attachment) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{22}
+	return file_proto_content_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *Attachment) GetId() int64 {
@@ -1676,7 +2596,7 @@ type ListAttachmentsRequest struct {
 
 func (x *ListAttachmentsRequest) Reset() {
 	*x = ListAttachmentsRequest{}
-	mi := &file_proto_content_proto_msgTypes[23]
+	mi := &file_proto_content_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1688,7 +2608,7 @@ func (x *ListAttachmentsRequest) String() string {
 func (*ListAttachmentsRequest) ProtoMessage() {}
 
 func (x *ListAttachmentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[23]
+	mi := &file_proto_content_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1701,7 +2621,7 @@ func (x *ListAttachmentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAttachmentsRequest.ProtoReflect.Descriptor instead.
 func (*ListAttachmentsRequest) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{23}
+	return file_proto_content_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *ListAttachmentsRequest) GetContentId() int64 {
@@ -1734,7 +2654,7 @@ type ListAttachmentsResponse struct {
 
 func (x *ListAttachmentsResponse) Reset() {
 	*x = ListAttachmentsResponse{}
-	mi := &file_proto_content_proto_msgTypes[24]
+	mi := &file_proto_content_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1746,7 +2666,7 @@ func (x *ListAttachmentsResponse) String() string {
 func (*ListAttachmentsResponse) ProtoMessage() {}
 
 func (x *ListAttachmentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[24]
+	mi := &file_proto_content_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1759,7 +2679,7 @@ func (x *ListAttachmentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAttachmentsResponse.ProtoReflect.Descriptor instead.
 func (*ListAttachmentsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{24}
+	return file_proto_content_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *ListAttachmentsResponse) GetList() []*Attachment {
@@ -1786,7 +2706,7 @@ type CreateAttachmentRequest struct {
 
 func (x *CreateAttachmentRequest) Reset() {
 	*x = CreateAttachmentRequest{}
-	mi := &file_proto_content_proto_msgTypes[25]
+	mi := &file_proto_content_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1798,7 +2718,7 @@ func (x *CreateAttachmentRequest) String() string {
 func (*CreateAttachmentRequest) ProtoMessage() {}
 
 func (x *CreateAttachmentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[25]
+	mi := &file_proto_content_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1811,7 +2731,7 @@ func (x *CreateAttachmentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAttachmentRequest.ProtoReflect.Descriptor instead.
 func (*CreateAttachmentRequest) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{25}
+	return file_proto_content_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *CreateAttachmentRequest) GetContentId() int64 {
@@ -1886,7 +2806,7 @@ type DeleteAttachmentRequest struct {
 
 func (x *DeleteAttachmentRequest) Reset() {
 	*x = DeleteAttachmentRequest{}
-	mi := &file_proto_content_proto_msgTypes[26]
+	mi := &file_proto_content_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1898,7 +2818,7 @@ func (x *DeleteAttachmentRequest) String() string {
 func (*DeleteAttachmentRequest) ProtoMessage() {}
 
 func (x *DeleteAttachmentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[26]
+	mi := &file_proto_content_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1911,7 +2831,7 @@ func (x *DeleteAttachmentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAttachmentRequest.ProtoReflect.Descriptor instead.
 func (*DeleteAttachmentRequest) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{26}
+	return file_proto_content_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *DeleteAttachmentRequest) GetId() int64 {
@@ -1937,7 +2857,7 @@ type Comment struct {
 
 func (x *Comment) Reset() {
 	*x = Comment{}
-	mi := &file_proto_content_proto_msgTypes[27]
+	mi := &file_proto_content_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1949,7 +2869,7 @@ func (x *Comment) String() string {
 func (*Comment) ProtoMessage() {}
 
 func (x *Comment) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[27]
+	mi := &file_proto_content_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1962,7 +2882,7 @@ func (x *Comment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Comment.ProtoReflect.Descriptor instead.
 func (*Comment) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{27}
+	return file_proto_content_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *Comment) GetId() int64 {
@@ -2032,7 +2952,7 @@ type ListCommentsRequest struct {
 
 func (x *ListCommentsRequest) Reset() {
 	*x = ListCommentsRequest{}
-	mi := &file_proto_content_proto_msgTypes[28]
+	mi := &file_proto_content_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2044,7 +2964,7 @@ func (x *ListCommentsRequest) String() string {
 func (*ListCommentsRequest) ProtoMessage() {}
 
 func (x *ListCommentsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[28]
+	mi := &file_proto_content_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2057,7 +2977,7 @@ func (x *ListCommentsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCommentsRequest.ProtoReflect.Descriptor instead.
 func (*ListCommentsRequest) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{28}
+	return file_proto_content_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *ListCommentsRequest) GetContentId() int64 {
@@ -2090,7 +3010,7 @@ type ListCommentsResponse struct {
 
 func (x *ListCommentsResponse) Reset() {
 	*x = ListCommentsResponse{}
-	mi := &file_proto_content_proto_msgTypes[29]
+	mi := &file_proto_content_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2102,7 +3022,7 @@ func (x *ListCommentsResponse) String() string {
 func (*ListCommentsResponse) ProtoMessage() {}
 
 func (x *ListCommentsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[29]
+	mi := &file_proto_content_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2115,7 +3035,7 @@ func (x *ListCommentsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListCommentsResponse.ProtoReflect.Descriptor instead.
 func (*ListCommentsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{29}
+	return file_proto_content_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *ListCommentsResponse) GetList() []*Comment {
@@ -2138,7 +3058,7 @@ type CreateCommentRequest struct {
 
 func (x *CreateCommentRequest) Reset() {
 	*x = CreateCommentRequest{}
-	mi := &file_proto_content_proto_msgTypes[30]
+	mi := &file_proto_content_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2150,7 +3070,7 @@ func (x *CreateCommentRequest) String() string {
 func (*CreateCommentRequest) ProtoMessage() {}
 
 func (x *CreateCommentRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[30]
+	mi := &file_proto_content_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2163,7 +3083,7 @@ func (x *CreateCommentRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateCommentRequest.ProtoReflect.Descriptor instead.
 func (*CreateCommentRequest) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{30}
+	return file_proto_content_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *CreateCommentRequest) GetContentId() int64 {
@@ -2212,7 +3132,7 @@ type UpdateCommentStatusRequest struct {
 
 func (x *UpdateCommentStatusRequest) Reset() {
 	*x = UpdateCommentStatusRequest{}
-	mi := &file_proto_content_proto_msgTypes[31]
+	mi := &file_proto_content_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2224,7 +3144,7 @@ func (x *UpdateCommentStatusRequest) String() string {
 func (*UpdateCommentStatusRequest) ProtoMessage() {}
 
 func (x *UpdateCommentStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_content_proto_msgTypes[31]
+	mi := &file_proto_content_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2237,7 +3157,7 @@ func (x *UpdateCommentStatusRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateCommentStatusRequest.ProtoReflect.Descriptor instead.
 func (*UpdateCommentStatusRequest) Descriptor() ([]byte, []int) {
-	return file_proto_content_proto_rawDescGZIP(), []int{31}
+	return file_proto_content_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *UpdateCommentStatusRequest) GetId() int64 {
@@ -2302,7 +3222,7 @@ const file_proto_content_proto_rawDesc = "" +
 	"\akeyword\x18\x04 \x01(\tR\akeyword\x12\x16\n" +
 	"\x06status\x18\x05 \x01(\tR\x06status\"C\n" +
 	"\x14ListContentsResponse\x12+\n" +
-	"\x04list\x18\x01 \x03(\v2\x17.content.ContentSummaryR\x04list\"\xfa\x03\n" +
+	"\x04list\x18\x01 \x03(\v2\x17.content.ContentSummaryR\x04list\"\x9b\x04\n" +
 	"\x14CreateContentRequest\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x12\n" +
@@ -2317,7 +3237,9 @@ const file_proto_content_proto_rawDesc = "" +
 	"\x12experience_profile\x18\t \x01(\v2\x1a.content.ExperienceProfileR\x11experienceProfile\x12S\n" +
 	"\x16timeline_event_profile\x18\n" +
 	" \x01(\v2\x1d.content.TimelineEventProfileR\x14timelineEventProfile\x12F\n" +
-	"\x11portfolio_profile\x18\v \x01(\v2\x19.content.PortfolioProfileR\x10portfolioProfile\"\xe2\x03\n" +
+	"\x11portfolio_profile\x18\v \x01(\v2\x19.content.PortfolioProfileR\x10portfolioProfile\x12\x1f\n" +
+	"\vchange_note\x18\f \x01(\tR\n" +
+	"changeNote\"\x83\x04\n" +
 	"\x14UpdateContentRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x18\n" +
@@ -2331,7 +3253,9 @@ const file_proto_content_proto_rawDesc = "" +
 	"\x12experience_profile\x18\b \x01(\v2\x1a.content.ExperienceProfileR\x11experienceProfile\x12S\n" +
 	"\x16timeline_event_profile\x18\t \x01(\v2\x1d.content.TimelineEventProfileR\x14timelineEventProfile\x12F\n" +
 	"\x11portfolio_profile\x18\n" +
-	" \x01(\v2\x19.content.PortfolioProfileR\x10portfolioProfile\"=\n" +
+	" \x01(\v2\x19.content.PortfolioProfileR\x10portfolioProfile\x12\x1f\n" +
+	"\vchange_note\x18\v \x01(\tR\n" +
+	"changeNote\"=\n" +
 	"\x13UpdateStatusRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\"#\n" +
@@ -2359,7 +3283,102 @@ const file_proto_content_proto_rawDesc = "" +
 	"\x0eevent_category\x18\x02 \x01(\tR\reventCategory\"\\\n" +
 	"\x10PortfolioProfile\x12#\n" +
 	"\rartifact_type\x18\x01 \x01(\tR\fartifactType\x12#\n" +
-	"\rexternal_link\x18\x02 \x01(\tR\fexternalLink\"u\n" +
+	"\rexternal_link\x18\x02 \x01(\tR\fexternalLink\"\xe9\x01\n" +
+	"\x0fRevisionSummary\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1d\n" +
+	"\n" +
+	"content_id\x18\x02 \x01(\x03R\tcontentId\x12\x18\n" +
+	"\aversion\x18\x03 \x01(\x03R\aversion\x12\x14\n" +
+	"\x05title\x18\x04 \x01(\tR\x05title\x12\x18\n" +
+	"\asummary\x18\x05 \x01(\tR\asummary\x12\x1f\n" +
+	"\vchange_note\x18\x06 \x01(\tR\n" +
+	"changeNote\x12\x1d\n" +
+	"\n" +
+	"created_by\x18\a \x01(\x03R\tcreatedBy\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\b \x01(\tR\tcreatedAt\"\x8d\x02\n" +
+	"\x0eRevisionDetail\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1d\n" +
+	"\n" +
+	"content_id\x18\x02 \x01(\x03R\tcontentId\x12\x18\n" +
+	"\aversion\x18\x03 \x01(\x03R\aversion\x12\x14\n" +
+	"\x05title\x18\x04 \x01(\tR\x05title\x12\x18\n" +
+	"\asummary\x18\x05 \x01(\tR\asummary\x12#\n" +
+	"\rbody_markdown\x18\x06 \x01(\tR\fbodyMarkdown\x12\x1f\n" +
+	"\vchange_note\x18\a \x01(\tR\n" +
+	"changeNote\x12\x1d\n" +
+	"\n" +
+	"created_by\x18\b \x01(\x03R\tcreatedBy\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\t \x01(\tR\tcreatedAt\"e\n" +
+	"\x13RevisionListRequest\x12\x1d\n" +
+	"\n" +
+	"content_id\x18\x01 \x01(\x03R\tcontentId\x12\x12\n" +
+	"\x04page\x18\x02 \x01(\x03R\x04page\x12\x1b\n" +
+	"\tpage_size\x18\x03 \x01(\x03R\bpageSize\"\xac\x01\n" +
+	"\x14RevisionListResponse\x12,\n" +
+	"\x04list\x18\x01 \x03(\v2\x18.content.RevisionSummaryR\x04list\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x03R\x05total\x12\x1f\n" +
+	"\vtotal_pages\x18\x03 \x01(\x03R\n" +
+	"totalPages\x12\x12\n" +
+	"\x04page\x18\x04 \x01(\x03R\x04page\x12\x1b\n" +
+	"\tpage_size\x18\x05 \x01(\x03R\bpageSize\"T\n" +
+	"\x12GetRevisionRequest\x12\x1d\n" +
+	"\n" +
+	"content_id\x18\x01 \x01(\x03R\tcontentId\x12\x1f\n" +
+	"\vrevision_id\x18\x02 \x01(\x03R\n" +
+	"revisionId\"X\n" +
+	"\x16RestoreRevisionRequest\x12\x1d\n" +
+	"\n" +
+	"content_id\x18\x01 \x01(\x03R\tcontentId\x12\x1f\n" +
+	"\vrevision_id\x18\x02 \x01(\x03R\n" +
+	"revisionId\"\xf8\x02\n" +
+	"\n" +
+	"ReviewTask\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1d\n" +
+	"\n" +
+	"content_id\x18\x02 \x01(\x03R\tcontentId\x12\x1f\n" +
+	"\vrevision_id\x18\x03 \x01(\x03R\n" +
+	"revisionId\x12*\n" +
+	"\x11submitter_user_id\x18\x04 \x01(\x03R\x0fsubmitterUserId\x12(\n" +
+	"\x10reviewer_user_id\x18\x05 \x01(\x03R\x0ereviewerUserId\x12\x1f\n" +
+	"\vsource_type\x18\x06 \x01(\tR\n" +
+	"sourceType\x12\x16\n" +
+	"\x06status\x18\a \x01(\tR\x06status\x12\x1a\n" +
+	"\bpriority\x18\b \x01(\x05R\bpriority\x12\x12\n" +
+	"\x04note\x18\t \x01(\tR\x04note\x12\x1d\n" +
+	"\n" +
+	"decided_at\x18\n" +
+	" \x01(\tR\tdecidedAt\x12\x1d\n" +
+	"\n" +
+	"created_at\x18\v \x01(\tR\tcreatedAt\x12\x1d\n" +
+	"\n" +
+	"updated_at\x18\f \x01(\tR\tupdatedAt\"\\\n" +
+	"\x11ReviewListRequest\x12\x12\n" +
+	"\x04page\x18\x01 \x01(\x03R\x04page\x12\x1b\n" +
+	"\tpage_size\x18\x02 \x01(\x03R\bpageSize\x12\x16\n" +
+	"\x06status\x18\x03 \x01(\tR\x06status\"\xa5\x01\n" +
+	"\x12ReviewListResponse\x12'\n" +
+	"\x04list\x18\x01 \x03(\v2\x13.content.ReviewTaskR\x04list\x12\x14\n" +
+	"\x05total\x18\x02 \x01(\x03R\x05total\x12\x1f\n" +
+	"\vtotal_pages\x18\x03 \x01(\x03R\n" +
+	"totalPages\x12\x12\n" +
+	"\x04page\x18\x04 \x01(\x03R\x04page\x12\x1b\n" +
+	"\tpage_size\x18\x05 \x01(\x03R\bpageSize\"\x90\x01\n" +
+	"\x13SubmitReviewRequest\x12\x1d\n" +
+	"\n" +
+	"content_id\x18\x01 \x01(\x03R\tcontentId\x12\x12\n" +
+	"\x04note\x18\x02 \x01(\tR\x04note\x12\x1a\n" +
+	"\bpriority\x18\x03 \x01(\x05R\bpriority\x12*\n" +
+	"\x11submitter_user_id\x18\x04 \x01(\x03R\x0fsubmitterUserId\"h\n" +
+	"\x14ApproveReviewRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason\x12(\n" +
+	"\x10reviewer_user_id\x18\x03 \x01(\x03R\x0ereviewerUserId\"g\n" +
+	"\x13RejectReviewRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason\x12(\n" +
+	"\x10reviewer_user_id\x18\x03 \x01(\x03R\x0ereviewerUserId\"u\n" +
 	"\x03Tag\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
@@ -2464,8 +3483,7 @@ const file_proto_content_proto_rawDesc = "" +
 	"\x1aUpdateCommentStatusRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
 	"\x06status\x18\x02 \x01(\tR\x06status\x12'\n" +
-	"\x0fmoderation_note\x18\x03 \x01(\tR\x0emoderationNote2\x88\n" +
-	"\n" +
+	"\x0fmoderation_note\x18\x03 \x01(\tR\x0emoderationNote2\xfa\r\n" +
 	"\aContent\x12Q\n" +
 	"\x12ListPublicArticles\x12\x1c.content.ListContentsRequest\x1a\x1d.content.ListContentsResponse\x12K\n" +
 	"\fListContents\x12\x1c.content.ListContentsRequest\x1a\x1d.content.ListContentsResponse\x12F\n" +
@@ -2485,7 +3503,14 @@ const file_proto_content_proto_rawDesc = "" +
 	"\x10DeleteAttachment\x12 .content.DeleteAttachmentRequest\x1a\x0e.content.Empty\x12K\n" +
 	"\fListComments\x12\x1c.content.ListCommentsRequest\x1a\x1d.content.ListCommentsResponse\x12@\n" +
 	"\rCreateComment\x12\x1d.content.CreateCommentRequest\x1a\x10.content.Comment\x12L\n" +
-	"\x13UpdateCommentStatus\x12#.content.UpdateCommentStatusRequest\x1a\x10.content.CommentB\x15Z\x13services/content/pbb\x06proto3"
+	"\x13UpdateCommentStatus\x12#.content.UpdateCommentStatusRequest\x1a\x10.content.Comment\x12L\n" +
+	"\rListRevisions\x12\x1c.content.RevisionListRequest\x1a\x1d.content.RevisionListResponse\x12C\n" +
+	"\vGetRevision\x12\x1b.content.GetRevisionRequest\x1a\x17.content.RevisionDetail\x12J\n" +
+	"\x0fRestoreRevision\x12\x1f.content.RestoreRevisionRequest\x1a\x16.content.ContentDetail\x12F\n" +
+	"\vListReviews\x12\x1a.content.ReviewListRequest\x1a\x1b.content.ReviewListResponse\x12A\n" +
+	"\fSubmitReview\x12\x1c.content.SubmitReviewRequest\x1a\x13.content.ReviewTask\x12C\n" +
+	"\rApproveReview\x12\x1d.content.ApproveReviewRequest\x1a\x13.content.ReviewTask\x12A\n" +
+	"\fRejectReview\x12\x1c.content.RejectReviewRequest\x1a\x13.content.ReviewTaskB\x15Z\x13services/content/pbb\x06proto3"
 
 var (
 	file_proto_content_proto_rawDescOnce sync.Once
@@ -2499,7 +3524,7 @@ func file_proto_content_proto_rawDescGZIP() []byte {
 	return file_proto_content_proto_rawDescData
 }
 
-var file_proto_content_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
+var file_proto_content_proto_msgTypes = make([]protoimpl.MessageInfo, 44)
 var file_proto_content_proto_goTypes = []any{
 	(*ContentSummary)(nil),             // 0: content.ContentSummary
 	(*ContentDetail)(nil),              // 1: content.ContentDetail
@@ -2514,25 +3539,37 @@ var file_proto_content_proto_goTypes = []any{
 	(*ExperienceProfile)(nil),          // 10: content.ExperienceProfile
 	(*TimelineEventProfile)(nil),       // 11: content.TimelineEventProfile
 	(*PortfolioProfile)(nil),           // 12: content.PortfolioProfile
-	(*Tag)(nil),                        // 13: content.Tag
-	(*ListTagsResponse)(nil),           // 14: content.ListTagsResponse
-	(*CreateTagRequest)(nil),           // 15: content.CreateTagRequest
-	(*DeleteTagRequest)(nil),           // 16: content.DeleteTagRequest
-	(*Relation)(nil),                   // 17: content.Relation
-	(*ListRelationsRequest)(nil),       // 18: content.ListRelationsRequest
-	(*ListRelationsResponse)(nil),      // 19: content.ListRelationsResponse
-	(*CreateRelationRequest)(nil),      // 20: content.CreateRelationRequest
-	(*DeleteRelationRequest)(nil),      // 21: content.DeleteRelationRequest
-	(*Attachment)(nil),                 // 22: content.Attachment
-	(*ListAttachmentsRequest)(nil),     // 23: content.ListAttachmentsRequest
-	(*ListAttachmentsResponse)(nil),    // 24: content.ListAttachmentsResponse
-	(*CreateAttachmentRequest)(nil),    // 25: content.CreateAttachmentRequest
-	(*DeleteAttachmentRequest)(nil),    // 26: content.DeleteAttachmentRequest
-	(*Comment)(nil),                    // 27: content.Comment
-	(*ListCommentsRequest)(nil),        // 28: content.ListCommentsRequest
-	(*ListCommentsResponse)(nil),       // 29: content.ListCommentsResponse
-	(*CreateCommentRequest)(nil),       // 30: content.CreateCommentRequest
-	(*UpdateCommentStatusRequest)(nil), // 31: content.UpdateCommentStatusRequest
+	(*RevisionSummary)(nil),            // 13: content.RevisionSummary
+	(*RevisionDetail)(nil),             // 14: content.RevisionDetail
+	(*RevisionListRequest)(nil),        // 15: content.RevisionListRequest
+	(*RevisionListResponse)(nil),       // 16: content.RevisionListResponse
+	(*GetRevisionRequest)(nil),         // 17: content.GetRevisionRequest
+	(*RestoreRevisionRequest)(nil),     // 18: content.RestoreRevisionRequest
+	(*ReviewTask)(nil),                 // 19: content.ReviewTask
+	(*ReviewListRequest)(nil),          // 20: content.ReviewListRequest
+	(*ReviewListResponse)(nil),         // 21: content.ReviewListResponse
+	(*SubmitReviewRequest)(nil),        // 22: content.SubmitReviewRequest
+	(*ApproveReviewRequest)(nil),       // 23: content.ApproveReviewRequest
+	(*RejectReviewRequest)(nil),        // 24: content.RejectReviewRequest
+	(*Tag)(nil),                        // 25: content.Tag
+	(*ListTagsResponse)(nil),           // 26: content.ListTagsResponse
+	(*CreateTagRequest)(nil),           // 27: content.CreateTagRequest
+	(*DeleteTagRequest)(nil),           // 28: content.DeleteTagRequest
+	(*Relation)(nil),                   // 29: content.Relation
+	(*ListRelationsRequest)(nil),       // 30: content.ListRelationsRequest
+	(*ListRelationsResponse)(nil),      // 31: content.ListRelationsResponse
+	(*CreateRelationRequest)(nil),      // 32: content.CreateRelationRequest
+	(*DeleteRelationRequest)(nil),      // 33: content.DeleteRelationRequest
+	(*Attachment)(nil),                 // 34: content.Attachment
+	(*ListAttachmentsRequest)(nil),     // 35: content.ListAttachmentsRequest
+	(*ListAttachmentsResponse)(nil),    // 36: content.ListAttachmentsResponse
+	(*CreateAttachmentRequest)(nil),    // 37: content.CreateAttachmentRequest
+	(*DeleteAttachmentRequest)(nil),    // 38: content.DeleteAttachmentRequest
+	(*Comment)(nil),                    // 39: content.Comment
+	(*ListCommentsRequest)(nil),        // 40: content.ListCommentsRequest
+	(*ListCommentsResponse)(nil),       // 41: content.ListCommentsResponse
+	(*CreateCommentRequest)(nil),       // 42: content.CreateCommentRequest
+	(*UpdateCommentStatusRequest)(nil), // 43: content.UpdateCommentStatusRequest
 }
 var file_proto_content_proto_depIdxs = []int32{
 	9,  // 0: content.ContentDetail.project_profile:type_name -> content.ProjectProfile
@@ -2548,51 +3585,67 @@ var file_proto_content_proto_depIdxs = []int32{
 	10, // 10: content.UpdateContentRequest.experience_profile:type_name -> content.ExperienceProfile
 	11, // 11: content.UpdateContentRequest.timeline_event_profile:type_name -> content.TimelineEventProfile
 	12, // 12: content.UpdateContentRequest.portfolio_profile:type_name -> content.PortfolioProfile
-	13, // 13: content.ListTagsResponse.list:type_name -> content.Tag
-	17, // 14: content.ListRelationsResponse.list:type_name -> content.Relation
-	22, // 15: content.ListAttachmentsResponse.list:type_name -> content.Attachment
-	27, // 16: content.ListCommentsResponse.list:type_name -> content.Comment
-	2,  // 17: content.Content.ListPublicArticles:input_type -> content.ListContentsRequest
-	2,  // 18: content.Content.ListContents:input_type -> content.ListContentsRequest
-	4,  // 19: content.Content.CreateContent:input_type -> content.CreateContentRequest
-	7,  // 20: content.Content.GetContent:input_type -> content.GetContentRequest
-	5,  // 21: content.Content.UpdateContent:input_type -> content.UpdateContentRequest
-	6,  // 22: content.Content.UpdateContentStatus:input_type -> content.UpdateStatusRequest
-	8,  // 23: content.Content.ListTags:input_type -> content.Empty
-	15, // 24: content.Content.CreateTag:input_type -> content.CreateTagRequest
-	16, // 25: content.Content.DeleteTag:input_type -> content.DeleteTagRequest
-	18, // 26: content.Content.ListRelations:input_type -> content.ListRelationsRequest
-	20, // 27: content.Content.CreateRelation:input_type -> content.CreateRelationRequest
-	21, // 28: content.Content.DeleteRelation:input_type -> content.DeleteRelationRequest
-	23, // 29: content.Content.ListAttachments:input_type -> content.ListAttachmentsRequest
-	25, // 30: content.Content.CreateAttachment:input_type -> content.CreateAttachmentRequest
-	26, // 31: content.Content.DeleteAttachment:input_type -> content.DeleteAttachmentRequest
-	28, // 32: content.Content.ListComments:input_type -> content.ListCommentsRequest
-	30, // 33: content.Content.CreateComment:input_type -> content.CreateCommentRequest
-	31, // 34: content.Content.UpdateCommentStatus:input_type -> content.UpdateCommentStatusRequest
-	3,  // 35: content.Content.ListPublicArticles:output_type -> content.ListContentsResponse
-	3,  // 36: content.Content.ListContents:output_type -> content.ListContentsResponse
-	1,  // 37: content.Content.CreateContent:output_type -> content.ContentDetail
-	1,  // 38: content.Content.GetContent:output_type -> content.ContentDetail
-	1,  // 39: content.Content.UpdateContent:output_type -> content.ContentDetail
-	1,  // 40: content.Content.UpdateContentStatus:output_type -> content.ContentDetail
-	14, // 41: content.Content.ListTags:output_type -> content.ListTagsResponse
-	13, // 42: content.Content.CreateTag:output_type -> content.Tag
-	8,  // 43: content.Content.DeleteTag:output_type -> content.Empty
-	19, // 44: content.Content.ListRelations:output_type -> content.ListRelationsResponse
-	17, // 45: content.Content.CreateRelation:output_type -> content.Relation
-	8,  // 46: content.Content.DeleteRelation:output_type -> content.Empty
-	24, // 47: content.Content.ListAttachments:output_type -> content.ListAttachmentsResponse
-	22, // 48: content.Content.CreateAttachment:output_type -> content.Attachment
-	8,  // 49: content.Content.DeleteAttachment:output_type -> content.Empty
-	29, // 50: content.Content.ListComments:output_type -> content.ListCommentsResponse
-	27, // 51: content.Content.CreateComment:output_type -> content.Comment
-	27, // 52: content.Content.UpdateCommentStatus:output_type -> content.Comment
-	35, // [35:53] is the sub-list for method output_type
-	17, // [17:35] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	13, // 13: content.RevisionListResponse.list:type_name -> content.RevisionSummary
+	19, // 14: content.ReviewListResponse.list:type_name -> content.ReviewTask
+	25, // 15: content.ListTagsResponse.list:type_name -> content.Tag
+	29, // 16: content.ListRelationsResponse.list:type_name -> content.Relation
+	34, // 17: content.ListAttachmentsResponse.list:type_name -> content.Attachment
+	39, // 18: content.ListCommentsResponse.list:type_name -> content.Comment
+	2,  // 19: content.Content.ListPublicArticles:input_type -> content.ListContentsRequest
+	2,  // 20: content.Content.ListContents:input_type -> content.ListContentsRequest
+	4,  // 21: content.Content.CreateContent:input_type -> content.CreateContentRequest
+	7,  // 22: content.Content.GetContent:input_type -> content.GetContentRequest
+	5,  // 23: content.Content.UpdateContent:input_type -> content.UpdateContentRequest
+	6,  // 24: content.Content.UpdateContentStatus:input_type -> content.UpdateStatusRequest
+	8,  // 25: content.Content.ListTags:input_type -> content.Empty
+	27, // 26: content.Content.CreateTag:input_type -> content.CreateTagRequest
+	28, // 27: content.Content.DeleteTag:input_type -> content.DeleteTagRequest
+	30, // 28: content.Content.ListRelations:input_type -> content.ListRelationsRequest
+	32, // 29: content.Content.CreateRelation:input_type -> content.CreateRelationRequest
+	33, // 30: content.Content.DeleteRelation:input_type -> content.DeleteRelationRequest
+	35, // 31: content.Content.ListAttachments:input_type -> content.ListAttachmentsRequest
+	37, // 32: content.Content.CreateAttachment:input_type -> content.CreateAttachmentRequest
+	38, // 33: content.Content.DeleteAttachment:input_type -> content.DeleteAttachmentRequest
+	40, // 34: content.Content.ListComments:input_type -> content.ListCommentsRequest
+	42, // 35: content.Content.CreateComment:input_type -> content.CreateCommentRequest
+	43, // 36: content.Content.UpdateCommentStatus:input_type -> content.UpdateCommentStatusRequest
+	15, // 37: content.Content.ListRevisions:input_type -> content.RevisionListRequest
+	17, // 38: content.Content.GetRevision:input_type -> content.GetRevisionRequest
+	18, // 39: content.Content.RestoreRevision:input_type -> content.RestoreRevisionRequest
+	20, // 40: content.Content.ListReviews:input_type -> content.ReviewListRequest
+	22, // 41: content.Content.SubmitReview:input_type -> content.SubmitReviewRequest
+	23, // 42: content.Content.ApproveReview:input_type -> content.ApproveReviewRequest
+	24, // 43: content.Content.RejectReview:input_type -> content.RejectReviewRequest
+	3,  // 44: content.Content.ListPublicArticles:output_type -> content.ListContentsResponse
+	3,  // 45: content.Content.ListContents:output_type -> content.ListContentsResponse
+	1,  // 46: content.Content.CreateContent:output_type -> content.ContentDetail
+	1,  // 47: content.Content.GetContent:output_type -> content.ContentDetail
+	1,  // 48: content.Content.UpdateContent:output_type -> content.ContentDetail
+	1,  // 49: content.Content.UpdateContentStatus:output_type -> content.ContentDetail
+	26, // 50: content.Content.ListTags:output_type -> content.ListTagsResponse
+	25, // 51: content.Content.CreateTag:output_type -> content.Tag
+	8,  // 52: content.Content.DeleteTag:output_type -> content.Empty
+	31, // 53: content.Content.ListRelations:output_type -> content.ListRelationsResponse
+	29, // 54: content.Content.CreateRelation:output_type -> content.Relation
+	8,  // 55: content.Content.DeleteRelation:output_type -> content.Empty
+	36, // 56: content.Content.ListAttachments:output_type -> content.ListAttachmentsResponse
+	34, // 57: content.Content.CreateAttachment:output_type -> content.Attachment
+	8,  // 58: content.Content.DeleteAttachment:output_type -> content.Empty
+	41, // 59: content.Content.ListComments:output_type -> content.ListCommentsResponse
+	39, // 60: content.Content.CreateComment:output_type -> content.Comment
+	39, // 61: content.Content.UpdateCommentStatus:output_type -> content.Comment
+	16, // 62: content.Content.ListRevisions:output_type -> content.RevisionListResponse
+	14, // 63: content.Content.GetRevision:output_type -> content.RevisionDetail
+	1,  // 64: content.Content.RestoreRevision:output_type -> content.ContentDetail
+	21, // 65: content.Content.ListReviews:output_type -> content.ReviewListResponse
+	19, // 66: content.Content.SubmitReview:output_type -> content.ReviewTask
+	19, // 67: content.Content.ApproveReview:output_type -> content.ReviewTask
+	19, // 68: content.Content.RejectReview:output_type -> content.ReviewTask
+	44, // [44:69] is the sub-list for method output_type
+	19, // [19:44] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_proto_content_proto_init() }
@@ -2606,7 +3659,7 @@ func file_proto_content_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_content_proto_rawDesc), len(file_proto_content_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   32,
+			NumMessages:   44,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -153,6 +153,86 @@ func toPortfolioProfileRPC(in *types.PortfolioProfile) *contentrpc.PortfolioProf
 	}
 }
 
+func toRevisionListResponse(in *contentrpc.RevisionListResponse) *types.RevisionListResponse {
+	resp := &types.RevisionListResponse{List: []types.RevisionSummary{}}
+	if in == nil {
+		return resp
+	}
+	resp.Pagination = types.Pagination{
+		Page:      in.GetPage(),
+		PageSize:  in.GetPageSize(),
+		Total:     in.GetTotal(),
+		TotalPage: in.GetTotalPages(),
+	}
+	for _, item := range in.List {
+		resp.List = append(resp.List, types.RevisionSummary{
+			Id:         item.Id,
+			ContentId:  item.ContentId,
+			Version:    item.Version,
+			Title:      item.Title,
+			Summary:    item.Summary,
+			ChangeNote: item.ChangeNote,
+			CreatedBy:  item.CreatedBy,
+			CreatedAt:  item.CreatedAt,
+		})
+	}
+	return resp
+}
+
+func toRevisionDetail(in *contentrpc.RevisionDetail) *types.RevisionDetail {
+	if in == nil {
+		return &types.RevisionDetail{}
+	}
+	return &types.RevisionDetail{
+		Id:           in.Id,
+		ContentId:    in.ContentId,
+		Version:      in.Version,
+		Title:        in.Title,
+		Summary:      in.Summary,
+		BodyMarkdown: in.BodyMarkdown,
+		ChangeNote:   in.ChangeNote,
+		CreatedBy:    in.CreatedBy,
+		CreatedAt:    in.CreatedAt,
+	}
+}
+
+func toReviewTask(in *contentrpc.ReviewTask) *types.ReviewTask {
+	if in == nil {
+		return &types.ReviewTask{}
+	}
+	return &types.ReviewTask{
+		Id:              in.Id,
+		ContentId:       in.ContentId,
+		RevisionId:      in.RevisionId,
+		SubmitterUserId: in.SubmitterUserId,
+		ReviewerUserId:  in.ReviewerUserId,
+		SourceType:      in.SourceType,
+		Status:          in.Status,
+		Priority:        in.Priority,
+		Note:            in.Note,
+		DecidedAt:       in.DecidedAt,
+		CreatedAt:       in.CreatedAt,
+		UpdatedAt:       in.UpdatedAt,
+	}
+}
+
+func toReviewListResponse(in *contentrpc.ReviewListResponse) *types.ReviewListResponse {
+	resp := &types.ReviewListResponse{List: []types.ReviewTask{}}
+	if in == nil {
+		return resp
+	}
+	resp.Pagination = types.Pagination{
+		Page:      in.GetPage(),
+		PageSize:  in.GetPageSize(),
+		Total:     in.GetTotal(),
+		TotalPage: in.GetTotalPages(),
+	}
+	for _, item := range in.List {
+		resp.List = append(resp.List, *toReviewTask(item))
+	}
+	return resp
+}
+
 func toContentListResponse(in *contentrpc.ListContentsResponse) *types.ContentListResponse {
 	resp := &types.ContentListResponse{List: []types.ContentSummary{}}
 	if in == nil {

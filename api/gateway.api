@@ -110,6 +110,7 @@ type ContentCreateRequest {
 	experienceProfile    ExperienceProfile    `json:"experienceProfile,optional"`
 	timelineEventProfile TimelineEventProfile `json:"timelineEventProfile,optional"`
 	portfolioProfile     PortfolioProfile     `json:"portfolioProfile,optional"`
+	changeNote           string               `json:"changeNote,optional"`
 }
 
 type ContentUpdateRequest {
@@ -123,6 +124,7 @@ type ContentUpdateRequest {
 	experienceProfile    ExperienceProfile    `json:"experienceProfile,optional"`
 	timelineEventProfile TimelineEventProfile `json:"timelineEventProfile,optional"`
 	portfolioProfile     PortfolioProfile     `json:"portfolioProfile,optional"`
+	changeNote           string               `json:"changeNote,optional"`
 }
 
 type StatusUpdateRequest {
@@ -132,6 +134,93 @@ type StatusUpdateRequest {
 
 type ContentPathRequest {
 	id int64 `path:"id"`
+}
+
+type RevisionPathRequest {
+	id         int64 `path:"id"`
+	revisionId int64 `path:"revisionId"`
+}
+
+type RevisionListRequest {
+	id       int64 `path:"id"`
+	page     int64 `form:"page,optional"`
+	pageSize int64 `form:"pageSize,optional"`
+}
+
+type RevisionSummary {
+	id         int64  `json:"id"`
+	contentId  int64  `json:"contentId"`
+	version    int64  `json:"version"`
+	title      string `json:"title"`
+	summary    string `json:"summary"`
+	changeNote string `json:"changeNote"`
+	createdBy  int64  `json:"createdBy"`
+	createdAt  string `json:"createdAt"`
+}
+
+type RevisionDetail {
+	id           int64  `json:"id"`
+	contentId    int64  `json:"contentId"`
+	version      int64  `json:"version"`
+	title        string `json:"title"`
+	summary      string `json:"summary"`
+	bodyMarkdown string `json:"bodyMarkdown"`
+	changeNote   string `json:"changeNote"`
+	createdBy    int64  `json:"createdBy"`
+	createdAt    string `json:"createdAt"`
+}
+
+type Pagination {
+	page      int64 `json:"page"`
+	pageSize  int64 `json:"pageSize"`
+	total     int64 `json:"total"`
+	totalPage int64 `json:"totalPage"`
+}
+
+type RevisionListResponse {
+	list       []RevisionSummary `json:"list"`
+	pagination Pagination        `json:"pagination"`
+}
+
+type ReviewTask {
+	id              int64  `json:"id"`
+	contentId       int64  `json:"contentId"`
+	revisionId      int64  `json:"revisionId"`
+	submitterUserId int64  `json:"submitterUserId"`
+	reviewerUserId  int64  `json:"reviewerUserId"`
+	sourceType      string `json:"sourceType"`
+	status          string `json:"status"`
+	priority        int32  `json:"priority"`
+	note            string `json:"note"`
+	decidedAt       string `json:"decidedAt,optional"`
+	createdAt       string `json:"createdAt"`
+	updatedAt       string `json:"updatedAt"`
+}
+
+type ReviewListRequest {
+	page     int64  `form:"page,optional"`
+	pageSize int64  `form:"pageSize,optional"`
+	status   string `form:"status,optional"`
+}
+
+type ReviewListResponse {
+	list       []ReviewTask `json:"list"`
+	pagination Pagination   `json:"pagination"`
+}
+
+type ContentReviewSubmitRequest {
+	id       int64  `path:"id"`
+	note     string `json:"note,optional"`
+	priority int32  `json:"priority,optional"`
+}
+
+type ReviewPathRequest {
+	id int64 `path:"id"`
+}
+
+type ReviewDecisionRequest {
+	id     int64  `path:"id"`
+	reason string `json:"reason,optional"`
 }
 
 type SearchRequest {
@@ -337,6 +426,27 @@ service gateway-api {
 
 	@handler UpdateContentStatus
 	put /studio/contents/:id/status (StatusUpdateRequest) returns (ContentDetail)
+
+	@handler ListRevisions
+	get /studio/contents/:id/revisions (RevisionListRequest) returns (RevisionListResponse)
+
+	@handler GetRevision
+	get /studio/contents/:id/revisions/:revisionId (RevisionPathRequest) returns (RevisionDetail)
+
+	@handler RestoreRevision
+	post /studio/contents/:id/revisions/:revisionId/restore (RevisionPathRequest) returns (ContentDetail)
+
+	@handler ListReviews
+	get /studio/reviews (ReviewListRequest) returns (ReviewListResponse)
+
+	@handler SubmitReview
+	post /studio/contents/:id/reviews/submit (ContentReviewSubmitRequest) returns (ReviewTask)
+
+	@handler ApproveReview
+	post /studio/reviews/:id/approve (ReviewDecisionRequest) returns (ReviewTask)
+
+	@handler RejectReview
+	post /studio/reviews/:id/reject (ReviewDecisionRequest) returns (ReviewTask)
 
 	@handler Query
 	get /search/query (SearchRequest) returns (SearchResponse)

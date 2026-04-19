@@ -112,3 +112,38 @@ func (s *ContentServer) UpdateCommentStatus(ctx context.Context, in *pb.UpdateCo
 	l := logic.NewUpdateCommentStatusLogic(ctx, s.svcCtx)
 	return l.UpdateCommentStatus(in)
 }
+
+func (s *ContentServer) ListRevisions(ctx context.Context, in *pb.RevisionListRequest) (*pb.RevisionListResponse, error) {
+	l := logic.NewListRevisionsLogic(ctx, s.svcCtx)
+	return l.ListRevisions(in)
+}
+
+func (s *ContentServer) GetRevision(ctx context.Context, in *pb.GetRevisionRequest) (*pb.RevisionDetail, error) {
+	l := logic.NewGetRevisionLogic(ctx, s.svcCtx)
+	return l.GetRevision(in)
+}
+
+func (s *ContentServer) RestoreRevision(ctx context.Context, in *pb.RestoreRevisionRequest) (*pb.ContentDetail, error) {
+	l := logic.NewRestoreRevisionLogic(ctx, s.svcCtx)
+	return l.RestoreRevision(in)
+}
+
+func (s *ContentServer) ListReviews(ctx context.Context, in *pb.ReviewListRequest) (*pb.ReviewListResponse, error) {
+	l := logic.NewListReviewsLogic(ctx, s.svcCtx)
+	return l.ListReviews(in)
+}
+
+func (s *ContentServer) SubmitReview(ctx context.Context, in *pb.SubmitReviewRequest) (*pb.ReviewTask, error) {
+	l := logic.NewSubmitReviewLogic(ctx, s.svcCtx)
+	return l.SubmitReview(in)
+}
+
+func (s *ContentServer) ApproveReview(ctx context.Context, in *pb.ApproveReviewRequest) (*pb.ReviewTask, error) {
+	l := logic.NewApproveReviewLogic(ctx, s.svcCtx)
+	return l.ApproveReview(in)
+}
+
+func (s *ContentServer) RejectReview(ctx context.Context, in *pb.RejectReviewRequest) (*pb.ReviewTask, error) {
+	l := logic.NewRejectReviewLogic(ctx, s.svcCtx)
+	return l.RejectReview(in)
+}

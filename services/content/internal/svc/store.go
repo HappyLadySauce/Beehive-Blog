@@ -55,6 +55,33 @@ type portfolioProfileRecord struct {
 	ExternalLink string `db:"external_link"`
 }
 
+type revisionRecord struct {
+	ID           int64     `db:"id"`
+	ContentID    int64     `db:"content_id"`
+	Version      int64     `db:"version"`
+	Title        string    `db:"title"`
+	Summary      string    `db:"summary"`
+	BodyMarkdown string    `db:"body_markdown"`
+	ChangeNote   string    `db:"change_note"`
+	CreatedBy    int64     `db:"created_by"`
+	CreatedAt    time.Time `db:"created_at"`
+}
+
+type reviewTaskRecord struct {
+	ID              int64      `db:"id"`
+	ContentID       int64      `db:"content_id"`
+	RevisionID      int64      `db:"revision_id"`
+	SubmitterUserID int64      `db:"submitter_user_id"`
+	ReviewerUserID  int64      `db:"reviewer_user_id"`
+	SourceType      string     `db:"source_type"`
+	Status          string     `db:"status"`
+	Priority        int32      `db:"priority"`
+	Note            string     `db:"note"`
+	DecidedAt       *time.Time `db:"decided_at"`
+	CreatedAt       time.Time  `db:"created_at"`
+	UpdatedAt       time.Time  `db:"updated_at"`
+}
+
 type tagRecord struct {
 	ID          int64  `db:"id"`
 	Name        string `db:"name"`
@@ -97,14 +124,22 @@ type commentRecord struct {
 }
 
 const (
-	contentTypeArticle    = "article"
-	contentTypeNote       = "note"
-	contentTypeProject    = "project"
-	contentTypeExperience = "experience"
-	contentTypeTimeline   = "timeline_event"
-	contentTypePortfolio  = "portfolio"
-	contentTypePage       = "page"
-	contentTypeInsight    = "insight"
+	contentTypeArticle        = "article"
+	contentTypeNote           = "note"
+	contentTypeProject        = "project"
+	contentTypeExperience     = "experience"
+	contentTypeTimeline       = "timeline_event"
+	contentTypePortfolio      = "portfolio"
+	contentTypePage           = "page"
+	contentTypeInsight        = "insight"
+	defaultCreateRevisionNote = "initial version"
+	defaultUpdateRevisionNote = "content updated"
+	reviewStatusPending       = "pending"
+	reviewStatusApproved      = "approved"
+	reviewStatusRejected      = "rejected"
+	reviewStatusCancelled     = "cancelled"
+	reviewSourceHuman         = "human"
+	reviewSourceSystem        = "system"
 )
 
 type contentStore struct {
@@ -157,6 +192,9 @@ RETURNING id, type, title, slug, summary, body_markdown, status, visibility, ai_
 		return nil, err
 	}
 	if err := s.upsertProfileByType(ctx, out.ID, typ, in.ProjectProfile, in.ExperienceProfile, in.TimelineEventProfile, in.PortfolioProfile); err != nil {
+		return nil, err
+	}
+	if err := s.createRevisionFromRecord(ctx, &out, strings.TrimSpace(in.ChangeNote), 0); err != nil {
 		return nil, err
 	}
 	if err := s.publishContentEvent(ctx, events.TopicContentCreated, out.ID); err != nil {
@@ -222,6 +260,13 @@ WHERE id = $1`
 			return nil, err
 		}
 	}
+	latest, err := s.getContentRecord(ctx, in.Id)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.createRevisionFromRecord(ctx, latest, strings.TrimSpace(in.ChangeNote), 0); err != nil {
+		return nil, err
+	}
 	out, err := s.Get(ctx, in.Id)
 	if err != nil {
 		return nil, err
@@ -240,14 +285,24 @@ func (s *contentStore) UpdateStatus(ctx context.Context, in *pb.UpdateStatusRequ
 	if !isAllowedStatus(status) {
 		return nil, fmt.Errorf("invalid status")
 	}
-	query := `
+	if err := s.conn.TransactCtx(ctx, func(txCtx context.Context, session sqlx.Session) error {
+		query := `
 UPDATE content_items
 SET
 	status = $2,
 	published_at = CASE WHEN $2 = 'published' AND published_at IS NULL THEN NOW() ELSE published_at END,
 	updated_at = NOW()
 WHERE id = $1`
-	if _, err := s.conn.ExecCtx(ctx, query, in.Id, status); err != nil {
+		if _, err := session.ExecCtx(txCtx, query, in.Id, status); err != nil {
+			return err
+		}
+		if status == "review" {
+			if _, err := s.submitReviewWithSession(txCtx, session, in.Id, "", 0, reviewSourceSystem); err != nil {
+				return err
+			}
+		}
+		return nil
+	}); err != nil {
 		return nil, err
 	}
 	out, err := s.Get(ctx, in.Id)
@@ -258,6 +313,486 @@ WHERE id = $1`
 		return nil, err
 	}
 	return out, nil
+}
+
+func (s *contentStore) ListRevisions(ctx context.Context, in *pb.RevisionListRequest) (*pb.RevisionListResponse, error) {
+	if in == nil || in.ContentId <= 0 {
+		return nil, fmt.Errorf("content_id is required")
+	}
+	if _, err := s.getContentType(ctx, in.ContentId); err != nil {
+		return nil, err
+	}
+
+	page, pageSize := normalizePage(in.Page, in.PageSize)
+	offset := (page - 1) * pageSize
+
+	var total int64
+	if err := s.conn.QueryRowCtx(ctx, &total, `SELECT COUNT(1) FROM content_revisions WHERE content_id = $1`, in.ContentId); err != nil {
+		return nil, err
+	}
+	totalPages := int64(0)
+	if total > 0 {
+		totalPages = (total + pageSize - 1) / pageSize
+	}
+
+	var rows []revisionRecord
+	query := `
+SELECT id, content_id, version, title, summary, body_markdown, change_note, COALESCE(created_by, 0) AS created_by, created_at
+FROM content_revisions
+WHERE content_id = $1
+ORDER BY version DESC
+LIMIT $2 OFFSET $3`
+	if err := s.conn.QueryRowsCtx(ctx, &rows, query, in.ContentId, pageSize, offset); err != nil {
+		return nil, err
+	}
+
+	list := make([]*pb.RevisionSummary, 0, len(rows))
+	for _, row := range rows {
+		list = append(list, &pb.RevisionSummary{
+			Id:         row.ID,
+			ContentId:  row.ContentID,
+			Version:    row.Version,
+			Title:      row.Title,
+			Summary:    row.Summary,
+			ChangeNote: row.ChangeNote,
+			CreatedBy:  row.CreatedBy,
+			CreatedAt:  row.CreatedAt.UTC().Format(time.RFC3339),
+		})
+	}
+
+	return &pb.RevisionListResponse{
+		List:       list,
+		Total:      total,
+		TotalPages: totalPages,
+		Page:       page,
+		PageSize:   pageSize,
+	}, nil
+}
+
+func (s *contentStore) GetRevision(ctx context.Context, in *pb.GetRevisionRequest) (*pb.RevisionDetail, error) {
+	if in == nil || in.ContentId <= 0 || in.RevisionId <= 0 {
+		return nil, fmt.Errorf("content_id and revision_id are required")
+	}
+	row, err := s.getRevisionRecord(ctx, in.ContentId, in.RevisionId)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.RevisionDetail{
+		Id:           row.ID,
+		ContentId:    row.ContentID,
+		Version:      row.Version,
+		Title:        row.Title,
+		Summary:      row.Summary,
+		BodyMarkdown: row.BodyMarkdown,
+		ChangeNote:   row.ChangeNote,
+		CreatedBy:    row.CreatedBy,
+		CreatedAt:    row.CreatedAt.UTC().Format(time.RFC3339),
+	}, nil
+}
+
+func (s *contentStore) RestoreRevision(ctx context.Context, in *pb.RestoreRevisionRequest) (*pb.ContentDetail, error) {
+	if in == nil || in.ContentId <= 0 || in.RevisionId <= 0 {
+		return nil, fmt.Errorf("content_id and revision_id are required")
+	}
+	row, err := s.getRevisionRecord(ctx, in.ContentId, in.RevisionId)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := s.conn.ExecCtx(ctx, `
+UPDATE content_items
+SET title = $2, summary = $3, body_markdown = $4, updated_at = NOW()
+WHERE id = $1`, in.ContentId, row.Title, row.Summary, row.BodyMarkdown); err != nil {
+		return nil, err
+	}
+
+	latest, err := s.getContentRecord(ctx, in.ContentId)
+	if err != nil {
+		return nil, err
+	}
+	note := fmt.Sprintf("restored from revision #%d", row.Version)
+	if err := s.createRevisionFromRecord(ctx, latest, note, 0); err != nil {
+		return nil, err
+	}
+	if err := s.publishContentEvent(ctx, events.TopicContentUpdated, in.ContentId); err != nil {
+		return nil, err
+	}
+	return s.Get(ctx, in.ContentId)
+}
+
+func (s *contentStore) ListReviews(ctx context.Context, in *pb.ReviewListRequest) (*pb.ReviewListResponse, error) {
+	if in == nil {
+		return nil, fmt.Errorf("empty request")
+	}
+	page, pageSize := normalizePage(in.Page, in.PageSize)
+	offset := (page - 1) * pageSize
+
+	args := []any{}
+	conds := []string{"1=1"}
+	if status := strings.TrimSpace(in.Status); status != "" {
+		if !isAllowedReviewStatus(status) {
+			return nil, fmt.Errorf("invalid review status")
+		}
+		args = append(args, status)
+		conds = append(conds, fmt.Sprintf("status = $%d", len(args)))
+	}
+
+	countQuery := `SELECT COUNT(1) FROM review_tasks WHERE ` + strings.Join(conds, " AND ")
+	var total int64
+	if err := s.conn.QueryRowCtx(ctx, &total, countQuery, args...); err != nil {
+		return nil, err
+	}
+	totalPages := int64(0)
+	if total > 0 {
+		totalPages = (total + pageSize - 1) / pageSize
+	}
+
+	args = append(args, pageSize, offset)
+	query := `
+SELECT
+	id,
+	COALESCE(content_id, 0) AS content_id,
+	COALESCE(revision_id, 0) AS revision_id,
+	COALESCE(submitter_user_id, 0) AS submitter_user_id,
+	COALESCE(reviewer_user_id, 0) AS reviewer_user_id,
+	source_type,
+	status,
+	priority,
+	note,
+	decided_at,
+	created_at,
+	updated_at
+FROM review_tasks
+WHERE ` + strings.Join(conds, " AND ") + `
+ORDER BY created_at DESC
+LIMIT $` + fmt.Sprintf("%d", len(args)-1) + ` OFFSET $` + fmt.Sprintf("%d", len(args))
+
+	var rows []reviewTaskRecord
+	if err := s.conn.QueryRowsCtx(ctx, &rows, query, args...); err != nil {
+		return nil, err
+	}
+
+	list := make([]*pb.ReviewTask, 0, len(rows))
+	for i := range rows {
+		list = append(list, toReviewTask(&rows[i]))
+	}
+	return &pb.ReviewListResponse{
+		List:       list,
+		Total:      total,
+		TotalPages: totalPages,
+		Page:       page,
+		PageSize:   pageSize,
+	}, nil
+}
+
+func (s *contentStore) SubmitReview(ctx context.Context, in *pb.SubmitReviewRequest) (*pb.ReviewTask, error) {
+	if in == nil || in.ContentId <= 0 {
+		return nil, fmt.Errorf("content_id is required")
+	}
+	note := strings.TrimSpace(in.Note)
+	priority := normalizeReviewPriority(in.Priority)
+	submitterUserID := in.SubmitterUserId
+
+	var out *reviewTaskRecord
+	if err := s.conn.TransactCtx(ctx, func(txCtx context.Context, session sqlx.Session) error {
+		task, err := s.submitReviewWithSession(txCtx, session, in.ContentId, note, priority, reviewSourceHuman)
+		if err != nil {
+			return err
+		}
+		if task.SubmitterUserID == 0 && submitterUserID > 0 {
+			if _, err := session.ExecCtx(txCtx, `
+UPDATE review_tasks
+SET submitter_user_id = $2, updated_at = NOW()
+WHERE id = $1`, task.ID, submitterUserID); err != nil {
+				return err
+			}
+			task.SubmitterUserID = submitterUserID
+		}
+		out = task
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return toReviewTask(out), nil
+}
+
+func (s *contentStore) ApproveReview(ctx context.Context, in *pb.ApproveReviewRequest) (*pb.ReviewTask, error) {
+	return s.decideReview(ctx, in.GetId(), in.GetReviewerUserId(), in.GetReason(), reviewStatusApproved)
+}
+
+func (s *contentStore) RejectReview(ctx context.Context, in *pb.RejectReviewRequest) (*pb.ReviewTask, error) {
+	return s.decideReview(ctx, in.GetId(), in.GetReviewerUserId(), in.GetReason(), reviewStatusRejected)
+}
+
+func (s *contentStore) decideReview(ctx context.Context, reviewID, reviewerUserID int64, reason, decision string) (*pb.ReviewTask, error) {
+	if reviewID <= 0 || reviewerUserID <= 0 {
+		return nil, fmt.Errorf("review id and reviewer_user_id are required")
+	}
+	if decision != reviewStatusApproved && decision != reviewStatusRejected {
+		return nil, fmt.Errorf("invalid review decision")
+	}
+
+	var out *reviewTaskRecord
+	if err := s.conn.TransactCtx(ctx, func(txCtx context.Context, session sqlx.Session) error {
+		task, err := s.getReviewTaskByID(txCtx, session, reviewID, true)
+		if err != nil {
+			return err
+		}
+		if task.Status != reviewStatusPending {
+			return fmt.Errorf("review task is not pending")
+		}
+		if task.ReviewerUserID > 0 && task.ReviewerUserID != reviewerUserID {
+			return fmt.Errorf("review task already claimed")
+		}
+		if task.ReviewerUserID == 0 {
+			if _, err := session.ExecCtx(txCtx, `
+UPDATE review_tasks
+SET reviewer_user_id = $2, updated_at = NOW()
+WHERE id = $1`, task.ID, reviewerUserID); err != nil {
+				return err
+			}
+			task.ReviewerUserID = reviewerUserID
+		}
+
+		reason = strings.TrimSpace(reason)
+		if _, err := session.ExecCtx(txCtx, `
+INSERT INTO review_decisions (review_task_id, decision, reason, decided_by)
+VALUES ($1, $2, $3, $4)`, task.ID, decision, reason, reviewerUserID); err != nil {
+			return err
+		}
+		if _, err := session.ExecCtx(txCtx, `
+UPDATE review_tasks
+SET status = $2, decided_at = NOW(), updated_at = NOW()
+WHERE id = $1`, task.ID, decision); err != nil {
+			return err
+		}
+		if task.ContentID <= 0 {
+			return fmt.Errorf("review task has no content")
+		}
+
+		targetContentStatus := "published"
+		if decision == reviewStatusRejected {
+			targetContentStatus = "draft"
+		}
+		if _, err := session.ExecCtx(txCtx, `
+UPDATE content_items
+SET
+	status = $2,
+	published_at = CASE WHEN $2 = 'published' AND published_at IS NULL THEN NOW() ELSE published_at END,
+	updated_at = NOW()
+WHERE id = $1`, task.ContentID, targetContentStatus); err != nil {
+			return err
+		}
+
+		latest, err := s.getReviewTaskByID(txCtx, session, task.ID, false)
+		if err != nil {
+			return err
+		}
+		out = latest
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	if err := s.publishContentEvent(ctx, events.TopicContentStatusChanged, out.ContentID); err != nil {
+		return nil, err
+	}
+	return toReviewTask(out), nil
+}
+
+func (s *contentStore) submitReviewWithSession(ctx context.Context, session sqlx.Session, contentID int64, note string, priority int32, sourceType string) (*reviewTaskRecord, error) {
+	if contentID <= 0 {
+		return nil, fmt.Errorf("content_id is required")
+	}
+	if sourceType == "" {
+		sourceType = reviewSourceHuman
+	}
+	if sourceType != reviewSourceHuman && sourceType != reviewSourceSystem {
+		return nil, fmt.Errorf("invalid review source type")
+	}
+	priority = normalizeReviewPriority(priority)
+	if _, err := s.getContentTypeWithSession(ctx, session, contentID); err != nil {
+		return nil, err
+	}
+
+	existing, err := s.findPendingReviewTaskByContent(ctx, session, contentID)
+	if err != nil {
+		return nil, err
+	}
+	if existing != nil {
+		return existing, nil
+	}
+
+	revisionID, err := s.getLatestRevisionID(ctx, session, contentID)
+	if err != nil {
+		return nil, err
+	}
+	note = strings.TrimSpace(note)
+
+	var out reviewTaskRecord
+	query := `
+INSERT INTO review_tasks (content_id, revision_id, source_type, status, priority, note)
+VALUES ($1, NULLIF($2, 0), $3, $4, $5, $6)
+RETURNING
+	id,
+	COALESCE(content_id, 0) AS content_id,
+	COALESCE(revision_id, 0) AS revision_id,
+	COALESCE(submitter_user_id, 0) AS submitter_user_id,
+	COALESCE(reviewer_user_id, 0) AS reviewer_user_id,
+	source_type,
+	status,
+	priority,
+	note,
+	decided_at,
+	created_at,
+	updated_at`
+	if err := session.QueryRowCtx(ctx, &out, query, contentID, revisionID, sourceType, reviewStatusPending, priority, note); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (s *contentStore) findPendingReviewTaskByContent(ctx context.Context, session sqlx.Session, contentID int64) (*reviewTaskRecord, error) {
+	var out reviewTaskRecord
+	query := `
+SELECT
+	id,
+	COALESCE(content_id, 0) AS content_id,
+	COALESCE(revision_id, 0) AS revision_id,
+	COALESCE(submitter_user_id, 0) AS submitter_user_id,
+	COALESCE(reviewer_user_id, 0) AS reviewer_user_id,
+	source_type,
+	status,
+	priority,
+	note,
+	decided_at,
+	created_at,
+	updated_at
+FROM review_tasks
+WHERE content_id = $1 AND status = $2
+ORDER BY id DESC
+LIMIT 1`
+	if err := session.QueryRowCtx(ctx, &out, query, contentID, reviewStatusPending); err != nil {
+		if err == sqlx.ErrNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (s *contentStore) getReviewTaskByID(ctx context.Context, session sqlx.Session, reviewID int64, forUpdate bool) (*reviewTaskRecord, error) {
+	if reviewID <= 0 {
+		return nil, fmt.Errorf("review id is required")
+	}
+	query := `
+SELECT
+	id,
+	COALESCE(content_id, 0) AS content_id,
+	COALESCE(revision_id, 0) AS revision_id,
+	COALESCE(submitter_user_id, 0) AS submitter_user_id,
+	COALESCE(reviewer_user_id, 0) AS reviewer_user_id,
+	source_type,
+	status,
+	priority,
+	note,
+	decided_at,
+	created_at,
+	updated_at
+FROM review_tasks
+WHERE id = $1
+LIMIT 1`
+	if forUpdate {
+		query += " FOR UPDATE"
+	}
+	var out reviewTaskRecord
+	if err := session.QueryRowCtx(ctx, &out, query, reviewID); err != nil {
+		if err == sqlx.ErrNotFound {
+			return nil, fmt.Errorf("review task not found")
+		}
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (s *contentStore) getLatestRevisionID(ctx context.Context, session sqlx.Session, contentID int64) (int64, error) {
+	var revisionID int64
+	query := `SELECT COALESCE((SELECT id FROM content_revisions WHERE content_id = $1 ORDER BY version DESC LIMIT 1), 0)`
+	if err := session.QueryRowCtx(ctx, &revisionID, query, contentID); err != nil {
+		return 0, err
+	}
+	return revisionID, nil
+}
+
+func (s *contentStore) getContentTypeWithSession(ctx context.Context, session sqlx.Session, contentID int64) (string, error) {
+	var contentType string
+	if err := session.QueryRowCtx(ctx, &contentType, `SELECT type FROM content_items WHERE id = $1 LIMIT 1`, contentID); err != nil {
+		if err == sqlx.ErrNotFound {
+			return "", fmt.Errorf("content not found")
+		}
+		return "", err
+	}
+	contentType = normalizeContentType(contentType)
+	if !isAllowedContentType(contentType) {
+		return "", fmt.Errorf("invalid content type")
+	}
+	return contentType, nil
+}
+
+func (s *contentStore) getRevisionRecord(ctx context.Context, contentID, revisionID int64) (*revisionRecord, error) {
+	var row revisionRecord
+	query := `
+SELECT id, content_id, version, title, summary, body_markdown, change_note, COALESCE(created_by, 0) AS created_by, created_at
+FROM content_revisions
+WHERE content_id = $1 AND id = $2
+LIMIT 1`
+	if err := s.conn.QueryRowCtx(ctx, &row, query, contentID, revisionID); err != nil {
+		if err == sqlx.ErrNotFound {
+			return nil, fmt.Errorf("revision not found")
+		}
+		return nil, err
+	}
+	return &row, nil
+}
+
+func (s *contentStore) getContentRecord(ctx context.Context, contentID int64) (*contentRecord, error) {
+	var out contentRecord
+	query := `SELECT id, type, title, slug, summary, body_markdown, status, visibility, ai_access, published_at FROM content_items WHERE id = $1 LIMIT 1`
+	if err := s.conn.QueryRowCtx(ctx, &out, query, contentID); err != nil {
+		if err == sqlx.ErrNotFound {
+			return nil, fmt.Errorf("content not found")
+		}
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (s *contentStore) createRevisionFromRecord(ctx context.Context, item *contentRecord, changeNote string, createdBy int64) error {
+	if item == nil || item.ID <= 0 {
+		return fmt.Errorf("invalid content record")
+	}
+	var version int64
+	if err := s.conn.QueryRowCtx(ctx, &version, `SELECT COALESCE(MAX(version), 0) + 1 FROM content_revisions WHERE content_id = $1`, item.ID); err != nil {
+		return err
+	}
+	changeNote = strings.TrimSpace(changeNote)
+	if changeNote == "" {
+		if version == 1 {
+			changeNote = defaultCreateRevisionNote
+		} else {
+			changeNote = defaultUpdateRevisionNote
+		}
+	}
+
+	var createdByAny any
+	if createdBy > 0 {
+		createdByAny = createdBy
+	}
+	_, err := s.conn.ExecCtx(ctx, `
+INSERT INTO content_revisions(content_id, version, title, summary, body_markdown, change_note, created_by)
+VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+		item.ID, version, item.Title, item.Summary, item.BodyMarkdown, changeNote, createdByAny)
+	return err
 }
 
 func (s *contentStore) getContentType(ctx context.Context, contentID int64) (string, error) {
@@ -830,6 +1365,26 @@ func toDetail(in *contentRecord) *pb.ContentDetail {
 	}
 }
 
+func toReviewTask(in *reviewTaskRecord) *pb.ReviewTask {
+	if in == nil {
+		return &pb.ReviewTask{}
+	}
+	return &pb.ReviewTask{
+		Id:              in.ID,
+		ContentId:       in.ContentID,
+		RevisionId:      in.RevisionID,
+		SubmitterUserId: in.SubmitterUserID,
+		ReviewerUserId:  in.ReviewerUserID,
+		SourceType:      in.SourceType,
+		Status:          in.Status,
+		Priority:        in.Priority,
+		Note:            in.Note,
+		DecidedAt:       formatTime(in.DecidedAt),
+		CreatedAt:       in.CreatedAt.UTC().Format(time.RFC3339),
+		UpdatedAt:       in.UpdatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
 func defaultIfEmpty(v, fallback string) string {
 	v = strings.TrimSpace(v)
 	if v == "" {
@@ -899,6 +1454,25 @@ func isAllowedStatus(v string) bool {
 	default:
 		return false
 	}
+}
+
+func isAllowedReviewStatus(v string) bool {
+	switch v {
+	case reviewStatusPending, reviewStatusApproved, reviewStatusRejected, reviewStatusCancelled:
+		return true
+	default:
+		return false
+	}
+}
+
+func normalizeReviewPriority(priority int32) int32 {
+	if priority <= 0 {
+		return 3
+	}
+	if priority > 9 {
+		return 9
+	}
+	return priority
 }
 
 func isAllowedContentType(v string) bool {

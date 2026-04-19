@@ -37,6 +37,13 @@ const (
 	Content_ListComments_FullMethodName        = "/content.Content/ListComments"
 	Content_CreateComment_FullMethodName       = "/content.Content/CreateComment"
 	Content_UpdateCommentStatus_FullMethodName = "/content.Content/UpdateCommentStatus"
+	Content_ListRevisions_FullMethodName       = "/content.Content/ListRevisions"
+	Content_GetRevision_FullMethodName         = "/content.Content/GetRevision"
+	Content_RestoreRevision_FullMethodName     = "/content.Content/RestoreRevision"
+	Content_ListReviews_FullMethodName         = "/content.Content/ListReviews"
+	Content_SubmitReview_FullMethodName        = "/content.Content/SubmitReview"
+	Content_ApproveReview_FullMethodName       = "/content.Content/ApproveReview"
+	Content_RejectReview_FullMethodName        = "/content.Content/RejectReview"
 )
 
 // ContentClient is the client API for Content service.
@@ -61,6 +68,13 @@ type ContentClient interface {
 	ListComments(ctx context.Context, in *ListCommentsRequest, opts ...grpc.CallOption) (*ListCommentsResponse, error)
 	CreateComment(ctx context.Context, in *CreateCommentRequest, opts ...grpc.CallOption) (*Comment, error)
 	UpdateCommentStatus(ctx context.Context, in *UpdateCommentStatusRequest, opts ...grpc.CallOption) (*Comment, error)
+	ListRevisions(ctx context.Context, in *RevisionListRequest, opts ...grpc.CallOption) (*RevisionListResponse, error)
+	GetRevision(ctx context.Context, in *GetRevisionRequest, opts ...grpc.CallOption) (*RevisionDetail, error)
+	RestoreRevision(ctx context.Context, in *RestoreRevisionRequest, opts ...grpc.CallOption) (*ContentDetail, error)
+	ListReviews(ctx context.Context, in *ReviewListRequest, opts ...grpc.CallOption) (*ReviewListResponse, error)
+	SubmitReview(ctx context.Context, in *SubmitReviewRequest, opts ...grpc.CallOption) (*ReviewTask, error)
+	ApproveReview(ctx context.Context, in *ApproveReviewRequest, opts ...grpc.CallOption) (*ReviewTask, error)
+	RejectReview(ctx context.Context, in *RejectReviewRequest, opts ...grpc.CallOption) (*ReviewTask, error)
 }
 
 type contentClient struct {
@@ -251,6 +265,76 @@ func (c *contentClient) UpdateCommentStatus(ctx context.Context, in *UpdateComme
 	return out, nil
 }
 
+func (c *contentClient) ListRevisions(ctx context.Context, in *RevisionListRequest, opts ...grpc.CallOption) (*RevisionListResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RevisionListResponse)
+	err := c.cc.Invoke(ctx, Content_ListRevisions_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contentClient) GetRevision(ctx context.Context, in *GetRevisionRequest, opts ...grpc.CallOption) (*RevisionDetail, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RevisionDetail)
+	err := c.cc.Invoke(ctx, Content_GetRevision_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contentClient) RestoreRevision(ctx context.Context, in *RestoreRevisionRequest, opts ...grpc.CallOption) (*ContentDetail, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ContentDetail)
+	err := c.cc.Invoke(ctx, Content_RestoreRevision_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contentClient) ListReviews(ctx context.Context, in *ReviewListRequest, opts ...grpc.CallOption) (*ReviewListResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReviewListResponse)
+	err := c.cc.Invoke(ctx, Content_ListReviews_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contentClient) SubmitReview(ctx context.Context, in *SubmitReviewRequest, opts ...grpc.CallOption) (*ReviewTask, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReviewTask)
+	err := c.cc.Invoke(ctx, Content_SubmitReview_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contentClient) ApproveReview(ctx context.Context, in *ApproveReviewRequest, opts ...grpc.CallOption) (*ReviewTask, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReviewTask)
+	err := c.cc.Invoke(ctx, Content_ApproveReview_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *contentClient) RejectReview(ctx context.Context, in *RejectReviewRequest, opts ...grpc.CallOption) (*ReviewTask, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReviewTask)
+	err := c.cc.Invoke(ctx, Content_RejectReview_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ContentServer is the server API for Content service.
 // All implementations must embed UnimplementedContentServer
 // for forward compatibility.
@@ -273,6 +357,13 @@ type ContentServer interface {
 	ListComments(context.Context, *ListCommentsRequest) (*ListCommentsResponse, error)
 	CreateComment(context.Context, *CreateCommentRequest) (*Comment, error)
 	UpdateCommentStatus(context.Context, *UpdateCommentStatusRequest) (*Comment, error)
+	ListRevisions(context.Context, *RevisionListRequest) (*RevisionListResponse, error)
+	GetRevision(context.Context, *GetRevisionRequest) (*RevisionDetail, error)
+	RestoreRevision(context.Context, *RestoreRevisionRequest) (*ContentDetail, error)
+	ListReviews(context.Context, *ReviewListRequest) (*ReviewListResponse, error)
+	SubmitReview(context.Context, *SubmitReviewRequest) (*ReviewTask, error)
+	ApproveReview(context.Context, *ApproveReviewRequest) (*ReviewTask, error)
+	RejectReview(context.Context, *RejectReviewRequest) (*ReviewTask, error)
 	mustEmbedUnimplementedContentServer()
 }
 
@@ -336,6 +427,27 @@ func (UnimplementedContentServer) CreateComment(context.Context, *CreateCommentR
 }
 func (UnimplementedContentServer) UpdateCommentStatus(context.Context, *UpdateCommentStatusRequest) (*Comment, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateCommentStatus not implemented")
+}
+func (UnimplementedContentServer) ListRevisions(context.Context, *RevisionListRequest) (*RevisionListResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListRevisions not implemented")
+}
+func (UnimplementedContentServer) GetRevision(context.Context, *GetRevisionRequest) (*RevisionDetail, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetRevision not implemented")
+}
+func (UnimplementedContentServer) RestoreRevision(context.Context, *RestoreRevisionRequest) (*ContentDetail, error) {
+	return nil, status.Error(codes.Unimplemented, "method RestoreRevision not implemented")
+}
+func (UnimplementedContentServer) ListReviews(context.Context, *ReviewListRequest) (*ReviewListResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListReviews not implemented")
+}
+func (UnimplementedContentServer) SubmitReview(context.Context, *SubmitReviewRequest) (*ReviewTask, error) {
+	return nil, status.Error(codes.Unimplemented, "method SubmitReview not implemented")
+}
+func (UnimplementedContentServer) ApproveReview(context.Context, *ApproveReviewRequest) (*ReviewTask, error) {
+	return nil, status.Error(codes.Unimplemented, "method ApproveReview not implemented")
+}
+func (UnimplementedContentServer) RejectReview(context.Context, *RejectReviewRequest) (*ReviewTask, error) {
+	return nil, status.Error(codes.Unimplemented, "method RejectReview not implemented")
 }
 func (UnimplementedContentServer) mustEmbedUnimplementedContentServer() {}
 func (UnimplementedContentServer) testEmbeddedByValue()                 {}
@@ -682,6 +794,132 @@ func _Content_UpdateCommentStatus_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Content_ListRevisions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RevisionListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServer).ListRevisions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Content_ListRevisions_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServer).ListRevisions(ctx, req.(*RevisionListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Content_GetRevision_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRevisionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServer).GetRevision(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Content_GetRevision_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServer).GetRevision(ctx, req.(*GetRevisionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Content_RestoreRevision_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RestoreRevisionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServer).RestoreRevision(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Content_RestoreRevision_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServer).RestoreRevision(ctx, req.(*RestoreRevisionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Content_ListReviews_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReviewListRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServer).ListReviews(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Content_ListReviews_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServer).ListReviews(ctx, req.(*ReviewListRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Content_SubmitReview_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SubmitReviewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServer).SubmitReview(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Content_SubmitReview_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServer).SubmitReview(ctx, req.(*SubmitReviewRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Content_ApproveReview_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ApproveReviewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServer).ApproveReview(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Content_ApproveReview_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServer).ApproveReview(ctx, req.(*ApproveReviewRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Content_RejectReview_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RejectReviewRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContentServer).RejectReview(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Content_RejectReview_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContentServer).RejectReview(ctx, req.(*RejectReviewRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Content_ServiceDesc is the grpc.ServiceDesc for Content service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -760,6 +998,34 @@ var Content_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateCommentStatus",
 			Handler:    _Content_UpdateCommentStatus_Handler,
+		},
+		{
+			MethodName: "ListRevisions",
+			Handler:    _Content_ListRevisions_Handler,
+		},
+		{
+			MethodName: "GetRevision",
+			Handler:    _Content_GetRevision_Handler,
+		},
+		{
+			MethodName: "RestoreRevision",
+			Handler:    _Content_RestoreRevision_Handler,
+		},
+		{
+			MethodName: "ListReviews",
+			Handler:    _Content_ListReviews_Handler,
+		},
+		{
+			MethodName: "SubmitReview",
+			Handler:    _Content_SubmitReview_Handler,
+		},
+		{
+			MethodName: "ApproveReview",
+			Handler:    _Content_ApproveReview_Handler,
+		},
+		{
+			MethodName: "RejectReview",
+			Handler:    _Content_RejectReview_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

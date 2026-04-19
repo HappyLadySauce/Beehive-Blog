@@ -14,6 +14,7 @@ import (
 )
 
 type (
+	ApproveReviewRequest       = pb.ApproveReviewRequest
 	Attachment                 = pb.Attachment
 	Comment                    = pb.Comment
 	ContentDetail              = pb.ContentDetail
@@ -29,6 +30,7 @@ type (
 	Empty                      = pb.Empty
 	ExperienceProfile          = pb.ExperienceProfile
 	GetContentRequest          = pb.GetContentRequest
+	GetRevisionRequest         = pb.GetRevisionRequest
 	ListAttachmentsRequest     = pb.ListAttachmentsRequest
 	ListAttachmentsResponse    = pb.ListAttachmentsResponse
 	ListCommentsRequest        = pb.ListCommentsRequest
@@ -40,7 +42,17 @@ type (
 	ListTagsResponse           = pb.ListTagsResponse
 	PortfolioProfile           = pb.PortfolioProfile
 	ProjectProfile             = pb.ProjectProfile
+	RejectReviewRequest        = pb.RejectReviewRequest
 	Relation                   = pb.Relation
+	RestoreRevisionRequest     = pb.RestoreRevisionRequest
+	ReviewListRequest          = pb.ReviewListRequest
+	ReviewListResponse         = pb.ReviewListResponse
+	ReviewTask                 = pb.ReviewTask
+	RevisionDetail             = pb.RevisionDetail
+	RevisionListRequest        = pb.RevisionListRequest
+	RevisionListResponse       = pb.RevisionListResponse
+	RevisionSummary            = pb.RevisionSummary
+	SubmitReviewRequest        = pb.SubmitReviewRequest
 	Tag                        = pb.Tag
 	TimelineEventProfile       = pb.TimelineEventProfile
 	UpdateCommentStatusRequest = pb.UpdateCommentStatusRequest
@@ -66,6 +78,13 @@ type (
 		ListComments(ctx context.Context, in *ListCommentsRequest, opts ...grpc.CallOption) (*ListCommentsResponse, error)
 		CreateComment(ctx context.Context, in *CreateCommentRequest, opts ...grpc.CallOption) (*Comment, error)
 		UpdateCommentStatus(ctx context.Context, in *UpdateCommentStatusRequest, opts ...grpc.CallOption) (*Comment, error)
+		ListRevisions(ctx context.Context, in *RevisionListRequest, opts ...grpc.CallOption) (*RevisionListResponse, error)
+		GetRevision(ctx context.Context, in *GetRevisionRequest, opts ...grpc.CallOption) (*RevisionDetail, error)
+		RestoreRevision(ctx context.Context, in *RestoreRevisionRequest, opts ...grpc.CallOption) (*ContentDetail, error)
+		ListReviews(ctx context.Context, in *ReviewListRequest, opts ...grpc.CallOption) (*ReviewListResponse, error)
+		SubmitReview(ctx context.Context, in *SubmitReviewRequest, opts ...grpc.CallOption) (*ReviewTask, error)
+		ApproveReview(ctx context.Context, in *ApproveReviewRequest, opts ...grpc.CallOption) (*ReviewTask, error)
+		RejectReview(ctx context.Context, in *RejectReviewRequest, opts ...grpc.CallOption) (*ReviewTask, error)
 	}
 
 	defaultContent struct {
@@ -167,4 +186,39 @@ func (m *defaultContent) CreateComment(ctx context.Context, in *CreateCommentReq
 func (m *defaultContent) UpdateCommentStatus(ctx context.Context, in *UpdateCommentStatusRequest, opts ...grpc.CallOption) (*Comment, error) {
 	client := pb.NewContentClient(m.cli.Conn())
 	return client.UpdateCommentStatus(ctx, in, opts...)
+}
+
+func (m *defaultContent) ListRevisions(ctx context.Context, in *RevisionListRequest, opts ...grpc.CallOption) (*RevisionListResponse, error) {
+	client := pb.NewContentClient(m.cli.Conn())
+	return client.ListRevisions(ctx, in, opts...)
+}
+
+func (m *defaultContent) GetRevision(ctx context.Context, in *GetRevisionRequest, opts ...grpc.CallOption) (*RevisionDetail, error) {
+	client := pb.NewContentClient(m.cli.Conn())
+	return client.GetRevision(ctx, in, opts...)
+}
+
+func (m *defaultContent) RestoreRevision(ctx context.Context, in *RestoreRevisionRequest, opts ...grpc.CallOption) (*ContentDetail, error) {
+	client := pb.NewContentClient(m.cli.Conn())
+	return client.RestoreRevision(ctx, in, opts...)
+}
+
+func (m *defaultContent) ListReviews(ctx context.Context, in *ReviewListRequest, opts ...grpc.CallOption) (*ReviewListResponse, error) {
+	client := pb.NewContentClient(m.cli.Conn())
+	return client.ListReviews(ctx, in, opts...)
+}
+
+func (m *defaultContent) SubmitReview(ctx context.Context, in *SubmitReviewRequest, opts ...grpc.CallOption) (*ReviewTask, error) {
+	client := pb.NewContentClient(m.cli.Conn())
+	return client.SubmitReview(ctx, in, opts...)
+}
+
+func (m *defaultContent) ApproveReview(ctx context.Context, in *ApproveReviewRequest, opts ...grpc.CallOption) (*ReviewTask, error) {
+	client := pb.NewContentClient(m.cli.Conn())
+	return client.ApproveReview(ctx, in, opts...)
+}
+
+func (m *defaultContent) RejectReview(ctx context.Context, in *RejectReviewRequest, opts ...grpc.CallOption) (*ReviewTask, error) {
+	client := pb.NewContentClient(m.cli.Conn())
+	return client.RejectReview(ctx, in, opts...)
 }
