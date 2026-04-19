@@ -25,6 +25,11 @@ If a new internal capability is introduced (for example indexer, scheduler, cons
 - For internal RPC changes, edit `proto/*.proto`.
 - For new internal services (even non-public worker services), create `proto/<service>.proto` first.
 - Keep field names and semantics aligned across API DTO and proto messages.
+- If the repository uses go-zero gateway upstream mappings for standard passthrough routes, treat those mappings as HTTP contracts too:
+  1. update `proto/*.proto` first,
+  2. regenerate RPC + `*.protoset` artifacts,
+  3. then update `services/gateway/etc/upstreams/*.yaml`,
+  4. finally adjust any custom gateway logic if needed.
 
 ## Regeneration
 
@@ -46,6 +51,8 @@ Repository caveat:
 - `goctl api go` does not overwrite many existing files by default.
 - Treat generation output as a sync signal, not as an overwrite guarantee.
 - If a handler name changes (for example `StudioQuery`), wire new handlers into `routes.go` and route logic explicitly.
+- `gateway.api` does not need to contain every public HTTP route in a mixed gateway setup.
+- Keep `gateway.api` focused on custom orchestration routes, and keep standard passthrough routes in upstream mapping config when the project adopts go-zero gateway routing.
 
 ## Business Code Update
 

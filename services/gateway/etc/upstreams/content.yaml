@@ -1,0 +1,15 @@
+Upstreams:
+  - Name: content-public
+    Grpc:
+      Etcd:
+        Hosts:
+          - 127.0.0.1:2379
+        Key: content.rpc
+      NonBlock: true
+      Timeout: 2000
+    ProtoSets:
+      - ../protos/content.protoset
+    Mappings:
+      - Method: GET
+        Path: /api/v2/public/articles
+        RpcPath: content.Content/ListPublicArticles

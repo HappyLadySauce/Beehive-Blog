@@ -30,15 +30,11 @@ type identityStore struct {
 }
 
 func newIdentityStore(conn sqlx.SqlConn, redisClient *redis.Redis, authCfg config.AuthConf) (*identityStore, error) {
-	s := &identityStore{
+	return &identityStore{
 		conn:       conn,
 		redis:      redisClient,
 		authConfig: authCfg,
-	}
-	if err := s.ensureSchema(context.Background()); err != nil {
-		return nil, err
-	}
-	return s, nil
+	}, nil
 }
 
 func (s *identityStore) Register(ctx context.Context, username, nickname, email, password string) (*userRecord, string, string, int64, error) {
@@ -174,22 +170,6 @@ LIMIT 1`
 		return nil, err
 	}
 	return &user, nil
-}
-
-func (s *identityStore) ensureSchema(ctx context.Context) error {
-	const query = `
-CREATE TABLE IF NOT EXISTS users (
-	id BIGSERIAL PRIMARY KEY,
-	username VARCHAR(64) NOT NULL UNIQUE,
-	nickname VARCHAR(128) NOT NULL,
-	email VARCHAR(255) NOT NULL UNIQUE,
-	role VARCHAR(32) NOT NULL DEFAULT 'owner',
-	password_hash VARCHAR(255) NOT NULL,
-	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-	updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-)`
-	_, err := s.conn.ExecCtx(ctx, query)
-	return err
 }
 
 func (s *identityStore) storeRefreshToken(ctx context.Context, token string, userID int64) error {

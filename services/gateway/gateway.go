@@ -1,21 +1,20 @@
-// Code scaffolded by goctl. Safe to edit.
-// goctl 1.10.1
-
 package main
 
 import (
 	"flag"
 	"fmt"
+	"path/filepath"
+
+	"github.com/zeromicro/go-zero/core/conf"
+	zgateway "github.com/zeromicro/go-zero/gateway"
 
 	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/config"
 	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/handler"
+	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/middleware"
 	"github.com/HappyLadySauce/Beehive-Blog/services/gateway/internal/svc"
-
-	"github.com/zeromicro/go-zero/core/conf"
-	"github.com/zeromicro/go-zero/rest"
 )
 
-var configFile = flag.String("f", "etc/gateway-api.yaml", "the config file")
+var configFile = flag.String("f", "etc/gateway.yaml", "the config file")
 
 func main() {
 	flag.Parse()
@@ -23,12 +22,25 @@ func main() {
 	var c config.Config
 	conf.MustLoad(*configFile, &c)
 
-	server := rest.MustNewServer(c.RestConf)
-	defer server.Stop()
+	upstreams, err := config.LoadUpstreams(filepath.Dir(*configFile), c.UpstreamFiles)
+	if err != nil {
+		panic(err)
+	}
+	c.GatewayConf.Upstreams = append(c.GatewayConf.Upstreams, upstreams...)
 
 	ctx := svc.NewServiceContext(c)
-	handler.RegisterHandlers(server, ctx)
+	requestIDMiddleware := middleware.NewRequestIDMiddleware()
+	rateLimitMiddleware := middleware.NewRateLimitMiddleware(c.RateLimit)
+	accessLogMiddleware := middleware.NewAccessLogMiddleware(c.AccessLog)
 
-	fmt.Printf("Starting server at %s:%d...\n", c.Host, c.Port)
+	server := zgateway.MustNewServer(
+		c.GatewayConf,
+		zgateway.WithMiddleware(requestIDMiddleware.Handle, rateLimitMiddleware.Handle, accessLogMiddleware.Handle),
+	)
+	defer server.Stop()
+
+	handler.RegisterHandlers(server.Server, ctx)
+
+	fmt.Printf("Starting gateway at %s:%d...\n", c.Host, c.Port)
 	server.Start()
 }

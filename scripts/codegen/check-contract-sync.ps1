@@ -1,7 +1,8 @@
 param(
     [string]$GatewayApi = "api/gateway.api",
     [string]$GatewayRoutes = "services/gateway/internal/handler/routes.go",
-    [string]$ProtoDir = "proto"
+    [string]$ProtoDir = "proto",
+    [string]$GatewayConfig = "services/gateway/etc/gateway.yaml"
 )
 
 Set-StrictMode -Version Latest
@@ -43,6 +44,77 @@ function Get-GoRoutes {
         $routes[$key] = $true
     }
     return $routes
+}
+
+function Get-UpstreamRoutesAndIssues {
+    param([string]$ConfigPath)
+
+    $result = @{
+        Routes = @{}
+        Issues = New-Object System.Collections.Generic.List[string]
+    }
+
+    if (-not (Test-Path -LiteralPath $ConfigPath)) {
+        $result.Issues.Add("gateway config not found: $ConfigPath")
+        return $result
+    }
+
+    $configDir = Split-Path -Parent $ConfigPath
+    $rawMain = Get-Content -LiteralPath $ConfigPath -Raw
+    $upstreamFiles = @()
+    foreach ($line in ($rawMain -split "`r?`n")) {
+        if ($line -match '^\s*-\s+(.+\.ya?ml)\s*$') {
+            $upstreamFiles += $matches[1].Trim()
+        }
+    }
+
+    foreach ($upstreamFile in $upstreamFiles) {
+        $path = $upstreamFile
+        if (-not [System.IO.Path]::IsPathRooted($path)) {
+            $path = Join-Path $configDir $upstreamFile
+        }
+        if (-not (Test-Path -LiteralPath $path)) {
+            $result.Issues.Add("upstream config not found: $path")
+            continue
+        }
+
+        $lines = Get-Content -LiteralPath $path
+        for ($i = 0; $i -lt $lines.Count; $i++) {
+            if ($lines[$i] -match '^\s*-\s+Method:\s*(\w+)\s*$') {
+                $method = $matches[1].Trim().ToUpperInvariant()
+                if ($i + 1 -lt $lines.Count -and $lines[$i + 1] -match '^\s*Path:\s*(\S+)\s*$') {
+                    $routePath = $matches[1].Trim()
+                    $result.Routes["$method $routePath"] = $true
+                }
+            }
+
+            if ($lines[$i] -match '^\s*-\s+(.+\.(pb|protoset))\s*$') {
+                $protoSetPath = $matches[1].Trim()
+                if (-not [System.IO.Path]::IsPathRooted($protoSetPath)) {
+                    $protoSetPath = Join-Path (Split-Path -Parent $path) $protoSetPath
+                }
+                if (-not (Test-Path -LiteralPath $protoSetPath)) {
+                    $result.Issues.Add("missing protoset: $protoSetPath")
+                    continue
+                }
+
+                $service = [System.IO.Path]::GetFileNameWithoutExtension($protoSetPath)
+                $protoPath = Join-Path $ProtoDir "$service.proto"
+                if (-not (Test-Path -LiteralPath $protoPath)) {
+                    $result.Issues.Add("missing proto for protoset: $protoPath")
+                    continue
+                }
+
+                $protoMtime = (Get-Item -LiteralPath $protoPath).LastWriteTimeUtc
+                $protoSetMtime = (Get-Item -LiteralPath $protoSetPath).LastWriteTimeUtc
+                if ($protoSetMtime -lt $protoMtime) {
+                    $result.Issues.Add("stale protoset: $protoSetPath (older than $protoPath)")
+                }
+            }
+        }
+    }
+
+    return $result
 }
 
 function Get-RpcProtoIssues {
@@ -94,12 +166,15 @@ function Get-RpcProtoIssues {
 try {
     $apiRoutes = Get-ApiRoutes -Path $GatewayApi
     $goRoutes = Get-GoRoutes -Path $GatewayRoutes
+    $upstream = Get-UpstreamRoutesAndIssues -ConfigPath $GatewayConfig
 
     $onlyInApi = @($apiRoutes.Keys | Where-Object { -not $goRoutes.ContainsKey($_) } | Sort-Object)
     $onlyInGo = @($goRoutes.Keys | Where-Object { -not $apiRoutes.ContainsKey($_) } | Sort-Object)
     $rpcIssues = @(Get-RpcProtoIssues -Dir $ProtoDir)
+    $routeOverlap = @($apiRoutes.Keys | Where-Object { $upstream.Routes.ContainsKey($_) } | Sort-Object)
+    $upstreamIssues = @($upstream.Issues)
 
-    if ($onlyInApi.Count -eq 0 -and $onlyInGo.Count -eq 0 -and $rpcIssues.Count -eq 0) {
+    if ($onlyInApi.Count -eq 0 -and $onlyInGo.Count -eq 0 -and $rpcIssues.Count -eq 0 -and $routeOverlap.Count -eq 0 -and $upstreamIssues.Count -eq 0) {
         Write-Host "contract sync check passed." -ForegroundColor Green
         exit 0
     }
@@ -126,6 +201,22 @@ try {
         Write-Host ""
         Write-Host "rpc/proto sync issues:" -ForegroundColor Yellow
         foreach ($issue in $rpcIssues) {
+            Write-Host "  - $issue"
+        }
+    }
+
+    if ($routeOverlap.Count -gt 0) {
+        Write-Host ""
+        Write-Host "routes declared in both api and upstream mappings:" -ForegroundColor Yellow
+        foreach ($item in $routeOverlap) {
+            Write-Host "  - $item"
+        }
+    }
+
+    if ($upstreamIssues.Count -gt 0) {
+        Write-Host ""
+        Write-Host "gateway upstream sync issues:" -ForegroundColor Yellow
+        foreach ($issue in $upstreamIssues) {
             Write-Host "  - $issue"
         }
     }

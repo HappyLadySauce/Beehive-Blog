@@ -397,20 +397,8 @@ service gateway-api {
 	@handler Healthz
 	get /healthz returns (HealthResponse)
 
-	@handler Register
-	post /auth/register (RegisterRequest) returns (TokenData)
-
-	@handler Login
-	post /auth/login (LoginRequest) returns (TokenData)
-
-	@handler Refresh
-	post /auth/refresh (RefreshRequest) returns (TokenData)
-
 	@handler Me
 	get /auth/me returns (UserProfile)
-
-	@handler ListArticles
-	get /public/articles (ContentListRequest) returns (ContentListResponse)
 
 	@handler ListContents
 	get /studio/contents (ContentListRequest) returns (ContentListResponse)
@@ -447,9 +435,6 @@ service gateway-api {
 
 	@handler RejectReview
 	post /studio/reviews/:id/reject (ReviewDecisionRequest) returns (ReviewTask)
-
-	@handler Query
-	get /search/query (SearchRequest) returns (SearchResponse)
 
 	@handler ListTags
 	get /studio/tags returns (TagListResponse)
@@ -496,4 +481,3 @@ service gateway-api {
 	@handler DeleteSearchIndex
 	delete /studio/search/index/contents/:id (SearchIndexPathRequest)
 }
-

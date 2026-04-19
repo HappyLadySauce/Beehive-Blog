@@ -1,0 +1,15 @@
+Upstreams:
+  - Name: search-public
+    Grpc:
+      Etcd:
+        Hosts:
+          - 127.0.0.1:2379
+        Key: search.rpc
+      NonBlock: true
+      Timeout: 2000
+    ProtoSets:
+      - ../protos/search.protoset
+    Mappings:
+      - Method: GET
+        Path: /api/v2/search/query
+        RpcPath: search.Search/Query

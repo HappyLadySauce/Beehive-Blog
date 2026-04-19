@@ -23,34 +23,9 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 		rest.WithMiddlewares([]rest.Middleware{requestIDMiddleware.Handle, rateLimitMiddleware.Handle, accessLogMiddleware.Handle},
 			[]rest.Route{
 				{
-					Method:  http.MethodPost,
-					Path:    "/auth/login",
-					Handler: gateway.LoginHandler(serverCtx),
-				},
-				{
-					Method:  http.MethodPost,
-					Path:    "/auth/refresh",
-					Handler: gateway.RefreshHandler(serverCtx),
-				},
-				{
-					Method:  http.MethodPost,
-					Path:    "/auth/register",
-					Handler: gateway.RegisterHandler(serverCtx),
-				},
-				{
 					Method:  http.MethodGet,
 					Path:    "/healthz",
 					Handler: gateway.HealthzHandler(serverCtx),
-				},
-				{
-					Method:  http.MethodGet,
-					Path:    "/public/articles",
-					Handler: gateway.ListArticlesHandler(serverCtx),
-				},
-				{
-					Method:  http.MethodGet,
-					Path:    "/search/query",
-					Handler: gateway.QueryHandler(serverCtx),
 				},
 			}...),
 		rest.WithPrefix("/api/v2"),

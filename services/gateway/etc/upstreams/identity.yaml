@@ -1,0 +1,21 @@
+Upstreams:
+  - Name: identity-public
+    Grpc:
+      Etcd:
+        Hosts:
+          - 127.0.0.1:2379
+        Key: identity.rpc
+      NonBlock: true
+      Timeout: 2000
+    ProtoSets:
+      - ../protos/identity.protoset
+    Mappings:
+      - Method: POST
+        Path: /api/v2/auth/register
+        RpcPath: identity.Identity/Register
+      - Method: POST
+        Path: /api/v2/auth/login
+        RpcPath: identity.Identity/Login
+      - Method: POST
+        Path: /api/v2/auth/refresh
+        RpcPath: identity.Identity/Refresh

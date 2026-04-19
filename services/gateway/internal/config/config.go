@@ -4,7 +4,7 @@
 package config
 
 import (
-	"github.com/zeromicro/go-zero/rest"
+	zgateway "github.com/zeromicro/go-zero/gateway"
 	"github.com/zeromicro/go-zero/zrpc"
 )
 
@@ -23,11 +23,12 @@ type AccessLogConf struct {
 }
 
 type Config struct {
-	rest.RestConf
-	IdentityRpc zrpc.RpcClientConf
-	ContentRpc  zrpc.RpcClientConf
-	SearchRpc   zrpc.RpcClientConf
-	Auth        AuthConf
-	RateLimit   RateLimitConf
-	AccessLog   AccessLogConf
+	zgateway.GatewayConf
+	UpstreamFiles []string `json:",optional"`
+	IdentityRpc   zrpc.RpcClientConf
+	ContentRpc    zrpc.RpcClientConf
+	SearchRpc     zrpc.RpcClientConf
+	Auth          AuthConf
+	RateLimit     RateLimitConf
+	AccessLog     AccessLogConf
 }
