@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 
+	_ "github.com/jackc/pgx/v5/stdlib"
+	
 	"github.com/HappyLadySauce/Beehive-Blog/services/search/internal/config"
 	"github.com/HappyLadySauce/Beehive-Blog/services/search/internal/server"
 	"github.com/HappyLadySauce/Beehive-Blog/services/search/internal/svc"

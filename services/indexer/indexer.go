@@ -4,8 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"os/signal"
-	"syscall"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/HappyLadySauce/Beehive-Blog/services/indexer/internal/config"
 	"github.com/HappyLadySauce/Beehive-Blog/services/indexer/internal/server"
@@ -29,12 +29,10 @@ func main() {
 	conf.MustLoad(*configFile, &c)
 
 	svcCtx := svc.NewServiceContext(c)
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
 
 	w := worker.NewIndexerWorker(svcCtx)
 	logx.Infof("starting indexer worker, poll=%s, batch=%d", c.Worker.PollInterval, c.Worker.BatchSize)
-	go w.Run(ctx)
+	go w.Run(context.Background())
 
 	s := zrpc.MustNewServer(c.RpcServerConf, func(grpcServer *grpc.Server) {
 		pb.RegisterIndexerServer(grpcServer, server.NewIndexerServer(svcCtx))
@@ -43,6 +41,7 @@ func main() {
 		}
 	})
 	defer s.Stop()
+
 	fmt.Printf("Starting rpc server at %s...\n", c.ListenOn)
 	s.Start()
 }
