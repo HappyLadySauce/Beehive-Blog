@@ -12,12 +12,16 @@ import (
 type Options struct {
 	basename string
 	InsecureServing *options.InsecureServingOptions `mapstructure:"insecure"`
+	Database *options.PostgreOptions `mapstructure:"database"`
+	Cache *options.RedisOptions `mapstructure:"cache"`
 }
 
 func NewOptions(basename string) *Options {
 	return &Options{
 		basename: basename,
 		InsecureServing: options.NewInsecureServingOptions(),
+		Database: options.NewPostgreOptions(),
+		Cache: options.NewRedisOptions(),
 	}
 }
 
@@ -33,6 +37,12 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) *flag.NamedFlagSets {
 
 	insecureServingFS := nfs.FlagSet("Insecure Serving")
 	o.InsecureServing.AddFlags(insecureServingFS)
+
+	databaseFS := nfs.FlagSet("Database")
+	o.Database.AddFlags(databaseFS)
+
+	cacheFS := nfs.FlagSet("Cache")
+	o.Cache.AddFlags(cacheFS)
 
 	// Merge all named flag sets into the root command FlagSet.
 	// 将所有命名标志集合并到根命令的 FlagSet。
