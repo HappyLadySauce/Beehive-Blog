@@ -3,7 +3,6 @@ module github.com/HappyLadySauce/Beehive-Blog
 go 1.26.2
 
 require (
-	github.com/HappyLadySauce/NexusPointWG v1.2.1
 	github.com/gin-gonic/gin v1.11.0
 	github.com/jackc/pgx/v5 v5.9.2
 	github.com/spf13/cobra v1.10.2
