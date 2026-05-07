@@ -75,6 +75,32 @@ func TestSchemaMigrationsPlaceAvatarSoftDeleteTriggerWithAttachmentLifecycle(t *
 	}
 }
 
+func TestAttachmentSchemaMigrationsOptimizeForRemoteTupleLookupAndStorageTypeListing(t *testing.T) {
+	t.Helper()
+
+	root := repoRootFromWorkingDir(t)
+	attachmentSQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "attachment", "000_attachment_attachments.sql"))
+
+	if !strings.Contains(attachmentSQL, "CREATE INDEX idx_attachment_attachments_live_storage_type_created_at") {
+		t.Fatalf("attachment migration should define a live storage_type + created_at listing index")
+	}
+	if !strings.Contains(attachmentSQL, "ON attachment.attachments (storage_type, created_at DESC, id DESC)") {
+		t.Fatalf("attachment migration should order the listing index by storage_type, created_at DESC, id DESC")
+	}
+	if !strings.Contains(attachmentSQL, "storage_type + bucket + object_key") {
+		t.Fatalf("attachment migration should document remote tuple lookup by storage_type + bucket + object_key")
+	}
+	if strings.Contains(attachmentSQL, "CREATE INDEX idx_attachment_attachments_storage_type") {
+		t.Fatalf("attachment migration should remove the live storage_type-only index")
+	}
+	if strings.Contains(attachmentSQL, "CREATE INDEX idx_attachment_attachments_object_key") {
+		t.Fatalf("attachment migration should remove the object_key-only lookup index")
+	}
+	if strings.Contains(attachmentSQL, "CREATE INDEX idx_attachment_attachments_created_at") {
+		t.Fatalf("attachment migration should remove the global live created_at index when no global timeline is required")
+	}
+}
+
 func repoRootFromWorkingDir(t *testing.T) string {
 	t.Helper()
 

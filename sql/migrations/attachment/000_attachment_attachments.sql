@@ -60,22 +60,10 @@ CREATE TABLE attachment.attachments (
     )
 );
 
--- Index by storage_type, restricted to live rows for cheaper scans.
--- 按 storage_type 查询的索引；仅覆盖活跃行以减小体积。
-CREATE INDEX idx_attachment_attachments_storage_type
-  ON attachment.attachments (storage_type)
-  WHERE deleted_at IS NULL;
-
--- Lookup by remote object_key (s3 / oss); skip NULL and soft-deleted rows.
--- 通过远端 object_key 定位（s3 / oss）；跳过 NULL 与软删行。
-CREATE INDEX idx_attachment_attachments_object_key
-  ON attachment.attachments (object_key)
-  WHERE deleted_at IS NULL AND object_key IS NOT NULL;
-
--- Listing by created_at on live rows (typical timeline queries).
--- 活跃行按 created_at 排序的列表查询。
-CREATE INDEX idx_attachment_attachments_created_at
-  ON attachment.attachments (created_at)
+-- Listing live attachments by storage_type with stable newest-first pagination.
+-- 活跃附件按 storage_type 过滤并按最新优先稳定分页。
+CREATE INDEX idx_attachment_attachments_live_storage_type_created_at
+  ON attachment.attachments (storage_type, created_at DESC, id DESC)
   WHERE deleted_at IS NULL;
 
 -- Audit / cleanup queries on soft-deleted rows.
@@ -113,7 +101,7 @@ COMMENT ON COLUMN attachment.attachments.storage_type IS
 COMMENT ON COLUMN attachment.attachments.bucket IS
   'Bucket name for s3/oss; NULL for local. / 远端桶名，本地为空。';
 COMMENT ON COLUMN attachment.attachments.object_key IS
-  'Object key for s3/oss; URL is derived at read time. / 远端对象键，访问 URL 在读取时拼装或签名。';
+  'Object key for s3/oss; URL is derived at read time. Remote attachment lookup should use storage_type + bucket + object_key together, not object_key alone. / 远端对象键，访问 URL 在读取时拼装或签名。远端附件定位应联合使用 storage_type + bucket + object_key，而不是仅用 object_key。';
 COMMENT ON COLUMN attachment.attachments.local_path IS
   'Relative path under configured local root. / 配置的本地根目录下的相对路径。';
 COMMENT ON COLUMN attachment.attachments.etag IS
