@@ -66,7 +66,7 @@ COMMENT ON COLUMN identity.users.nickname IS
 COMMENT ON COLUMN identity.users.phone IS
   'Optional phone number. / 可选手机号。';
 COMMENT ON COLUMN identity.users.avatar_attachment_id IS
-  'FK to attachment.attachments; resolve URL from that row. DB trigger clears this when the attachment row is soft-deleted (deleted_at set). / 外键指向附件表；URL 从该行解析。附件行软删时由库触发器自动清空本列。';
+  'FK to attachment.attachments; resolve URL from that row. NULL means use the application default avatar rather than missing data; DB trigger clears this when the attachment row is soft-deleted (deleted_at set), causing fallback to the default avatar. / 外键指向附件表；URL 从该行解析。NULL 表示使用应用层默认头像，而不是数据缺失；附件行软删时由库触发器自动清空本列，从而回退到默认头像。';
 COMMENT ON COLUMN identity.users.role IS
   'Authorization role: member | admin. / 授权角色。';
 COMMENT ON COLUMN identity.users.status IS
@@ -76,33 +76,6 @@ COMMENT ON COLUMN identity.users.last_login_at IS
 COMMENT ON COLUMN identity.users.created_at IS
   'Row creation timestamp, maintained by GORM CreatedAt. / 行创建时间，由 GORM CreatedAt 维护。';
 COMMENT ON COLUMN identity.users.updated_at IS
-  'Row last-update timestamp, maintained by GORM UpdatedAt. / 行最近更新时间，由 GORM UpdatedAt 维护。';
+  'Row last-update timestamp, maintained by GORM UpdatedAt; refreshes when avatar reference changes, including DB-triggered fallback to default avatar after attachment soft-delete. / 行最近更新时间，由 GORM UpdatedAt 维护；头像引用变化时会刷新，包括附件软删后由数据库触发回退默认头像。';
 COMMENT ON COLUMN identity.users.deleted_at IS
   'Soft-deletion timestamp aligned with gorm.DeletedAt. / 与 gorm.DeletedAt 对齐的软删时间戳。';
-
--- When an attachment becomes soft-deleted, unlink it from any user avatar FK.
--- 附件行一旦软删，自动解除所有用户头像外键引用。
-CREATE OR REPLACE FUNCTION attachment.fn_clear_identity_users_avatar_on_attachment_soft_delete()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  UPDATE identity.users
-  SET avatar_attachment_id = NULL,
-      updated_at = NOW()
-  WHERE avatar_attachment_id = NEW.id;
-  RETURN NEW;
-END;
-$$;
-
-COMMENT ON FUNCTION attachment.fn_clear_identity_users_avatar_on_attachment_soft_delete() IS
-  'Clears identity.users.avatar_attachment_id when attachment.attachments is soft-deleted. / 附件软删时清空 identity.users.avatar_attachment_id。';
-
-CREATE TRIGGER trg_attachment_attachments_clear_users_avatar_on_soft_delete
-  AFTER UPDATE OF deleted_at ON attachment.attachments
-  FOR EACH ROW
-  WHEN (OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL)
-  EXECUTE PROCEDURE attachment.fn_clear_identity_users_avatar_on_attachment_soft_delete();
-
-COMMENT ON TRIGGER trg_attachment_attachments_clear_users_avatar_on_soft_delete ON attachment.attachments IS
-  'Unlink user avatars when this attachment row is soft-deleted. / 本附件软删时解除用户头像引用。';

@@ -60,22 +60,10 @@ CREATE TABLE attachment.attachments (
     )
 );
 
--- Index by storage_type, restricted to live rows for cheaper scans.
--- 按 storage_type 查询的索引；仅覆盖活跃行以减小体积。
-CREATE INDEX idx_attachment_attachments_storage_type
-  ON attachment.attachments (storage_type)
-  WHERE deleted_at IS NULL;
-
--- Lookup by remote object_key (s3 / oss); skip NULL and soft-deleted rows.
--- 通过远端 object_key 定位（s3 / oss）；跳过 NULL 与软删行。
-CREATE INDEX idx_attachment_attachments_object_key
-  ON attachment.attachments (object_key)
-  WHERE deleted_at IS NULL AND object_key IS NOT NULL;
-
--- Listing by created_at on live rows (typical timeline queries).
--- 活跃行按 created_at 排序的列表查询。
-CREATE INDEX idx_attachment_attachments_created_at
-  ON attachment.attachments (created_at)
+-- Listing live attachments by storage_type with stable newest-first pagination.
+-- 活跃附件按 storage_type 过滤并按最新优先稳定分页。
+CREATE INDEX idx_attachment_attachments_live_storage_type_created_at
+  ON attachment.attachments (storage_type, created_at DESC, id DESC)
   WHERE deleted_at IS NULL;
 
 -- Audit / cleanup queries on soft-deleted rows.
@@ -113,7 +101,7 @@ COMMENT ON COLUMN attachment.attachments.storage_type IS
 COMMENT ON COLUMN attachment.attachments.bucket IS
   'Bucket name for s3/oss; NULL for local. / 远端桶名，本地为空。';
 COMMENT ON COLUMN attachment.attachments.object_key IS
-  'Object key for s3/oss; URL is derived at read time. / 远端对象键，访问 URL 在读取时拼装或签名。';
+  'Object key for s3/oss; URL is derived at read time. Remote attachment lookup should use storage_type + bucket + object_key together, not object_key alone. / 远端对象键，访问 URL 在读取时拼装或签名。远端附件定位应联合使用 storage_type + bucket + object_key，而不是仅用 object_key。';
 COMMENT ON COLUMN attachment.attachments.local_path IS
   'Relative path under configured local root. / 配置的本地根目录下的相对路径。';
 COMMENT ON COLUMN attachment.attachments.etag IS
@@ -121,10 +109,39 @@ COMMENT ON COLUMN attachment.attachments.etag IS
 COMMENT ON COLUMN attachment.attachments.checksum IS
   'Content checksum, algorithm fixed in app layer (e.g. sha256). / 内容校验和，算法在应用层固定，例如 sha256。';
 COMMENT ON COLUMN attachment.attachments.status IS
-  'Visibility/lifecycle: active | hidden | archived. hidden hides from default UI without deleting the row; archived marks cold retention; soft-deletion is always deleted_at. / 可见性与生命周期：active | hidden | archived。hidden 为默认列表不可见但未软删；archived 为归档；软删仅看 deleted_at。';
+  'Visibility/lifecycle: active | hidden | archived. hidden hides from default UI without deleting the row and hidden remains referenceable, including by user avatars; archived marks cold retention; only soft-deletion via deleted_at makes the attachment unusable as an avatar. / 可见性与生命周期：active | hidden | archived。hidden 为默认列表不可见但未软删，且 hidden 仍可被引用，包括被用户头像引用；archived 为归档；只有 deleted_at 软删才会使附件不可继续作为头像。';
 COMMENT ON COLUMN attachment.attachments.created_at IS
   'Row creation timestamp, maintained by GORM CreatedAt. / 行创建时间，由 GORM CreatedAt 维护。';
 COMMENT ON COLUMN attachment.attachments.updated_at IS
   'Row last-update timestamp, maintained by GORM UpdatedAt. / 行最近更新时间，由 GORM UpdatedAt 维护。';
 COMMENT ON COLUMN attachment.attachments.deleted_at IS
   'Soft-deletion timestamp aligned with gorm.DeletedAt. / 与 gorm.DeletedAt 对齐的软删时间戳。';
+
+-- When an attachment becomes soft-deleted, unlink it from any user avatar FK
+-- so those users fall back to the application default avatar.
+-- 附件行一旦软删，自动解除所有用户头像外键引用，
+-- 使这些用户回退到应用层默认头像。
+CREATE OR REPLACE FUNCTION attachment.fn_clear_identity_users_avatar_on_attachment_soft_delete()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  UPDATE identity.users
+  SET avatar_attachment_id = NULL,
+      updated_at = NOW()
+  WHERE avatar_attachment_id = NEW.id;
+  RETURN NEW;
+END;
+$$;
+
+COMMENT ON FUNCTION attachment.fn_clear_identity_users_avatar_on_attachment_soft_delete() IS
+  'When attachment.attachments.deleted_at changes from NULL to non-NULL, clears identity.users.avatar_attachment_id and refreshes identity.users.updated_at so affected users fall back to the application default avatar. / 当 attachment.attachments.deleted_at 从 NULL 变为非 NULL 时，清空 identity.users.avatar_attachment_id 并刷新 identity.users.updated_at，使受影响用户回退到应用层默认头像。';
+
+CREATE TRIGGER trg_attachment_attachments_clear_users_avatar_on_soft_delete
+  AFTER UPDATE OF deleted_at ON attachment.attachments
+  FOR EACH ROW
+  WHEN (OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL)
+  EXECUTE PROCEDURE attachment.fn_clear_identity_users_avatar_on_attachment_soft_delete();
+
+COMMENT ON TRIGGER trg_attachment_attachments_clear_users_avatar_on_soft_delete ON attachment.attachments IS
+  'On soft-delete only (deleted_at NULL -> non-NULL), unlink user avatars from this attachment, refresh affected identity.users.updated_at values, and make those users fall back to the application default avatar. / 仅在软删时（deleted_at 从 NULL 变为非 NULL）解除用户头像对本附件的引用，刷新受影响 identity.users.updated_at，并使这些用户回退到应用层默认头像。';
