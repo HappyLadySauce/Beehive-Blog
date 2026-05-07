@@ -7,13 +7,10 @@
 #   将单个迁移文件按语句拆分执行；遇到表/列/对象已存在等 SQLSTATE 时跳过该句并继续，
 #   用于已有部分表结构、重复执行或半旧库向前对齐（仍有风险，重要环境请先备份）。
 #
+# 迁移目录：固定递归 sql/migrations（如 identity\*.sql、attachment\*.sql）。
+#
 # 用法（在仓库根目录执行亦可）:
 #   .\sql\migrate.ps1
-#     默认仅 sql/migrations/v3（递归，如 v3/identity/*.sql），不跑 v2。
-#   .\sql\migrate.ps1 -MigrationsScope all
-#     扫描 sql/migrations 下全部版本（v2 + v3）。
-#   .\sql\migrate.ps1 -MigrationsScope v2
-#     仅 sql/migrations/v2。
 #   .\sql\migrate.ps1 -Mode adaptive -Verbose
 #   .\sql\migrate.ps1 -Dsn 'postgres://user:pass@host:5432/dbname?sslmode=disable'
 #   .\sql\migrate.ps1 -Force
@@ -24,7 +21,6 @@
 param(
     [ValidateSet('versioned', 'adaptive')][string]$Mode = 'versioned',
     [string]$Dsn = '',
-    [ValidateSet('v3', 'v2', 'all')][string]$MigrationsScope = 'v3',
     [switch]$Force,
     [switch]$Reapply,
     [switch]$Verbose
@@ -32,13 +28,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $RepoRoot = Split-Path -Parent $PSScriptRoot
-$MigrationsCatalog = Join-Path $RepoRoot 'sql\migrations'
-$MigrationsDir = $MigrationsCatalog
-switch ($MigrationsScope) {
-    'v2' { $MigrationsDir = Join-Path $MigrationsDir 'v2' }
-    'v3' { $MigrationsDir = Join-Path $MigrationsDir 'v3' }
-    'all' { }
-}
+$MigrationsRoot = Join-Path $RepoRoot 'sql\migrations'
 
 if (-not $Dsn) {
     $Dsn = $env:DB_DSN
@@ -50,8 +40,8 @@ if (-not $Dsn) {
 $goArgs = @(
     'run', './sql/migrate/main.go',
     '-dsn', $Dsn,
-    '-dir', $MigrationsDir,
-    '-catalog', $MigrationsCatalog,
+    '-dir', $MigrationsRoot,
+    '-catalog', $MigrationsRoot,
     '-mode', $Mode
 )
 if ($Verbose) {

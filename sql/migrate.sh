@@ -4,11 +4,10 @@
 # 全覆盖（默认）：MODE=versioned
 # 适应：MODE=adaptive  （详见 sql/migrate/main.go 头部注释）
 #
+# 迁移目录：固定递归 sql/migrations（如 identity/*.sql、attachment/*.sql）。
+#
 # 用法:
 #   ./sql/migrate.sh
-#     默认仅 sql/migrations/v3（递归），不跑 v2。
-#   MIGRATIONS_SCOPE=all ./sql/migrate.sh   # v2 + v3
-#   MIGRATIONS_SCOPE=v2 ./sql/migrate.sh    # 仅 v2
 #   MODE=adaptive VERBOSE=1 ./sql/migrate.sh
 #   DB_DSN='postgres://...' ./sql/migrate.sh
 #   MIGRATION_FORCE=1 ./sql/migrate.sh
@@ -19,21 +18,11 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-MIGRATIONS_CATALOG="${ROOT}/sql/migrations"
-MIGRATIONS="${MIGRATIONS_CATALOG}"
-case "${MIGRATIONS_SCOPE:-v3}" in
-  v2) MIGRATIONS="${MIGRATIONS}/v2" ;;
-  v3) MIGRATIONS="${MIGRATIONS}/v3" ;;
-  all) ;;
-  *)
-    echo "migration error: unknown MIGRATIONS_SCOPE=${MIGRATIONS_SCOPE:-} (use v3, v2, or all)" >&2
-    exit 1
-    ;;
-esac
+MIGRATIONS="${ROOT}/sql/migrations"
 MODE="${MODE:-versioned}"
 DSN="${DB_DSN:-postgres://Beehive-Blog:Beehive-Blog@127.0.0.1:5432/Beehive-Blog?sslmode=disable}"
 
-GO_ARGS=(run ./sql/migrate/main.go -dsn "$DSN" -dir "$MIGRATIONS" -catalog "$MIGRATIONS_CATALOG" -mode "$MODE")
+GO_ARGS=(run ./sql/migrate/main.go -dsn "$DSN" -dir "$MIGRATIONS" -catalog "$MIGRATIONS" -mode "$MODE")
 if [[ "${VERBOSE:-}" == "1" ]]; then
   GO_ARGS+=(-v)
 fi
