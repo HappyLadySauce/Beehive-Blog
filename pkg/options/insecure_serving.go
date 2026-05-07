@@ -28,5 +28,5 @@ func (i *InsecureServingOptions) Validate() []error {
 
 func (i *InsecureServingOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVarP(&i.BindAddress, "bind-address", "b", "127.0.0.1", "IP address on which to serve the --port, set to 0.0.0.0 for all interfaces")
-	fs.IntVarP(&i.BindPort, "bind-port", "p", 51830, "port to listen to for incoming HTTPS requests")
+	fs.IntVarP(&i.BindPort, "bind-port", "p", 8080, "port to listen to for incoming HTTPS requests")
 }
