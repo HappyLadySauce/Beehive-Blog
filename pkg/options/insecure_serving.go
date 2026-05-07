@@ -1,6 +1,7 @@
 package options
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/spf13/pflag"
@@ -15,16 +16,16 @@ func NewInsecureServingOptions() *InsecureServingOptions {
 	return &InsecureServingOptions{}
 }
 
-func (i *InsecureServingOptions) Validate() []error {
-	var errors []error
+func (i *InsecureServingOptions) Validate() error {
+	var err error
 	if i.BindAddress == "" {
-		errors = append(errors, fmt.Errorf("bind-address is required"))
+		err = errors.Join(err, fmt.Errorf("bind-address is required"))
 	}
 	if i.BindPort == 0 {
-		errors = append(errors, fmt.Errorf("bind-port is required"))
+		err = errors.Join(err, fmt.Errorf("bind-port is required"))
 	}
-	return errors
-}	
+	return err
+}
 
 func (i *InsecureServingOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVarP(&i.BindAddress, "bind-address", "b", "127.0.0.1", "IP address on which to serve the --port, set to 0.0.0.0 for all interfaces")

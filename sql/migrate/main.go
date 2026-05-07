@@ -50,7 +50,7 @@ func main() {
 	}
 }
 
-func run() error {
+func run() (err error) {
 	var (
 		dsn           = flag.String("dsn", envOrDefault("DB_DSN", defaultDSN), "PostgreSQL DSN")
 		migrationsDir = flag.String("dir", "sql/migrations", "迁移 SQL 扫描根目录（递归）")
@@ -87,7 +87,11 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer func() {
+		if closeErr := db.Close(); closeErr != nil {
+			err = errors.Join(err, closeErr)
+		}
+	}()
 
 	if err = db.PingContext(ctx); err != nil {
 		return err
@@ -469,7 +473,7 @@ func isApplied(ctx context.Context, db *sql.DB, version, checksum string, force 
 	var existing string
 	err := db.QueryRowContext(ctx, `SELECT checksum FROM schema_migrations WHERE version = $1`, version).Scan(&existing)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return false, nil
 		}
 		return false, err

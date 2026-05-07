@@ -1,9 +1,9 @@
 package options
 
-func (o *Options) Validate() []error {
-	var errs []error
+import "errors"
 
-	errs = append(errs, o.InsecureServing.Validate()...)
-
-	return errs
+func (o *Options) Validate() error {
+	var err error
+	err = errors.Join(err, o.InsecureServing.Validate())
+	return err
 }
