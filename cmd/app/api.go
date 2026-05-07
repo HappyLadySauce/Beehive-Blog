@@ -58,6 +58,7 @@ func run(ctx context.Context, opts *options.Options) error {
 		InsecureServing: opts.InsecureServing,
 		Database:        opts.Database,
 		Cache:           opts.Cache,
+		JWT:             opts.JWT,
 	}
 	config.Init(cfg)
 

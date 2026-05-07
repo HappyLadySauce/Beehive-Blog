@@ -13,6 +13,7 @@ import (
 	"gorm.io/gorm"
 	"k8s.io/klog/v2"
 
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/config"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
 )
@@ -23,6 +24,7 @@ type ServiceContext struct {
 	Config *config.Config
 	DB     *gorm.DB
 	Cache  *redis.Client
+	Token  *auth.Issuer
 }
 
 // NewServiceContext opens PostgreSQL (GORM) and Redis, applies pool settings, and verifies connectivity.
@@ -36,6 +38,9 @@ func NewServiceContext(ctx context.Context, cfg *config.Config) (*ServiceContext
 	}
 	if cfg.Cache == nil {
 		return nil, fmt.Errorf("cache config is nil")
+	}
+	if cfg.JWT == nil {
+		return nil, fmt.Errorf("jwt config is nil")
 	}
 
 	dsn, err := postgreDSN(cfg.Database)
@@ -82,10 +87,23 @@ func NewServiceContext(ctx context.Context, cfg *config.Config) (*ServiceContext
 		"db", cfg.Cache.DB,
 	)
 
+	issuer, err := auth.NewIssuer(cfg.JWT)
+	if err != nil {
+		_ = rdb.Close()
+		_ = sqlDB.Close()
+		return nil, fmt.Errorf("init token issuer: %w", err)
+	}
+	klog.InfoS("JWT issuer initialized",
+		"issuer", cfg.JWT.Issuer,
+		"access-ttl", cfg.JWT.AccessTTL,
+		"refresh-ttl", cfg.JWT.RefreshTTL,
+	)
+
 	return &ServiceContext{
 		Config: cfg,
 		DB:     db,
 		Cache:  rdb,
+		Token:  issuer,
 	}, nil
 }
 

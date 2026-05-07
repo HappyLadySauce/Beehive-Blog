@@ -14,6 +14,7 @@ type Options struct {
 	InsecureServing *options.InsecureServingOptions `mapstructure:"insecure"`
 	Database        *options.PostgreOptions         `mapstructure:"database"`
 	Cache           *options.RedisOptions           `mapstructure:"cache"`
+	JWT             *options.JWTOptions             `mapstructure:"jwt"`
 }
 
 func NewOptions(basename string) *Options {
@@ -22,6 +23,7 @@ func NewOptions(basename string) *Options {
 		InsecureServing: options.NewInsecureServingOptions(),
 		Database:        options.NewPostgreOptions(),
 		Cache:           options.NewRedisOptions(),
+		JWT:             options.NewJWTOptions(),
 	}
 }
 
@@ -43,6 +45,9 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) *flag.NamedFlagSets {
 
 	cacheFS := nfs.FlagSet("Cache")
 	o.Cache.AddFlags(cacheFS)
+
+	jwtFS := nfs.FlagSet("JWT")
+	o.JWT.AddFlags(jwtFS)
 
 	// Merge all named flag sets into the root command FlagSet.
 	// 将所有命名标志集合并到根命令的 FlagSet。
