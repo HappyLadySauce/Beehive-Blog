@@ -12,7 +12,7 @@ var (
 	v1     *gin.RouterGroup
 )
 
-func Init() {
+func init() {
 	router = gin.Default()
 
 	// Set up HTTP routes and API groups.
