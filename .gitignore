@@ -1,0 +1,8 @@
+.vscode/
+.claude/
+.cursor/
+.trae/
+.codex/
+
+.tmp
+logs/
