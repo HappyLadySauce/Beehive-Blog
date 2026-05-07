@@ -46,7 +46,7 @@ func TestSchemaMigrationsEncodeAvatarFallbackSemantics(t *testing.T) {
 	t.Helper()
 
 	root := repoRootFromWorkingDir(t)
-	identitySQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "identity", "001_identity_users.sql"))
+	identitySQL := readIdentityUsersMigration(t, root)
 	attachmentSQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "attachment", "000_attachment_attachments.sql"))
 
 	if !strings.Contains(identitySQL, "NULL means use the application default avatar") {
@@ -61,7 +61,7 @@ func TestSchemaMigrationsPlaceAvatarSoftDeleteTriggerWithAttachmentLifecycle(t *
 	t.Helper()
 
 	root := repoRootFromWorkingDir(t)
-	identitySQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "identity", "001_identity_users.sql"))
+	identitySQL := readIdentityUsersMigration(t, root)
 	attachmentSQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "attachment", "000_attachment_attachments.sql"))
 
 	if strings.Contains(identitySQL, "trg_attachment_attachments_clear_users_avatar_on_soft_delete") {
@@ -117,6 +117,24 @@ func readRepoFile(t *testing.T, root, relativePath string) string {
 	body, err := os.ReadFile(filepath.Join(root, relativePath))
 	if err != nil {
 		t.Fatalf("read %s failed: %v", relativePath, err)
+	}
+	return string(body)
+}
+
+func readIdentityUsersMigration(t *testing.T, root string) string {
+	t.Helper()
+
+	matches, err := filepath.Glob(filepath.Join(root, "sql", "migrations", "identity", "*_identity_users.sql"))
+	if err != nil {
+		t.Fatalf("glob identity users migrations failed: %v", err)
+	}
+	if len(matches) != 1 {
+		t.Fatalf("expected exactly one identity users migration, got %d", len(matches))
+	}
+
+	body, err := os.ReadFile(matches[0])
+	if err != nil {
+		t.Fatalf("read %s failed: %v", matches[0], err)
 	}
 	return string(body)
 }
