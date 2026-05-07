@@ -27,8 +27,16 @@ CREATE TABLE attachment.attachments (
   etag            VARCHAR(80),
   checksum        VARCHAR(128),
 
-  -- Business status; soft-deletion is expressed by deleted_at, not status.
-  -- 业务状态；软删一律由 deleted_at 表达，不再用 status='deleted'。
+  -- Business visibility / lifecycle (orthogonal to soft-delete):
+  --   active   — default; shown in normal listings.
+  --   hidden   — not shown in public/default UI; file still retained; row still "live" (deleted_at NULL).
+  --   archived — long-term / cold retention; off active workflows; still not deleted until deleted_at set.
+  -- Soft-delete (deleted_at): logical removal; GORM omits row by default; may trigger cleanup of storage later.
+  -- 业务可见性与生命周期（与软删正交）：
+  --   active   — 默认；出现在常规列表。
+  --   hidden   — 公共/默认列表不展示；文件仍保留；行仍为「存活」（deleted_at 为空）。
+  --   archived — 长期归档/冷数据；退出活跃业务流；在未设置 deleted_at 前不算删除。
+  -- 软删（deleted_at）：逻辑删除；GORM 默认查询会排除；可配合后续清理对象存储。
   status          VARCHAR(16) NOT NULL DEFAULT 'active',
 
   -- GORM-standard timestamps. / GORM 标准时间字段。
@@ -39,7 +47,7 @@ CREATE TABLE attachment.attachments (
   CONSTRAINT chk_attachment_storage_type
     CHECK (storage_type IN ('s3', 'oss', 'local')),
   CONSTRAINT chk_attachment_status
-    CHECK (status IN ('active', 'archived')),
+    CHECK (status IN ('active', 'archived', 'hidden')),
   CONSTRAINT chk_attachment_remote_required
     CHECK (
       storage_type = 'local'
@@ -113,7 +121,7 @@ COMMENT ON COLUMN attachment.attachments.etag IS
 COMMENT ON COLUMN attachment.attachments.checksum IS
   'Content checksum, algorithm fixed in app layer (e.g. sha256). / 内容校验和，算法在应用层固定，例如 sha256。';
 COMMENT ON COLUMN attachment.attachments.status IS
-  'Business status: active | archived. Soft-deletion uses deleted_at. / 业务状态；软删由 deleted_at 表示。';
+  'Visibility/lifecycle: active | hidden | archived. hidden hides from default UI without deleting the row; archived marks cold retention; soft-deletion is always deleted_at. / 可见性与生命周期：active | hidden | archived。hidden 为默认列表不可见但未软删；archived 为归档；软删仅看 deleted_at。';
 COMMENT ON COLUMN attachment.attachments.created_at IS
   'Row creation timestamp, maintained by GORM CreatedAt. / 行创建时间，由 GORM CreatedAt 维护。';
 COMMENT ON COLUMN attachment.attachments.updated_at IS
