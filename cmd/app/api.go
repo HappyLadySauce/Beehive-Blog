@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -13,6 +12,8 @@ import (
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/options"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/router"
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/config"
 )
 
 func NewAPICommand(ctx context.Context, basename string) *cobra.Command {
@@ -53,10 +54,25 @@ func NewAPICommand(ctx context.Context, basename string) *cobra.Command {
 }
 
 func run(ctx context.Context, opts *options.Options) error {
+	cfg := &config.Config{
+		InsecureServing: opts.InsecureServing,
+		Database:        opts.Database,
+		Cache:           opts.Cache,
+	}
+	config.Init(cfg)
+
+	sc, err := svc.NewServiceContext(ctx, cfg)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if closeErr := sc.Close(); closeErr != nil {
+			klog.ErrorS(closeErr, "failed to close service context")
+		}
+	}()
 
 	serve(opts)
 	<-ctx.Done()
-	os.Exit(0)
 	return nil
 }
 
