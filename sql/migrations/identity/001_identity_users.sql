@@ -66,7 +66,7 @@ COMMENT ON COLUMN identity.users.nickname IS
 COMMENT ON COLUMN identity.users.phone IS
   'Optional phone number. / 可选手机号。';
 COMMENT ON COLUMN identity.users.avatar_attachment_id IS
-  'FK to attachment.attachments; resolve URL from that row. If attachment is soft-deleted, treat as no avatar in UI. / 外键指向附件表；URL 从该行解析。若附件已软删，界面视为无头像。';
+  'FK to attachment.attachments; resolve URL from that row. DB trigger clears this when the attachment row is soft-deleted (deleted_at set). / 外键指向附件表；URL 从该行解析。附件行软删时由库触发器自动清空本列。';
 COMMENT ON COLUMN identity.users.role IS
   'Authorization role: member | admin. / 授权角色。';
 COMMENT ON COLUMN identity.users.status IS
@@ -79,3 +79,30 @@ COMMENT ON COLUMN identity.users.updated_at IS
   'Row last-update timestamp, maintained by GORM UpdatedAt. / 行最近更新时间，由 GORM UpdatedAt 维护。';
 COMMENT ON COLUMN identity.users.deleted_at IS
   'Soft-deletion timestamp aligned with gorm.DeletedAt. / 与 gorm.DeletedAt 对齐的软删时间戳。';
+
+-- When an attachment becomes soft-deleted, unlink it from any user avatar FK.
+-- 附件行一旦软删，自动解除所有用户头像外键引用。
+CREATE OR REPLACE FUNCTION attachment.fn_clear_identity_users_avatar_on_attachment_soft_delete()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  UPDATE identity.users
+  SET avatar_attachment_id = NULL,
+      updated_at = NOW()
+  WHERE avatar_attachment_id = NEW.id;
+  RETURN NEW;
+END;
+$$;
+
+COMMENT ON FUNCTION attachment.fn_clear_identity_users_avatar_on_attachment_soft_delete() IS
+  'Clears identity.users.avatar_attachment_id when attachment.attachments is soft-deleted. / 附件软删时清空 identity.users.avatar_attachment_id。';
+
+CREATE TRIGGER trg_attachment_attachments_clear_users_avatar_on_soft_delete
+  AFTER UPDATE OF deleted_at ON attachment.attachments
+  FOR EACH ROW
+  WHEN (OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL)
+  EXECUTE PROCEDURE attachment.fn_clear_identity_users_avatar_on_attachment_soft_delete();
+
+COMMENT ON TRIGGER trg_attachment_attachments_clear_users_avatar_on_soft_delete ON attachment.attachments IS
+  'Unlink user avatars when this attachment row is soft-deleted. / 本附件软删时解除用户头像引用。';
