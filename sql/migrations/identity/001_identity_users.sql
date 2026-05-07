@@ -1,7 +1,9 @@
 CREATE SCHEMA IF NOT EXISTS identity;
 
--- identity.users: core user rows aligned with GORM soft-deletion (deleted_at).
--- identity.users：核心用户行，与 GORM 软删（deleted_at）对齐。
+-- identity.users: core user rows; avatar points at attachment.attachments (FK).
+-- Run after 000_attachment_attachments.sql (basename sort: 000 before 001).
+-- identity.users：核心用户；头像外键指向 attachment.attachments。
+-- 须在 000_attachment_attachments.sql 之后执行（按文件名前缀 000 < 001）。
 CREATE TABLE identity.users (
   id BIGSERIAL PRIMARY KEY,
 
@@ -10,10 +12,12 @@ CREATE TABLE identity.users (
   nickname VARCHAR(128) NULL,
   phone VARCHAR(16) NULL,
 
-  -- Avatar: stable key + storage backend; URL is derived at read time.
-  -- 头像：稳定键 + 存储后端；访问 URL 在读取时拼装或签名。
-  avatar_object_key TEXT NULL,
-  avatar_storage VARCHAR(16) NULL,
+  -- Avatar as registered attachment row (storage details live on attachments).
+  -- 头像登记为附件表一行，具体存储信息在 attachments 上。
+  avatar_attachment_id BIGINT NULL
+    CONSTRAINT fk_identity_users_avatar_attachment
+    REFERENCES attachment.attachments (id)
+    ON DELETE SET NULL,
 
   role VARCHAR(16) NOT NULL DEFAULT 'member',
   status VARCHAR(16) NOT NULL DEFAULT 'active',
@@ -26,14 +30,7 @@ CREATE TABLE identity.users (
   deleted_at TIMESTAMPTZ NULL,
 
   CONSTRAINT chk_identity_users_role CHECK (role IN ('member', 'admin')),
-  CONSTRAINT chk_identity_users_status CHECK (status IN ('pending', 'active', 'locked')),
-  CONSTRAINT chk_identity_users_avatar_storage CHECK (
-    avatar_storage IS NULL OR avatar_storage IN ('local', 'oss', 's3')
-  ),
-  CONSTRAINT chk_identity_users_avatar_pair CHECK (
-    (avatar_object_key IS NULL AND avatar_storage IS NULL)
-    OR (avatar_object_key IS NOT NULL AND avatar_storage IS NOT NULL)
-  )
+  CONSTRAINT chk_identity_users_status CHECK (status IN ('pending', 'active', 'disabled', 'locked'))
 );
 
 -- Unique login identifiers among live rows only (allows reuse after soft-delete).
@@ -54,6 +51,12 @@ CREATE INDEX idx_identity_users_deleted_at
   ON identity.users (deleted_at)
   WHERE deleted_at IS NOT NULL;
 
+-- Join / preload avatar attachment for live users who set one.
+-- 为设置了头像的活跃用户预加载附件行。
+CREATE INDEX idx_identity_users_avatar_attachment_id
+  ON identity.users (avatar_attachment_id)
+  WHERE deleted_at IS NULL AND avatar_attachment_id IS NOT NULL;
+
 COMMENT ON COLUMN identity.users.username IS
   'Unique login name among live rows. / 活跃行内唯一的登录名。';
 COMMENT ON COLUMN identity.users.email IS
@@ -62,14 +65,12 @@ COMMENT ON COLUMN identity.users.nickname IS
   'Display name. / 展示昵称。';
 COMMENT ON COLUMN identity.users.phone IS
   'Optional phone number. / 可选手机号。';
-COMMENT ON COLUMN identity.users.avatar_object_key IS
-  'Stable key: local relative path or remote object key (no scheme/host). / 稳定键：本地相对路径或远端对象键（不含协议与域名）。';
-COMMENT ON COLUMN identity.users.avatar_storage IS
-  'Avatar backend: local | oss | s3; pairs with avatar_object_key. / 头像存储后端，与 avatar_object_key 成对出现。';
+COMMENT ON COLUMN identity.users.avatar_attachment_id IS
+  'FK to attachment.attachments; resolve URL from that row. If attachment is soft-deleted, treat as no avatar in UI. / 外键指向附件表；URL 从该行解析。若附件已软删，界面视为无头像。';
 COMMENT ON COLUMN identity.users.role IS
   'Authorization role: member | admin. / 授权角色。';
 COMMENT ON COLUMN identity.users.status IS
-  'Account lifecycle: pending | active | locked. Soft account removal uses deleted_at. / 账户生命周期；销户软删用 deleted_at。';
+  'Account lifecycle: pending | active | disabled | locked. Soft account removal uses deleted_at. / 账户生命周期；销户软删用 deleted_at。';
 COMMENT ON COLUMN identity.users.last_login_at IS
   'Last successful login time. / 上次成功登录时间。';
 COMMENT ON COLUMN identity.users.created_at IS
