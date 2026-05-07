@@ -11,6 +11,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"k8s.io/klog/v2"
 
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/config"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
@@ -59,6 +60,11 @@ func NewServiceContext(ctx context.Context, cfg *config.Config) (*ServiceContext
 		_ = sqlDB.Close()
 		return nil, fmt.Errorf("postgres ping: %w", err)
 	}
+	klog.InfoS("PostgreSQL connection established",
+		"host", cfg.Database.Host,
+		"port", cfg.Database.Port,
+		"database", cfg.Database.DB,
+	)
 
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     net.JoinHostPort(cfg.Cache.Host, strconv.Itoa(cfg.Cache.Port)),
@@ -70,6 +76,11 @@ func NewServiceContext(ctx context.Context, cfg *config.Config) (*ServiceContext
 		_ = sqlDB.Close()
 		return nil, fmt.Errorf("redis ping: %w", err)
 	}
+	klog.InfoS("Redis connection established",
+		"host", cfg.Cache.Host,
+		"port", cfg.Cache.Port,
+		"db", cfg.Cache.DB,
+	)
 
 	return &ServiceContext{
 		Config: cfg,
