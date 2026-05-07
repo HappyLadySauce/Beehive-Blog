@@ -10,18 +10,18 @@ import (
 )
 
 type Options struct {
-	basename string
+	basename        string
 	InsecureServing *options.InsecureServingOptions `mapstructure:"insecure"`
-	Database *options.PostgreOptions `mapstructure:"database"`
-	Cache *options.RedisOptions `mapstructure:"cache"`
+	Database        *options.PostgreOptions         `mapstructure:"database"`
+	Cache           *options.RedisOptions           `mapstructure:"cache"`
 }
 
 func NewOptions(basename string) *Options {
 	return &Options{
-		basename: basename,
+		basename:        basename,
 		InsecureServing: options.NewInsecureServingOptions(),
-		Database: options.NewPostgreOptions(),
-		Cache: options.NewRedisOptions(),
+		Database:        options.NewPostgreOptions(),
+		Cache:           options.NewRedisOptions(),
 	}
 }
 
