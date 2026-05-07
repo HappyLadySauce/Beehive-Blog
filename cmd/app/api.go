@@ -22,7 +22,8 @@ func NewAPICommand(ctx context.Context, basename string) *cobra.Command {
 		Short:  basename + " is a web server",
 		Long:  basename + " is a web server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// bind command line flags to viper (command line args override config file)
+			// Bind command-line flags to Viper (CLI values override the config file).
+			// 将命令行标志绑定到 Viper（命令行参数覆盖配置文件）。
 			if err := viper.BindPFlags(cmd.Flags()); err != nil {
 				return err
 			}
@@ -31,11 +32,13 @@ func NewAPICommand(ctx context.Context, basename string) *cobra.Command {
 				return err
 			}
 
-			// initialize logs after flags are parsed and config is loaded
+			// Initialize logging after flags are parsed and configuration is loaded.
+			// 在解析完标志并加载配置后初始化日志。
 			logs.InitLogs()
 			defer logs.FlushLogs()
 
-			// validate options after flags & config are fully populated
+			// Validate options after flags and configuration are fully populated.
+			// 在标志与配置全部就绪后校验选项。
 			if errs := opts.Validate(); len(errs) != 0 {
 				for _, err := range errs {
 					fmt.Fprintln(os.Stderr, "Error:", err)

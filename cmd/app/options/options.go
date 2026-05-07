@@ -22,17 +22,20 @@ func NewOptions(basename string) *Options {
 }
 
 // AddFlags adds the flags to the specified FlagSet and returns the grouped flag sets.
+// AddFlags 将标志注册到指定的 FlagSet，并返回分组后的 NamedFlagSets。
 func (o *Options) AddFlags(fs *pflag.FlagSet) *flag.NamedFlagSets {
 	nfs := &flag.NamedFlagSets{}
 
-	// add the flags to the NamedFlagSets
+	// Register flags into each NamedFlagSet bucket.
+	// 将各组标志注册到对应的 NamedFlagSet。
 	configFS := nfs.FlagSet("Config")
 	options.AddConfigFlag(configFS, o.basename)
 
 	insecureServingFS := nfs.FlagSet("Insecure Serving")
 	o.InsecureServing.AddFlags(insecureServingFS)
 
-	// add the flags to the main Command
+	// Merge all named flag sets into the root command FlagSet.
+	// 将所有命名标志集合并到根命令的 FlagSet。
 	for _, name := range nfs.Order {
 		fs.AddFlagSet(nfs.FlagSets[name])
 	}

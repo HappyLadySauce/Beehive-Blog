@@ -24,8 +24,8 @@ func init() {
 		"support JSON, TOML, YAML, HCL, or Java properties formats.")
 }
 
-// addConfigFlag adds flags for a specific server to the specified FlagSet
-// object.
+// AddConfigFlag registers the shared --config flag and wires Viper loading for basename.
+// AddConfigFlag 注册共用的 --config 标志，并按 basename 接入 Viper 配置加载。
 func AddConfigFlag(fs *pflag.FlagSet, basename string) {
 	fs.AddFlag(pflag.Lookup(configFlagName))
 
@@ -35,8 +35,8 @@ func AddConfigFlag(fs *pflag.FlagSet, basename string) {
 
 	cobra.OnInitialize(func() {
 		if cfgFile != "" {
-			// Support ${ENV_VAR} expansion inside config files.
-			// This enables passing config values via environment variables (e.g. from make).
+			// Support ${ENV_VAR} expansion inside config files so values can be injected via the environment (e.g. from Make).
+			// 支持配置文件内的 ${ENV_VAR} 展开，以便通过环境变量注入配置（例如由 Makefile 传入）。
 			b, err := os.ReadFile(cfgFile)
 			if err != nil {
 				_, _ = fmt.Fprintf(os.Stderr, "Error: failed to read configuration file(%s): %v\n", cfgFile, err)
