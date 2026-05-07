@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -39,4 +40,57 @@ func writeMigrationTestFile(t *testing.T, root, relativePath string) {
 	if err := os.WriteFile(path, []byte("SELECT 1;\n"), 0o644); err != nil {
 		t.Fatalf("write migration file failed: %v", err)
 	}
+}
+
+func TestSchemaMigrationsEncodeAvatarFallbackSemantics(t *testing.T) {
+	t.Helper()
+
+	root := repoRootFromWorkingDir(t)
+	identitySQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "identity", "001_identity_users.sql"))
+	attachmentSQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "attachment", "000_attachment_attachments.sql"))
+
+	if !strings.Contains(identitySQL, "NULL means use the application default avatar") {
+		t.Fatalf("identity migration should document that NULL avatar_attachment_id falls back to the application default avatar")
+	}
+	if !strings.Contains(attachmentSQL, "hidden remains referenceable") {
+		t.Fatalf("attachment migration should document that hidden attachments can still be referenced")
+	}
+}
+
+func TestSchemaMigrationsPlaceAvatarSoftDeleteTriggerWithAttachmentLifecycle(t *testing.T) {
+	t.Helper()
+
+	root := repoRootFromWorkingDir(t)
+	identitySQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "identity", "001_identity_users.sql"))
+	attachmentSQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "attachment", "000_attachment_attachments.sql"))
+
+	if strings.Contains(identitySQL, "trg_attachment_attachments_clear_users_avatar_on_soft_delete") {
+		t.Fatalf("identity migration should not define attachment soft-delete trigger")
+	}
+	if !strings.Contains(attachmentSQL, "trg_attachment_attachments_clear_users_avatar_on_soft_delete") {
+		t.Fatalf("attachment migration should define attachment soft-delete trigger")
+	}
+	if !strings.Contains(attachmentSQL, "updated_at = NOW()") {
+		t.Fatalf("attachment migration should refresh user updated_at when avatar falls back to default")
+	}
+}
+
+func repoRootFromWorkingDir(t *testing.T) string {
+	t.Helper()
+
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("get working directory failed: %v", err)
+	}
+	return filepath.Clean(filepath.Join(wd, "..", ".."))
+}
+
+func readRepoFile(t *testing.T, root, relativePath string) string {
+	t.Helper()
+
+	body, err := os.ReadFile(filepath.Join(root, relativePath))
+	if err != nil {
+		t.Fatalf("read %s failed: %v", relativePath, err)
+	}
+	return string(body)
 }
