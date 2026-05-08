@@ -1,6 +1,7 @@
 package users
 
 import (
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/router"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/httpx"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
@@ -24,8 +25,9 @@ func NewUsersController(svcCtx *svc.ServiceContext) *UsersController {
 // Init 注册 users 域的 HTTP 路由。
 func Init(svcCtx *svc.ServiceContext) {
 	u := NewUsersController(svcCtx)
+	rl := middleware.NewAuthPublicRateLimiter(10.0/60.0, 12)
 
 	users := router.V1().Group("/users")
 
-	users.POST("/register", httpx.HandleJSON(u.Register))
+	users.POST("/register", rl.GinMiddleware(), httpx.HandleJSON(u.Register))
 }

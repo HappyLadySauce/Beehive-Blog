@@ -50,7 +50,7 @@ func (a *AuthController) loginByLocal(ctx *gin.Context, req *v1.LoginRequest) (*
 	var cred model.UserCredential
 	if err := a.svc.DB.Where("user_id = ?", user.ID).First(&cred).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, fmt.Errorf("invalid username or password")
+			return nil, fmt.Errorf("invalid account or password")
 		}
 		return nil, fmt.Errorf("query credential: %w", err)
 	}
@@ -58,13 +58,7 @@ func (a *AuthController) loginByLocal(ctx *gin.Context, req *v1.LoginRequest) (*
 	// Compare password hash.
 	// 比较密码哈希。
 	if err := passwd.Verify(req.Password, cred.PasswordHash); err != nil {
-		return nil, fmt.Errorf("invalid username or password")
-	}
-
-	// Reject disabled or locked accounts.
-	// 拒绝被禁用或锁定的账户。
-	if user.Status != "active" && user.Status != "pending" {
-		return nil, fmt.Errorf("account is %s", user.Status)
+		return nil, fmt.Errorf("invalid account or password")
 	}
 
 	return a.finalizeLogin(&user)
@@ -75,6 +69,20 @@ func (a *AuthController) loginByLocal(ctx *gin.Context, req *v1.LoginRequest) (*
 func (a *AuthController) loginByGitHub(ctx *gin.Context, req *v1.LoginRequest) (*v1.LoginResponse, error) {
 	if req.Code == "" {
 		return nil, fmt.Errorf("code is required for grant_type=%q", v1.GrantTypeGitHubOAuth2)
+	}
+
+	httpCtx := ctx.Request.Context()
+
+	if req.State == "" {
+		return nil, fmt.Errorf("invalid or expired oauth session")
+	}
+	ok, err := oauth.ConsumeGitHubOAuthState(httpCtx, a.svc.Cache, req.State)
+	if err != nil {
+		klog.ErrorS(err, "Failed to consume GitHub OAuth state")
+		return nil, fmt.Errorf("invalid or expired oauth session")
+	}
+	if !ok {
+		return nil, fmt.Errorf("invalid or expired oauth session")
 	}
 
 	cfg := a.svc.Config.GithubOAuth2
@@ -88,7 +96,6 @@ func (a *AuthController) loginByGitHub(ctx *gin.Context, req *v1.LoginRequest) (
 		},
 	}
 
-	httpCtx := ctx.Request.Context()
 	token, err := oauthCfg.Exchange(httpCtx, req.Code)
 	if err != nil {
 		klog.ErrorS(err, "Failed to exchange GitHub authorization code")
@@ -118,9 +125,21 @@ func (a *AuthController) loginByGitHub(ctx *gin.Context, req *v1.LoginRequest) (
 	return a.finalizeLogin(user)
 }
 
+// assertUserMayLogin rejects non-loginable account statuses for every auth path.
+// assertUserMayLogin 在所有认证路径上拒绝不可登录的账户状态。
+func assertUserMayLogin(user *model.User) error {
+	if user.Status != "active" && user.Status != "pending" {
+		return fmt.Errorf("account is %s", user.Status)
+	}
+	return nil
+}
+
 // finalizeLogin updates last_login_at and issues a JWT token pair.
 // finalizeLogin 更新 last_login_at 并签发 JWT 令牌对。
 func (a *AuthController) finalizeLogin(user *model.User) (*v1.LoginResponse, error) {
+	if err := assertUserMayLogin(user); err != nil {
+		return nil, err
+	}
 	now := time.Now()
 	if err := a.svc.DB.Model(user).Update("last_login_at", now).Error; err != nil {
 		klog.ErrorS(err, "Failed to update last_login_at", "uid", user.ID)

@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/router"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/httpx"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
@@ -24,8 +25,13 @@ func NewAuthController(svcCtx *svc.ServiceContext) *AuthController {
 // Init 注册 auth 域的 HTTP 路由。
 func Init(svcCtx *svc.ServiceContext) {
 	auth := NewAuthController(svcCtx)
+	// ~20 requests/min sustained per IP with short bursts for login/OAuth/refresh.
+	// 约每 IP 每分钟 20 次可持续速率，并允许短时突发（登录 / OAuth / 刷新）。
+	rl := middleware.NewAuthPublicRateLimiter(20.0/60.0, 25)
 
 	authGroup := router.V1().Group("/auth")
 
-	authGroup.POST("/login", httpx.HandleJSON(auth.Login))
+	authGroup.GET("/github/authorize", rl.GinMiddleware(), auth.GithubOAuthBegin)
+	authGroup.POST("/login", rl.GinMiddleware(), httpx.HandleJSON(auth.Login))
+	authGroup.POST("/refresh", rl.GinMiddleware(), httpx.HandleJSON(auth.Refresh))
 }

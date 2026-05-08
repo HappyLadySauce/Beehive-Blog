@@ -4,9 +4,10 @@ package oauth
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"strings"
 
@@ -35,7 +36,11 @@ type GitHubEmail struct {
 // FetchGitHubUser calls the GitHub user API and returns the parsed profile.
 // FetchGitHubUser 调用 GitHub 用户 API 并返回解析后的用户信息。
 func FetchGitHubUser(ctx context.Context, client *http.Client, userInfoURL string) (*GitHubUser, error) {
-	resp, err := client.Get(userInfoURL)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, userInfoURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +60,12 @@ func FetchGitHubUser(ctx context.Context, client *http.Client, userInfoURL strin
 // FetchGitHubPrimaryEmail returns the primary verified email from GitHub.
 // FetchGitHubPrimaryEmail 返回 GitHub 的主验证邮箱。
 func FetchGitHubPrimaryEmail(ctx context.Context, client *http.Client) (string, error) {
-	resp, err := client.Get("https://api.github.com/user/emails")
+	const emailsURL = "https://api.github.com/user/emails"
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, emailsURL, nil)
+	if err != nil {
+		return "", err
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -122,7 +132,10 @@ func FindOrCreateUser(db *gorm.DB, ghUser *GitHubUser, email string) (*model.Use
 			return &user, true, nil
 		}
 		if isUniqueViolation(result.Error) && attempt < 4 {
-			suffix := rand.Intn(9000) + 1000
+			suffix, err := randomUsernameSuffix()
+			if err != nil {
+				return nil, false, fmt.Errorf("create user: %w", err)
+			}
 			user.Username = fmt.Sprintf("%s_%d", ghUser.Login, suffix)
 			continue
 		}
@@ -134,6 +147,17 @@ func FindOrCreateUser(db *gorm.DB, ghUser *GitHubUser, email string) (*model.Use
 
 // isUniqueViolation checks whether the error is a PostgreSQL unique constraint violation (SQLSTATE 23505).
 // isUniqueViolation 检查错误是否为 PostgreSQL 唯一约束冲突（SQLSTATE 23505）。
+// randomUsernameSuffix returns a value in [1000, 9999] using crypto/rand.
+// randomUsernameSuffix 使用 crypto/rand 返回 [1000, 9999] 内的整数。
+func randomUsernameSuffix() (int, error) {
+	var buf [2]byte
+	if _, err := rand.Read(buf[:]); err != nil {
+		return 0, err
+	}
+	n := binary.BigEndian.Uint16(buf[:])
+	return int(n%9000) + 1000, nil
+}
+
 func isUniqueViolation(err error) bool {
 	if err == nil {
 		return false

@@ -15,7 +15,7 @@ import (
 // AuthMiddleware 返回验证 Bearer 令牌并将解析结果注入请求上下文的 Gin 处理器。
 func AuthMiddleware(svcCtx *svc.ServiceContext) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		header := ctx.GetHeader("Authorization")
+		header := strings.TrimSpace(ctx.GetHeader("Authorization"))
 		if header == "" {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"code":    401,
@@ -25,7 +25,8 @@ func AuthMiddleware(svcCtx *svc.ServiceContext) gin.HandlerFunc {
 			return
 		}
 
-		if !strings.HasPrefix(header, "Bearer ") {
+		scheme, tokenString, ok := strings.Cut(header, " ")
+		if !ok || !strings.EqualFold(scheme, "Bearer") || tokenString == "" {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"code":    401,
 				"message": "authorization header must use Bearer scheme",
@@ -33,8 +34,7 @@ func AuthMiddleware(svcCtx *svc.ServiceContext) gin.HandlerFunc {
 			})
 			return
 		}
-
-		tokenString := strings.TrimPrefix(header, "Bearer ")
+		tokenString = strings.TrimSpace(tokenString)
 		if tokenString == "" {
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"code":    401,

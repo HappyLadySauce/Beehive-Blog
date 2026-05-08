@@ -52,3 +52,26 @@ type LoginResponse struct {
 	// Token 为登录成功后自动签发的鉴权凭证集合（自动登录）。
 	Token AuthToken `json:"token"`
 }
+
+// GithubOAuthBeginResponse is returned by GET /auth/github/authorize before redirecting to GitHub.
+// GithubOAuthBeginResponse 为跳转 GitHub 前 GET /auth/github/authorize 的响应体。
+type GithubOAuthBeginResponse struct {
+	// State must be echoed to POST /auth/login (github_oauth2) and matches a Redis one-time entry.
+	// State 必须在 POST /auth/login（github_oauth2）回传，并与 Redis 中一次性条目匹配。
+	State string `json:"state"`
+	// AuthURL is the full GitHub authorize URL including client_id, redirect_uri, scope, and state.
+	// AuthURL 为完整的 GitHub 授权 URL（含 client_id、redirect_uri、scope、state）。
+	AuthURL string `json:"auth_url"`
+}
+
+// RefreshRequest carries a refresh JWT to exchange for a new access token.
+// RefreshRequest 携带用于换取新 access 的 refresh JWT。
+type RefreshRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
+// RefreshResponse returns a new access token bundle (refresh token unchanged on the client).
+// RefreshResponse 返回新的 access 令牌集合（客户端侧 refresh 令牌不变）。
+type RefreshResponse struct {
+	Token AuthToken `json:"token"`
+}

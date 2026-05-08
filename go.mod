@@ -14,6 +14,7 @@ require (
 	github.com/swaggo/gin-swagger v1.6.1
 	golang.org/x/crypto v0.47.0
 	golang.org/x/oauth2 v0.36.0
+	golang.org/x/time v0.15.0
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.31.1
 	k8s.io/component-base v0.36.0
