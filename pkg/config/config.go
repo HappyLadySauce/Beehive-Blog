@@ -13,6 +13,7 @@ type Config struct {
 	Database        *options.PostgreOptions         `mapstructure:"database"`
 	Cache           *options.RedisOptions           `mapstructure:"cache"`
 	JWT             *options.JWTOptions             `mapstructure:"jwt"`
+	GithubOAuth2    *options.GithubOAuth2Options    `mapstructure:"github-oauth2"`
 }
 
 var (

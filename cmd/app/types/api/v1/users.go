@@ -23,8 +23,6 @@ type RegisterRequest struct {
 	AvatarAttachmentID *int64 `json:"avatar_attachment_id" binding:"omitempty"`
 }
 
-
-
 // RegisterResponse is the safe public subset returned after a successful registration (no secrets except issued tokens).
 // RegisterResponse 为注册成功后的安全公开字段子集（除签发的令牌外不含任何敏感数据）。
 type RegisterResponse struct {

@@ -12,6 +12,8 @@ import (
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/options"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/router"
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/auth"
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/users"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/config"
 )
@@ -59,6 +61,7 @@ func run(ctx context.Context, opts *options.Options) error {
 		Database:        opts.Database,
 		Cache:           opts.Cache,
 		JWT:             opts.JWT,
+		GithubOAuth2:    opts.GithubOAuth2,
 	}
 	config.Init(cfg)
 
@@ -71,6 +74,11 @@ func run(ctx context.Context, opts *options.Options) error {
 			klog.ErrorS(closeErr, "failed to close service context")
 		}
 	}()
+
+	// Initialize HTTP route handlers after the service context is ready.
+	// 在服务上下文就绪后初始化 HTTP 路由处理器。
+	auth.Init(sc)
+	users.Init(sc)
 
 	serve(opts)
 	<-ctx.Done()

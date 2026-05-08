@@ -8,5 +8,6 @@ func (o *Options) Validate() error {
 	err = errors.Join(err, o.Database.Validate())
 	err = errors.Join(err, o.Cache.Validate())
 	err = errors.Join(err, o.JWT.Validate())
+	err = errors.Join(err, o.GithubOAuth2.Validate())
 	return err
 }
