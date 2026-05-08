@@ -1,22 +1,27 @@
 package users
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 	"k8s.io/klog/v2"
 
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/passwd"
 	authsession "github.com/HappyLadySauce/Beehive-Blog/pkg/auth/session"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
 )
 
 // Register creates a new user and issues JWT credentials (auto-login).
+// Avatar binding is intentionally omitted here (attachments lack ownership columns); bind avatars after authenticated flows.
 // Register 创建新用户并签发 JWT 凭证（自动登录）。
+// 头像绑定有意不在此完成（附件表无归属列）；请在登录态流程后再绑定头像。
 func (u *UsersController) Register(ctx *gin.Context, req *v1.RegisterRequest) (*v1.RegisterResponse, error) {
 	// Check username uniqueness among live rows.
 	// 检查用户名在活跃行中的唯一性。
@@ -63,14 +68,20 @@ func (u *UsersController) Register(ctx *gin.Context, req *v1.RegisterRequest) (*
 	if req.Phone != "" {
 		user.Phone = &req.Phone
 	}
-	if req.AvatarAttachmentID != nil {
-		user.AvatarAttachmentID = req.AvatarAttachmentID
+
+	meta := authsession.ClientMeta{
+		IP:        ctx.ClientIP(),
+		UserAgent: ctx.Request.UserAgent(),
 	}
 
-	// Create user and credential in a transaction.
-	// 在事务中创建用户和凭证。
+	var pair jwt.TokenPair
+
 	err = u.svc.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&user).Error; err != nil {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+				return mapRegisterUniqueViolation(pgErr)
+			}
 			return fmt.Errorf("create user: %w", err)
 		}
 
@@ -81,26 +92,29 @@ func (u *UsersController) Register(ctx *gin.Context, req *v1.RegisterRequest) (*
 			UpdatedAt:    now,
 		}
 		if err := tx.Create(&cred).Error; err != nil {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+				return mapRegisterUniqueViolation(pgErr)
+			}
 			return fmt.Errorf("create credential: %w", err)
 		}
 
+		p, _, err := authsession.IssuePairInTx(tx, u.svc.Token, &user, meta)
+		if err != nil {
+			return fmt.Errorf("issue token pair: %w", err)
+		}
+		pair = p
 		return nil
 	})
 	if err != nil {
+		var appErr *common.AppError
+		if errors.As(err, &appErr) {
+			return nil, appErr
+		}
 		return nil, common.NewInternal("failed to register user", err)
 	}
 
 	klog.InfoS("User registered", "uid", user.ID, "username", user.Username)
-
-	// Issue a session-bound token pair for auto-login after registration.
-	// 签发绑定会话的令牌对，实现注册后自动登录。
-	pair, _, err := authsession.IssuePair(u.svc.DB, u.svc.Token, &user, authsession.ClientMeta{
-		IP:        ctx.ClientIP(),
-		UserAgent: ctx.Request.UserAgent(),
-	})
-	if err != nil {
-		return nil, common.NewInternal("failed to issue token", err)
-	}
 
 	return &v1.RegisterResponse{
 		Token: v1.AuthToken{
@@ -110,4 +124,17 @@ func (u *UsersController) Register(ctx *gin.Context, req *v1.RegisterRequest) (*
 			RefreshToken: pair.Refresh.Token,
 		},
 	}, nil
+}
+
+func mapRegisterUniqueViolation(pgErr *pgconn.PgError) *common.AppError {
+	// Map stable constraint names to safe API-facing conflict messages (Err left nil to skip noisy 4xx logs).
+	// 将稳定约束名映射为安全的冲突文案（Err 置 nil，避免 4xx 路径触发冗余 Error 日志）。
+	switch pgErr.ConstraintName {
+	case "ux_identity_users_username":
+		return common.NewConflict("username is already taken", nil)
+	case "ux_identity_users_email":
+		return common.NewConflict("email is already registered", nil)
+	default:
+		return common.NewConflict("registration conflict", nil)
+	}
 }

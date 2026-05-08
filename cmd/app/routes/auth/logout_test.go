@@ -33,7 +33,7 @@ func TestLogoutRevokesCurrentSession(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
 
-	controller := &AuthController{svc: svc.ServiceContext{DB: db}}
+	controller := &AuthController{svc: &svc.ServiceContext{DB: db}}
 	rec := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(rec)
 	ctx.Request = httptest.NewRequest(http.MethodPost, "/api/v1/auth/logout", nil)

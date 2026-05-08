@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
@@ -224,5 +225,6 @@ func randomUsernameSuffix() (int, error) {
 }
 
 func isUniqueViolation(err error) bool {
-	return errors.Is(err, gorm.ErrDuplicatedKey)
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "23505"
 }

@@ -18,9 +18,6 @@ type RegisterRequest struct {
 	// Phone is an optional phone number (max 16 per DB).
 	// Phone 为可选手机号（数据库最长 16）。
 	Phone string `json:"phone" binding:"omitempty,max=16"`
-	// AvatarAttachmentID links to attachment.attachments when the client pre-uploaded an avatar; nil means omit.
-	// AvatarAttachmentID 在客户端已预上传头像时指向 attachment.attachments；指针为 nil 表示不传该字段。
-	AvatarAttachmentID *int64 `json:"avatar_attachment_id" binding:"omitempty"`
 }
 
 // RegisterResponse is the safe public subset returned after a successful registration (no secrets except issued tokens).

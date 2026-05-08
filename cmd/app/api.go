@@ -65,6 +65,10 @@ func run(ctx context.Context, opts *options.Options) error {
 	}
 	config.Init(cfg)
 
+	if err := router.ConfigureTrustedProxies(opts.InsecureServing.TrustedProxies); err != nil {
+		return fmt.Errorf("configure trusted proxies: %w", err)
+	}
+
 	sc, err := svc.NewServiceContext(ctx, cfg)
 	if err != nil {
 		return err

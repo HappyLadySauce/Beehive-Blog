@@ -10,14 +10,14 @@ import (
 // UsersController handles HTTP routes for users.
 // UsersController 处理用户相关 HTTP 路由。
 type AuthController struct {
-	svc svc.ServiceContext
+	svc *svc.ServiceContext
 }
 
 // NewAuthController builds a AuthController bound to the given service context.
 // NewAuthController 基于给定 ServiceContext 构造 AuthController。
 func NewAuthController(svcCtx *svc.ServiceContext) *AuthController {
 	return &AuthController{
-		svc: *svcCtx,
+		svc: svcCtx,
 	}
 }
 

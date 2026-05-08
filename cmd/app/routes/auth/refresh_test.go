@@ -234,7 +234,7 @@ func newRefreshTestController(t *testing.T) (*AuthController, sqlmock.Sqlmock, *
 		t.Fatalf("NewIssuer() error = %v", err)
 	}
 	return &AuthController{
-		svc: svc.ServiceContext{
+		svc: &svc.ServiceContext{
 			DB:    db,
 			Token: issuer,
 		},

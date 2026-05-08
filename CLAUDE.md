@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### 启动流程
 
-`cmd/main.go` → `cmd/app/api.go:NewAPICommand()` → cobra 命令解析标志 → Viper 加载 YAML 配置 → `opts.Validate()` → `run()` → `config.Init()` → `svc.NewServiceContext()` 打开 PG + Redis → `serve()` 启动 Gin HTTP 路由
+`cmd/main.go` → `cmd/app/api.go:NewAPICommand()` → cobra 命令解析标志 → Viper 加载 YAML 配置 → `opts.Validate()` → `run()` → `config.Init()` → `router.ConfigureTrustedProxies()` → `svc.NewServiceContext()` 打开 PG + Redis → `serve()` 启动 Gin HTTP 路由
 
 ### 配置加载（Kubernetes 风格 CLI）
 
@@ -33,7 +33,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 | 选项组 | 结构体 | 对应配置项 |
 |--------|--------|-----------|
-| 不安全监听 | `InsecureServingOptions` | `bind-address`, `bind-port` |
+| 不安全监听 | `InsecureServingOptions` | `bind-address`, `bind-port`, `trusted-proxies` |
 | PostgreSQL | `PostgreOptions` | `host`, `port`, `user`, `password`, `db`, `ssl-mode`, 连接池参数 |
 | Redis | `RedisOptions` | `host`, `port`, `password`, `db` |
 
