@@ -13,7 +13,7 @@ import (
 	"gorm.io/gorm"
 	"k8s.io/klog/v2"
 
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/config"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
 )
@@ -24,7 +24,7 @@ type ServiceContext struct {
 	Config *config.Config
 	DB     *gorm.DB
 	Cache  *redis.Client
-	Token  *auth.Issuer
+	Token  *jwt.Issuer
 }
 
 // NewServiceContext opens PostgreSQL (GORM) and Redis, applies pool settings, and verifies connectivity.
@@ -87,7 +87,7 @@ func NewServiceContext(ctx context.Context, cfg *config.Config) (*ServiceContext
 		"db", cfg.Cache.DB,
 	)
 
-	issuer, err := auth.NewIssuer(cfg.JWT)
+	issuer, err := jwt.NewIssuer(cfg.JWT)
 	if err != nil {
 		_ = rdb.Close()
 		_ = sqlDB.Close()

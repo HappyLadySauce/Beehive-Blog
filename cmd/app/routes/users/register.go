@@ -5,17 +5,13 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"k8s.io/klog/v2"
 
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/passwd"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
 )
-
-// bcryptCost balances security and server load; 12 is current industry default.
-// bcryptCost 平衡安全性与服务器负载；12 为当前业界默认值。
-const bcryptCost = 12
 
 // Register creates a new user and issues JWT credentials (auto-login).
 // Register 创建新用户并签发 JWT 凭证（自动登录）。
@@ -41,7 +37,7 @@ func (u *UsersController) Register(ctx *gin.Context, req *v1.RegisterRequest) (*
 
 	// Hash the password with bcrypt.
 	// 用 bcrypt 哈希密码。
-	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcryptCost)
+	hash, err := passwd.Hash(req.Password)
 	if err != nil {
 		return nil, fmt.Errorf("hash password: %w", err)
 	}
@@ -78,7 +74,7 @@ func (u *UsersController) Register(ctx *gin.Context, req *v1.RegisterRequest) (*
 
 		cred := model.UserCredential{
 			UserID:       user.ID,
-			PasswordHash: string(hash),
+			PasswordHash: hash,
 			CreatedAt:    now,
 			UpdatedAt:    now,
 		}

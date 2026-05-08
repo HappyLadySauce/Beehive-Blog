@@ -7,21 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth"
-)
-
-// Context keys set by AuthMiddleware for downstream handlers.
-// AuthMiddleware 为下游处理器注入的 Context 键。
-const (
-	// ClaimsKey stores the parsed *auth.Claims.
-	// ClaimsKey 存储解析后的 *auth.Claims。
-	ClaimsKey = "claims"
-	// UIDKey stores the authenticated user ID as int64.
-	// UIDKey 存储已认证用户 ID（int64）。
-	UIDKey = "uid"
-	// RoleKey stores the authenticated user role as string.
-	// RoleKey 存储已认证用户角色（string）。
-	RoleKey = "role"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
 )
 
 // AuthMiddleware returns a Gin handler that validates the Bearer token
@@ -68,24 +54,10 @@ func AuthMiddleware(svcCtx *svc.ServiceContext) gin.HandlerFunc {
 			return
 		}
 
-		ctx.Set(ClaimsKey, claims)
-		ctx.Set(UIDKey, claims.UID)
-		ctx.Set(RoleKey, claims.Role)
+		ctx.Set(jwt.ClaimsKey, claims)
+		ctx.Set(jwt.UIDKey, claims.UID)
+		ctx.Set(jwt.RoleKey, claims.Role)
 
 		ctx.Next()
 	}
-}
-
-// GetClaims extracts the *auth.Claims from the Gin context; returns nil if absent.
-// GetClaims 从 Gin 上下文提取 *auth.Claims；不存在时返回 nil。
-func GetClaims(ctx *gin.Context) *auth.Claims {
-	v, ok := ctx.Get(ClaimsKey)
-	if !ok {
-		return nil
-	}
-	claims, ok := v.(*auth.Claims)
-	if !ok {
-		return nil
-	}
-	return claims
 }

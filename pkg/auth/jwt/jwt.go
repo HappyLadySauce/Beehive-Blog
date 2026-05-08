@@ -1,6 +1,6 @@
-// Package auth issues and verifies HMAC-SHA256 JWT credentials.
-// Package auth 提供 HMAC-SHA256 JWT 凭证的签发与验证能力。
-package auth
+// Package jwt issues and verifies HMAC-SHA256 JWT credentials.
+// Package jwt 提供 HMAC-SHA256 JWT 凭证的签发与验证能力。
+package jwt
 
 import (
 	"errors"
@@ -8,7 +8,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/gin-gonic/gin"
+	jwt5 "github.com/golang-jwt/jwt/v5"
 
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
 )
@@ -34,7 +35,7 @@ type Claims struct {
 	UID  int64  `json:"uid"`
 	Role string `json:"role"`
 	Use  string `json:"use"`
-	jwt.RegisteredClaims
+	jwt5.RegisteredClaims
 }
 
 // SignedToken is an issued JWT plus its lifetime expressed in seconds.
@@ -129,17 +130,17 @@ func (i *Issuer) IssueAccess(uid int64, role string) (SignedToken, error) {
 // Parse verifies an HS256 token, asserts iss + alg, and returns the decoded Claims.
 // Parse 验证 HS256 令牌、校验 iss 与签名算法，并返回解码后的 Claims。
 func (i *Issuer) Parse(tokenString string) (*Claims, error) {
-	parsed, err := jwt.ParseWithClaims(
+	parsed, err := jwt5.ParseWithClaims(
 		tokenString,
 		&Claims{},
-		func(t *jwt.Token) (any, error) {
-			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+		func(t *jwt5.Token) (any, error) {
+			if _, ok := t.Method.(*jwt5.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method %q", t.Header["alg"])
 			}
 			return i.secret, nil
 		},
-		jwt.WithIssuer(i.issuer),
-		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Alg()}),
+		jwt5.WithIssuer(i.issuer),
+		jwt5.WithValidMethods([]string{jwt5.SigningMethodHS256.Alg()}),
 	)
 	if err != nil {
 		return nil, err
@@ -185,13 +186,41 @@ func (i *Issuer) sign(uid int64, role, use string, ttl time.Duration) (string, e
 		UID:  uid,
 		Role: role,
 		Use:  use,
-		RegisteredClaims: jwt.RegisteredClaims{
+		RegisteredClaims: jwt5.RegisteredClaims{
 			Issuer:    i.issuer,
 			Subject:   strconv.FormatInt(uid, 10),
-			IssuedAt:  jwt.NewNumericDate(now),
-			NotBefore: jwt.NewNumericDate(now),
-			ExpiresAt: jwt.NewNumericDate(now.Add(ttl)),
+			IssuedAt:  jwt5.NewNumericDate(now),
+			NotBefore: jwt5.NewNumericDate(now),
+			ExpiresAt: jwt5.NewNumericDate(now.Add(ttl)),
 		},
 	}
-	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(i.secret)
+	return jwt5.NewWithClaims(jwt5.SigningMethodHS256, claims).SignedString(i.secret)
+}
+
+// Context keys set by AuthMiddleware for downstream handlers.
+// AuthMiddleware 为下游处理器注入的 Context 键。
+const (
+	// ClaimsKey stores the parsed *Claims.
+	// ClaimsKey 存储解析后的 *Claims。
+	ClaimsKey = "claims"
+	// UIDKey stores the authenticated user ID as int64.
+	// UIDKey 存储已认证用户 ID（int64）。
+	UIDKey = "uid"
+	// RoleKey stores the authenticated user role as string.
+	// RoleKey 存储已认证用户角色（string）。
+	RoleKey = "role"
+)
+
+// GetClaims extracts the *Claims from the Gin context; returns nil if absent.
+// GetClaims 从 Gin 上下文提取 *Claims；不存在时返回 nil。
+func GetClaims(ctx *gin.Context) *Claims {
+	v, ok := ctx.Get(ClaimsKey)
+	if !ok {
+		return nil
+	}
+	claims, ok := v.(*Claims)
+	if !ok {
+		return nil
+	}
+	return claims
 }
