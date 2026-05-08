@@ -152,6 +152,41 @@ func TestRefreshRejectsAccessTokenUse(t *testing.T) {
 	}
 }
 
+func TestRefreshRejectsJTIOrHashMismatch(t *testing.T) {
+	controller, mock, issuer := newRefreshTestController(t)
+	pair, err := issuer.IssueSessionPair(42, "member", 7, "old-jti")
+	if err != nil {
+		t.Fatalf("IssueSessionPair() error = %v", err)
+	}
+
+	mock.ExpectBegin()
+	expectSessionQuery(mock, sessionRow{
+		id:         7,
+		userID:     42,
+		hash:       "different-hash-not-matching",
+		jti:        "different-jti",
+		expiresAt:  time.Now().Add(time.Hour),
+		revokedAt:  nil,
+		rotatedAt:  nil,
+		createdAt:  time.Now(),
+		updatedAt:  time.Now(),
+		createdIP:  "203.0.113.1",
+		userAgent:  "old-agent",
+		lastUsedAt: nil,
+	})
+	expectRevokeUpdate(mock)
+	mock.ExpectCommit()
+
+	_, err = controller.Refresh(testGinContext(), &v1.RefreshRequest{RefreshToken: pair.Refresh.Token})
+	if err == nil {
+		t.Fatalf("Refresh() error = nil, want error")
+	}
+	assertAppError(t, err, http.StatusUnauthorized, "invalid or expired refresh token")
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet sql expectations: %v", err)
+	}
+}
+
 type sessionRow struct {
 	id         int64
 	userID     int64

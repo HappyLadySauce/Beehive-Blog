@@ -7,10 +7,10 @@ import (
 	"crypto/rand"
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -224,9 +224,5 @@ func randomUsernameSuffix() (int, error) {
 }
 
 func isUniqueViolation(err error) bool {
-	if err == nil {
-		return false
-	}
-	msg := err.Error()
-	return strings.Contains(msg, "23505") || strings.Contains(msg, "duplicate key")
+	return errors.Is(err, gorm.ErrDuplicatedKey)
 }
