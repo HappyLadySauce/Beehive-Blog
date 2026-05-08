@@ -15,7 +15,7 @@ func HandleJSON[Req any, Resp any](fn func(*gin.Context, *Req) (Resp, error)) gi
 		var req Req
 		if err := ctx.ShouldBindJSON(&req); err != nil {
 			klog.ErrorS(err, "Failed to bind JSON request body")
-			common.Fail(ctx, err)
+			common.Fail(ctx, common.NewBadRequest("invalid request body", err))
 			return
 		}
 		resp, err := fn(ctx, &req)

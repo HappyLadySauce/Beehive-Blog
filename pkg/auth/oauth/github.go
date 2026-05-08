@@ -103,6 +103,8 @@ func FetchGitHubPrimaryEmail(ctx context.Context, client *http.Client) (string, 
 // FindOrCreateUser looks up a user by email; if not found, creates one from GitHub profile data.
 // FindOrCreateUser 按邮箱查找用户；未找到则基于 GitHub 资料创建。
 func FindOrCreateUser(db *gorm.DB, ghUser *GitHubUser, email string) (*model.User, bool, error) {
+	// TODO: Replace email-only matching with a provider identity table keyed by GitHub ID.
+	// TODO: 后续以 GitHub ID 为键引入第三方身份绑定表，替换当前仅按邮箱匹配的策略。
 	var user model.User
 	err := db.Where("email = ?", email).First(&user).Error
 	if err == nil {

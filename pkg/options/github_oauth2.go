@@ -1,11 +1,11 @@
 package options
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 
 	"github.com/spf13/pflag"
-	"errors"
 )
 
 // GithubOAuth2Options holds configuration for the GitHub OAuth2 authorization code flow.
@@ -29,6 +29,9 @@ type GithubOAuth2Options struct {
 	// UserInfoURL is the GitHub API endpoint for fetching the authenticated user profile.
 	// UserInfoURL 为获取已认证用户信息的 GitHub API 端点。
 	UserInfoURL string `json:"user-info-url" mapstructure:"user-info-url"`
+	// AllowNonGitHubEndpoints permits non-default OAuth endpoints for local integration tests only.
+	// AllowNonGitHubEndpoints 仅允许本地集成测试使用非默认 OAuth 端点。
+	AllowNonGitHubEndpoints bool `json:"allow-non-github-endpoints" mapstructure:"allow-non-github-endpoints"`
 }
 
 // NewGithubOAuth2Options returns an empty GithubOAuth2Options; defaults are applied via AddFlags.
@@ -62,7 +65,7 @@ func (g *GithubOAuth2Options) Validate() error {
 	}
 	// Validate URL formats for non-empty values.
 	// 对非空值校验 URL 格式。
-	for _, u := range []struct {
+	for _, endpoint := range []struct {
 		name string
 		val  string
 	}{
@@ -71,13 +74,48 @@ func (g *GithubOAuth2Options) Validate() error {
 		{"token-url", g.TokenURL},
 		{"user-info-url", g.UserInfoURL},
 	} {
-		if u.val != "" {
-			if _, parseErr := url.Parse(u.val); parseErr != nil {
-				err = errors.Join(err, fmt.Errorf("github %s is not a valid URL: %w", u.name, parseErr))
+		if endpoint.val != "" {
+			parsed, parseErr := parseAbsoluteHTTPURL(endpoint.name, endpoint.val)
+			if parseErr != nil {
+				err = errors.Join(err, parseErr)
+				continue
+			}
+			if endpoint.name != "redirect-url" && !g.AllowNonGitHubEndpoints {
+				if endpointErr := validateGitHubEndpoint(endpoint.name, parsed); endpointErr != nil {
+					err = errors.Join(err, endpointErr)
+				}
 			}
 		}
 	}
 	return err
+}
+
+func parseAbsoluteHTTPURL(name, raw string) (*url.URL, error) {
+	parsed, err := url.Parse(raw)
+	if err != nil {
+		return nil, fmt.Errorf("github %s is not a valid URL: %w", name, err)
+	}
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return nil, fmt.Errorf("github %s must use http or https scheme", name)
+	}
+	if parsed.Host == "" {
+		return nil, fmt.Errorf("github %s must be an absolute URL with host", name)
+	}
+	return parsed, nil
+}
+
+func validateGitHubEndpoint(name string, parsed *url.URL) error {
+	if parsed.Scheme != "https" {
+		return fmt.Errorf("github %s must use https scheme", name)
+	}
+	expectedHost := "github.com"
+	if name == "user-info-url" {
+		expectedHost = "api.github.com"
+	}
+	if parsed.Hostname() != expectedHost {
+		return fmt.Errorf("github %s host must be %s", name, expectedHost)
+	}
+	return nil
 }
 
 // AddFlags registers GitHub OAuth2 flags on the supplied FlagSet.
@@ -89,4 +127,5 @@ func (g *GithubOAuth2Options) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&g.AuthURL, "github-auth-url", "https://github.com/login/oauth/authorize", "GitHub authorization endpoint")
 	fs.StringVar(&g.TokenURL, "github-token-url", "https://github.com/login/oauth/access_token", "GitHub token exchange endpoint")
 	fs.StringVar(&g.UserInfoURL, "github-user-info-url", "https://api.github.com/user", "GitHub user info API endpoint")
+	fs.BoolVar(&g.AllowNonGitHubEndpoints, "github-allow-non-github-endpoints", false, "Allow non-GitHub OAuth endpoints for local integration tests only")
 }

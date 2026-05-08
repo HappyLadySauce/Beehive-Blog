@@ -9,6 +9,7 @@ import (
 	"k8s.io/klog/v2"
 
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/passwd"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
 )
@@ -20,18 +21,18 @@ func (u *UsersController) Register(ctx *gin.Context, req *v1.RegisterRequest) (*
 	// 检查用户名在活跃行中的唯一性。
 	var existing model.User
 	if err := u.svc.DB.Where("username = ?", req.Username).First(&existing).Error; err == nil {
-		return nil, fmt.Errorf("username %q is already taken", req.Username)
+		return nil, common.NewConflict("username is already taken", nil)
 	} else if err != gorm.ErrRecordNotFound {
-		return nil, fmt.Errorf("check username: %w", err)
+		return nil, common.NewInternal("failed to register user", fmt.Errorf("check username: %w", err))
 	}
 
 	// Check email uniqueness if provided.
 	// 如提供邮箱则检查其唯一性。
 	if req.Email != "" {
 		if err := u.svc.DB.Where("email = ?", req.Email).First(&existing).Error; err == nil {
-			return nil, fmt.Errorf("email %q is already registered", req.Email)
+			return nil, common.NewConflict("email is already registered", nil)
 		} else if err != gorm.ErrRecordNotFound {
-			return nil, fmt.Errorf("check email: %w", err)
+			return nil, common.NewInternal("failed to register user", fmt.Errorf("check email: %w", err))
 		}
 	}
 
@@ -39,16 +40,16 @@ func (u *UsersController) Register(ctx *gin.Context, req *v1.RegisterRequest) (*
 	// 用 bcrypt 哈希密码。
 	hash, err := passwd.Hash(req.Password)
 	if err != nil {
-		return nil, fmt.Errorf("hash password: %w", err)
+		return nil, common.NewInternal("failed to register user", fmt.Errorf("hash password: %w", err))
 	}
 
 	// Build the user row; pointer fields default to nil when empty.
 	// 构造用户行；指针字段为空时即为 nil。
 	now := time.Now()
 	user := model.User{
-		Username: req.Username,
-		Role:     "member",
-		Status:   "active",
+		Username:  req.Username,
+		Role:      "member",
+		Status:    "active",
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
@@ -85,7 +86,7 @@ func (u *UsersController) Register(ctx *gin.Context, req *v1.RegisterRequest) (*
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, common.NewInternal("failed to register user", err)
 	}
 
 	klog.InfoS("User registered", "uid", user.ID, "username", user.Username)
@@ -94,7 +95,7 @@ func (u *UsersController) Register(ctx *gin.Context, req *v1.RegisterRequest) (*
 	// 签发 JWT 令牌对，实现注册后自动登录。
 	pair, err := u.svc.Token.IssuePair(user.ID, user.Role)
 	if err != nil {
-		return nil, fmt.Errorf("issue JWT: %w", err)
+		return nil, common.NewInternal("failed to issue token", err)
 	}
 
 	return &v1.RegisterResponse{

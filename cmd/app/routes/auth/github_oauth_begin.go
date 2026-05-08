@@ -17,14 +17,14 @@ import (
 func (a *AuthController) GithubOAuthBegin(ctx *gin.Context) {
 	state, err := oauth.StoreGitHubOAuthState(ctx.Request.Context(), a.svc.Cache, 15*time.Minute)
 	if err != nil {
-		common.Fail(ctx, err)
+		common.Fail(ctx, common.NewInternal("failed to start oauth session", err))
 		return
 	}
 
 	cfg := a.svc.Config.GithubOAuth2
 	u, err := url.Parse(cfg.AuthURL)
 	if err != nil {
-		common.Fail(ctx, fmt.Errorf("invalid github auth-url: %w", err))
+		common.Fail(ctx, common.NewInternal("invalid oauth configuration", fmt.Errorf("invalid github auth-url: %w", err)))
 		return
 	}
 	q := u.Query()
