@@ -2,47 +2,97 @@ package auth
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
+	authsession "github.com/HappyLadySauce/Beehive-Blog/pkg/auth/session"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
 )
 
-// Refresh mints a new access token from a valid refresh token (refresh JWT is not rotated here).
-// Refresh 使用有效 refresh 令牌签发新的 access 令牌（此处不轮换 refresh JWT）。
+// Refresh rotates a valid server-side refresh session and returns a new token pair.
+// Refresh 轮换有效的服务端 refresh 会话并返回新的令牌对。
 func (a *AuthController) Refresh(ctx *gin.Context, req *v1.RefreshRequest) (*v1.RefreshResponse, error) {
 	claims, err := a.svc.Token.ParseRefresh(req.RefreshToken)
 	if err != nil {
 		return nil, common.NewUnauthorized("invalid or expired refresh token", nil)
 	}
-
-	// Refresh tokens must be re-authorized against current user state before minting access.
-	// 刷新令牌签发 access 前必须基于当前用户状态重新授权。
-	var user model.User
-	if err := a.svc.DB.First(&user, claims.UID).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, common.NewUnauthorized("invalid or expired refresh token", nil)
-		}
-		return nil, common.NewInternal("failed to refresh token", fmt.Errorf("query user: %w", err))
+	if claims.SID <= 0 || claims.ID == "" {
+		return nil, common.NewUnauthorized("invalid or expired refresh token", nil)
 	}
-	if err := assertUserMayLogin(&user); err != nil {
+
+	var pair jwt.TokenPair
+	var publicErr error
+	err = a.svc.DB.Transaction(func(tx *gorm.DB) error {
+		var current model.UserSession
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("id = ? AND user_id = ?", claims.SID, claims.UID).
+			First(&current).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				return common.NewUnauthorized("invalid or expired refresh token", nil)
+			}
+			return common.NewInternal("failed to refresh token", fmt.Errorf("query session: %w", err))
+		}
+
+		if current.RotatedAt != nil {
+			if err := authsession.RevokeSession(tx, current.ID, current.UserID, "refresh_reuse"); err != nil {
+				return common.NewInternal("failed to refresh token", err)
+			}
+			publicErr = common.NewUnauthorized("invalid or expired refresh token", nil)
+			return nil
+		}
+		if current.RevokedAt != nil || time.Now().After(current.ExpiresAt) {
+			return common.NewUnauthorized("invalid or expired refresh token", nil)
+		}
+		if current.RefreshJTI != claims.ID || current.RefreshTokenHash != authsession.HashRefreshToken(req.RefreshToken) {
+			if err := authsession.RevokeSession(tx, current.ID, current.UserID, "refresh_mismatch"); err != nil {
+				return common.NewInternal("failed to refresh token", err)
+			}
+			publicErr = common.NewUnauthorized("invalid or expired refresh token", nil)
+			return nil
+		}
+
+		// Refresh tokens must be re-authorized against current user state before minting access.
+		// 刷新令牌签发 access 前必须基于当前用户状态重新授权。
+		var user model.User
+		if err := tx.First(&user, claims.UID).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				return common.NewUnauthorized("invalid or expired refresh token", nil)
+			}
+			return common.NewInternal("failed to refresh token", fmt.Errorf("query user: %w", err))
+		}
+		if err := assertUserMayLogin(&user); err != nil {
+			return err
+		}
+
+		nextPair, _, err := authsession.Rotate(tx, a.svc.Token, &current, &user, authsession.ClientMeta{
+			IP:        ctx.ClientIP(),
+			UserAgent: ctx.Request.UserAgent(),
+		})
+		if err != nil {
+			return common.NewInternal("failed to issue access token", err)
+		}
+		pair = nextPair
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
-
-	access, err := a.svc.Token.IssueAccess(user.ID, user.Role)
-	if err != nil {
-		return nil, common.NewInternal("failed to issue access token", err)
+	if publicErr != nil {
+		return nil, publicErr
 	}
 
 	return &v1.RefreshResponse{
 		Token: v1.AuthToken{
-			AccessToken: access.Token,
-			TokenType:   jwt.TokenTypeBearer,
-			ExpiresIn:   access.ExpiresIn,
+			AccessToken:  pair.Access.Token,
+			TokenType:    pair.TokenType,
+			ExpiresIn:    pair.Access.ExpiresIn,
+			RefreshToken: pair.Refresh.Token,
 		},
 	}, nil
 }

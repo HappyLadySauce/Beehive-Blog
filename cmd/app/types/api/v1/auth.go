@@ -70,8 +70,8 @@ type RefreshRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }
 
-// RefreshResponse returns a new access token bundle (refresh token unchanged on the client).
-// RefreshResponse 返回新的 access 令牌集合（客户端侧 refresh 令牌不变）。
+// RefreshResponse returns a rotated access + refresh token bundle.
+// RefreshResponse 返回轮换后的 access + refresh 令牌集合。
 type RefreshResponse struct {
 	Token AuthToken `json:"token"`
 }

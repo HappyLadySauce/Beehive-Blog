@@ -13,6 +13,7 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/oauth"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/passwd"
+	authsession "github.com/HappyLadySauce/Beehive-Blog/pkg/auth/session"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
 )
 
@@ -62,7 +63,7 @@ func (a *AuthController) loginByLocal(ctx *gin.Context, req *v1.LoginRequest) (*
 		return nil, common.NewUnauthorized("invalid credentials", nil)
 	}
 
-	return a.finalizeLogin(&user)
+	return a.finalizeLogin(ctx, &user)
 }
 
 // loginByGitHub performs the GitHub OAuth2 authorization code flow.
@@ -123,7 +124,7 @@ func (a *AuthController) loginByGitHub(ctx *gin.Context, req *v1.LoginRequest) (
 		klog.InfoS("Created new user via GitHub OAuth2", "uid", user.ID, "username", user.Username, "email", email)
 	}
 
-	return a.finalizeLogin(user)
+	return a.finalizeLogin(ctx, user)
 }
 
 // assertUserMayLogin rejects non-loginable account statuses for every auth path.
@@ -137,7 +138,7 @@ func assertUserMayLogin(user *model.User) error {
 
 // finalizeLogin updates last_login_at and issues a JWT token pair.
 // finalizeLogin 更新 last_login_at 并签发 JWT 令牌对。
-func (a *AuthController) finalizeLogin(user *model.User) (*v1.LoginResponse, error) {
+func (a *AuthController) finalizeLogin(ctx *gin.Context, user *model.User) (*v1.LoginResponse, error) {
 	if err := assertUserMayLogin(user); err != nil {
 		return nil, err
 	}
@@ -146,7 +147,10 @@ func (a *AuthController) finalizeLogin(user *model.User) (*v1.LoginResponse, err
 		klog.ErrorS(err, "Failed to update last_login_at", "uid", user.ID)
 	}
 
-	pair, err := a.svc.Token.IssuePair(user.ID, user.Role)
+	pair, _, err := authsession.IssuePair(a.svc.DB, a.svc.Token, user, authsession.ClientMeta{
+		IP:        ctx.ClientIP(),
+		UserAgent: ctx.Request.UserAgent(),
+	})
 	if err != nil {
 		return nil, common.NewInternal("failed to issue token", err)
 	}

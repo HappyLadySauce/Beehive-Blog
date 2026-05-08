@@ -34,4 +34,5 @@ func Init(svcCtx *svc.ServiceContext) {
 	authGroup.GET("/github/authorize", rl.GinMiddleware(), auth.GithubOAuthBegin)
 	authGroup.POST("/login", rl.GinMiddleware(), httpx.HandleJSON(auth.Login))
 	authGroup.POST("/refresh", rl.GinMiddleware(), httpx.HandleJSON(auth.Refresh))
+	authGroup.POST("/logout", middleware.AuthMiddleware(svcCtx), auth.Logout)
 }

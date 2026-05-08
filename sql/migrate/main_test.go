@@ -108,6 +108,36 @@ func TestAttachmentSchemaMigrationsOptimizeForRemoteTupleLookupAndStorageTypeLis
 	}
 }
 
+func TestIdentitySchemaMigrationsAddRefreshSessionsAndProviderIdentities(t *testing.T) {
+	t.Helper()
+
+	root := repoRootFromWorkingDir(t)
+	sessionSQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "identity", "012_identity_user_sessions.sql"))
+	identitySQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "identity", "013_identity_user_identities.sql"))
+
+	for _, want := range []string{
+		"CREATE TABLE identity.user_sessions",
+		"refresh_token_hash CHAR(64) NOT NULL",
+		"refresh_jti VARCHAR(64) NOT NULL",
+		"rotated_at TIMESTAMPTZ NULL",
+		"ux_user_sessions_refresh_jti",
+	} {
+		if !strings.Contains(sessionSQL, want) {
+			t.Fatalf("user sessions migration missing %q", want)
+		}
+	}
+	for _, want := range []string{
+		"CREATE TABLE identity.user_identities",
+		"provider VARCHAR(32) NOT NULL",
+		"provider_subject VARCHAR(128) NOT NULL",
+		"ux_user_identities_provider_subject",
+	} {
+		if !strings.Contains(identitySQL, want) {
+			t.Fatalf("user identities migration missing %q", want)
+		}
+	}
+}
+
 func TestIsAppliedTreatsNoRowsAsNotApplied(t *testing.T) {
 	t.Helper()
 

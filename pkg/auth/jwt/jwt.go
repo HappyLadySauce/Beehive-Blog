@@ -35,6 +35,7 @@ type Claims struct {
 	UID  int64  `json:"uid"`
 	Role string `json:"role"`
 	Use  string `json:"use"`
+	SID  int64  `json:"sid,omitempty"`
 	jwt5.RegisteredClaims
 }
 
@@ -96,14 +97,20 @@ func (i *Issuer) RefreshTTL() time.Duration { return i.refreshTTL }
 // IssuePair signs an access + refresh token pair for the given subject and role.
 // IssuePair 为指定主体与角色签发 access + refresh 令牌对。
 func (i *Issuer) IssuePair(uid int64, role string) (TokenPair, error) {
+	return i.IssueSessionPair(uid, role, 0, "")
+}
+
+// IssueSessionPair signs an access + refresh pair bound to a server-side session.
+// IssueSessionPair 签发绑定服务端会话的 access + refresh 令牌对。
+func (i *Issuer) IssueSessionPair(uid int64, role string, sid int64, refreshJTI string) (TokenPair, error) {
 	if uid <= 0 {
 		return TokenPair{}, fmt.Errorf("uid must be > 0, got %d", uid)
 	}
-	access, err := i.sign(uid, role, TokenUseAccess, i.accessTTL)
+	access, err := i.sign(uid, role, TokenUseAccess, i.accessTTL, sid, "")
 	if err != nil {
 		return TokenPair{}, fmt.Errorf("sign access token: %w", err)
 	}
-	refresh, err := i.sign(uid, role, TokenUseRefresh, i.refreshTTL)
+	refresh, err := i.sign(uid, role, TokenUseRefresh, i.refreshTTL, sid, refreshJTI)
 	if err != nil {
 		return TokenPair{}, fmt.Errorf("sign refresh token: %w", err)
 	}
@@ -117,10 +124,16 @@ func (i *Issuer) IssuePair(uid int64, role string) (TokenPair, error) {
 // IssueAccess signs only an access token; useful for refresh flows that rotate access only.
 // IssueAccess 仅签发访问令牌，适用于只轮换 access 的刷新流程。
 func (i *Issuer) IssueAccess(uid int64, role string) (SignedToken, error) {
+	return i.IssueSessionAccess(uid, role, 0)
+}
+
+// IssueSessionAccess signs an access token bound to a server-side session.
+// IssueSessionAccess 签发绑定服务端会话的 access 令牌。
+func (i *Issuer) IssueSessionAccess(uid int64, role string, sid int64) (SignedToken, error) {
 	if uid <= 0 {
 		return SignedToken{}, fmt.Errorf("uid must be > 0, got %d", uid)
 	}
-	tok, err := i.sign(uid, role, TokenUseAccess, i.accessTTL)
+	tok, err := i.sign(uid, role, TokenUseAccess, i.accessTTL, sid, "")
 	if err != nil {
 		return SignedToken{}, fmt.Errorf("sign access token: %w", err)
 	}
@@ -180,15 +193,17 @@ func (i *Issuer) ParseRefresh(tokenString string) (*Claims, error) {
 
 // sign builds and signs a single JWT with the given use claim and TTL.
 // sign 构造并签发一份带有给定 use 声明与 TTL 的 JWT。
-func (i *Issuer) sign(uid int64, role, use string, ttl time.Duration) (string, error) {
+func (i *Issuer) sign(uid int64, role, use string, ttl time.Duration, sid int64, jti string) (string, error) {
 	now := time.Now()
 	claims := &Claims{
 		UID:  uid,
 		Role: role,
 		Use:  use,
+		SID:  sid,
 		RegisteredClaims: jwt5.RegisteredClaims{
 			Issuer:    i.issuer,
 			Subject:   strconv.FormatInt(uid, 10),
+			ID:        jti,
 			IssuedAt:  jwt5.NewNumericDate(now),
 			NotBefore: jwt5.NewNumericDate(now),
 			ExpiresAt: jwt5.NewNumericDate(now.Add(ttl)),

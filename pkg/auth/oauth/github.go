@@ -9,12 +9,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
 )
+
+const githubProvider = "github"
 
 // GitHubUser is the partial GitHub user API response fields we need.
 // GitHubUser 为 GitHub 用户信息 API 响应中我们需要的部分字段。
@@ -103,11 +107,25 @@ func FetchGitHubPrimaryEmail(ctx context.Context, client *http.Client) (string, 
 // FindOrCreateUser looks up a user by email; if not found, creates one from GitHub profile data.
 // FindOrCreateUser 按邮箱查找用户；未找到则基于 GitHub 资料创建。
 func FindOrCreateUser(db *gorm.DB, ghUser *GitHubUser, email string) (*model.User, bool, error) {
-	// TODO: Replace email-only matching with a provider identity table keyed by GitHub ID.
-	// TODO: 后续以 GitHub ID 为键引入第三方身份绑定表，替换当前仅按邮箱匹配的策略。
+	if ghUser == nil || ghUser.ID <= 0 {
+		return nil, false, fmt.Errorf("github user id is required")
+	}
+	subject := strconv.FormatInt(ghUser.ID, 10)
+
+	boundUser, found, err := findUserByProviderSubject(db, githubProvider, subject)
+	if err != nil {
+		return nil, false, err
+	}
+	if found {
+		return boundUser, false, nil
+	}
+
 	var user model.User
-	err := db.Where("email = ?", email).First(&user).Error
+	err = db.Where("email = ?", email).First(&user).Error
 	if err == nil {
+		if err := bindProviderIdentity(db, user.ID, githubProvider, subject, email); err != nil {
+			return nil, false, err
+		}
 		return &user, false, nil
 	}
 	if err != gorm.ErrRecordNotFound {
@@ -129,11 +147,16 @@ func FindOrCreateUser(db *gorm.DB, ghUser *GitHubUser, email string) (*model.Use
 	}
 
 	for attempt := 0; attempt < 5; attempt++ {
-		result := db.Create(&user)
-		if result.Error == nil {
+		err := db.Transaction(func(tx *gorm.DB) error {
+			if err := tx.Create(&user).Error; err != nil {
+				return err
+			}
+			return bindProviderIdentity(tx, user.ID, githubProvider, subject, email)
+		})
+		if err == nil {
 			return &user, true, nil
 		}
-		if isUniqueViolation(result.Error) && attempt < 4 {
+		if isUniqueViolation(err) && attempt < 4 {
 			suffix, err := randomUsernameSuffix()
 			if err != nil {
 				return nil, false, fmt.Errorf("create user: %w", err)
@@ -141,10 +164,50 @@ func FindOrCreateUser(db *gorm.DB, ghUser *GitHubUser, email string) (*model.Use
 			user.Username = fmt.Sprintf("%s_%d", ghUser.Login, suffix)
 			continue
 		}
-		return nil, false, fmt.Errorf("create user: %w", result.Error)
+		if user, found, findErr := findUserByProviderSubject(db, githubProvider, subject); findErr != nil {
+			return nil, false, findErr
+		} else if found {
+			return user, false, nil
+		}
+		return nil, false, fmt.Errorf("create user: %w", err)
 	}
 
 	return nil, false, fmt.Errorf("create user: exceeded retry limit for username %s", ghUser.Login)
+}
+
+func findUserByProviderSubject(db *gorm.DB, provider, subject string) (*model.User, bool, error) {
+	var identity model.UserIdentity
+	err := db.Where("provider = ? AND provider_subject = ?", provider, subject).First(&identity).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, false, fmt.Errorf("query user identity: %w", err)
+	}
+	var user model.User
+	if err := db.First(&user, identity.UserID).Error; err != nil {
+		return nil, false, fmt.Errorf("query identity user: %w", err)
+	}
+	return &user, true, nil
+}
+
+func bindProviderIdentity(db *gorm.DB, userID int64, provider, subject, email string) error {
+	now := time.Now()
+	identity := model.UserIdentity{
+		UserID:          userID,
+		Provider:        provider,
+		ProviderSubject: subject,
+		EmailAtBind:     &email,
+		CreatedAt:       now,
+		UpdatedAt:       now,
+	}
+	if err := db.Create(&identity).Error; err != nil {
+		if isUniqueViolation(err) {
+			return nil
+		}
+		return fmt.Errorf("bind user identity: %w", err)
+	}
+	return nil
 }
 
 // isUniqueViolation checks whether the error is a PostgreSQL unique constraint violation (SQLSTATE 23505).

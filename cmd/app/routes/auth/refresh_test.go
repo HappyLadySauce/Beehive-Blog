@@ -2,10 +2,12 @@ package auth
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
@@ -13,32 +15,58 @@ import (
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
+	authsession "github.com/HappyLadySauce/Beehive-Blog/pkg/auth/session"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
 )
 
-func TestRefreshUsesCurrentDatabaseRole(t *testing.T) {
+func TestRefreshRotatesSessionAndUsesCurrentDatabaseRole(t *testing.T) {
 	controller, mock, issuer := newRefreshTestController(t)
-	pair, err := issuer.IssuePair(42, "admin")
+	pair, err := issuer.IssueSessionPair(42, "admin", 7, "old-jti")
 	if err != nil {
-		t.Fatalf("IssuePair() error = %v", err)
+		t.Fatalf("IssueSessionPair() error = %v", err)
 	}
-	expectUserQuery(mock, userRow{
-		id:       42,
-		username: "alice",
-		role:     "member",
-		status:   "active",
-	})
 
-	resp, err := controller.Refresh(nil, &v1.RefreshRequest{RefreshToken: pair.Refresh.Token})
+	mock.ExpectBegin()
+	expectSessionQuery(mock, sessionRow{
+		id:         7,
+		userID:     42,
+		hash:       authsession.HashRefreshToken(pair.Refresh.Token),
+		jti:        "old-jti",
+		expiresAt:  time.Now().Add(time.Hour),
+		revokedAt:  nil,
+		rotatedAt:  nil,
+		createdAt:  time.Now(),
+		updatedAt:  time.Now(),
+		createdIP:  "203.0.113.1",
+		userAgent:  "old-agent",
+		lastUsedAt: nil,
+	})
+	expectUserQuery(mock, userRow{id: 42, username: "alice", role: "member", status: "active"})
+	expectRotateUpdate(mock, 7)
+	expectSessionInsert(mock, 8)
+	expectSessionHashUpdate(mock, 8)
+	mock.ExpectCommit()
+
+	resp, err := controller.Refresh(testGinContext(), &v1.RefreshRequest{RefreshToken: pair.Refresh.Token})
 	if err != nil {
 		t.Fatalf("Refresh() error = %v", err)
 	}
-	claims, err := issuer.ParseAccess(resp.Token.AccessToken)
+	accessClaims, err := issuer.ParseAccess(resp.Token.AccessToken)
 	if err != nil {
 		t.Fatalf("ParseAccess() error = %v", err)
 	}
-	if claims.Role != "member" {
-		t.Fatalf("access role = %q, want member", claims.Role)
+	if accessClaims.Role != "member" {
+		t.Fatalf("access role = %q, want member", accessClaims.Role)
+	}
+	refreshClaims, err := issuer.ParseRefresh(resp.Token.RefreshToken)
+	if err != nil {
+		t.Fatalf("ParseRefresh() error = %v", err)
+	}
+	if refreshClaims.SID != 8 {
+		t.Fatalf("new refresh sid = %d, want 8", refreshClaims.SID)
+	}
+	if resp.Token.RefreshToken == pair.Refresh.Token {
+		t.Fatalf("refresh token was not rotated")
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet sql expectations: %v", err)
@@ -47,18 +75,25 @@ func TestRefreshUsesCurrentDatabaseRole(t *testing.T) {
 
 func TestRefreshRejectsDisabledUser(t *testing.T) {
 	controller, mock, issuer := newRefreshTestController(t)
-	pair, err := issuer.IssuePair(42, "member")
+	pair, err := issuer.IssueSessionPair(42, "member", 7, "old-jti")
 	if err != nil {
-		t.Fatalf("IssuePair() error = %v", err)
+		t.Fatalf("IssueSessionPair() error = %v", err)
 	}
-	expectUserQuery(mock, userRow{
-		id:       42,
-		username: "alice",
-		role:     "member",
-		status:   "disabled",
-	})
 
-	_, err = controller.Refresh(nil, &v1.RefreshRequest{RefreshToken: pair.Refresh.Token})
+	mock.ExpectBegin()
+	expectSessionQuery(mock, sessionRow{
+		id:        7,
+		userID:    42,
+		hash:      authsession.HashRefreshToken(pair.Refresh.Token),
+		jti:       "old-jti",
+		expiresAt: time.Now().Add(time.Hour),
+		createdAt: time.Now(),
+		updatedAt: time.Now(),
+	})
+	expectUserQuery(mock, userRow{id: 42, username: "alice", role: "member", status: "disabled"})
+	mock.ExpectRollback()
+
+	_, err = controller.Refresh(testGinContext(), &v1.RefreshRequest{RefreshToken: pair.Refresh.Token})
 	if err == nil {
 		t.Fatalf("Refresh() error = nil, want error")
 	}
@@ -68,15 +103,29 @@ func TestRefreshRejectsDisabledUser(t *testing.T) {
 	}
 }
 
-func TestRefreshRejectsMissingUser(t *testing.T) {
+func TestRefreshRejectsReusedRotatedToken(t *testing.T) {
 	controller, mock, issuer := newRefreshTestController(t)
-	pair, err := issuer.IssuePair(42, "member")
+	pair, err := issuer.IssueSessionPair(42, "member", 7, "old-jti")
 	if err != nil {
-		t.Fatalf("IssuePair() error = %v", err)
+		t.Fatalf("IssueSessionPair() error = %v", err)
 	}
-	expectMissingUserQuery(mock)
+	rotatedAt := time.Now().Add(-time.Minute)
 
-	_, err = controller.Refresh(nil, &v1.RefreshRequest{RefreshToken: pair.Refresh.Token})
+	mock.ExpectBegin()
+	expectSessionQuery(mock, sessionRow{
+		id:        7,
+		userID:    42,
+		hash:      authsession.HashRefreshToken(pair.Refresh.Token),
+		jti:       "old-jti",
+		expiresAt: time.Now().Add(time.Hour),
+		rotatedAt: &rotatedAt,
+		createdAt: time.Now(),
+		updatedAt: time.Now(),
+	})
+	expectRevokeUpdate(mock)
+	mock.ExpectCommit()
+
+	_, err = controller.Refresh(testGinContext(), &v1.RefreshRequest{RefreshToken: pair.Refresh.Token})
 	if err == nil {
 		t.Fatalf("Refresh() error = nil, want error")
 	}
@@ -88,12 +137,12 @@ func TestRefreshRejectsMissingUser(t *testing.T) {
 
 func TestRefreshRejectsAccessTokenUse(t *testing.T) {
 	controller, mock, issuer := newRefreshTestController(t)
-	pair, err := issuer.IssuePair(42, "member")
+	pair, err := issuer.IssueSessionPair(42, "member", 7, "old-jti")
 	if err != nil {
-		t.Fatalf("IssuePair() error = %v", err)
+		t.Fatalf("IssueSessionPair() error = %v", err)
 	}
 
-	_, err = controller.Refresh(nil, &v1.RefreshRequest{RefreshToken: pair.Access.Token})
+	_, err = controller.Refresh(testGinContext(), &v1.RefreshRequest{RefreshToken: pair.Access.Token})
 	if err == nil {
 		t.Fatalf("Refresh() error = nil, want error")
 	}
@@ -101,6 +150,21 @@ func TestRefreshRejectsAccessTokenUse(t *testing.T) {
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet sql expectations: %v", err)
 	}
+}
+
+type sessionRow struct {
+	id         int64
+	userID     int64
+	hash       string
+	jti        string
+	expiresAt  time.Time
+	revokedAt  *time.Time
+	rotatedAt  *time.Time
+	createdIP  string
+	userAgent  string
+	lastUsedAt *time.Time
+	createdAt  time.Time
+	updatedAt  time.Time
 }
 
 type userRow struct {
@@ -112,6 +176,7 @@ type userRow struct {
 
 func newRefreshTestController(t *testing.T) (*AuthController, sqlmock.Sqlmock, *jwt.Issuer) {
 	t.Helper()
+	gin.SetMode(gin.TestMode)
 	sqlDB, mock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("sqlmock.New() error = %v", err)
@@ -141,21 +206,74 @@ func newRefreshTestController(t *testing.T) (*AuthController, sqlmock.Sqlmock, *
 	}, mock, issuer
 }
 
+func testGinContext() *gin.Context {
+	rec := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(rec)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/refresh", nil)
+	req.RemoteAddr = "203.0.113.10:12345"
+	req.Header.Set("User-Agent", "refresh-test")
+	ctx.Request = req
+	return ctx
+}
+
+func expectSessionQuery(mock sqlmock.Sqlmock, row sessionRow) {
+	mock.ExpectQuery(`SELECT .*FROM "identity"\."user_sessions".*WHERE id = \$1 AND user_id = \$2.*LIMIT \$3 FOR UPDATE`).
+		WithArgs(row.id, row.userID, 1).
+		WillReturnRows(sqlmock.NewRows(sessionColumns()).
+			AddRow(row.id, row.userID, row.hash, row.jti, row.expiresAt, row.revokedAt, nil, row.rotatedAt, row.createdIP, row.userAgent, row.lastUsedAt, row.createdAt, row.updatedAt))
+}
+
 func expectUserQuery(mock sqlmock.Sqlmock, row userRow) {
-	mock.ExpectQuery(userQueryPattern()).
+	mock.ExpectQuery(`SELECT .*FROM "identity"\."users".*WHERE "users"\."id" = \$1 AND "users"\."deleted_at" IS NULL.*LIMIT \$2`).
 		WithArgs(row.id, 1).
 		WillReturnRows(sqlmock.NewRows(userColumns()).
 			AddRow(row.id, row.username, nil, nil, nil, nil, row.role, row.status, nil, time.Now(), time.Now(), nil))
 }
 
-func expectMissingUserQuery(mock sqlmock.Sqlmock) {
-	mock.ExpectQuery(userQueryPattern()).
-		WithArgs(int64(42), 1).
-		WillReturnRows(sqlmock.NewRows(userColumns()))
+func expectRotateUpdate(mock sqlmock.Sqlmock, sessionID int64) {
+	mock.ExpectExec(`UPDATE "identity"\."user_sessions" SET .*"last_used_at".*"rotated_at".*"updated_at".*WHERE "id" = \$4`).
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sessionID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
 }
 
-func userQueryPattern() string {
-	return `SELECT .*FROM "identity"\."users".*WHERE "users"\."id" = \$1 AND "users"\."deleted_at" IS NULL.*LIMIT \$2`
+func expectSessionInsert(mock sqlmock.Sqlmock, newID int64) {
+	mock.ExpectQuery(`INSERT INTO "identity"\."user_sessions".*RETURNING "id"`).
+		WithArgs(
+			sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+			sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+			sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+		).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(newID))
+}
+
+func expectSessionHashUpdate(mock sqlmock.Sqlmock, sessionID int64) {
+	mock.ExpectExec(`UPDATE "identity"\."user_sessions" SET .*"refresh_token_hash".*"updated_at".*WHERE "id" = \$3`).
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sessionID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+}
+
+func expectRevokeUpdate(mock sqlmock.Sqlmock) {
+	mock.ExpectExec(`UPDATE "identity"\."user_sessions" SET .*"revoked_at".*"revoked_reason".*"updated_at".*WHERE .*revoked_at IS NULL`).
+		WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+}
+
+func sessionColumns() []string {
+	return []string{
+		"id",
+		"user_id",
+		"refresh_token_hash",
+		"refresh_jti",
+		"expires_at",
+		"revoked_at",
+		"revoked_reason",
+		"rotated_at",
+		"created_ip",
+		"user_agent",
+		"last_used_at",
+		"created_at",
+		"updated_at",
+	}
 }
 
 func userColumns() []string {

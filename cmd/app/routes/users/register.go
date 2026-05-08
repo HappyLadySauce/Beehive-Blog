@@ -11,6 +11,7 @@ import (
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/passwd"
+	authsession "github.com/HappyLadySauce/Beehive-Blog/pkg/auth/session"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
 )
 
@@ -91,9 +92,12 @@ func (u *UsersController) Register(ctx *gin.Context, req *v1.RegisterRequest) (*
 
 	klog.InfoS("User registered", "uid", user.ID, "username", user.Username)
 
-	// Issue JWT token pair for auto-login after registration.
-	// 签发 JWT 令牌对，实现注册后自动登录。
-	pair, err := u.svc.Token.IssuePair(user.ID, user.Role)
+	// Issue a session-bound token pair for auto-login after registration.
+	// 签发绑定会话的令牌对，实现注册后自动登录。
+	pair, _, err := authsession.IssuePair(u.svc.DB, u.svc.Token, &user, authsession.ClientMeta{
+		IP:        ctx.ClientIP(),
+		UserAgent: ctx.Request.UserAgent(),
+	})
 	if err != nil {
 		return nil, common.NewInternal("failed to issue token", err)
 	}
