@@ -23,6 +23,15 @@ cache:
 
 jwt:
     issuer: beehive-blog # JWT iss 声明，验证侧期望的发行者
-    secret: ${BEEHIVE_BLOG_JWT_SECRET} # HS256 签名密钥，至少 32 字节；生产环境请通过环境变量注入
+    secret: beehive-blog-secret-fawfawfawfawfaw # HS256 签名密钥，至少 32 字节；生产环境请通过环境变量注入
     access-ttl: 15m # 访问令牌存活时间
     refresh-ttl: 168h # 刷新令牌存活时间，必须严格大于 access-ttl
+
+github-oauth2:
+    client-id: 
+    client-secret: 
+    redirect-url: http://blog.happyladysauce.cn/auth/github/callback
+    auth-url: https://github.com/login/oauth/authorize
+    token-url: https://github.com/login/oauth/access_token
+    user-info-url: https://api.github.com/user
+    allow-non-github-endpoints: false
