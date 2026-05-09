@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen, LayoutDashboard } from "lucide-react";
+import { ArrowRight, BookOpen } from "lucide-react";
 
 import { PostCard } from "@/components/PostCard";
 import { listPublicPosts } from "@/lib/api/content";
@@ -11,20 +11,15 @@ export default async function HomePage() {
     <main className="page">
       <section className="hero">
         <div>
-          <p className="eyebrow">Public Web + Studio</p>
+          <p className="eyebrow">Public Web</p>
           <h1>把长期写作、项目和 AI 协作整理成一个可发布的知识蜂巢。</h1>
           <p>
-            Beehive Blog 同时服务读者、创作者和外部智能体。公开页面强调 SSR 与 SEO，Studio
-            负责草稿、关系、版本和发布闸门。
+            Beehive Blog 面向读者呈现公开文章、项目与知识脉络。公开页面强调 SSR 与 SEO，让内容稳定可读、可索引。
           </p>
           <div className="hero-actions">
             <Link className="primary-button" href="/posts">
               <BookOpen aria-hidden size={18} />
               阅读文章
-            </Link>
-            <Link className="secondary-button" href="/studio">
-              <LayoutDashboard aria-hidden size={18} />
-              进入 Studio
             </Link>
           </div>
         </div>

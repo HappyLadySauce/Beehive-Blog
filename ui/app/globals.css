@@ -55,6 +55,7 @@ input {
 .brand,
 .main-nav,
 .nav-action,
+.avatar-button,
 .primary-button,
 .secondary-button,
 .studio-sidebar a,
@@ -84,6 +85,75 @@ input {
   border-radius: 8px;
   color: white;
   padding: 9px 13px !important;
+}
+
+.user-menu {
+  position: relative;
+}
+
+.avatar-button {
+  background: var(--ink);
+  border: 0;
+  border-radius: 999px;
+  color: white;
+  cursor: pointer;
+  height: 40px;
+  justify-content: center;
+  padding: 0;
+  width: 40px;
+}
+
+.avatar-button span {
+  font-weight: 900;
+}
+
+.user-dropdown {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  display: grid;
+  gap: 6px;
+  min-width: 190px;
+  padding: 10px;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  z-index: 20;
+}
+
+.user-dropdown__meta {
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 3px;
+  padding: 6px 8px 10px;
+}
+
+.user-dropdown__meta span,
+.user-dropdown__meta small {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.user-dropdown a,
+.user-dropdown button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  gap: 9px;
+  min-height: 38px;
+  padding: 8px;
+  text-align: left;
+}
+
+.user-dropdown a:hover,
+.user-dropdown button:hover {
+  background: #f1eee6;
 }
 
 .page {
@@ -342,20 +412,51 @@ input {
 
 .studio-layout {
   display: grid;
-  gap: 24px;
-  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 28px;
+  grid-template-columns: 220px minmax(0, 1fr);
 }
 
 .studio-sidebar {
-  background: #1f2a2a;
+  align-self: start;
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 8px;
-  color: white;
-  min-height: 620px;
-  padding: 22px;
+  box-shadow: 0 12px 28px rgba(33, 29, 20, 0.06);
+  color: var(--ink);
+  padding: 14px;
+  position: sticky;
+  top: 18px;
 }
 
-.studio-sidebar h1 {
-  margin: 0 0 22px;
+.studio-sidebar__brand {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 8px 8px 14px;
+}
+
+.studio-sidebar__brand > span {
+  align-items: center;
+  background: var(--accent);
+  border-radius: 8px;
+  color: white;
+  display: inline-flex;
+  font-size: 0.82rem;
+  font-weight: 900;
+  height: 34px;
+  justify-content: center;
+  width: 34px;
+}
+
+.studio-sidebar__brand div {
+  display: grid;
+  gap: 2px;
+}
+
+.studio-sidebar__brand small {
+  color: var(--muted);
 }
 
 .studio-sidebar nav {
@@ -366,13 +467,18 @@ input {
 
 .studio-sidebar a {
   border-radius: 8px;
-  color: #d7e4e2;
+  color: var(--muted);
   padding: 11px;
+}
+
+.studio-sidebar a:hover {
+  background: #edf7f5;
+  color: var(--accent-dark);
 }
 
 .studio-main {
   display: grid;
-  gap: 18px;
+  gap: 20px;
 }
 
 .studio-heading {
@@ -387,6 +493,12 @@ input {
   margin: 0;
 }
 
+.studio-heading p:not(.eyebrow) {
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 8px 0 0;
+}
+
 .metric-grid {
   display: grid;
   gap: 14px;
@@ -394,6 +506,7 @@ input {
 }
 
 .metric-card {
+  align-content: start;
   display: grid;
   gap: 8px;
   padding: 20px;
@@ -409,8 +522,39 @@ input {
 }
 
 .work-surface {
-  min-height: 280px;
+  min-height: 260px;
   padding: 24px;
+}
+
+.studio-work-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.6fr);
+}
+
+.work-surface__heading {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.work-surface h3 {
+  margin: 0 0 12px;
+}
+
+.work-surface__heading h3 {
+  margin: 0;
+}
+
+.work-surface--compact {
+  min-height: 260px;
+}
+
+.work-surface ul {
+  color: var(--muted);
+  line-height: 1.9;
+  margin: 0;
+  padding-left: 18px;
 }
 
 .spin {
@@ -426,7 +570,8 @@ input {
 @media (max-width: 860px) {
   .hero,
   .auth-page,
-  .studio-layout {
+  .studio-layout,
+  .studio-work-grid {
     grid-template-columns: 1fr;
   }
 

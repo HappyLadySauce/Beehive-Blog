@@ -1,44 +1,57 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useMemo, useSyncExternalStore } from "react";
 
-import type { StoredSession } from "@/lib/auth/session";
-import { clearSession, readSession, saveSession } from "@/lib/auth/session";
+import type { JwtClaims, StoredSession } from "@/lib/auth/session";
+import { clearSession, isAdminClaims, isExpiredClaims, readSession, saveSession } from "@/lib/auth/session";
 import type { AuthPayload } from "@/lib/api/types";
 
 type AuthContextValue = {
   session: StoredSession | null;
+  claims: JwtClaims | null;
+  role: string | undefined;
   isAuthenticated: boolean;
+  isAdmin: boolean;
+  isTokenExpired: boolean;
   setAuth: (payload: AuthPayload) => void;
   clearAuth: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<StoredSession | null>(() => readSession());
+function subscribeAuthStore(onStoreChange: () => void) {
+  window.addEventListener("storage", onStoreChange);
+  window.addEventListener("beehive-auth-changed", onStoreChange);
+  return () => {
+    window.removeEventListener("storage", onStoreChange);
+    window.removeEventListener("beehive-auth-changed", onStoreChange);
+  };
+}
 
-  useEffect(() => {
-    const onChange = () => setSession(readSession());
-    window.addEventListener("storage", onChange);
-    window.addEventListener("beehive-auth-changed", onChange);
-    return () => {
-      window.removeEventListener("storage", onChange);
-      window.removeEventListener("beehive-auth-changed", onChange);
-    };
-  }, []);
+function getAuthSnapshot() {
+  return readSession();
+}
+
+function getServerAuthSnapshot() {
+  return null;
+}
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const session = useSyncExternalStore(subscribeAuthStore, getAuthSnapshot, getServerAuthSnapshot);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       session,
-      isAuthenticated: Boolean(session?.token.access_token),
+      claims: session?.claims ?? null,
+      role: session?.claims?.role,
+      isAuthenticated: Boolean(session?.token.access_token && session.claims?.role && !isExpiredClaims(session.claims)),
+      isAdmin: isAdminClaims(session?.claims),
+      isTokenExpired: isExpiredClaims(session?.claims),
       setAuth(payload) {
         saveSession(payload);
-        setSession(readSession());
       },
       clearAuth() {
         clearSession();
-        setSession(null);
       }
     }),
     [session]
