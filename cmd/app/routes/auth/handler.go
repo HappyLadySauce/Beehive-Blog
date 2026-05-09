@@ -3,12 +3,11 @@ package auth
 import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/router"
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/httpx"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 )
 
-// UsersController handles HTTP routes for users.
-// UsersController 处理用户相关 HTTP 路由。
+// AuthController handles HTTP routes for authentication.
+// AuthController 处理认证相关 HTTP 路由。
 type AuthController struct {
 	svc *svc.ServiceContext
 }
@@ -32,7 +31,7 @@ func Init(svcCtx *svc.ServiceContext) {
 	authGroup := router.V1().Group("/auth")
 
 	authGroup.GET("/github/authorize", rl.GinMiddleware(), auth.GithubOAuthBegin)
-	authGroup.POST("/login", rl.GinMiddleware(), httpx.HandleJSON(auth.Login))
-	authGroup.POST("/refresh", rl.GinMiddleware(), httpx.HandleJSON(auth.Refresh))
+	authGroup.POST("/login", rl.GinMiddleware(), auth.ServeLogin)
+	authGroup.POST("/refresh", rl.GinMiddleware(), auth.ServeRefresh)
 	authGroup.POST("/logout", middleware.AuthMiddleware(svcCtx), auth.Logout)
 }

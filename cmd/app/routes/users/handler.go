@@ -3,7 +3,6 @@ package users
 import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/router"
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/httpx"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 )
 
@@ -29,5 +28,5 @@ func Init(svcCtx *svc.ServiceContext) {
 
 	users := router.V1().Group("/users")
 
-	users.POST("/register", rl.GinMiddleware(), httpx.HandleJSON(u.Register))
+	users.POST("/register", rl.GinMiddleware(), u.ServeRegister)
 }

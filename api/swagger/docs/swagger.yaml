@@ -1,0 +1,339 @@
+basePath: /
+definitions:
+  common.BaseResponse:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+  v1.AuthToken:
+    properties:
+      access_token:
+        description: |-
+          AccessToken is the short-lived bearer token used in the Authorization header.
+          AccessToken 为短期 Bearer 令牌，用于 Authorization 请求头。
+        type: string
+      expires_in:
+        description: |-
+          ExpiresIn is the access token lifetime in seconds.
+          ExpiresIn 为访问令牌的有效期（秒）。
+        type: integer
+      refresh_token:
+        description: |-
+          RefreshToken is an optional long-lived credential to mint new access tokens; omit when not issued.
+          RefreshToken 为可选的长期凭证，用于刷新访问令牌；未签发时不输出该字段。
+        type: string
+      token_type:
+        description: |-
+          TokenType is the credential scheme; "Bearer" for OAuth2-compatible clients.
+          TokenType 为凭证类型；OAuth2 客户端固定为 "Bearer"。
+        type: string
+    type: object
+  v1.GithubOAuthBeginResponse:
+    properties:
+      auth_url:
+        description: |-
+          AuthURL is the full GitHub authorize URL including client_id, redirect_uri, scope, and state.
+          AuthURL 为完整的 GitHub 授权 URL（含 client_id、redirect_uri、scope、state）。
+        type: string
+      state:
+        description: |-
+          State must be echoed to POST /auth/login (github_oauth2) and matches a Redis one-time entry.
+          State 必须在 POST /auth/login（github_oauth2）回传，并与 Redis 中一次性条目匹配。
+        type: string
+    type: object
+  v1.LoginRequest:
+    properties:
+      account:
+        description: |-
+          Account is the local login account; required when grant_type is "local".
+          Account 为本地登录名；grant_type 为 "local" 时必填。
+        maxLength: 64
+        type: string
+      code:
+        description: |-
+          Code is the OAuth2 authorization code; required when grant_type is "github_oauth2".
+          Code 为 OAuth2 授权码；grant_type 为 "github_oauth2" 时必填。
+        type: string
+      grant_type:
+        description: |-
+          GrantType selects the authentication method: "local" or "github_oauth2".
+          GrantType 选择认证方式："local" 或 "github_oauth2"。
+        type: string
+      password:
+        description: |-
+          Password is the local plaintext credential; required when grant_type is "local".
+          Password 为本地明文密码；grant_type 为 "local" 时必填。
+        maxLength: 72
+        type: string
+      state:
+        description: |-
+          State is the OAuth2 state parameter for CSRF protection.
+          State 是 OAuth2 的 state 参数，用于 CSRF 防护。
+        type: string
+    required:
+    - grant_type
+    type: object
+  v1.LoginResponse:
+    properties:
+      token:
+        allOf:
+        - $ref: '#/definitions/v1.AuthToken'
+        description: |-
+          Token is the auth credential bundle granted on successful login (auto-login).
+          Token 为登录成功后自动签发的鉴权凭证集合（自动登录）。
+    type: object
+  v1.RefreshRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  v1.RefreshResponse:
+    properties:
+      token:
+        $ref: '#/definitions/v1.AuthToken'
+    type: object
+  v1.RegisterRequest:
+    properties:
+      email:
+        description: |-
+          Email is optional; when set must be unique among live rows (max 320 per DB).
+          Email 可选；有值时在活跃行内唯一（数据库最长 320）。
+        maxLength: 320
+        type: string
+      nickname:
+        description: |-
+          Nickname is an optional display name (max 128 per DB).
+          Nickname 为可选展示昵称（数据库最长 128）。
+        maxLength: 128
+        type: string
+      password:
+        description: |-
+          Password is the plaintext credential for hashing upstream of persistence (not a DB column yet).
+          Password 为明文凭证，供持久化前哈希使用（当前迁移尚无对应列）。
+        maxLength: 72
+        minLength: 8
+        type: string
+      phone:
+        description: |-
+          Phone is an optional phone number (max 16 per DB).
+          Phone 为可选手机号（数据库最长 16）。
+        maxLength: 16
+        type: string
+      username:
+        description: |-
+          Username is the unique login name among live rows (max 64 per DB).
+          Username 为活跃行内唯一的登录名（数据库最长 64）。
+        maxLength: 64
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  v1.RegisterResponse:
+    properties:
+      token:
+        allOf:
+        - $ref: '#/definitions/v1.AuthToken'
+        description: |-
+          Token is the auth credential bundle granted on successful registration (auto-login).
+          Token 为注册成功后自动签发的鉴权凭证集合（自动登录）。
+    type: object
+info:
+  contact: {}
+  description: 'REST API for Beehive Blog (v1). JSON envelope: code (HTTP-style),
+    message, data. 中文：Beehive Blog REST API（v1）；响应为 code、message、data 的 JSON 包装。'
+  title: Beehive Blog HTTP API
+  version: "1.0"
+paths:
+  /api/v1/auth/github/authorize:
+    get:
+      description: |-
+        Returns a one-time state string and full auth_url for the browser redirect. After GitHub redirects back with code, call POST /api/v1/auth/login with grant_type github_oauth2, code, and the same state.
+        返回一次性 state 与完整 auth_url 供浏览器跳转。GitHub 回调携带 code 后，使用 grant_type=github_oauth2、code 与本 state 调用 POST /api/v1/auth/login。
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: state and auth_url
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.GithubOAuthBeginResponse'
+              type: object
+        "500":
+          description: Redis or configuration error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: Start GitHub OAuth2 (state + authorize URL)
+      tags:
+      - auth
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates by grant_type. Use grant_type=local with account
+        (username or email) and password, or grant_type=github_oauth2 with code and
+        state from GET /api/v1/auth/github/authorize. 中文：按 grant_type 登录；local 使用用户名或邮箱与密码；github_oauth2
+        使用授权码与 state。
+      parameters:
+      - description: Login request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Issued access and refresh tokens
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.LoginResponse'
+              type: object
+        "400":
+          description: Validation error or unsupported grant_type
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Invalid credentials or invalid OAuth code/state
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Account status disallows login
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: Login (local password or GitHub OAuth2)
+      tags:
+      - auth
+  /api/v1/auth/logout:
+    post:
+      description: Revokes the server-side session tied to the presented access token.
+        Reuse detection on refresh tokens is unaffected. 中文：撤销当前 access token 对应的服务端会话；与
+        refresh 轮换检测无关。
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: data is an empty JSON object
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Logout (revoke current session)
+      tags:
+      - auth
+  /api/v1/auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Rotates the refresh session and returns a new access + refresh
+        pair. Reuse of an old refresh token may revoke the session family. 中文：轮换 refresh
+        会话并返回新的令牌对；重复使用旧 refresh 可能导致会话族被吊销。
+      parameters:
+      - description: Refresh token
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: New token pair
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.RefreshResponse'
+              type: object
+        "401":
+          description: Invalid, expired, or reused refresh token
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: User status disallows login
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: Refresh access token
+      tags:
+      - auth
+  /api/v1/users/register:
+    post:
+      consumes:
+      - application/json
+      description: Creates identity.users plus credentials and returns tokens (auto-login).
+        Avatar binding is deferred until authenticated flows. 中文：创建用户与凭证并返回令牌（自动登录）；头像请在登录态流程中再绑定。
+      parameters:
+      - description: Registration payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Issued access and refresh tokens
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.RegisterResponse'
+              type: object
+        "400":
+          description: Validation error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Username or email conflict
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: Register a new user
+      tags:
+      - users
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: Send header Authorization with value "Bearer " plus the JWT access
+      token. 中文：请求头 Authorization，值为 Bearer、空格与 access token 拼接。
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

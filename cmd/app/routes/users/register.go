@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 	"k8s.io/klog/v2"
 
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/httpx"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
@@ -137,4 +138,22 @@ func mapRegisterUniqueViolation(pgErr *pgconn.PgError) *common.AppError {
 	default:
 		return common.NewConflict("registration conflict", nil)
 	}
+}
+
+// ServeRegister is the Gin entrypoint for POST /api/v1/users/register (JSON bind + Swagger).
+// ServeRegister 为 POST /api/v1/users/register 的 Gin 入口（JSON 绑定与 Swagger 元数据）。
+//
+// @Summary      Register a new user
+// @Description  Creates identity.users plus credentials and returns tokens (auto-login). Avatar binding is deferred until authenticated flows. 中文：创建用户与凭证并返回令牌（自动登录）；头像请在登录态流程中再绑定。
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        body  body      v1.RegisterRequest  true  "Registration payload"
+// @Success      200   {object}  common.BaseResponse{data=v1.RegisterResponse}  "Issued access and refresh tokens"
+// @Failure      400   {object}  common.BaseResponse                            "Validation error"
+// @Failure      409   {object}  common.BaseResponse                            "Username or email conflict"
+// @Failure      500   {object}  common.BaseResponse                            "Internal error"
+// @Router       /api/v1/users/register [post]
+func (u *UsersController) ServeRegister(ctx *gin.Context) {
+	httpx.HandleJSON(u.Register)(ctx)
 }

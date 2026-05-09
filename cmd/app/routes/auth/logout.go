@@ -10,6 +10,16 @@ import (
 
 // Logout revokes the current access-token-bound session; repeated calls are safe.
 // Logout 撤销当前 access token 绑定的会话；重复调用是安全的。
+//
+// @Summary      Logout (revoke current session)
+// @Description  Revokes the server-side session tied to the presented access token. Reuse detection on refresh tokens is unaffected. 中文：撤销当前 access token 对应的服务端会话；与 refresh 轮换检测无关。
+// @Tags         auth
+// @Security     BearerAuth
+// @Produce      json
+// @Success      200  {object}  common.BaseResponse  "data is an empty JSON object"
+// @Failure      401  {object}  common.BaseResponse
+// @Failure      500  {object}  common.BaseResponse
+// @Router       /api/v1/auth/logout [post]
 func (a *AuthController) Logout(ctx *gin.Context) {
 	claims := jwt.GetClaims(ctx)
 	if claims == nil || claims.UID <= 0 || claims.SID <= 0 {

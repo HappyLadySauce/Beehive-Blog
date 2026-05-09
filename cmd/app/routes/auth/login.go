@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 	"k8s.io/klog/v2"
 
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/httpx"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/oauth"
@@ -163,4 +164,23 @@ func (a *AuthController) finalizeLogin(ctx *gin.Context, user *model.User) (*v1.
 			RefreshToken: pair.Refresh.Token,
 		},
 	}, nil
+}
+
+// ServeLogin is the Gin entrypoint for POST /api/v1/auth/login (JSON bind + Swagger).
+// ServeLogin 为 POST /api/v1/auth/login 的 Gin 入口（JSON 绑定与 Swagger 元数据）。
+//
+// @Summary      Login (local password or GitHub OAuth2)
+// @Description  Authenticates by grant_type. Use grant_type=local with account (username or email) and password, or grant_type=github_oauth2 with code and state from GET /api/v1/auth/github/authorize. 中文：按 grant_type 登录；local 使用用户名或邮箱与密码；github_oauth2 使用授权码与 state。
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      v1.LoginRequest  true  "Login request"
+// @Success      200   {object}  common.BaseResponse{data=v1.LoginResponse}  "Issued access and refresh tokens"
+// @Failure      400   {object}  common.BaseResponse                         "Validation error or unsupported grant_type"
+// @Failure      401   {object}  common.BaseResponse                         "Invalid credentials or invalid OAuth code/state"
+// @Failure      403   {object}  common.BaseResponse                         "Account status disallows login"
+// @Failure      500   {object}  common.BaseResponse                         "Internal error"
+// @Router       /api/v1/auth/login [post]
+func (a *AuthController) ServeLogin(ctx *gin.Context) {
+	httpx.HandleJSON(a.Login)(ctx)
 }

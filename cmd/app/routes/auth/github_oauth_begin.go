@@ -14,6 +14,15 @@ import (
 
 // GithubOAuthBegin issues a CSRF state, stores it in Redis, and returns the GitHub authorize URL.
 // GithubOAuthBegin 签发 CSRF state、写入 Redis，并返回 GitHub 授权 URL。
+//
+// @Summary      Start GitHub OAuth2 (state + authorize URL)
+// @Description  Returns a one-time state string and full auth_url for the browser redirect. After GitHub redirects back with code, call POST /api/v1/auth/login with grant_type github_oauth2, code, and the same state.
+// @Description  返回一次性 state 与完整 auth_url 供浏览器跳转。GitHub 回调携带 code 后，使用 grant_type=github_oauth2、code 与本 state 调用 POST /api/v1/auth/login。
+// @Tags         auth
+// @Produce      json
+// @Success      200  {object}  common.BaseResponse{data=v1.GithubOAuthBeginResponse}  "state and auth_url"
+// @Failure      500  {object}  common.BaseResponse                                  "Redis or configuration error"
+// @Router       /api/v1/auth/github/authorize [get]
 func (a *AuthController) GithubOAuthBegin(ctx *gin.Context) {
 	state, err := oauth.StoreGitHubOAuthState(ctx.Request.Context(), a.svc.Cache, 15*time.Minute)
 	if err != nil {
