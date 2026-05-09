@@ -79,3 +79,11 @@ COMMENT ON COLUMN identity.users.updated_at IS
   'Row last-update timestamp, maintained by GORM UpdatedAt; refreshes when avatar reference changes, including DB-triggered fallback to default avatar after attachment soft-delete. / 行最近更新时间，由 GORM UpdatedAt 维护；头像引用变化时会刷新，包括附件软删后由数据库触发回退默认头像。';
 COMMENT ON COLUMN identity.users.deleted_at IS
   'Soft-deletion timestamp aligned with gorm.DeletedAt. / 与 gorm.DeletedAt 对齐的软删时间戳。';
+
+-- Default bootstrap admin for fresh installs (password set in 011_identity_user_credentials.sql).
+-- 全新安装时的默认管理员（密码哈希在 011_identity_user_credentials.sql 中写入）。
+INSERT INTO identity.users (username, nickname, role, status, created_at, updated_at)
+SELECT 'admin', 'Administrator', 'admin', 'active', NOW(), NOW()
+WHERE NOT EXISTS (
+  SELECT 1 FROM identity.users u WHERE u.username = 'admin' AND u.deleted_at IS NULL
+);

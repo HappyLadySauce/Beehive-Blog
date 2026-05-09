@@ -36,3 +36,19 @@ COMMENT ON COLUMN identity.user_credentials.password_hash IS
   'bcrypt hash of the plaintext password. / 明文密码的 bcrypt 哈希。';
 COMMENT ON COLUMN identity.user_credentials.deleted_at IS
   'Soft-deletion permits password change history; only rows with NULL deleted_at are active. / 软删保留改密历史；仅 deleted_at IS NULL 行为活跃凭证。';
+
+-- Default admin password: Admin@123 (bcrypt cost 12, matches pkg/auth/passwd.DefaultCost).
+-- 默认管理员密码：Admin@123（bcrypt cost 12，与 pkg/auth/passwd.DefaultCost 一致）。
+INSERT INTO identity.user_credentials (user_id, password_hash, created_at, updated_at)
+SELECT u.id,
+  '$2a$12$fKPFyp6NfF/paV.nMbBdPujwpX9XeS6RnYICqKlm2G5sYlmO57BPO',
+  NOW(),
+  NOW()
+FROM identity.users u
+WHERE u.username = 'admin'
+  AND u.deleted_at IS NULL
+  AND NOT EXISTS (
+    SELECT 1
+    FROM identity.user_credentials c
+    WHERE c.user_id = u.id AND c.deleted_at IS NULL
+  );
