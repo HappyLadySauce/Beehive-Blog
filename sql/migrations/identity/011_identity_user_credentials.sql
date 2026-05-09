@@ -2,7 +2,9 @@
 -- identity.user_credentials：本地认证的密码哈希，每个活跃用户仅一条。
 -- Must run after 010_identity_users.sql.
 -- 必须在 010_identity_users.sql 之后执行。
-CREATE TABLE identity.user_credentials (
+-- IF NOT EXISTS pairs with versioned -force re-apply (same rationale as 010).
+-- 与 versioned 模式下 -force 重跑策略一致，见 010 文件头注释。
+CREATE TABLE IF NOT EXISTS identity.user_credentials (
   id BIGSERIAL PRIMARY KEY,
 
   user_id BIGINT NOT NULL
@@ -24,7 +26,7 @@ CREATE TABLE identity.user_credentials (
 
 -- Unique index: only one active credential per user.
 -- 唯一索引：每个用户仅有一个活跃凭证。
-CREATE UNIQUE INDEX ux_user_credentials_user_id
+CREATE UNIQUE INDEX IF NOT EXISTS ux_user_credentials_user_id
   ON identity.user_credentials (user_id)
   WHERE deleted_at IS NULL;
 

@@ -4,7 +4,9 @@ CREATE SCHEMA IF NOT EXISTS identity;
 -- Run after 000_attachment_attachments.sql (basename sort: 000 before 001).
 -- identity.users：核心用户；头像外键指向 attachment.attachments。
 -- 须在 000_attachment_attachments.sql 之后执行（按文件名前缀 000 < 001）。
-CREATE TABLE identity.users (
+-- IF NOT EXISTS allows -force re-apply after checksum changes without 42P07 on existing DBs.
+-- 使用 IF NOT EXISTS 便于在 checksum 变更后用 -force 重跑，避免库中已有对象时报 42P07。
+CREATE TABLE IF NOT EXISTS identity.users (
   id BIGSERIAL PRIMARY KEY,
 
   username VARCHAR(64) NOT NULL,
@@ -35,25 +37,25 @@ CREATE TABLE identity.users (
 
 -- Unique login identifiers among live rows only (allows reuse after soft-delete).
 -- 仅在未软删行上唯一，便于软删后重新注册同名 / 同邮。
-CREATE UNIQUE INDEX ux_identity_users_username
+CREATE UNIQUE INDEX IF NOT EXISTS ux_identity_users_username
   ON identity.users (username)
   WHERE deleted_at IS NULL;
 
-CREATE UNIQUE INDEX ux_identity_users_email
+CREATE UNIQUE INDEX IF NOT EXISTS ux_identity_users_email
   ON identity.users (email)
   WHERE deleted_at IS NULL AND email IS NOT NULL;
 
-CREATE INDEX idx_identity_users_role_status
+CREATE INDEX IF NOT EXISTS idx_identity_users_role_status
   ON identity.users (role, status)
   WHERE deleted_at IS NULL;
 
-CREATE INDEX idx_identity_users_deleted_at
+CREATE INDEX IF NOT EXISTS idx_identity_users_deleted_at
   ON identity.users (deleted_at)
   WHERE deleted_at IS NOT NULL;
 
 -- Join / preload avatar attachment for live users who set one.
 -- 为设置了头像的活跃用户预加载附件行。
-CREATE INDEX idx_identity_users_avatar_attachment_id
+CREATE INDEX IF NOT EXISTS idx_identity_users_avatar_attachment_id
   ON identity.users (avatar_attachment_id)
   WHERE deleted_at IS NULL AND avatar_attachment_id IS NOT NULL;
 
