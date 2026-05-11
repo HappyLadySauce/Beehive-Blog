@@ -7,6 +7,13 @@ import { accessCookieName, refreshCookieName, secureCookieEnabled } from "@/lib/
 const goApiBaseUrl = process.env.BEEHIVE_API_BASE_URL ?? "http://localhost:8080";
 const fallbackRefreshMaxAge = 60 * 60 * 24 * 30;
 
+export type VerifiedAccessSession = {
+  uid: number;
+  role: string;
+  exp: number;
+  sid?: number;
+};
+
 export class BffAuthError extends Error {
   readonly status: number;
   readonly code: number;
@@ -111,5 +118,14 @@ export async function refreshAuthSession(refreshToken: string) {
   return forwardGoApi<AuthPayload>("/auth/refresh", {
     method: "POST",
     body: JSON.stringify({ refresh_token: refreshToken })
+  });
+}
+
+export async function verifyAccessSession(accessToken: string) {
+  return forwardGoApi<VerifiedAccessSession>("/auth/session", {
+    method: "GET",
+    headers: {
+      authorization: `Bearer ${accessToken}`
+    }
   });
 }
