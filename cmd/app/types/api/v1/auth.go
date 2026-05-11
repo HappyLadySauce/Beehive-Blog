@@ -75,3 +75,20 @@ type RefreshRequest struct {
 type RefreshResponse struct {
 	Token AuthToken `json:"token"`
 }
+
+// AuthSessionResponse is returned after the access token has been verified by AuthMiddleware.
+// AuthSessionResponse 在 AuthMiddleware 完成 access token 校验后返回。
+type AuthSessionResponse struct {
+	// UID is the authenticated user ID from the verified access token.
+	// UID 为已验证 access token 中的用户 ID。
+	UID int64 `json:"uid"`
+	// Role is the authenticated user's authorization role.
+	// Role 为已认证用户的授权角色。
+	Role string `json:"role"`
+	// Exp is the access token expiration time as a Unix timestamp.
+	// Exp 为 access token 的过期时间（Unix 时间戳）。
+	Exp int64 `json:"exp"`
+	// SID is the server-side session ID bound to the access token.
+	// SID 为 access token 绑定的服务端会话 ID。
+	SID int64 `json:"sid,omitempty"`
+}
