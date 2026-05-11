@@ -7,5 +7,6 @@
 .tmp
 logs/
 data/
+configs/
 
 Restrict Studio Access/
