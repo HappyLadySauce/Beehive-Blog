@@ -10,9 +10,10 @@ CREATE SCHEMA IF NOT EXISTS attachment;
 CREATE TABLE attachment.categories (
   id              BIGSERIAL PRIMARY KEY,
 
-  -- Self-referencing parent. RESTRICT prevents hard-deleting non-empty subtrees;
-  -- soft-delete (deleted_at) does not block business workflows.
-  -- 自引用父分类。RESTRICT 阻止物理删除非空子树；软删（deleted_at）不影响业务流。
+  -- Self-referencing parent. RESTRICT prevents hard-deleting non-empty subtrees.
+  -- Triggers below reject new or moved children under soft-deleted parents.
+  -- 自引用父分类。RESTRICT 阻止物理删除非空子树；
+  -- 下方触发器会拒绝将新分类或移动分类挂到已软删父节点下。
   parent_id       BIGINT NULL
     CONSTRAINT fk_attachment_categories_parent
     REFERENCES attachment.categories (id)
@@ -122,10 +123,11 @@ BEGIN
     SELECT c.path, c.depth
       INTO parent_path, parent_depth
       FROM attachment.categories c
-     WHERE c.id = NEW.parent_id;
+     WHERE c.id = NEW.parent_id
+       AND c.deleted_at IS NULL;
 
     IF parent_path IS NULL THEN
-      RAISE EXCEPTION 'attachment.categories.parent_id=% not found', NEW.parent_id
+      RAISE EXCEPTION 'attachment.categories.parent_id=% not found or soft-deleted', NEW.parent_id
         USING ERRCODE = 'foreign_key_violation';
     END IF;
 
@@ -162,10 +164,11 @@ BEGIN
   SELECT c.path, c.depth
     INTO parent_path, parent_depth
     FROM attachment.categories c
-   WHERE c.id = NEW.parent_id;
+   WHERE c.id = NEW.parent_id
+     AND c.deleted_at IS NULL;
 
   IF parent_path IS NULL THEN
-    RAISE EXCEPTION 'attachment.categories.parent_id=% not found', NEW.parent_id
+    RAISE EXCEPTION 'attachment.categories.parent_id=% not found or soft-deleted', NEW.parent_id
       USING ERRCODE = 'foreign_key_violation';
   END IF;
 
@@ -253,7 +256,7 @@ COMMENT ON TABLE attachment.categories IS
   'Hierarchical attachment taxonomy with materialized path. / 基于物化路径的附件分类层级表。';
 
 COMMENT ON COLUMN attachment.categories.parent_id IS
-  'Self-FK to parent category; NULL for roots. RESTRICT on hard delete. / 自引用父分类外键，根分类为 NULL；物理删除走 RESTRICT。';
+  'Self-FK to parent category; NULL for roots. RESTRICT on hard delete; triggers reject soft-deleted parents for new or moved children. / 自引用父分类外键，根分类为 NULL；物理删除走 RESTRICT；触发器会拒绝新建或移动到已软删父节点。';
 COMMENT ON COLUMN attachment.categories.name IS
   'Display name; unique among siblings on live rows (case-insensitive). / 展示名；活跃行内同级唯一（不区分大小写）。';
 COMMENT ON COLUMN attachment.categories.slug IS

@@ -1,16 +1,29 @@
 CREATE SCHEMA IF NOT EXISTS attachment;
 
--- attachment.attachments: unified table for s3 / oss / local attachments,
--- aligned with GORM soft-deletion model (deleted_at is gorm.DeletedAt).
--- attachment.attachments：统一登记 s3 / oss / local 三类附件，
--- 与 GORM 软删模型对齐（deleted_at 对应 gorm.DeletedAt）。
+-- attachment.attachments: unified metadata table for s3 / oss / local attachments.
+-- It separates ownership, upload completion, access policy, business lifecycle,
+-- and GORM soft-deletion so handlers can enforce each concern explicitly.
+-- attachment.attachments：统一登记 s3 / oss / local 三类附件元数据。
+-- 表结构将归属、上传完成状态、访问策略、业务生命周期与 GORM 软删拆开，
+-- 便于接口层分别执行权限、安全与清理策略。
 CREATE TABLE attachment.attachments (
   id              BIGSERIAL PRIMARY KEY,
+
+  -- Business owner. The FK is declared by a later migration because this
+  -- migration must run before identity.users; application code must still
+  -- validate the owner in request scope.
+  -- 业务归属。此处不声明外键，因为本迁移必须先于 identity.users 执行；
+  -- 外键由后续迁移追加；应用层仍需在请求上下文中校验归属。
+  owner_user_id   BIGINT,
+
+  -- Attachment purpose drives validation policy in the application layer.
+  -- 附件用途用于驱动应用层校验策略。
+  purpose         VARCHAR(32) NOT NULL DEFAULT 'content',
 
   -- Business fields. / 业务字段。
   filename        VARCHAR(255) NOT NULL,
   original_name   VARCHAR(255),
-  mime_type       VARCHAR(127),
+  mime_type       VARCHAR(127) NOT NULL,
   size            BIGINT NOT NULL CHECK (size >= 0),
 
   -- Storage backend selector. / 存储后端选择。
@@ -26,6 +39,18 @@ CREATE TABLE attachment.attachments (
   -- Optional integrity / cache fields. / 可选完整性与缓存字段。
   etag            VARCHAR(80),
   checksum        VARCHAR(128),
+
+  -- Read access policy. public rows may be served without an owner check
+  -- after application-level publication checks; private rows require auth.
+  -- 读取访问策略。public 可在应用层发布校验后匿名读取；private 必须鉴权。
+  access_scope    VARCHAR(16) NOT NULL DEFAULT 'private',
+
+  -- Upload state is separate from business visibility. Direct-to-object-store
+  -- flows create pending rows first; only ready rows can be downloaded or bound
+  -- as avatars.
+  -- 上传状态与业务可见性分离。对象存储直传会先创建 pending 行；
+  -- 只有 ready 行可下载或绑定为头像。
+  upload_status   VARCHAR(16) NOT NULL DEFAULT 'ready',
 
   -- Business visibility / lifecycle (orthogonal to soft-delete):
   --   active   — default; shown in normal listings.
@@ -44,27 +69,69 @@ CREATE TABLE attachment.attachments (
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted_at      TIMESTAMPTZ NULL,
 
+  CONSTRAINT chk_attachment_purpose
+    CHECK (purpose IN ('avatar', 'content', 'system', 'other')),
   CONSTRAINT chk_attachment_storage_type
     CHECK (storage_type IN ('s3', 'oss', 'local')),
+  CONSTRAINT chk_attachment_access_scope
+    CHECK (access_scope IN ('private', 'public')),
+  CONSTRAINT chk_attachment_upload_status
+    CHECK (upload_status IN ('pending', 'ready', 'failed')),
   CONSTRAINT chk_attachment_status
     CHECK (status IN ('active', 'archived', 'hidden')),
-  CONSTRAINT chk_attachment_remote_required
+  CONSTRAINT chk_attachment_owner_required
+    CHECK (owner_user_id IS NOT NULL OR purpose = 'system'),
+  CONSTRAINT chk_attachment_avatar_mime_type
+    CHECK (purpose <> 'avatar' OR mime_type LIKE 'image/%'),
+  CONSTRAINT chk_attachment_public_requires_ready_upload
+    CHECK (access_scope <> 'public' OR upload_status = 'ready'),
+  CONSTRAINT chk_attachment_storage_location
     CHECK (
-      storage_type = 'local'
-      OR (bucket IS NOT NULL AND object_key IS NOT NULL)
-    ),
-  CONSTRAINT chk_attachment_local_required
-    CHECK (
-      storage_type <> 'local'
-      OR local_path IS NOT NULL
+      (
+        storage_type = 'local'
+        AND local_path IS NOT NULL
+        AND bucket IS NULL
+        AND object_key IS NULL
+      )
+      OR
+      (
+        storage_type IN ('s3', 'oss')
+        AND bucket IS NOT NULL
+        AND object_key IS NOT NULL
+        AND local_path IS NULL
+      )
     )
 );
+
+COMMENT ON TABLE attachment.attachments IS
+  'Attachment metadata and storage registry. Ownership, upload_status, access_scope, status and deleted_at are intentionally separate so authorization, publication, lifecycle and soft-deletion do not overlap. / 附件元数据与存储登记表。owner、upload_status、access_scope、status、deleted_at 被刻意拆分，避免授权、发布、生命周期和软删语义混用。';
 
 -- Listing live attachments by storage_type with stable newest-first pagination.
 -- 活跃附件按 storage_type 过滤并按最新优先稳定分页。
 CREATE INDEX idx_attachment_attachments_live_storage_type_created_at
   ON attachment.attachments (storage_type, created_at DESC, id DESC)
   WHERE deleted_at IS NULL;
+
+-- Owner-scoped library listing with stable newest-first pagination.
+-- 按归属用户查询附件库并按最新优先稳定分页。
+CREATE INDEX idx_attachment_attachments_live_owner_created_at
+  ON attachment.attachments (owner_user_id, created_at DESC, id DESC)
+  WHERE deleted_at IS NULL AND owner_user_id IS NOT NULL;
+
+-- Public ready assets for published content, ordered newest first.
+-- 已完成上传且可公开访问的发布资源，按最新优先排序。
+CREATE INDEX idx_attachment_attachments_ready_public_created_at
+  ON attachment.attachments (created_at DESC, id DESC)
+  WHERE deleted_at IS NULL
+    AND upload_status = 'ready'
+    AND access_scope = 'public'
+    AND status = 'active';
+
+-- Pending / failed uploads are uncommon but need cleanup and retry scans.
+-- pending / failed 上传较少，但需要清理与重试扫描。
+CREATE INDEX idx_attachment_attachments_upload_status
+  ON attachment.attachments (upload_status, created_at)
+  WHERE deleted_at IS NULL AND upload_status <> 'ready';
 
 -- Audit / cleanup queries on soft-deleted rows.
 -- 用于审计或清理软删行的索引。
@@ -88,6 +155,10 @@ CREATE UNIQUE INDEX ux_attachment_attachments_local_path
     AND storage_type = 'local'
     AND local_path IS NOT NULL;
 
+COMMENT ON COLUMN attachment.attachments.owner_user_id IS
+  'User id that owns this attachment. The FK is added after identity.users is created; handlers must still validate ownership before writes and reads. / 拥有该附件的用户 id。外键在 identity.users 创建后追加；接口层在读写前仍必须校验归属。';
+COMMENT ON COLUMN attachment.attachments.purpose IS
+  'Attachment purpose: avatar | content | system | other. Purpose selects validation policy; avatar rows must be image MIME types. / 附件用途：avatar | content | system | other。用途决定校验策略；avatar 必须是图片 MIME 类型。';
 COMMENT ON COLUMN attachment.attachments.filename IS
   'Server-side safe filename used for storage. / 用于落盘 / 上传的安全文件名。';
 COMMENT ON COLUMN attachment.attachments.original_name IS
@@ -108,6 +179,10 @@ COMMENT ON COLUMN attachment.attachments.etag IS
   'Provider-returned entity tag, used for cache validation. / 提供方返回的实体标签，用于缓存校验。';
 COMMENT ON COLUMN attachment.attachments.checksum IS
   'Content checksum, algorithm fixed in app layer (e.g. sha256). / 内容校验和，算法在应用层固定，例如 sha256。';
+COMMENT ON COLUMN attachment.attachments.access_scope IS
+  'Read access policy: private | public. public rows can be served anonymously only after upload_status=ready and application publication checks pass. / 读取访问策略：private | public。public 行仅在 upload_status=ready 且应用层发布校验通过后才可匿名读取。';
+COMMENT ON COLUMN attachment.attachments.upload_status IS
+  'Upload completion state: pending | ready | failed. Only ready rows may be downloaded or bound as user avatars. / 上传完成状态：pending | ready | failed。只有 ready 行可下载或绑定为用户头像。';
 COMMENT ON COLUMN attachment.attachments.status IS
   'Visibility/lifecycle: active | hidden | archived. hidden hides from default UI without deleting the row and hidden remains referenceable, including by user avatars; archived marks cold retention; only soft-deletion via deleted_at makes the attachment unusable as an avatar. / 可见性与生命周期：active | hidden | archived。hidden 为默认列表不可见但未软删，且 hidden 仍可被引用，包括被用户头像引用；archived 为归档；只有 deleted_at 软删才会使附件不可继续作为头像。';
 COMMENT ON COLUMN attachment.attachments.created_at IS
