@@ -61,6 +61,12 @@ func NewConflict(message string, err error) *AppError {
 	return newAppError(http.StatusConflict, message, err)
 }
 
+// NewNotFound returns a 404 public error.
+// NewNotFound 返回 404 对外错误。
+func NewNotFound(message string, err error) *AppError {
+	return newAppError(http.StatusNotFound, message, err)
+}
+
 // NewInternal returns a 500 public error with a safe message and a logged cause.
 // NewInternal 返回带安全信息和日志原因的 500 对外错误。
 func NewInternal(message string, err error) *AppError {

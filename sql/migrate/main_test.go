@@ -108,6 +108,39 @@ func TestAttachmentSchemaMigrationsOptimizeForRemoteTupleLookupAndStorageTypeLis
 	}
 }
 
+func TestAttachmentSchemaMigrationsKeepPurposeAndAddOwnerFKAfterIdentity(t *testing.T) {
+	t.Helper()
+
+	root := repoRootFromWorkingDir(t)
+	attachmentSQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "attachment", "000_attachment_attachments.sql"))
+	ownerFKSQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "attachment", "014_attachment_attachments_owner_fk.sql"))
+
+	for _, want := range []string{
+		"purpose         VARCHAR(32) NOT NULL DEFAULT 'content'",
+		"CONSTRAINT chk_attachment_purpose",
+		"CHECK (purpose IN ('avatar', 'content', 'system', 'other'))",
+		"CHECK (owner_user_id IS NOT NULL OR purpose = 'system')",
+		"CHECK (purpose <> 'avatar' OR mime_type LIKE 'image/%')",
+	} {
+		if !strings.Contains(attachmentSQL, want) {
+			t.Fatalf("attachment migration should keep purpose semantics, missing %q", want)
+		}
+	}
+	if strings.Contains(attachmentSQL, "usage_type") {
+		t.Fatalf("attachment migration should use purpose, not usage_type")
+	}
+	for _, want := range []string{
+		"ADD CONSTRAINT fk_attachment_attachments_owner_user",
+		"FOREIGN KEY (owner_user_id)",
+		"REFERENCES identity.users (id)",
+		"ON DELETE RESTRICT",
+	} {
+		if !strings.Contains(ownerFKSQL, want) {
+			t.Fatalf("owner FK migration missing %q", want)
+		}
+	}
+}
+
 func TestIdentitySchemaMigrationsAddRefreshSessionsAndProviderIdentities(t *testing.T) {
 	t.Helper()
 

@@ -10,5 +10,6 @@ func (o *Options) Validate() error {
 	err = errors.Join(err, o.JWT.Validate())
 	err = errors.Join(err, o.GithubOAuth2.Validate())
 	err = errors.Join(err, o.Email.Validate())
+	err = errors.Join(err, o.Attachment.Validate())
 	return err
 }

@@ -38,6 +38,23 @@ email:
     from-name: ""
     tls: starttls
 
+attachment:
+    default-storage: local # local | s3 | oss
+    local-root: data/attachments
+    max-bytes: 10485760
+    allowed-mime-prefixes:
+        - image/
+        - application/pdf
+    presign-ttl: 15m
+    s3:
+        bucket: ""
+        upload-base-url: ""
+        download-base-url: ""
+    oss:
+        bucket: ""
+        upload-base-url: ""
+        download-base-url: ""
+
 github-oauth2:
     client-id: 
     client-secret: 

@@ -17,6 +17,7 @@ type Options struct {
 	JWT             *options.JWTOptions             `mapstructure:"jwt"`
 	GithubOAuth2    *options.GithubOAuth2Options    `mapstructure:"github-oauth2"`
 	Email           *options.EmailSMTPOptions       `mapstructure:"email"`
+	Attachment      *options.AttachmentOptions      `mapstructure:"attachment"`
 }
 
 func NewOptions(basename string) *Options {
@@ -28,6 +29,7 @@ func NewOptions(basename string) *Options {
 		JWT:             options.NewJWTOptions(),
 		GithubOAuth2:    options.NewGithubOAuth2Options(),
 		Email:           options.NewEmailSMTPOptions(),
+		Attachment:      options.NewAttachmentOptions(),
 	}
 }
 
@@ -58,6 +60,9 @@ func (o *Options) AddFlags(fs *pflag.FlagSet) *flag.NamedFlagSets {
 
 	emailFS := nfs.FlagSet("Email SMTP")
 	o.Email.AddFlags(emailFS)
+
+	attachmentFS := nfs.FlagSet("Attachment")
+	o.Attachment.AddFlags(attachmentFS)
 
 	// Merge all named flag sets into the root command FlagSet.
 	// 将所有命名标志集合并到根命令的 FlagSet。

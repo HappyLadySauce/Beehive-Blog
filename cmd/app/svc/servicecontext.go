@@ -48,6 +48,9 @@ func NewServiceContext(ctx context.Context, cfg *config.Config) (*ServiceContext
 	if cfg.Email == nil {
 		return nil, fmt.Errorf("email config is nil")
 	}
+	if cfg.Attachment == nil {
+		return nil, fmt.Errorf("attachment config is nil")
+	}
 
 	dsn, err := postgreDSN(cfg.Database)
 	if err != nil {

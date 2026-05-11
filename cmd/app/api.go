@@ -12,6 +12,7 @@ import (
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/options"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/router"
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/attachments"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/auth"
 	routesettings "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/settings"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/users"
@@ -65,6 +66,7 @@ func run(ctx context.Context, opts *options.Options) error {
 		JWT:             opts.JWT,
 		GithubOAuth2:    opts.GithubOAuth2,
 		Email:           opts.Email,
+		Attachment:      opts.Attachment,
 	}
 	config.Init(cfg)
 
@@ -87,6 +89,9 @@ func run(ctx context.Context, opts *options.Options) error {
 	auth.Init(sc)
 	users.Init(sc)
 	routesettings.Init(sc)
+	if err := attachments.Init(sc); err != nil {
+		return err
+	}
 
 	if sc.Settings != nil && sc.PostgresDSN != "" {
 		settings.StartNotifyListener(ctx, sc.PostgresDSN, sc.Settings)
