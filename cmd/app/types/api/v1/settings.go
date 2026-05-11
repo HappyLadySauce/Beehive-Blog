@@ -38,3 +38,15 @@ type EmailSMTPPatchJSON struct {
 type SettingsPatchRequestJSON struct {
 	Email *EmailSMTPPatchJSON `json:"email"`
 }
+
+// SettingsEmailTestRequest is the body for sending a test email with saved SMTP settings.
+// SettingsEmailTestRequest 为使用已保存 SMTP 设置发送测试邮件的请求体。
+type SettingsEmailTestRequest struct {
+	Recipient string `json:"recipient" binding:"required,email,max=320"`
+}
+
+// SettingsEmailTestResponse confirms the accepted test recipient.
+// SettingsEmailTestResponse 确认测试邮件收件人。
+type SettingsEmailTestResponse struct {
+	Recipient string `json:"recipient"`
+}

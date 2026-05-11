@@ -1,10 +1,10 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Loader2, Save, Settings } from "lucide-react";
+import { Loader2, Save, Send, Settings } from "lucide-react";
 
 import { humanizeApiError } from "@/lib/api/client";
-import { getSettings, patchSettings } from "@/lib/api/settings";
+import { getSettings, patchSettings, testEmailSettings } from "@/lib/api/settings";
 import type { EmailSettingsPublic, SettingsResponse } from "@/lib/api/types";
 import styles from "./Studio.module.css";
 import { StudioPanel } from "./StudioPanel";
@@ -23,23 +23,37 @@ const defaultEmail: EmailSettingsPublic = {
   tls: "starttls"
 };
 
+let settingsLoadRequest: Promise<SettingsResponse> | null = null;
+
+function loadSettings() {
+  if (!settingsLoadRequest) {
+    settingsLoadRequest = getSettings().finally(() => {
+      settingsLoadRequest = null;
+    });
+  }
+  return settingsLoadRequest;
+}
+
 export function StudioSettingsPage() {
   const [settings, setSettings] = useState<SettingsResponse | null>(null);
   const [email, setEmail] = useState<EmailSettingsPublic>(defaultEmail);
   const [password, setPassword] = useState("");
   const [passwordMode, setPasswordMode] = useState<PasswordMode>("keep");
+  const [testRecipient, setTestRecipient] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
   const [message, setMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     let active = true;
 
-    getSettings()
+    loadSettings()
       .then((payload) => {
         if (!active) return;
         setSettings(payload);
         setEmail(payload.email);
+        setTestRecipient(payload.email.from || payload.email.username);
       })
       .catch((error) => {
         if (!active) return;
@@ -91,6 +105,7 @@ export function StudioSettingsPage() {
       });
       setSettings(next);
       setEmail(next.email);
+      setTestRecipient((current) => current || next.email.from || next.email.username);
       setPassword("");
       setPasswordMode("keep");
       setMessage({ tone: "success", text: "设置已保存。" });
@@ -98,6 +113,26 @@ export function StudioSettingsPage() {
       setMessage({ tone: "error", text: humanizeApiError(error) });
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function onSendTestEmail() {
+    const recipient = testRecipient.trim();
+    const validation = validateTestRecipient(email, recipient);
+    if (validation) {
+      setMessage({ tone: "error", text: validation });
+      return;
+    }
+
+    setTesting(true);
+    setMessage(null);
+    try {
+      const result = await testEmailSettings({ recipient });
+      setMessage({ tone: "success", text: `测试邮件已发送至 ${result.recipient}。` });
+    } catch (error) {
+      setMessage({ tone: "error", text: humanizeApiError(error) });
+    } finally {
+      setTesting(false);
     }
   }
 
@@ -213,6 +248,30 @@ export function StudioSettingsPage() {
               {settings ? <span className={styles.muted}>Revision {settings.revision}</span> : null}
             </div>
 
+            <label className={styles.fieldFull}>
+              <span>测试收件人</span>
+              <div className={styles.passwordRow}>
+                <input
+                  aria-label="测试收件人"
+                  autoComplete="email"
+                  placeholder="recipient@example.com"
+                  type="email"
+                  value={testRecipient}
+                  onChange={(event) => setTestRecipient(event.target.value)}
+                />
+                <button
+                  className="secondary-button"
+                  disabled={saving || testing}
+                  type="button"
+                  onClick={onSendTestEmail}
+                >
+                  {testing ? <Loader2 aria-hidden className="spin" size={18} /> : <Send aria-hidden size={18} />}
+                  发送测试邮件
+                </button>
+              </div>
+              <span className={styles.muted}>测试使用已保存的 SMTP 配置；未保存修改不会参与发送。</span>
+            </label>
+
             {message ? (
               <p
                 className={`${styles.message} ${message.tone === "success" ? styles.messageSuccess : styles.messageError}`}
@@ -246,6 +305,19 @@ function validateEmail(email: EmailSettingsPublic) {
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.from.trim())) {
     return "发件人邮箱格式不正确。";
+  }
+  return null;
+}
+
+function validateTestRecipient(email: EmailSettingsPublic, recipient: string) {
+  if (!email.enabled) {
+    return "发送测试邮件前必须先启用 SMTP。";
+  }
+  if (recipient === "") {
+    return "请填写测试收件人邮箱。";
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)) {
+    return "测试收件人邮箱格式不正确。";
   }
   return null;
 }

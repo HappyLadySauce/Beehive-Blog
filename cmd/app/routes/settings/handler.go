@@ -26,4 +26,5 @@ func Init(svcCtx *svc.ServiceContext) {
 	g.Use(middleware.AuthMiddleware(svcCtx), middleware.RequireRole("admin"))
 	g.GET("", h.ServeGet)
 	g.PATCH("", h.ServePatch)
+	g.POST("/email/test", h.ServeEmailTest)
 }

@@ -87,3 +87,11 @@ export type EmailSMTPPatch = {
 export type SettingsPatchRequest = {
   email: EmailSMTPPatch;
 };
+
+export type SettingsEmailTestRequest = {
+  recipient: string;
+};
+
+export type SettingsEmailTestResponse = {
+  recipient: string;
+};

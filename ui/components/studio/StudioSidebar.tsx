@@ -45,6 +45,7 @@ export function StudioSidebar() {
               className={`${styles.navLink} ${active ? styles.navLinkActive : ""}`}
               href={item.href}
               key={item.href}
+              prefetch={false}
               onClick={() => setOpen(false)}
             >
               <Icon aria-hidden size={18} />

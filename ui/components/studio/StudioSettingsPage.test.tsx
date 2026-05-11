@@ -5,10 +5,12 @@ import { StudioSettingsPage } from "./StudioSettingsPage";
 
 const getSettings = vi.hoisted(() => vi.fn());
 const patchSettings = vi.hoisted(() => vi.fn());
+const testEmailSettings = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api/settings", () => ({
   getSettings,
-  patchSettings
+  patchSettings,
+  testEmailSettings
 }));
 
 const baseSettings = {
@@ -29,8 +31,10 @@ describe("StudioSettingsPage", () => {
   beforeEach(() => {
     getSettings.mockReset();
     patchSettings.mockReset();
+    testEmailSettings.mockReset();
     getSettings.mockResolvedValue(baseSettings);
     patchSettings.mockResolvedValue({ ...baseSettings, revision: 6 });
+    testEmailSettings.mockResolvedValue({ recipient: "reader@example.com" });
   });
 
   it("loads and renders SMTP settings", async () => {
@@ -75,6 +79,28 @@ describe("StudioSettingsPage", () => {
 
     await waitFor(() => expect(patchSettings).toHaveBeenCalled());
     expect(patchSettings.mock.calls[0][0].email.password).toBe("");
+  });
+
+  it("sends a SMTP test email to the requested recipient", async () => {
+    render(<StudioSettingsPage />);
+    await waitFor(() => expect(screen.getByLabelText("测试收件人")).toHaveValue("robot@example.com"));
+
+    fireEvent.change(screen.getByLabelText("测试收件人"), { target: { value: "reader@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: "发送测试邮件" }));
+
+    await waitFor(() => expect(testEmailSettings).toHaveBeenCalledWith({ recipient: "reader@example.com" }));
+    expect(await screen.findByText("测试邮件已发送至 reader@example.com。")).toBeInTheDocument();
+  });
+
+  it("validates test recipient before sending SMTP test email", async () => {
+    render(<StudioSettingsPage />);
+    await waitFor(() => expect(screen.getByLabelText("测试收件人")).toHaveValue("robot@example.com"));
+
+    fireEvent.change(screen.getByLabelText("测试收件人"), { target: { value: "invalid-email" } });
+    fireEvent.click(screen.getByRole("button", { name: "发送测试邮件" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("测试收件人邮箱格式不正确。");
+    expect(testEmailSettings).not.toHaveBeenCalled();
   });
 
   it("shows a safe error state when settings cannot be loaded", async () => {

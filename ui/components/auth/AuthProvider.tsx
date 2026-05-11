@@ -15,6 +15,16 @@ type AuthContextValue = ClientSession & {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 const anonymousSession = sessionFromClaims(null);
+let initialSessionRequest: Promise<ClientSession> | null = null;
+
+function loadInitialSession() {
+  if (!initialSessionRequest) {
+    initialSessionRequest = getSession().finally(() => {
+      initialSessionRequest = null;
+    });
+  }
+  return initialSessionRequest;
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<ClientSession>(anonymousSession);
@@ -29,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let active = true;
 
-    getSession()
+    loadInitialSession()
       .then((nextSession) => {
         if (active) {
           setSession(nextSession);

@@ -122,6 +122,12 @@ func validateEmailSMTP(e *EmailSMTPSettings) error {
 	return nil
 }
 
+// ValidateForSend validates SMTP settings before opening a network connection.
+// ValidateForSend 在建立网络连接前校验 SMTP 设置。
+func (e EmailSMTPSettings) ValidateForSend() error {
+	return validateEmailSMTP(&e)
+}
+
 // MergePatch merges a patch into a deep copy of base and returns the result.
 // MergePatch 将补丁合并到 base 的深拷贝并返回结果。
 func MergePatch(base ApplicationSettings, patch *SettingsPatchRequest) (ApplicationSettings, error) {

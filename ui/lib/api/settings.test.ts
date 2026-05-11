@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getSettings, patchSettings } from "./settings";
+import { getSettings, patchSettings, testEmailSettings } from "./settings";
 
 describe("settings API client", () => {
   beforeEach(() => {
@@ -29,6 +29,21 @@ describe("settings API client", () => {
 
     const init = fetchMock.mock.calls[0][1] as RequestInit;
     expect(JSON.parse(String(init.body))).toEqual({ email: { enabled: true, host: "smtp.example.com" } });
+  });
+
+  it("sends SMTP test requests through the BFF route", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ recipient: "reader@example.com" }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await testEmailSettings({ recipient: "reader@example.com" });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/bff/settings/email/test",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ recipient: "reader@example.com" })
+      })
+    );
   });
 });
 
