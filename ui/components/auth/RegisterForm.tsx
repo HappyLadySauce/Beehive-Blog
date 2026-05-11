@@ -31,7 +31,7 @@ export function RegisterForm() {
         nickname: nickname || undefined
       });
       setAuth(payload);
-      router.replace("/studio");
+      router.replace("/");
     } catch (error) {
       setMessage(humanizeApiError(error));
     } finally {
@@ -68,7 +68,7 @@ export function RegisterForm() {
       {message ? <p className="form-message" role="alert">{message}</p> : null}
       <button className="primary-button" disabled={pending} type="submit">
         {pending ? <Loader2 aria-hidden className="spin" size={18} /> : <UserPlus aria-hidden size={18} />}
-        注册并进入 Studio
+        注册并登录
       </button>
       <p className="auth-switch">
         已有账号？<Link href="/login">登录</Link>

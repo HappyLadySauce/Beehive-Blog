@@ -1,19 +1,5 @@
-import type { Metadata } from "next";
-
-import { StudioShell } from "@/components/studio/StudioShell";
-
-export const metadata: Metadata = {
-  title: "Studio",
-  robots: {
-    index: false,
-    follow: false
-  }
-};
+import { StudioOverview } from "@/components/studio/StudioOverview";
 
 export default function StudioPage() {
-  return (
-    <main className="page">
-      <StudioShell />
-    </main>
-  );
+  return <StudioOverview />;
 }

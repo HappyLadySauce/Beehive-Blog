@@ -1,0 +1,275 @@
+.layout {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: 240px minmax(0, 1fr);
+  margin: 0 auto;
+  max-width: 1580px;
+  padding: 28px clamp(18px, 2.5vw, 40px) 56px;
+}
+
+.sidebar {
+  align-self: start;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--soft-shadow);
+  padding: 14px;
+  position: sticky;
+  top: 18px;
+}
+
+.brand {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 8px 8px 14px;
+}
+
+.brandMark {
+  align-items: center;
+  background: var(--accent);
+  border-radius: var(--radius);
+  color: white;
+  display: inline-flex;
+  font-size: 0.82rem;
+  font-weight: 900;
+  height: 34px;
+  justify-content: center;
+  width: 34px;
+}
+
+.brandText {
+  display: grid;
+  gap: 2px;
+}
+
+.brandText small,
+.muted {
+  color: var(--muted);
+}
+
+.mobileToggle {
+  display: none;
+  width: 100%;
+}
+
+.nav {
+  display: grid;
+  gap: 8px;
+}
+
+.navLink {
+  align-items: center;
+  border-radius: var(--radius);
+  color: var(--muted);
+  display: flex;
+  gap: 10px;
+  min-height: 42px;
+  padding: 11px;
+}
+
+.navLink:hover,
+.navLink:focus-visible,
+.navLinkActive {
+  background: #edf7f5;
+  color: var(--accent-dark);
+  outline: none;
+}
+
+.main {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+
+.topbar {
+  align-items: center;
+  display: flex;
+  gap: 18px;
+  justify-content: space-between;
+}
+
+.topbar h1 {
+  font-size: clamp(1.65rem, 2vw, 2.2rem);
+  line-height: 1.15;
+  margin: 0;
+}
+
+.topbar p:not(.eyebrow) {
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 8px 0 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.metricGrid,
+.workGrid {
+  display: grid;
+  gap: 14px;
+}
+
+.metricGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.workGrid {
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+}
+
+.metricCard,
+.panel,
+.accessState {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--soft-shadow);
+}
+
+.metricCard {
+  align-content: start;
+  display: grid;
+  gap: 8px;
+  min-height: 150px;
+  padding: 20px;
+}
+
+.metricIcon {
+  align-items: center;
+  background: #edf7f5;
+  border-radius: var(--radius);
+  color: var(--accent-dark);
+  display: inline-flex;
+  height: 38px;
+  justify-content: center;
+  width: 38px;
+}
+
+.metricCard strong {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.metricCard span,
+.panel p,
+.emptyState {
+  color: var(--muted);
+}
+
+.panel {
+  min-height: 220px;
+  padding: 24px;
+}
+
+.panelHeader {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.panelHeader h2,
+.panelHeader h3 {
+  margin: 0;
+}
+
+.checkList,
+.activityList {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.checkItem,
+.activityItem {
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 10px 12px;
+}
+
+.statusPill {
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 5px 9px;
+}
+
+.statusReady {
+  background: #edf7f5;
+  color: var(--accent-dark);
+}
+
+.statusPending {
+  background: #fff7e6;
+  color: #925d05;
+}
+
+.emptyState {
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 8px;
+  min-height: 160px;
+  place-items: center;
+  text-align: center;
+}
+
+.accessState {
+  display: grid;
+  gap: 10px;
+  margin: 48px auto;
+  max-width: 560px;
+  padding: 24px;
+}
+
+@media (max-width: 920px) {
+  .layout,
+  .metricGrid,
+  .workGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+  }
+
+  .mobileToggle {
+    display: inline-flex;
+    margin-bottom: 10px;
+  }
+
+  .navCollapsed {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .layout {
+    padding-top: 18px;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+}

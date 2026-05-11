@@ -1,9 +1,3 @@
-import type { AuthPayload, AuthToken } from "@/lib/api/types";
-
-const storageKey = "beehive.auth";
-let cachedRawSession: string | null | undefined;
-let cachedSession: StoredSession | null = null;
-
 export type JwtClaims = {
   uid?: number;
   role?: string;
@@ -12,22 +6,13 @@ export type JwtClaims = {
   use?: string;
 };
 
-export type StoredSession = {
-  token: AuthToken;
-  claims?: JwtClaims;
-  issuedAt: number;
+export type ClientSession = {
+  isAuthenticated: boolean;
+  claims: JwtClaims | null;
+  role?: string;
+  isAdmin: boolean;
+  isTokenExpired: boolean;
 };
-
-export function saveSession(payload: AuthPayload) {
-  const claims = decodeJwtClaims(payload.token.access_token);
-  const session: StoredSession = {
-    token: payload.token,
-    claims: claims ?? undefined,
-    issuedAt: Date.now()
-  };
-  window.localStorage.setItem(storageKey, JSON.stringify(session));
-  window.dispatchEvent(new Event("beehive-auth-changed"));
-}
 
 export function decodeJwtClaims(token: string): JwtClaims | null {
   const payload = token.split(".")[1];
@@ -58,31 +43,15 @@ export function isAdminClaims(claims: JwtClaims | null | undefined) {
   return claims?.role === "admin" && !isExpiredClaims(claims);
 }
 
-export function readSession(): StoredSession | null {
-  if (typeof window === "undefined") return null;
+export function sessionFromClaims(claims: JwtClaims | null): ClientSession {
+  const isTokenExpired = isExpiredClaims(claims);
+  const isAuthenticated = Boolean(claims?.role && !isTokenExpired);
 
-  const raw = window.localStorage.getItem(storageKey);
-  if (raw === cachedRawSession) return cachedSession;
-
-  cachedRawSession = raw;
-  cachedSession = null;
-  if (!raw) return null;
-
-  try {
-    const parsed = JSON.parse(raw) as StoredSession;
-    if (!parsed.token?.access_token) return null;
-    const claims = decodeJwtClaims(parsed.token.access_token);
-    if (!claims?.role || isExpiredClaims(claims)) return null;
-    cachedSession = { ...parsed, claims };
-    return cachedSession;
-  } catch {
-    clearSession();
-    return null;
-  }
-}
-
-export function clearSession() {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem(storageKey);
-  window.dispatchEvent(new Event("beehive-auth-changed"));
+  return {
+    isAuthenticated,
+    claims: isAuthenticated ? claims : null,
+    role: isAuthenticated ? claims?.role : undefined,
+    isAdmin: isAdminClaims(claims),
+    isTokenExpired
+  };
 }

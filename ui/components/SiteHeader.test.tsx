@@ -6,6 +6,7 @@ import { SiteHeader } from "./SiteHeader";
 const authState = vi.hoisted(() => ({
   isAuthenticated: false,
   isAdmin: false,
+  loading: false,
   role: undefined as string | undefined,
   claims: null as { uid?: number; role?: string } | null,
   clearAuth: vi.fn()
@@ -13,10 +14,6 @@ const authState = vi.hoisted(() => ({
 
 vi.mock("@/components/auth/AuthProvider", () => ({
   useAuth: () => authState
-}));
-
-vi.mock("@/lib/api/auth", () => ({
-  logout: vi.fn()
 }));
 
 vi.mock("next/navigation", () => ({
@@ -29,6 +26,7 @@ describe("SiteHeader", () => {
   beforeEach(() => {
     authState.isAuthenticated = false;
     authState.isAdmin = false;
+    authState.loading = false;
     authState.role = undefined;
     authState.claims = null;
     authState.clearAuth.mockClear();
@@ -65,5 +63,25 @@ describe("SiteHeader", () => {
 
     expect(screen.getByRole("link", { name: "Studio" })).toHaveAttribute("href", "/studio");
     expect(screen.getByRole("menuitem", { name: "登出" })).toBeInTheDocument();
+  });
+
+  it("closes the user menu when clicking outside", () => {
+    authState.isAuthenticated = true;
+    authState.isAdmin = true;
+    authState.role = "admin";
+    authState.claims = { uid: 1, role: "admin" };
+
+    render(
+      <div>
+        <SiteHeader />
+        <main data-testid="outside">Outside</main>
+      </div>
+    );
+    fireEvent.click(screen.getByRole("button", { name: "打开用户菜单" }));
+    expect(screen.getByRole("menuitem", { name: "登出" })).toBeInTheDocument();
+
+    fireEvent.pointerDown(screen.getByTestId("outside"));
+
+    expect(screen.queryByRole("menuitem", { name: "登出" })).not.toBeInTheDocument();
   });
 });

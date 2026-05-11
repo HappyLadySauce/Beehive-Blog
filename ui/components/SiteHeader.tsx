@@ -3,24 +3,35 @@
 import Link from "next/link";
 import { Hexagon, LogOut, PenLine, User, Wrench } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { logout } from "@/lib/api/auth";
 import { useAuth } from "@/components/auth/AuthProvider";
 
 export function SiteHeader() {
   const router = useRouter();
-  const { claims, clearAuth, isAdmin, isAuthenticated, session } = useAuth();
+  const { claims, clearAuth, isAdmin, isAuthenticated, loading } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const avatarText = claims?.role === "admin" ? "A" : claims?.uid ? String(claims.uid).slice(0, 1) : "";
 
-  async function onLogout() {
-    const accessToken = session?.token.access_token;
-    setMenuOpen(false);
-    clearAuth();
-    if (accessToken) {
-      await logout(accessToken).catch(() => undefined);
+  useEffect(() => {
+    if (!menuOpen) {
+      return;
     }
+
+    function onPointerDown(event: PointerEvent) {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [menuOpen]);
+
+  async function onLogout() {
+    setMenuOpen(false);
+    await clearAuth();
     router.replace("/");
   }
 
@@ -32,8 +43,8 @@ export function SiteHeader() {
       </Link>
       <nav className="main-nav" aria-label="主导航">
         <Link href="/posts">文章</Link>
-        {isAuthenticated ? (
-          <div className="user-menu">
+        {loading ? null : isAuthenticated ? (
+          <div className="user-menu" ref={menuRef}>
             <button
               aria-expanded={menuOpen}
               aria-label="打开用户菜单"

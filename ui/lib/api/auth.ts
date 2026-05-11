@@ -1,33 +1,36 @@
 import { apiFetch } from "./client";
-import type { AuthPayload, GithubOAuthBeginResponse, LoginRequest, RegisterRequest } from "./types";
+import type { ClientSession } from "@/lib/auth/session";
+import type { GithubOAuthBeginResponse, LoginRequest, RegisterRequest } from "./types";
 
 export function login(payload: LoginRequest) {
-  return apiFetch<AuthPayload>("/auth/login", {
+  return apiFetch<ClientSession>("/bff/auth/login", {
     method: "POST",
     body: JSON.stringify(payload)
   });
 }
 
 export function register(payload: RegisterRequest) {
-  return apiFetch<AuthPayload>("/users/register", {
+  return apiFetch<ClientSession>("/bff/auth/register", {
     method: "POST",
     body: JSON.stringify(payload)
   });
 }
 
-export function refresh(refreshToken: string) {
-  return apiFetch<AuthPayload>("/auth/refresh", {
-    method: "POST",
-    body: JSON.stringify({ refresh_token: refreshToken })
+export function refresh() {
+  return apiFetch<ClientSession>("/bff/auth/refresh", {
+    method: "POST"
   });
 }
 
-export function logout(accessToken: string) {
-  return apiFetch<null>("/auth/logout", {
-    method: "POST",
-    headers: {
-      authorization: `Bearer ${accessToken}`
-    }
+export function logout() {
+  return apiFetch<null>("/bff/auth/logout", {
+    method: "POST"
+  });
+}
+
+export function getSession() {
+  return apiFetch<ClientSession>("/bff/auth/session", {
+    method: "GET"
   });
 }
 

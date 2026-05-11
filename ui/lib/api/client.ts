@@ -14,6 +14,13 @@ export class ApiError extends Error {
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/v1";
 
+function resolveApiUrl(path: string) {
+  if (path.startsWith("/bff/")) {
+    return `/api${path}`;
+  }
+  return `${apiBaseUrl}${path}`;
+}
+
 export async function parseBaseResponse<T>(response: Response): Promise<T> {
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) {
@@ -35,7 +42,7 @@ export async function parseBaseResponse<T>(response: Response): Promise<T> {
 }
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
+  const response = await fetch(resolveApiUrl(path), {
     ...init,
     headers: {
       "content-type": "application/json",
