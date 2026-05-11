@@ -15,6 +15,13 @@ export type AuthPayload = {
   token: AuthToken;
 };
 
+export type AuthSessionResponse = {
+  uid: number;
+  role: string;
+  exp: number;
+  sid?: number;
+};
+
 export type GithubOAuthBeginResponse = {
   state: string;
   auth_url: string;

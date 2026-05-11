@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import type { AuthPayload, BaseResponse } from "@/lib/api/types";
+import type { AuthPayload, AuthSessionResponse, BaseResponse } from "@/lib/api/types";
 import { decodeJwtClaims, sessionFromClaims } from "@/lib/auth/session";
 import { accessCookieName, refreshCookieName, secureCookieEnabled } from "@/lib/auth/cookies";
 
@@ -111,5 +111,14 @@ export async function refreshAuthSession(refreshToken: string) {
   return forwardGoApi<AuthPayload>("/auth/refresh", {
     method: "POST",
     body: JSON.stringify({ refresh_token: refreshToken })
+  });
+}
+
+export async function verifyAccessSession(accessToken: string) {
+  return forwardGoApi<AuthSessionResponse>("/auth/session", {
+    method: "GET",
+    headers: {
+      authorization: `Bearer ${accessToken}`
+    }
   });
 }

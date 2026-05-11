@@ -1,18 +1,33 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { clearAuthCookies, jsonError, refreshAuthSession, sessionFromAuthPayload, setAuthCookies } from "@/lib/auth/bff";
+import type { AuthSessionResponse } from "@/lib/api/types";
+import {
+  BffAuthError,
+  clearAuthCookies,
+  jsonError,
+  refreshAuthSession,
+  sessionFromAuthPayload,
+  setAuthCookies,
+  verifyAccessSession
+} from "@/lib/auth/bff";
 import { accessCookieName, refreshCookieName } from "@/lib/auth/cookies";
-import { decodeJwtClaims, isExpiredClaims, sessionFromClaims } from "@/lib/auth/session";
+import { sessionFromClaims } from "@/lib/auth/session";
 
 export async function GET() {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get(accessCookieName)?.value;
   const refreshToken = cookieStore.get(refreshCookieName)?.value;
-  const accessClaims = accessToken ? decodeJwtClaims(accessToken) : null;
 
-  if (accessClaims && !isExpiredClaims(accessClaims)) {
-    return NextResponse.json({ code: 200, message: "success", data: sessionFromClaims(accessClaims) });
+  if (accessToken) {
+    try {
+      const session = await verifyAccessSession(accessToken);
+      return NextResponse.json({ code: 200, message: "success", data: sessionFromVerifiedAccess(session) });
+    } catch (error) {
+      if (!(error instanceof BffAuthError) || error.status !== 401) {
+        return jsonError(error);
+      }
+    }
   }
 
   if (!refreshToken) {
@@ -32,4 +47,14 @@ export async function GET() {
     clearAuthCookies(response);
     return response;
   }
+}
+
+function sessionFromVerifiedAccess(session: AuthSessionResponse) {
+  return sessionFromClaims({
+    uid: session.uid,
+    role: session.role,
+    exp: session.exp,
+    sid: session.sid,
+    use: "access"
+  });
 }

@@ -1,21 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import type { AuthPayload, BaseResponse } from "@/lib/api/types";
+import type { AuthPayload, AuthSessionResponse, BaseResponse } from "@/lib/api/types";
 import { accessCookieName, refreshCookieName, secureCookieEnabled } from "@/lib/auth/cookies";
-import { decodeJwtClaims, isAdminClaims, isExpiredClaims } from "@/lib/auth/session";
+import { decodeJwtClaims } from "@/lib/auth/session";
 
 const goApiBaseUrl = process.env.BEEHIVE_API_BASE_URL ?? "http://localhost:8080";
 const fallbackRefreshMaxAge = 60 * 60 * 24 * 30;
 
 export async function proxy(request: NextRequest) {
   const accessToken = request.cookies.get(accessCookieName)?.value;
-  const accessClaims = accessToken ? decodeJwtClaims(accessToken) : null;
 
-  if (isAdminClaims(accessClaims)) {
-    return NextResponse.next();
-  }
-  if (accessClaims?.role && !isExpiredClaims(accessClaims)) {
-    return NextResponse.redirect(new URL("/", request.url));
+  if (accessToken) {
+    const session = await verifyAccessWithGo(accessToken).catch((error) => {
+      console.error("Studio proxy access verification failed", error);
+      return null;
+    });
+    if (session) {
+      if (session.role === "admin") {
+        return NextResponse.next();
+      }
+      return NextResponse.redirect(new URL("/", request.url));
+    }
   }
 
   const refreshToken = request.cookies.get(refreshCookieName)?.value;
@@ -26,13 +31,16 @@ export async function proxy(request: NextRequest) {
     });
 
     if (refreshed) {
-      const refreshedClaims = decodeJwtClaims(refreshed.token.access_token);
-      if (isAdminClaims(refreshedClaims)) {
+      const session = await verifyAccessWithGo(refreshed.token.access_token).catch((error) => {
+        console.error("Studio proxy refreshed access verification failed", error);
+        return null;
+      });
+      if (session?.role === "admin") {
         const response = NextResponse.next();
         setProxyAuthCookies(response, refreshed);
         return response;
       }
-      if (refreshedClaims?.role && !isExpiredClaims(refreshedClaims)) {
+      if (session?.role) {
         const response = NextResponse.redirect(new URL("/", request.url));
         setProxyAuthCookies(response, refreshed);
         return response;
@@ -45,6 +53,22 @@ export async function proxy(request: NextRequest) {
   const response = NextResponse.redirect(target);
   clearProxyAuthCookies(response);
   return response;
+}
+
+async function verifyAccessWithGo(accessToken: string) {
+  const response = await fetch(`${goApiBaseUrl}/api/v1/auth/session`, {
+    method: "GET",
+    headers: {
+      authorization: `Bearer ${accessToken}`
+    },
+    cache: "no-store"
+  });
+
+  const envelope = (await response.json()) as BaseResponse<AuthSessionResponse>;
+  if (!response.ok || envelope.code < 200 || envelope.code >= 300) {
+    return null;
+  }
+  return envelope.data;
 }
 
 async function refreshFromGo(refreshToken: string) {

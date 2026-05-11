@@ -73,3 +73,17 @@ func (p *Provider) SaveAndRefresh(ctx context.Context, next settingtypes.Applica
 	p.mu.Unlock()
 	return nil
 }
+
+// PatchAndRefresh persists a partial update against the latest locked row and swaps the in-process snapshot.
+// PatchAndRefresh 基于最新加锁行持久化部分更新，并替换进程内快照。
+func (p *Provider) PatchAndRefresh(ctx context.Context, patch *settingtypes.SettingsPatchRequest) error {
+	next, rev, err := p.store.Patch(ctx, patch)
+	if err != nil {
+		return err
+	}
+	p.mu.Lock()
+	p.snap = next
+	p.rev = rev
+	p.mu.Unlock()
+	return nil
+}

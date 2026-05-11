@@ -20,6 +20,10 @@ type Store struct {
 	db *gorm.DB
 }
 
+// ErrInvalidSettings marks caller-supplied settings payload validation failures.
+// ErrInvalidSettings 标记调用方提交的设置 payload 校验失败。
+var ErrInvalidSettings = errors.New("invalid settings")
+
 // NewStore builds a Store backed by the given GORM handle.
 // NewStore 使用给定 GORM 句柄构造 Store。
 func NewStore(db *gorm.DB) *Store {
@@ -128,4 +132,46 @@ func (s *Store) Save(ctx context.Context, next settingtypes.ApplicationSettings)
 		return 0, err
 	}
 	return savedRev, nil
+}
+
+// Patch locks the singleton row, merges the patch against the latest payload, and increments revision.
+// Patch 锁定单行配置，基于最新 payload 合并补丁，并递增 revision。
+func (s *Store) Patch(ctx context.Context, patch *settingtypes.SettingsPatchRequest) (settingtypes.ApplicationSettings, int64, error) {
+	var saved settingtypes.ApplicationSettings
+	var savedRev int64
+	if err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var row model.ApplicationSetting
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("id = ?", 1).
+			First(&row).Error; err != nil {
+			return fmt.Errorf("lock application settings: %w", err)
+		}
+		current, err := settingtypes.ParsePayload(row.Payload)
+		if err != nil {
+			return err
+		}
+		next, err := settingtypes.MergePatch(current, patch)
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrInvalidSettings, err)
+		}
+		raw, err := settingtypes.MarshalPayload(next)
+		if err != nil {
+			return err
+		}
+		nextRev := row.Revision + 1
+		now := time.Now()
+		if err := tx.Model(&row).Updates(map[string]any{
+			"payload":    raw,
+			"revision":   nextRev,
+			"updated_at": now,
+		}).Error; err != nil {
+			return fmt.Errorf("patch application settings: %w", err)
+		}
+		saved = next
+		savedRev = nextRev
+		return nil
+	}); err != nil {
+		return settingtypes.ApplicationSettings{}, 0, err
+	}
+	return saved, savedRev, nil
 }

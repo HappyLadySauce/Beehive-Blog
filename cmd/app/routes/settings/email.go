@@ -104,20 +104,13 @@ func (h *SettingsController) ServePatch(ctx *gin.Context) {
 		return
 	}
 
-	store := pkgsettings.NewStore(h.svc.DB)
-	base, _, err := store.Load(ctx.Request.Context())
-	if err != nil {
-		common.Fail(ctx, common.NewInternal("failed to load settings", err))
-		return
-	}
 	patch := &settingtypes.SettingsPatchRequest{Email: patchFromV1(req.Email)}
-	merged, err := settingtypes.MergePatch(base, patch)
-	if err != nil {
-		common.Fail(ctx, common.NewBadRequest("invalid settings", err))
-		return
-	}
-	if err := h.svc.Settings.SaveAndRefresh(ctx.Request.Context(), merged); err != nil {
-		common.Fail(ctx, common.NewInternal("failed to save settings", err))
+	if err := h.svc.Settings.PatchAndRefresh(ctx.Request.Context(), patch); err != nil {
+		if errors.Is(err, pkgsettings.ErrInvalidSettings) {
+			common.Fail(ctx, common.NewBadRequest("invalid settings", err))
+			return
+		}
+		common.Fail(ctx, common.NewInternal("failed to patch settings", err))
 		return
 	}
 	out := toResponse(h.svc.Settings.Current(), h.svc.Settings.CachedRevision())
