@@ -10,7 +10,6 @@ import (
 	"gorm.io/gorm"
 	"k8s.io/klog/v2"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/httpx"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
@@ -23,7 +22,7 @@ import (
 // Avatar binding is intentionally omitted here (attachments lack ownership columns); bind avatars after authenticated flows.
 // Register 创建新用户并签发 JWT 凭证（自动登录）。
 // 头像绑定有意不在此完成（附件表无归属列）；请在登录态流程后再绑定头像。
-func (u *UsersController) Register(ctx *gin.Context, req *v1.RegisterRequest) (*v1.RegisterResponse, error) {
+func (u *UsersController) register(ctx *gin.Context, req *v1.RegisterRequest) (*v1.RegisterResponse, error) {
 	// Check username uniqueness among live rows.
 	// 检查用户名在活跃行中的唯一性。
 	var existing model.User
@@ -154,6 +153,16 @@ func mapRegisterUniqueViolation(pgErr *pgconn.PgError) *common.AppError {
 // @Failure      409   {object}  common.BaseResponse                            "Username or email conflict"
 // @Failure      500   {object}  common.BaseResponse                            "Internal error"
 // @Router       /api/v1/users/register [post]
-func (u *UsersController) ServeRegister(ctx *gin.Context) {
-	httpx.HandleJSON(u.Register)(ctx)
+func (u *UsersController) Register(ctx *gin.Context) {
+	var req v1.RegisterRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		common.Fail(ctx, common.NewBadRequest("invalid request body", err))
+		return
+	}
+	resp, err := u.register(ctx, &req)
+	if err != nil {
+		common.Fail(ctx, err)
+		return
+	}
+	common.Success(ctx, resp)
 }

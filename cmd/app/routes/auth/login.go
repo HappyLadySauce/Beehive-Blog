@@ -9,7 +9,6 @@ import (
 	"gorm.io/gorm"
 	"k8s.io/klog/v2"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/httpx"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/oauth"
@@ -18,17 +17,46 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
 )
 
-// Login dispatches based on grant_type to the appropriate authentication method.
-// Login 根据 grant_type 分发到对应的认证方法。
-func (a *AuthController) Login(ctx *gin.Context, req *v1.LoginRequest) (*v1.LoginResponse, error) {
+// Login handles POST /api/v1/auth/login.
+// Login 处理 POST /api/v1/auth/login。
+//
+// @Summary      Login (local password or GitHub OAuth2)
+// @Description  Authenticates by grant_type. Use grant_type=local with account (username or email) and password, or grant_type=github_oauth2 with code and state from GET /api/v1/auth/github/authorize. 中文：按 grant_type 登录；local 使用用户名或邮箱与密码；github_oauth2 使用授权码与 state。
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      v1.LoginRequest  true  "Login request"
+// @Success      200   {object}  common.BaseResponse{data=v1.LoginResponse}  "Issued access and refresh tokens"
+// @Failure      400   {object}  common.BaseResponse                         "Validation error or unsupported grant_type"
+// @Failure      401   {object}  common.BaseResponse                         "Invalid credentials or invalid OAuth code/state"
+// @Failure      403   {object}  common.BaseResponse                         "Account status disallows login"
+// @Failure      500   {object}  common.BaseResponse                         "Internal error"
+// @Router       /api/v1/auth/login [post]
+func (a *AuthController) Login(ctx *gin.Context) {
+	var req v1.LoginRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		common.Fail(ctx, common.NewBadRequest("invalid request body", err))
+		return
+	}
+
+	var (
+		resp *v1.LoginResponse
+		err  error
+	)
 	switch req.GrantType {
 	case v1.GrantTypeLocal:
-		return a.loginByLocal(ctx, req)
+		resp, err = a.loginByLocal(ctx, &req)
 	case v1.GrantTypeGitHubOAuth2:
-		return a.loginByGitHub(ctx, req)
+		resp, err = a.loginByGitHub(ctx, &req)
 	default:
-		return nil, common.NewBadRequest("unsupported grant_type", fmt.Errorf("unsupported grant_type: %q", req.GrantType))
+		err = common.NewBadRequest("unsupported grant_type", fmt.Errorf("unsupported grant_type: %q", req.GrantType))
 	}
+
+	if err != nil {
+		common.Fail(ctx, err)
+		return
+	}
+	common.Success(ctx, resp)
 }
 
 // loginByLocal authenticates a local user via account (username or email) and password.
@@ -164,23 +192,4 @@ func (a *AuthController) finalizeLogin(ctx *gin.Context, user *model.User) (*v1.
 			RefreshToken: pair.Refresh.Token,
 		},
 	}, nil
-}
-
-// ServeLogin is the Gin entrypoint for POST /api/v1/auth/login (JSON bind + Swagger).
-// ServeLogin 为 POST /api/v1/auth/login 的 Gin 入口（JSON 绑定与 Swagger 元数据）。
-//
-// @Summary      Login (local password or GitHub OAuth2)
-// @Description  Authenticates by grant_type. Use grant_type=local with account (username or email) and password, or grant_type=github_oauth2 with code and state from GET /api/v1/auth/github/authorize. 中文：按 grant_type 登录；local 使用用户名或邮箱与密码；github_oauth2 使用授权码与 state。
-// @Tags         auth
-// @Accept       json
-// @Produce      json
-// @Param        body  body      v1.LoginRequest  true  "Login request"
-// @Success      200   {object}  common.BaseResponse{data=v1.LoginResponse}  "Issued access and refresh tokens"
-// @Failure      400   {object}  common.BaseResponse                         "Validation error or unsupported grant_type"
-// @Failure      401   {object}  common.BaseResponse                         "Invalid credentials or invalid OAuth code/state"
-// @Failure      403   {object}  common.BaseResponse                         "Account status disallows login"
-// @Failure      500   {object}  common.BaseResponse                         "Internal error"
-// @Router       /api/v1/auth/login [post]
-func (a *AuthController) ServeLogin(ctx *gin.Context) {
-	httpx.HandleJSON(a.Login)(ctx)
 }

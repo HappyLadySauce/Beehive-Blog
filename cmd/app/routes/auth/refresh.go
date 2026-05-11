@@ -8,7 +8,6 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/httpx"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
@@ -16,9 +15,37 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
 )
 
-// Refresh rotates a valid server-side refresh session and returns a new token pair.
-// Refresh 轮换有效的服务端 refresh 会话并返回新的令牌对。
-func (a *AuthController) Refresh(ctx *gin.Context, req *v1.RefreshRequest) (*v1.RefreshResponse, error) {
+// Refresh handles POST /api/v1/auth/refresh.
+// Refresh 处理 POST /api/v1/auth/refresh。
+//
+// @Summary      Refresh access token
+// @Description  Rotates the refresh session and returns a new access + refresh pair. Reuse of an old refresh token may revoke the session family. 中文：轮换 refresh 会话并返回新的令牌对；重复使用旧 refresh 可能导致会话族被吊销。
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      v1.RefreshRequest  true  "Refresh token"
+// @Success      200   {object}  common.BaseResponse{data=v1.RefreshResponse}  "New token pair"
+// @Failure      401   {object}  common.BaseResponse                          "Invalid, expired, or reused refresh token"
+// @Failure      403   {object}  common.BaseResponse                          "User status disallows login"
+// @Failure      500   {object}  common.BaseResponse                          "Internal error"
+// @Router       /api/v1/auth/refresh [post]
+func (a *AuthController) Refresh(ctx *gin.Context) {
+	var req v1.RefreshRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		common.Fail(ctx, common.NewBadRequest("invalid request body", err))
+		return
+	}
+	resp, err := a.refresh(ctx, &req)
+	if err != nil {
+		common.Fail(ctx, err)
+		return
+	}
+	common.Success(ctx, resp)
+}
+
+// refresh rotates a valid server-side refresh session and returns a new token pair.
+// refresh 轮换有效的服务端 refresh 会话并返回新的令牌对。
+func (a *AuthController) refresh(ctx *gin.Context, req *v1.RefreshRequest) (*v1.RefreshResponse, error) {
 	claims, err := a.svc.Token.ParseRefresh(req.RefreshToken)
 	if err != nil {
 		return nil, common.NewUnauthorized("invalid or expired refresh token", nil)
@@ -96,22 +123,4 @@ func (a *AuthController) Refresh(ctx *gin.Context, req *v1.RefreshRequest) (*v1.
 			RefreshToken: pair.Refresh.Token,
 		},
 	}, nil
-}
-
-// ServeRefresh is the Gin entrypoint for POST /api/v1/auth/refresh (JSON bind + Swagger).
-// ServeRefresh 为 POST /api/v1/auth/refresh 的 Gin 入口（JSON 绑定与 Swagger 元数据）。
-//
-// @Summary      Refresh access token
-// @Description  Rotates the refresh session and returns a new access + refresh pair. Reuse of an old refresh token may revoke the session family. 中文：轮换 refresh 会话并返回新的令牌对；重复使用旧 refresh 可能导致会话族被吊销。
-// @Tags         auth
-// @Accept       json
-// @Produce      json
-// @Param        body  body      v1.RefreshRequest  true  "Refresh token"
-// @Success      200   {object}  common.BaseResponse{data=v1.RefreshResponse}  "New token pair"
-// @Failure      401   {object}  common.BaseResponse                          "Invalid, expired, or reused refresh token"
-// @Failure      403   {object}  common.BaseResponse                          "User status disallows login"
-// @Failure      500   {object}  common.BaseResponse                          "Internal error"
-// @Router       /api/v1/auth/refresh [post]
-func (a *AuthController) ServeRefresh(ctx *gin.Context) {
-	httpx.HandleJSON(a.Refresh)(ctx)
 }

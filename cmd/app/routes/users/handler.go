@@ -28,5 +28,5 @@ func Init(svcCtx *svc.ServiceContext) {
 
 	users := router.V1().Group("/users")
 
-	users.POST("/register", rl.GinMiddleware(), u.ServeRegister)
+	users.POST("/register", rl.GinMiddleware(), u.Register)
 }

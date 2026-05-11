@@ -3,6 +3,7 @@ package settings
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -49,8 +50,8 @@ func patchFromV1(p *v1.EmailSMTPPatchJSON) *settingtypes.EmailSMTPPatch {
 	}
 }
 
-// ServeGet handles GET /api/v1/settings.
-// ServeGet 处理 GET /api/v1/settings。
+// GetEmailSettings handles GET /api/v1/settings/email.
+// GetEmailSettings 处理 GET /api/v1/settings/email。
 //
 // @Summary      Get application settings (admin)
 // @Description  Returns sanitized settings including email SMTP flags without secrets. 中文：返回脱敏应用设置（含 SMTP 开关，不含密码明文）。
@@ -60,8 +61,8 @@ func patchFromV1(p *v1.EmailSMTPPatchJSON) *settingtypes.EmailSMTPPatch {
 // @Success      200  {object}  common.BaseResponse{data=v1.SettingsResponse}
 // @Failure      401  {object}  common.BaseResponse
 // @Failure      403  {object}  common.BaseResponse
-// @Router       /api/v1/settings [get]
-func (h *SettingsController) ServeGet(ctx *gin.Context) {
+// @Router       /api/v1/settings/email [get]
+func (h *SettingsController) GetEmailSettings(ctx *gin.Context) {
 	if h.svc.Settings == nil {
 		common.Fail(ctx, common.NewInternal("settings provider is not configured", errors.New("nil settings provider")))
 		return
@@ -71,8 +72,26 @@ func (h *SettingsController) ServeGet(ctx *gin.Context) {
 	common.Success(ctx, toResponse(s, rev))
 }
 
-// ServePatch handles PATCH /api/v1/settings (partial merge).
-// ServePatch 处理 PATCH /api/v1/settings（部分合并）。
+func (h *SettingsController) patchEmailSettings(ctx *gin.Context, req *v1.SettingsPatchRequestJSON) (v1.SettingsResponse, error) {
+	if h.svc.Settings == nil {
+		return v1.SettingsResponse{}, common.NewInternal("settings provider is not configured", errors.New("nil settings provider"))
+	}
+	if req.Email == nil {
+		return v1.SettingsResponse{}, common.NewBadRequest("email field is required for patch", nil)
+	}
+
+	patch := &settingtypes.SettingsPatchRequest{Email: patchFromV1(req.Email)}
+	if err := h.svc.Settings.PatchAndRefresh(ctx.Request.Context(), patch); err != nil {
+		if errors.Is(err, pkgsettings.ErrInvalidSettings) {
+			return v1.SettingsResponse{}, common.NewBadRequest("invalid settings", err)
+		}
+		return v1.SettingsResponse{}, common.NewInternal("failed to patch settings", err)
+	}
+	return toResponse(h.svc.Settings.Current(), h.svc.Settings.CachedRevision()), nil
+}
+
+// PatchEmailSettings handles PATCH /api/v1/settings/email (partial merge).
+// PatchEmailSettings 处理 PATCH /api/v1/settings/email（部分合并）。
 //
 // @Summary      Patch application settings (admin)
 // @Description  Merges email subtree; omit password to keep existing. Empty string clears password. 中文：合并 email 子树；省略 password 表示不改；传空字符串清空密码。
@@ -86,33 +105,24 @@ func (h *SettingsController) ServeGet(ctx *gin.Context) {
 // @Failure      401   {object}  common.BaseResponse
 // @Failure      403   {object}  common.BaseResponse
 // @Failure      500   {object}  common.BaseResponse
-// @Router       /api/v1/settings [patch]
-func (h *SettingsController) ServePatch(ctx *gin.Context) {
-	if h.svc.Settings == nil {
-		common.Fail(ctx, common.NewInternal("settings provider is not configured", errors.New("nil settings provider")))
-		return
-	}
+// @Router       /api/v1/settings/email [patch]
+func (h *SettingsController) PatchEmailSettings(ctx *gin.Context) {
+	var req v1.SettingsPatchRequestJSON
 	dec := json.NewDecoder(ctx.Request.Body)
 	dec.DisallowUnknownFields()
-	var req v1.SettingsPatchRequestJSON
 	if err := dec.Decode(&req); err != nil {
 		common.Fail(ctx, common.NewBadRequest("invalid request body", err))
 		return
 	}
-	if req.Email == nil {
-		common.Fail(ctx, common.NewBadRequest("email field is required for patch", nil))
+	if err := dec.Decode(&struct{}{}); err != io.EOF {
+		common.Fail(ctx, common.NewBadRequest("invalid request body", errors.New("request body must contain a single JSON object")))
 		return
 	}
 
-	patch := &settingtypes.SettingsPatchRequest{Email: patchFromV1(req.Email)}
-	if err := h.svc.Settings.PatchAndRefresh(ctx.Request.Context(), patch); err != nil {
-		if errors.Is(err, pkgsettings.ErrInvalidSettings) {
-			common.Fail(ctx, common.NewBadRequest("invalid settings", err))
-			return
-		}
-		common.Fail(ctx, common.NewInternal("failed to patch settings", err))
+	out, err := h.patchEmailSettings(ctx, &req)
+	if err != nil {
+		common.Fail(ctx, err)
 		return
 	}
-	out := toResponse(h.svc.Settings.Current(), h.svc.Settings.CachedRevision())
 	common.Success(ctx, out)
 }

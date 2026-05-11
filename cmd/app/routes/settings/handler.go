@@ -24,7 +24,9 @@ func Init(svcCtx *svc.ServiceContext) {
 	h := NewSettingsController(svcCtx)
 	g := router.V1().Group("/settings")
 	g.Use(middleware.AuthMiddleware(svcCtx), middleware.RequireRole("admin"))
-	g.GET("", h.ServeGet)
-	g.PATCH("", h.ServePatch)
-	g.POST("/email/test", h.ServeEmailTest)
+
+	email := g.Group("/email")
+	email.GET("", h.GetEmailSettings)
+	email.PATCH("", h.PatchEmailSettings)
+	email.POST("/test", h.TestEmail)
 }

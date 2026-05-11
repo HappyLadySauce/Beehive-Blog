@@ -37,7 +37,7 @@ var sendSMTPTestEmail = sendSMTPTestEmailDefault
 // @Failure      403   {object}  common.BaseResponse
 // @Failure      500   {object}  common.BaseResponse
 // @Router       /api/v1/settings/email/test [post]
-func (h *SettingsController) ServeEmailTest(ctx *gin.Context) {
+func (h *SettingsController) TestEmail(ctx *gin.Context) {
 	if h.svc.Settings == nil {
 		common.Fail(ctx, common.NewInternal("settings provider is not configured", fmt.Errorf("nil settings provider")))
 		return

@@ -47,7 +47,7 @@ func TestRefreshRotatesSessionAndUsesCurrentDatabaseRole(t *testing.T) {
 	expectSessionHashUpdate(mock, 8)
 	mock.ExpectCommit()
 
-	resp, err := controller.Refresh(testGinContext(), &v1.RefreshRequest{RefreshToken: pair.Refresh.Token})
+	resp, err := controller.refresh(testGinContext(), &v1.RefreshRequest{RefreshToken: pair.Refresh.Token})
 	if err != nil {
 		t.Fatalf("Refresh() error = %v", err)
 	}
@@ -93,7 +93,7 @@ func TestRefreshRejectsDisabledUser(t *testing.T) {
 	expectUserQuery(mock, userRow{id: 42, username: "alice", role: "member", status: "disabled"})
 	mock.ExpectRollback()
 
-	_, err = controller.Refresh(testGinContext(), &v1.RefreshRequest{RefreshToken: pair.Refresh.Token})
+	_, err = controller.refresh(testGinContext(), &v1.RefreshRequest{RefreshToken: pair.Refresh.Token})
 	if err == nil {
 		t.Fatalf("Refresh() error = nil, want error")
 	}
@@ -125,7 +125,7 @@ func TestRefreshRejectsReusedRotatedToken(t *testing.T) {
 	expectRevokeUpdate(mock)
 	mock.ExpectCommit()
 
-	_, err = controller.Refresh(testGinContext(), &v1.RefreshRequest{RefreshToken: pair.Refresh.Token})
+	_, err = controller.refresh(testGinContext(), &v1.RefreshRequest{RefreshToken: pair.Refresh.Token})
 	if err == nil {
 		t.Fatalf("Refresh() error = nil, want error")
 	}
@@ -142,7 +142,7 @@ func TestRefreshRejectsAccessTokenUse(t *testing.T) {
 		t.Fatalf("IssueSessionPair() error = %v", err)
 	}
 
-	_, err = controller.Refresh(testGinContext(), &v1.RefreshRequest{RefreshToken: pair.Access.Token})
+	_, err = controller.refresh(testGinContext(), &v1.RefreshRequest{RefreshToken: pair.Access.Token})
 	if err == nil {
 		t.Fatalf("Refresh() error = nil, want error")
 	}
@@ -177,7 +177,7 @@ func TestRefreshRejectsJTIOrHashMismatch(t *testing.T) {
 	expectRevokeUpdate(mock)
 	mock.ExpectCommit()
 
-	_, err = controller.Refresh(testGinContext(), &v1.RefreshRequest{RefreshToken: pair.Refresh.Token})
+	_, err = controller.refresh(testGinContext(), &v1.RefreshRequest{RefreshToken: pair.Refresh.Token})
 	if err == nil {
 		t.Fatalf("Refresh() error = nil, want error")
 	}

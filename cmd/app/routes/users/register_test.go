@@ -15,7 +15,6 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/httpx"
 	routeusers "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/users"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
@@ -29,8 +28,8 @@ func TestRegisterPrecheckUsernameConflict(t *testing.T) {
 	expectUsernameLookup(mock, "bob", 9, "bob")
 	req := &v1.RegisterRequest{Username: "bob", Password: "password12"}
 
-	_, err := c.Register(testRegisterContext(), req)
-	assertAppError(t, err, http.StatusConflict, "username is already taken")
+	rec, envelope := performRegister(t, c, req)
+	assertHTTPError(t, rec, envelope, http.StatusConflict, "username is already taken")
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet sql expectations: %v", err)
 	}
@@ -42,8 +41,8 @@ func TestRegisterPrecheckEmailConflict(t *testing.T) {
 	expectEmailLookup(mock, "taken@example.com", 3, "other", "taken@example.com")
 	req := &v1.RegisterRequest{Username: "alice", Password: "password12", Email: "taken@example.com"}
 
-	_, err := c.Register(testRegisterContext(), req)
-	assertAppError(t, err, http.StatusConflict, "email is already registered")
+	rec, envelope := performRegister(t, c, req)
+	assertHTTPError(t, rec, envelope, http.StatusConflict, "email is already registered")
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet sql expectations: %v", err)
 	}
@@ -58,8 +57,8 @@ func TestRegisterUniqueViolationOnCreateUsername(t *testing.T) {
 	mock.ExpectRollback()
 
 	req := &v1.RegisterRequest{Username: "alice", Password: "password12"}
-	_, err := c.Register(testRegisterContext(), req)
-	assertAppError(t, err, http.StatusConflict, "username is already taken")
+	rec, envelope := performRegister(t, c, req)
+	assertHTTPError(t, rec, envelope, http.StatusConflict, "username is already taken")
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet sql expectations: %v", err)
 	}
@@ -75,8 +74,8 @@ func TestRegisterUniqueViolationOnCreateEmail(t *testing.T) {
 	mock.ExpectRollback()
 
 	req := &v1.RegisterRequest{Username: "alice", Password: "password12", Email: "dup@example.com"}
-	_, err := c.Register(testRegisterContext(), req)
-	assertAppError(t, err, http.StatusConflict, "email is already registered")
+	rec, envelope := performRegister(t, c, req)
+	assertHTTPError(t, rec, envelope, http.StatusConflict, "email is already registered")
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet sql expectations: %v", err)
 	}
@@ -91,8 +90,8 @@ func TestRegisterUniqueViolationUnknownConstraint(t *testing.T) {
 	mock.ExpectRollback()
 
 	req := &v1.RegisterRequest{Username: "alice", Password: "password12"}
-	_, err := c.Register(testRegisterContext(), req)
-	assertAppError(t, err, http.StatusConflict, "registration conflict")
+	rec, envelope := performRegister(t, c, req)
+	assertHTTPError(t, rec, envelope, http.StatusConflict, "registration conflict")
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet sql expectations: %v", err)
 	}
@@ -107,8 +106,8 @@ func TestRegisterCreateUserNonUniqueError(t *testing.T) {
 	mock.ExpectRollback()
 
 	req := &v1.RegisterRequest{Username: "alice", Password: "password12"}
-	_, err := c.Register(testRegisterContext(), req)
-	assertAppError(t, err, http.StatusInternalServerError, "failed to register user")
+	rec, envelope := performRegister(t, c, req)
+	assertHTTPError(t, rec, envelope, http.StatusInternalServerError, "failed to register user")
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet sql expectations: %v", err)
 	}
@@ -125,15 +124,18 @@ func TestRegisterSuccess(t *testing.T) {
 	mock.ExpectCommit()
 
 	req := &v1.RegisterRequest{Username: "alice", Password: "password12"}
-	resp, err := c.Register(testRegisterContext(), req)
-	if err != nil {
-		t.Fatalf("Register() error = %v", err)
+	rec, envelope := performRegister(t, c, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("HTTP status = %d, want %d", rec.Code, http.StatusOK)
 	}
-	if resp.Token.AccessToken == "" || resp.Token.RefreshToken == "" {
-		t.Fatalf("missing tokens in response: %+v", resp.Token)
+	if envelope.Code != http.StatusOK {
+		t.Fatalf("envelope code = %d, want %d", envelope.Code, http.StatusOK)
 	}
-	if resp.Token.TokenType != jwt.TokenTypeBearer {
-		t.Fatalf("TokenType = %q, want %q", resp.Token.TokenType, jwt.TokenTypeBearer)
+	if envelope.Data.Token.AccessToken == "" || envelope.Data.Token.RefreshToken == "" {
+		t.Fatalf("missing tokens in response: %+v", envelope.Data.Token)
+	}
+	if envelope.Data.Token.TokenType != jwt.TokenTypeBearer {
+		t.Fatalf("TokenType = %q, want %q", envelope.Data.Token.TokenType, jwt.TokenTypeBearer)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet sql expectations: %v", err)
@@ -148,7 +150,7 @@ func TestRegisterBindInvalidBody(t *testing.T) {
 	ctx.Request.Header.Set("Content-Type", "application/json")
 
 	u := routeusers.NewUsersController(&svc.ServiceContext{})
-	httpx.HandleJSON(u.Register)(ctx)
+	u.Register(ctx)
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("HTTP status = %d, want %d", rec.Code, http.StatusBadRequest)
@@ -190,10 +192,33 @@ func newRegisterTestController(t *testing.T) (*routeusers.UsersController, sqlmo
 	}), mock
 }
 
-func testRegisterContext() *gin.Context {
+type registerEnvelope struct {
+	Code int                 `json:"code"`
+	Msg  string              `json:"message"`
+	Data v1.RegisterResponse `json:"data"`
+}
+
+func performRegister(t *testing.T, c *routeusers.UsersController, req *v1.RegisterRequest) (*httptest.ResponseRecorder, registerEnvelope) {
+	t.Helper()
+	body, err := json.Marshal(req)
+	if err != nil {
+		t.Fatalf("marshal request: %v", err)
+	}
 	rec := httptest.NewRecorder()
+	ctx := testRegisterContext(bytes.NewReader(body), rec)
+	ctx.Request.Header.Set("Content-Type", "application/json")
+	c.Register(ctx)
+
+	var envelope registerEnvelope
+	if err := json.NewDecoder(rec.Body).Decode(&envelope); err != nil {
+		t.Fatalf("decode body: %v", err)
+	}
+	return rec, envelope
+}
+
+func testRegisterContext(body *bytes.Reader, rec *httptest.ResponseRecorder) *gin.Context {
 	ctx, _ := gin.CreateTestContext(rec)
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/users/register", bytes.NewReader(nil))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/users/register", body)
 	req.RemoteAddr = "203.0.113.11:12345"
 	req.Header.Set("User-Agent", "register-test")
 	ctx.Request = req
@@ -275,16 +300,15 @@ func userColumns() []string {
 	}
 }
 
-func assertAppError(t *testing.T, err error, status int, message string) {
+func assertHTTPError(t *testing.T, rec *httptest.ResponseRecorder, envelope registerEnvelope, status int, message string) {
 	t.Helper()
-	appErr, ok := err.(*common.AppError)
-	if !ok {
-		t.Fatalf("error type = %T, want *common.AppError", err)
+	if rec.Code != status {
+		t.Fatalf("HTTP status = %d, want %d", rec.Code, status)
 	}
-	if appErr.HTTPStatus != status {
-		t.Fatalf("HTTPStatus = %d, want %d", appErr.HTTPStatus, status)
+	if envelope.Code != status {
+		t.Fatalf("envelope code = %d, want %d", envelope.Code, status)
 	}
-	if appErr.Message != message {
-		t.Fatalf("Message = %q, want %q", appErr.Message, message)
+	if envelope.Msg != message {
+		t.Fatalf("Message = %q, want %q", envelope.Msg, message)
 	}
 }
