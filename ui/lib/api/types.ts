@@ -49,3 +49,34 @@ export type PublicPost = {
   tags: string[];
   readingMinutes: number;
 };
+
+export type EmailSettingsPublic = {
+  enabled: boolean;
+  host: string;
+  port: number;
+  username: string;
+  password_set: boolean;
+  from: string;
+  from_name: string;
+  tls: "none" | "starttls" | "tls" | string;
+};
+
+export type SettingsResponse = {
+  revision: number;
+  email: EmailSettingsPublic;
+};
+
+export type EmailSMTPPatch = {
+  enabled?: boolean;
+  host?: string;
+  port?: number;
+  username?: string;
+  password?: string;
+  from?: string;
+  from_name?: string;
+  tls?: "none" | "starttls" | "tls" | string;
+};
+
+export type SettingsPatchRequest = {
+  email: EmailSMTPPatch;
+};

@@ -1,22 +1,18 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { clearAuthCookies, jsonError, refreshAuthSession, sessionFromAuthPayload, setAuthCookies, verifyAccessSession } from "@/lib/auth/bff";
+import { clearAuthCookies, jsonError, refreshAuthSession, sessionFromAuthPayload, setAuthCookies } from "@/lib/auth/bff";
 import { accessCookieName, refreshCookieName } from "@/lib/auth/cookies";
-import { sessionFromClaims } from "@/lib/auth/session";
+import { decodeJwtClaims, isExpiredClaims, sessionFromClaims } from "@/lib/auth/session";
 
 export async function GET() {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get(accessCookieName)?.value;
   const refreshToken = cookieStore.get(refreshCookieName)?.value;
+  const accessClaims = accessToken ? decodeJwtClaims(accessToken) : null;
 
-  if (accessToken) {
-    try {
-      const verifiedSession = await verifyAccessSession(accessToken);
-      return NextResponse.json({ code: 200, message: "success", data: sessionFromClaims(verifiedSession) });
-    } catch (error) {
-      console.error("BFF auth session verification failed", error);
-    }
+  if (accessClaims && !isExpiredClaims(accessClaims)) {
+    return NextResponse.json({ code: 200, message: "success", data: sessionFromClaims(accessClaims) });
   }
 
   if (!refreshToken) {

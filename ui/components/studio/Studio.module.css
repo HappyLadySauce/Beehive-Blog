@@ -229,6 +229,89 @@
   text-align: center;
 }
 
+.formGrid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field,
+.fieldFull,
+.checkboxField {
+  display: grid;
+  gap: 8px;
+}
+
+.fieldFull {
+  grid-column: 1 / -1;
+}
+
+.field span,
+.fieldFull span,
+.checkboxField span {
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.field input,
+.fieldFull input,
+.field select {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  min-height: 44px;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+.checkboxField {
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  grid-column: 1 / -1;
+  grid-template-columns: auto minmax(0, 1fr);
+  padding: 12px;
+}
+
+.checkboxField input {
+  height: 18px;
+  width: 18px;
+}
+
+.passwordRow {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.metaRow {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.message {
+  border-radius: var(--radius);
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 10px 12px;
+}
+
+.messageSuccess {
+  background: #edf7f5;
+  border: 1px solid #cde8e3;
+  color: var(--accent-dark);
+}
+
+.messageError {
+  background: #fff1f0;
+  border: 1px solid #ffd2cc;
+  color: var(--danger);
+}
+
 .accessState {
   display: grid;
   gap: 10px;
@@ -271,5 +354,13 @@
   .actions {
     justify-content: flex-start;
     width: 100%;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .passwordRow {
+    grid-template-columns: 1fr;
   }
 }

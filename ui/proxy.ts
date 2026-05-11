@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import type { AuthPayload, BaseResponse } from "@/lib/api/types";
-import type { VerifiedAccessSession } from "@/lib/auth/bff";
 import { accessCookieName, refreshCookieName, secureCookieEnabled } from "@/lib/auth/cookies";
 import { decodeJwtClaims, isAdminClaims, isExpiredClaims } from "@/lib/auth/session";
 
@@ -10,18 +9,13 @@ const fallbackRefreshMaxAge = 60 * 60 * 24 * 30;
 
 export async function proxy(request: NextRequest) {
   const accessToken = request.cookies.get(accessCookieName)?.value;
+  const accessClaims = accessToken ? decodeJwtClaims(accessToken) : null;
 
-  if (accessToken) {
-    const verifiedSession = await verifyAccessFromGo(accessToken).catch((error) => {
-      console.error("Studio proxy access verification failed", error);
-      return null;
-    });
-    if (isAdminClaims(verifiedSession)) {
-      return NextResponse.next();
-    }
-    if (verifiedSession?.role && !isExpiredClaims(verifiedSession)) {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
+  if (isAdminClaims(accessClaims)) {
+    return NextResponse.next();
+  }
+  if (accessClaims?.role && !isExpiredClaims(accessClaims)) {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   const refreshToken = request.cookies.get(refreshCookieName)?.value;
@@ -51,22 +45,6 @@ export async function proxy(request: NextRequest) {
   const response = NextResponse.redirect(target);
   clearProxyAuthCookies(response);
   return response;
-}
-
-async function verifyAccessFromGo(accessToken: string) {
-  const response = await fetch(`${goApiBaseUrl}/api/v1/auth/session`, {
-    method: "GET",
-    headers: {
-      authorization: `Bearer ${accessToken}`
-    },
-    cache: "no-store"
-  });
-
-  const envelope = (await response.json()) as BaseResponse<VerifiedAccessSession>;
-  if (!response.ok || envelope.code < 200 || envelope.code >= 300) {
-    return null;
-  }
-  return envelope.data;
 }
 
 async function refreshFromGo(refreshToken: string) {
