@@ -16,15 +16,18 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/config"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/settings"
 )
 
 // ServiceContext wires shared infrastructure for HTTP handlers and background work.
 // ServiceContext 为 HTTP 处理器与后台任务提供共享的基础设施连接。
 type ServiceContext struct {
-	Config *config.Config
-	DB     *gorm.DB
-	Cache  *redis.Client
-	Token  *jwt.Issuer
+	Config      *config.Config
+	DB          *gorm.DB
+	Cache       *redis.Client
+	Token       *jwt.Issuer
+	Settings    *settings.Provider
+	PostgresDSN string
 }
 
 // NewServiceContext opens PostgreSQL (GORM) and Redis, applies pool settings, and verifies connectivity.
@@ -99,11 +102,19 @@ func NewServiceContext(ctx context.Context, cfg *config.Config) (*ServiceContext
 		"refresh-ttl", cfg.JWT.RefreshTTL,
 	)
 
+	settingsStore := settings.NewStore(db)
+	settingsProv := settings.NewProvider(settingsStore)
+	if err := settingsProv.Refresh(ctx); err != nil {
+		klog.ErrorS(err, "Initial application settings refresh failed; defaults kept until DB is ready")
+	}
+
 	return &ServiceContext{
-		Config: cfg,
-		DB:     db,
-		Cache:  rdb,
-		Token:  issuer,
+		Config:      cfg,
+		DB:          db,
+		Cache:       rdb,
+		Token:       issuer,
+		Settings:    settingsProv,
+		PostgresDSN: dsn,
 	}, nil
 }
 

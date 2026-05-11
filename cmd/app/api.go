@@ -13,9 +13,11 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/options"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/router"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/auth"
+	routesettings "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/settings"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/users"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/config"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/settings"
 )
 
 func NewAPICommand(ctx context.Context, basename string) *cobra.Command {
@@ -83,6 +85,11 @@ func run(ctx context.Context, opts *options.Options) error {
 	// 在服务上下文就绪后初始化 HTTP 路由处理器。
 	auth.Init(sc)
 	users.Init(sc)
+	routesettings.Init(sc)
+
+	if sc.Settings != nil && sc.PostgresDSN != "" {
+		settings.StartNotifyListener(ctx, sc.PostgresDSN, sc.Settings)
+	}
 
 	serve(opts)
 	<-ctx.Done()
