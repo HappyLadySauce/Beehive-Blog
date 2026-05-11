@@ -1,4 +1,4 @@
-package common
+package common_test
 
 import (
 	"errors"
@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 )
 
 func TestResponseMapsAppErrorToHTTPStatusAndSafeMessage(t *testing.T) {
@@ -14,7 +16,7 @@ func TestResponseMapsAppErrorToHTTPStatusAndSafeMessage(t *testing.T) {
 	rec := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(rec)
 
-	Response(ctx, NewUnauthorized("invalid credentials", errors.New("database timeout")), nil)
+	common.Response(ctx, common.NewUnauthorized("invalid credentials", errors.New("database timeout")), nil)
 
 	if rec.Code != http.StatusUnauthorized {
 		t.Fatalf("HTTP status = %d, want %d", rec.Code, http.StatusUnauthorized)
@@ -29,7 +31,7 @@ func TestResponseHidesUnclassifiedInternalError(t *testing.T) {
 	rec := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(rec)
 
-	Response(ctx, errors.New(`pq: duplicate key value violates unique constraint "secret_index"`), nil)
+	common.Response(ctx, errors.New(`pq: duplicate key value violates unique constraint "secret_index"`), nil)
 
 	if rec.Code != http.StatusInternalServerError {
 		t.Fatalf("HTTP status = %d, want %d", rec.Code, http.StatusInternalServerError)

@@ -1,19 +1,21 @@
-package types
+package types_test
 
 import (
 	"strings"
 	"testing"
+
+	settingtypes "github.com/HappyLadySauce/Beehive-Blog/pkg/settings/types"
 )
 
 func TestValidateEmailDisabledSkipsHost(t *testing.T) {
-	s := DefaultApplicationSettings()
+	s := settingtypes.DefaultApplicationSettings()
 	if err := s.Validate(); err != nil {
 		t.Fatalf("Validate() = %v", err)
 	}
 }
 
 func TestValidateEmailEnabledRequiresHost(t *testing.T) {
-	s := DefaultApplicationSettings()
+	s := settingtypes.DefaultApplicationSettings()
 	s.Email.Enabled = true
 	s.Email.Host = ""
 	if err := s.Validate(); err == nil || !strings.Contains(err.Error(), "host") {
@@ -22,7 +24,7 @@ func TestValidateEmailEnabledRequiresHost(t *testing.T) {
 }
 
 func TestValidateEmailEnabledRequiresFrom(t *testing.T) {
-	s := DefaultApplicationSettings()
+	s := settingtypes.DefaultApplicationSettings()
 	s.Email.Enabled = true
 	s.Email.Host = "smtp.example.com"
 	s.Email.From = "not-an-email"
@@ -32,7 +34,7 @@ func TestValidateEmailEnabledRequiresFrom(t *testing.T) {
 }
 
 func TestValidateTLSInvalid(t *testing.T) {
-	s := DefaultApplicationSettings()
+	s := settingtypes.DefaultApplicationSettings()
 	s.Email.TLS = "weird"
 	if err := s.Validate(); err == nil || !strings.Contains(err.Error(), "tls") {
 		t.Fatalf("expected tls error, got %v", err)
@@ -40,13 +42,13 @@ func TestValidateTLSInvalid(t *testing.T) {
 }
 
 func TestMergePatchPassword(t *testing.T) {
-	base := DefaultApplicationSettings()
+	base := settingtypes.DefaultApplicationSettings()
 	base.Email.Password = "secret"
 	pw := ""
-	patch := &SettingsPatchRequest{
-		Email: &EmailSMTPPatch{Password: &pw},
+	patch := &settingtypes.SettingsPatchRequest{
+		Email: &settingtypes.EmailSMTPPatch{Password: &pw},
 	}
-	out, err := MergePatch(base, patch)
+	out, err := settingtypes.MergePatch(base, patch)
 	if err != nil {
 		t.Fatalf("MergePatch: %v", err)
 	}
@@ -56,13 +58,13 @@ func TestMergePatchPassword(t *testing.T) {
 }
 
 func TestMergePatchOmitPasswordKeeps(t *testing.T) {
-	base := DefaultApplicationSettings()
+	base := settingtypes.DefaultApplicationSettings()
 	base.Email.Password = "keep"
 	host := "smtp.example.com"
-	patch := &SettingsPatchRequest{
-		Email: &EmailSMTPPatch{Host: &host},
+	patch := &settingtypes.SettingsPatchRequest{
+		Email: &settingtypes.EmailSMTPPatch{Host: &host},
 	}
-	out, err := MergePatch(base, patch)
+	out, err := settingtypes.MergePatch(base, patch)
 	if err != nil {
 		t.Fatalf("MergePatch: %v", err)
 	}
@@ -72,7 +74,7 @@ func TestMergePatchOmitPasswordKeeps(t *testing.T) {
 }
 
 func TestParsePayloadEmpty(t *testing.T) {
-	s, err := ParsePayload(nil)
+	s, err := settingtypes.ParsePayload(nil)
 	if err != nil {
 		t.Fatalf("ParsePayload: %v", err)
 	}

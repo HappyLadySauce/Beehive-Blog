@@ -83,8 +83,8 @@ func IssuePairInTx(tx *gorm.DB, issuer *jwt.Issuer, user *model.User, meta Clien
 		RefreshTokenHash: strings.Repeat("0", 64),
 		RefreshJTI:       jti,
 		ExpiresAt:        now.Add(issuer.RefreshTTL()),
-		CreatedIP:        trim(meta.IP, 64),
-		UserAgent:        trim(meta.UserAgent, 512),
+		CreatedIP:        TruncateString(meta.IP, 64),
+		UserAgent:        TruncateString(meta.UserAgent, 512),
 		CreatedAt:        now,
 		UpdatedAt:        now,
 	}
@@ -132,7 +132,7 @@ func RevokeSession(db *gorm.DB, sessionID int64, userID int64, reason string) er
 		Where("id = ? AND user_id = ? AND revoked_at IS NULL", sessionID, userID).
 		Updates(map[string]any{
 			"revoked_at":     &now,
-			"revoked_reason": trim(reason, 64),
+			"revoked_reason": TruncateString(reason, 64),
 			"updated_at":     now,
 		})
 	if result.Error != nil {
@@ -152,7 +152,7 @@ func RevokeUserSessions(db *gorm.DB, userID int64, reason string) error {
 		Where("user_id = ? AND revoked_at IS NULL", userID).
 		Updates(map[string]any{
 			"revoked_at":     &now,
-			"revoked_reason": trim(reason, 64),
+			"revoked_reason": TruncateString(reason, 64),
 			"updated_at":     now,
 		})
 	if result.Error != nil {
@@ -161,9 +161,13 @@ func RevokeUserSessions(db *gorm.DB, userID int64, reason string) error {
 	return nil
 }
 
-func trim(value string, max int) string {
-	if len(value) <= max {
-		return value
+// TruncateString returns s unchanged if len(s) <= max, otherwise the first max bytes of s.
+// TruncateString 在 len(s)<=max 时返回 s 本身，否则返回 s 的前 max 个字节（按字节而非 Unicode 标量）。
+// Callers storing into VARCHAR(n) should pass max equal to the column byte budget.
+// 写入 VARCHAR(n) 等定宽列时，max 应与列的字节预算一致。
+func TruncateString(s string, max int) string {
+	if len(s) <= max {
+		return s
 	}
-	return value[:max]
+	return s[:max]
 }

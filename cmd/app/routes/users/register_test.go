@@ -1,4 +1,4 @@
-package users
+package users_test
 
 import (
 	"bytes"
@@ -16,6 +16,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/httpx"
+	routeusers "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/users"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
@@ -146,7 +147,7 @@ func TestRegisterBindInvalidBody(t *testing.T) {
 	ctx.Request = httptest.NewRequest(http.MethodPost, "/api/v1/users/register", strings.NewReader(`{}`))
 	ctx.Request.Header.Set("Content-Type", "application/json")
 
-	u := NewUsersController(&svc.ServiceContext{})
+	u := routeusers.NewUsersController(&svc.ServiceContext{})
 	httpx.HandleJSON(u.Register)(ctx)
 
 	if rec.Code != http.StatusBadRequest {
@@ -161,7 +162,7 @@ func TestRegisterBindInvalidBody(t *testing.T) {
 	}
 }
 
-func newRegisterTestController(t *testing.T) (*UsersController, sqlmock.Sqlmock) {
+func newRegisterTestController(t *testing.T) (*routeusers.UsersController, sqlmock.Sqlmock) {
 	t.Helper()
 	sqlDB, mock, err := sqlmock.New()
 	if err != nil {
@@ -183,7 +184,7 @@ func newRegisterTestController(t *testing.T) (*UsersController, sqlmock.Sqlmock)
 	if err != nil {
 		t.Fatalf("NewIssuer() error = %v", err)
 	}
-	return NewUsersController(&svc.ServiceContext{
+	return routeusers.NewUsersController(&svc.ServiceContext{
 		DB:    db,
 		Token: issuer,
 	}), mock

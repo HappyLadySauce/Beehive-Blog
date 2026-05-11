@@ -64,6 +64,7 @@ func run(ctx context.Context, opts *options.Options) error {
 		Cache:           opts.Cache,
 		JWT:             opts.JWT,
 		GithubOAuth2:    opts.GithubOAuth2,
+		Email:           opts.Email,
 	}
 	config.Init(cfg)
 

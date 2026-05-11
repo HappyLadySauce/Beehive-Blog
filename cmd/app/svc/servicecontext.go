@@ -45,6 +45,9 @@ func NewServiceContext(ctx context.Context, cfg *config.Config) (*ServiceContext
 	if cfg.JWT == nil {
 		return nil, fmt.Errorf("jwt config is nil")
 	}
+	if cfg.Email == nil {
+		return nil, fmt.Errorf("email config is nil")
+	}
 
 	dsn, err := postgreDSN(cfg.Database)
 	if err != nil {
@@ -103,6 +106,17 @@ func NewServiceContext(ctx context.Context, cfg *config.Config) (*ServiceContext
 	)
 
 	settingsStore := settings.NewStore(db)
+	seed, err := cfg.Email.ToApplicationSettings()
+	if err != nil {
+		_ = rdb.Close()
+		_ = sqlDB.Close()
+		return nil, fmt.Errorf("email options: %w", err)
+	}
+	if err := settingsStore.EnsureSingleton(ctx, seed); err != nil {
+		_ = rdb.Close()
+		_ = sqlDB.Close()
+		return nil, fmt.Errorf("ensure application settings: %w", err)
+	}
 	settingsProv := settings.NewProvider(settingsStore)
 	if err := settingsProv.Refresh(ctx); err != nil {
 		klog.ErrorS(err, "Initial application settings refresh failed; defaults kept until DB is ready")

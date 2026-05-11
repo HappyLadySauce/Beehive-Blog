@@ -1,9 +1,13 @@
-package options
+package options_test
 
-import "testing"
+import (
+	"testing"
 
-func validGitHubOAuth2Options() *GithubOAuth2Options {
-	return &GithubOAuth2Options{
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
+)
+
+func validGitHubOAuth2Options() *options.GithubOAuth2Options {
+	return &options.GithubOAuth2Options{
 		ClientID:     "client-id",
 		ClientSecret: "client-secret",
 		RedirectURL:  "http://localhost:8080/api/v1/auth/callback",

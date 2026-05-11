@@ -1,4 +1,4 @@
-package settings
+package settings_test
 
 import (
 	"context"
@@ -8,6 +8,8 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/settings"
 )
 
 func TestProviderRefreshLoadsSnapshot(t *testing.T) {
@@ -27,7 +29,7 @@ func TestProviderRefreshLoadsSnapshot(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"id", "revision", "payload", "created_at", "updated_at", "deleted_at"}).
 			AddRow(1, 2, payload, now, now, nil))
 
-	p := NewProvider(NewStore(db))
+	p := settings.NewProvider(settings.NewStore(db))
 	if err := p.Refresh(context.Background()); err != nil {
 		t.Fatalf("Refresh: %v", err)
 	}
@@ -64,7 +66,7 @@ func TestProviderSaveAndRefreshUpdatesSnapshotWithoutReload(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
 
-	p := NewProvider(NewStore(db))
+	p := settings.NewProvider(settings.NewStore(db))
 	next := p.Current()
 	next.Email.Host = "smtp.example.com"
 	if err := p.SaveAndRefresh(context.Background(), next); err != nil {

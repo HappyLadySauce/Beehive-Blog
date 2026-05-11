@@ -2,9 +2,11 @@ package settings
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
@@ -50,6 +52,47 @@ func (s *Store) GetRevision(ctx context.Context) (int64, error) {
 		return 0, fmt.Errorf("read settings revision: %w", err)
 	}
 	return row.Revision, nil
+}
+
+// EnsureSingleton inserts id=1 when no live row exists; unique_violation is treated as success (concurrent seed).
+// EnsureSingleton 在无活跃 id=1 行时插入；唯一约束冲突视为成功（并发补种）。
+func (s *Store) EnsureSingleton(ctx context.Context, initial settingtypes.ApplicationSettings) error {
+	if err := initial.Validate(); err != nil {
+		return err
+	}
+	raw, err := settingtypes.MarshalPayload(initial)
+	if err != nil {
+		return err
+	}
+
+	var count int64
+	if err := s.db.WithContext(ctx).Model(&model.ApplicationSetting{}).Where("id = ?", 1).Count(&count).Error; err != nil {
+		return fmt.Errorf("ensure application settings: count id=1: %w", err)
+	}
+	if count > 0 {
+		return nil
+	}
+
+	now := time.Now()
+	row := model.ApplicationSetting{
+		ID:        1,
+		Revision:  1,
+		Payload:   raw,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+	if err := s.db.WithContext(ctx).Create(&row).Error; err != nil {
+		if isPostgresUniqueViolation(err) {
+			return nil
+		}
+		return fmt.Errorf("ensure application settings: insert singleton: %w", err)
+	}
+	return nil
+}
+
+func isPostgresUniqueViolation(err error) bool {
+	var pg *pgconn.PgError
+	return errors.As(err, &pg) && pg.Code == "23505"
 }
 
 // Save persists merged settings and increments revision inside a row lock transaction.

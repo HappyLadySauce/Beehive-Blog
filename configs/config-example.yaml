@@ -27,6 +27,17 @@ jwt:
     access-ttl: 15m # 访问令牌存活时间
     refresh-ttl: 168h # 刷新令牌存活时间，必须严格大于 access-ttl
 
+# email: 出站 SMTP 默认值；仅当 setting.application_settings 无 id=1 活跃行时写入首行种子。有数据后以数据库为准。
+email:
+    enabled: false
+    host: ""
+    port: 587
+    username: ""
+    password: ""
+    from: ""
+    from-name: ""
+    tls: starttls
+
 github-oauth2:
     client-id: 
     client-secret: 

@@ -6,14 +6,15 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
 )
 
-// Config aggregates runtime settings shared across packages (serving, database, cache, jwt).
-// Config 汇总各包共用的运行时配置（监听、数据库、缓存、JWT）。
+// Config aggregates runtime settings shared across packages (serving, database, cache, jwt, email).
+// Config 汇总各包共用的运行时配置（监听、数据库、缓存、JWT、邮箱）。
 type Config struct {
 	InsecureServing *options.InsecureServingOptions `mapstructure:"insecure"`
 	Database        *options.PostgreOptions         `mapstructure:"database"`
 	Cache           *options.RedisOptions           `mapstructure:"cache"`
 	JWT             *options.JWTOptions             `mapstructure:"jwt"`
 	GithubOAuth2    *options.GithubOAuth2Options    `mapstructure:"github-oauth2"`
+	Email           *options.EmailSMTPOptions       `mapstructure:"email"`
 }
 
 var (
