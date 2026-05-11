@@ -1,10 +1,19 @@
 .layout {
+  /* Studio-only horizontal inset; slightly wider than site header for more side breathing room. */
+  /* Studio 专用左右内边距；略大于顶栏，两侧留白更舒展。 */
+  --studio-pad-x: clamp(28px, 5vw, 72px);
+  --studio-gap: 16px;
+  --studio-pad-y-top: 20px;
+  --studio-pad-y-bottom: 40px;
+  --studio-sidebar-w: 220px;
+  box-sizing: border-box;
   display: grid;
-  gap: 24px;
-  grid-template-columns: 240px minmax(0, 1fr);
-  margin: 0 auto;
-  max-width: 1580px;
-  padding: 28px clamp(18px, 2.5vw, 40px) 56px;
+  gap: var(--studio-gap);
+  grid-template-columns: minmax(200px, var(--studio-sidebar-w)) minmax(0, 1fr);
+  margin: 0;
+  max-width: none;
+  padding: var(--studio-pad-y-top) var(--studio-pad-x) var(--studio-pad-y-bottom);
+  width: 100%;
 }
 
 .sidebar {
@@ -13,9 +22,9 @@
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--soft-shadow);
-  padding: 14px;
+  padding: 12px;
   position: sticky;
-  top: 18px;
+  top: 16px;
 }
 
 .brand {
@@ -23,8 +32,8 @@
   border-bottom: 1px solid var(--line);
   display: flex;
   gap: 10px;
-  margin-bottom: 12px;
-  padding: 8px 8px 14px;
+  margin-bottom: 10px;
+  padding: 8px 8px 12px;
 }
 
 .brandMark {
@@ -79,15 +88,17 @@
 }
 
 .main {
+  container-name: studio;
+  container-type: inline-size;
   display: grid;
-  gap: 20px;
+  gap: 16px;
   min-width: 0;
 }
 
 .topbar {
   align-items: center;
   display: flex;
-  gap: 18px;
+  gap: 14px;
   justify-content: space-between;
 }
 
@@ -113,7 +124,7 @@
 .metricGrid,
 .workGrid {
   display: grid;
-  gap: 14px;
+  gap: 12px;
 }
 
 .metricGrid {
@@ -121,7 +132,27 @@
 }
 
 .workGrid {
-  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+  grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
+}
+
+/* Container queries: column counts follow main content width, not only viewport. */
+/* 容器查询：列数随主内容区宽度变化，而非仅视口。 */
+@container studio (max-width: 1100px) {
+  .metricGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container studio (max-width: 900px) {
+  .workGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@container studio (max-width: 720px) {
+  .metricGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .metricCard,
@@ -137,8 +168,8 @@
   align-content: start;
   display: grid;
   gap: 8px;
-  min-height: 150px;
-  padding: 20px;
+  min-height: 120px;
+  padding: 16px;
 }
 
 .metricIcon {
@@ -164,8 +195,8 @@
 }
 
 .panel {
-  min-height: 220px;
-  padding: 24px;
+  min-height: 180px;
+  padding: 18px;
 }
 
 .panelHeader {
@@ -173,7 +204,7 @@
   display: flex;
   gap: 10px;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .panelHeader h2,
@@ -224,7 +255,7 @@
   border-radius: var(--radius);
   display: grid;
   gap: 8px;
-  min-height: 160px;
+  min-height: 140px;
   place-items: center;
   text-align: center;
 }
@@ -315,9 +346,9 @@
 .accessState {
   display: grid;
   gap: 10px;
-  margin: 48px auto;
+  margin: 36px auto;
   max-width: 560px;
-  padding: 24px;
+  padding: 20px;
 }
 
 @media (max-width: 920px) {
