@@ -176,10 +176,14 @@ func newAttachmentDBTestController(t *testing.T) (*routeattachments.AttachmentsC
 	}
 	opts := options.NewAttachmentOptions()
 	opts.LocalRoot = t.TempDir()
-	return routeattachments.NewAttachmentsController(&svc.ServiceContext{
+	controller, err := routeattachments.NewAttachmentsController(&svc.ServiceContext{
 		Config: &config.Config{Attachment: opts},
 		DB:     db,
-	}), mock
+	})
+	if err != nil {
+		t.Fatalf("NewAttachmentsController: %v", err)
+	}
+	return controller, mock
 }
 
 func performAttachmentRequest(method string, target string, body any, paramKey string, paramValue string, claims *jwt.Claims, handler gin.HandlerFunc) *httptest.ResponseRecorder {

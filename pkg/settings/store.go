@@ -14,15 +14,15 @@ import (
 	settingtypes "github.com/HappyLadySauce/Beehive-Blog/pkg/settings/types"
 )
 
-// Store loads and persists the singleton setting.application_settings row.
-// Store 负责读写 setting.application_settings 单行。
-type Store struct {
-	db *gorm.DB
-}
-
 // ErrInvalidSettings marks caller-supplied settings payload validation failures.
 // ErrInvalidSettings 标记调用方提交的设置 payload 校验失败。
 var ErrInvalidSettings = errors.New("invalid settings")
+
+// Store loads and persists the singleton setting.application_settings row.
+// Store 读写 setting.application_settings 单行。
+type Store struct {
+	db *gorm.DB
+}
 
 // NewStore builds a Store backed by the given GORM handle.
 // NewStore 使用给定 GORM 句柄构造 Store。
@@ -44,8 +44,8 @@ func (s *Store) Load(ctx context.Context) (settingtypes.ApplicationSettings, int
 	return out, row.Revision, nil
 }
 
-// GetRevision returns revision only (cheap probe for hot reload).
-// GetRevision 仅返回 revision（热加载轻量探测）。
+// GetRevision returns revision only for cheap probes.
+// GetRevision 仅返回 revision，用于轻量探测。
 func (s *Store) GetRevision(ctx context.Context) (int64, error) {
 	var row model.ApplicationSetting
 	if err := s.db.WithContext(ctx).
@@ -58,8 +58,8 @@ func (s *Store) GetRevision(ctx context.Context) (int64, error) {
 	return row.Revision, nil
 }
 
-// EnsureSingleton inserts id=1 when no live row exists; unique_violation is treated as success (concurrent seed).
-// EnsureSingleton 在无活跃 id=1 行时插入；唯一约束冲突视为成功（并发补种）。
+// EnsureSingleton inserts id=1 when no live row exists; unique_violation is treated as success.
+// EnsureSingleton 在无活跃 id=1 行时插入；唯一约束冲突视为成功。
 func (s *Store) EnsureSingleton(ctx context.Context, initial settingtypes.ApplicationSettings) error {
 	if err := initial.Validate(); err != nil {
 		return err
@@ -94,13 +94,8 @@ func (s *Store) EnsureSingleton(ctx context.Context, initial settingtypes.Applic
 	return nil
 }
 
-func isPostgresUniqueViolation(err error) bool {
-	var pg *pgconn.PgError
-	return errors.As(err, &pg) && pg.Code == "23505"
-}
-
-// Save persists merged settings and increments revision inside a row lock transaction.
-// Save 在行锁事务内持久化合并后的设置并递增 revision。
+// Save persists settings and increments revision inside a row-lock transaction.
+// Save 在行锁事务内持久化设置并递增 revision。
 func (s *Store) Save(ctx context.Context, next settingtypes.ApplicationSettings) (int64, error) {
 	if err := next.Validate(); err != nil {
 		return 0, err
@@ -174,4 +169,9 @@ func (s *Store) Patch(ctx context.Context, patch *settingtypes.SettingsPatchRequ
 		return settingtypes.ApplicationSettings{}, 0, err
 	}
 	return saved, savedRev, nil
+}
+
+func isPostgresUniqueViolation(err error) bool {
+	var pg *pgconn.PgError
+	return errors.As(err, &pg) && pg.Code == "23505"
 }

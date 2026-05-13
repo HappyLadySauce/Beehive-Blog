@@ -139,8 +139,8 @@ func mapRegisterUniqueViolation(pgErr *pgconn.PgError) *common.AppError {
 	}
 }
 
-// ServeRegister is the Gin entrypoint for POST /api/v1/users/register (JSON bind + Swagger).
-// ServeRegister 为 POST /api/v1/users/register 的 Gin 入口（JSON 绑定与 Swagger 元数据）。
+// Register is the Gin entrypoint for POST /api/v1/users/register (JSON bind + Swagger).
+// Register 为 POST /api/v1/users/register 的 Gin 入口（JSON 绑定与 Swagger 元数据）。
 //
 // @Summary      Register a new user
 // @Description  Creates identity.users plus credentials and returns tokens (auto-login). Avatar binding is deferred until authenticated flows. 中文：创建用户与凭证并返回令牌（自动登录）；头像请在登录态流程中再绑定。

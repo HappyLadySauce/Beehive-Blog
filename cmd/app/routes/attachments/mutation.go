@@ -80,7 +80,7 @@ func (h *AttachmentsController) patch(ctx context.Context, actor pkgattachment.A
 		return model.Attachment{}, err
 	}
 	var out model.Attachment
-	err := h.svc.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	err := h.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&out, "id = ?", id).Error; err != nil {
 			return pkgattachment.MapDBError(err)
 		}
@@ -125,7 +125,7 @@ func (h *AttachmentsController) delete(ctx context.Context, actor pkgattachment.
 	if err := pkgattachment.RequireAdmin(actor); err != nil {
 		return err
 	}
-	res := h.svc.DB.WithContext(ctx).Delete(&model.Attachment{}, "id = ?", id)
+	res := h.db.WithContext(ctx).Delete(&model.Attachment{}, "id = ?", id)
 	if res.Error != nil {
 		return pkgattachment.MapDBError(res.Error)
 	}
@@ -141,7 +141,7 @@ func (h *AttachmentsController) replaceCategories(ctx context.Context, actor pkg
 	if err := pkgattachment.RequireAdmin(actor); err != nil {
 		return err
 	}
-	return h.svc.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	return h.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var attachment model.Attachment
 		if err := tx.First(&attachment, "id = ?", attachmentID).Error; err != nil {
 			return pkgattachment.MapDBError(err)

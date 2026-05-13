@@ -21,8 +21,8 @@ const smtpTestTimeout = 10 * time.Second
 
 var sendSMTPTestEmail = sendSMTPTestEmailDefault
 
-// ServeEmailTest sends a test email with the saved SMTP settings.
-// ServeEmailTest 使用已保存的 SMTP 设置发送测试邮件。
+// TestEmail sends a test email with the saved SMTP settings.
+// TestEmail 使用已保存的 SMTP 设置发送测试邮件。
 //
 // @Summary      Send SMTP test email (admin)
 // @Description  Sends a test email to the requested recipient using saved SMTP settings. 中文：使用已保存 SMTP 设置向指定收件人发送测试邮件。
@@ -38,7 +38,7 @@ var sendSMTPTestEmail = sendSMTPTestEmailDefault
 // @Failure      500   {object}  common.BaseResponse
 // @Router       /api/v1/settings/email/test [post]
 func (h *SettingsController) TestEmail(ctx *gin.Context) {
-	if h.svc.Settings == nil {
+	if h.provider == nil {
 		common.Fail(ctx, common.NewInternal("settings provider is not configured", fmt.Errorf("nil settings provider")))
 		return
 	}
@@ -48,7 +48,7 @@ func (h *SettingsController) TestEmail(ctx *gin.Context) {
 		return
 	}
 	recipient := strings.TrimSpace(req.Recipient)
-	settings := h.svc.Settings.Current()
+	settings := h.provider.Current()
 	if err := validateEmailTestSettings(settings.Email, recipient); err != nil {
 		common.Fail(ctx, common.NewBadRequest("invalid email test settings", err))
 		return

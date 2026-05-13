@@ -136,7 +136,7 @@ func (h *AttachmentsController) createCategory(ctx context.Context, actor pkgatt
 		SortOrder:   in.SortOrder,
 		Status:      status,
 	}
-	if err := h.svc.DB.WithContext(ctx).Create(&row).Error; err != nil {
+	if err := h.db.WithContext(ctx).Create(&row).Error; err != nil {
 		return model.AttachmentCategory{}, pkgattachment.MapDBError(err)
 	}
 	return row, nil
@@ -149,7 +149,7 @@ func (h *AttachmentsController) listCategories(ctx context.Context, actor pkgatt
 		return nil, err
 	}
 	var rows []model.AttachmentCategory
-	if err := h.svc.DB.WithContext(ctx).Order("path ASC").Find(&rows).Error; err != nil {
+	if err := h.db.WithContext(ctx).Order("path ASC").Find(&rows).Error; err != nil {
 		return nil, pkgattachment.MapDBError(err)
 	}
 	return rows, nil
@@ -162,7 +162,7 @@ func (h *AttachmentsController) getCategory(ctx context.Context, actor pkgattach
 		return model.AttachmentCategory{}, err
 	}
 	var row model.AttachmentCategory
-	if err := h.svc.DB.WithContext(ctx).First(&row, "id = ?", id).Error; err != nil {
+	if err := h.db.WithContext(ctx).First(&row, "id = ?", id).Error; err != nil {
 		return model.AttachmentCategory{}, pkgattachment.MapDBError(err)
 	}
 	return row, nil
@@ -175,7 +175,7 @@ func (h *AttachmentsController) patchCategory(ctx context.Context, actor pkgatta
 		return model.AttachmentCategory{}, err
 	}
 	var out model.AttachmentCategory
-	err := h.svc.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	err := h.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&out, "id = ?", id).Error; err != nil {
 			return pkgattachment.MapDBError(err)
 		}
@@ -221,7 +221,7 @@ func (h *AttachmentsController) deleteCategory(ctx context.Context, actor pkgatt
 	if err := pkgattachment.RequireAdmin(actor); err != nil {
 		return err
 	}
-	res := h.svc.DB.WithContext(ctx).Delete(&model.AttachmentCategory{}, "id = ?", id)
+	res := h.db.WithContext(ctx).Delete(&model.AttachmentCategory{}, "id = ?", id)
 	if res.Error != nil {
 		return pkgattachment.MapDBError(res.Error)
 	}

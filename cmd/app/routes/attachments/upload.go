@@ -21,7 +21,7 @@ import (
 // UploadLocal handles POST /api/v1/attachments multipart uploads (admin).
 // UploadLocal 处理 POST /api/v1/attachments multipart 上传（管理员）。
 func (h *AttachmentsController) UploadLocal(ctx *gin.Context) {
-	ctx.Request.Body = http.MaxBytesReader(ctx.Writer, ctx.Request.Body, h.svc.Config.Attachment.MaxBytes+1<<20)
+	ctx.Request.Body = http.MaxBytesReader(ctx.Writer, ctx.Request.Body, h.attachmentOptions.MaxBytes+1<<20)
 	file, header, err := ctx.Request.FormFile("file")
 	if err != nil {
 		common.Fail(ctx, common.NewBadRequest("file field is required", err))
@@ -129,7 +129,7 @@ func (h *AttachmentsController) uploadLocal(ctx context.Context, actor pkgattach
 	if err := pkgattachment.RequireAdmin(actor); err != nil {
 		return model.Attachment{}, err
 	}
-	if err := pkgattachment.ValidateCommon(h.svc.Config.Attachment, in.OwnerUserID, in.Purpose, in.MimeType, in.Size, in.AccessScope); err != nil {
+	if err := pkgattachment.ValidateCommon(h.attachmentOptions, in.OwnerUserID, in.Purpose, in.MimeType, in.Size, in.AccessScope); err != nil {
 		return model.Attachment{}, err
 	}
 	if in.Reader == nil {
@@ -143,11 +143,7 @@ func (h *AttachmentsController) uploadLocal(ctx context.Context, actor pkgattach
 	if err != nil {
 		return model.Attachment{}, err
 	}
-	registry, err := h.storageRegistry()
-	if err != nil {
-		return model.Attachment{}, err
-	}
-	backend, err := registry.Backend(options.AttachmentStorageLocal)
+	backend, err := h.storage.Backend(options.AttachmentStorageLocal)
 	if err != nil {
 		return model.Attachment{}, err
 	}
@@ -171,7 +167,7 @@ func (h *AttachmentsController) uploadLocal(ctx context.Context, actor pkgattach
 		UploadStatus: pkgattachment.UploadReady,
 		Status:       pkgattachment.StatusActive,
 	}
-	err = h.svc.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	err = h.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&attachment).Error; err != nil {
 			return pkgattachment.MapDBError(err)
 		}
@@ -192,18 +188,14 @@ func (h *AttachmentsController) presignRemote(ctx context.Context, actor pkgatta
 	if in.StorageType != options.AttachmentStorageS3 && in.StorageType != options.AttachmentStorageOSS {
 		return pkgattachment.PresignOutput{}, fmt.Errorf("%w: storage_type must be s3 or oss", pkgattachment.ErrInvalid)
 	}
-	if err := pkgattachment.ValidateCommon(h.svc.Config.Attachment, in.OwnerUserID, in.Purpose, in.MimeType, in.Size, in.AccessScope); err != nil {
+	if err := pkgattachment.ValidateCommon(h.attachmentOptions, in.OwnerUserID, in.Purpose, in.MimeType, in.Size, in.AccessScope); err != nil {
 		return pkgattachment.PresignOutput{}, err
 	}
 	objectKey, filename, err := pkgattachment.ObjectKeyFor(in.Purpose, in.Filename)
 	if err != nil {
 		return pkgattachment.PresignOutput{}, err
 	}
-	registry, err := h.storageRegistry()
-	if err != nil {
-		return pkgattachment.PresignOutput{}, err
-	}
-	backend, err := registry.Backend(in.StorageType)
+	backend, err := h.storage.Backend(in.StorageType)
 	if err != nil {
 		return pkgattachment.PresignOutput{}, err
 	}
@@ -212,7 +204,7 @@ func (h *AttachmentsController) presignRemote(ctx context.Context, actor pkgatta
 		MimeType:  in.MimeType,
 		Checksum:  pkgattachment.DerefString(in.Checksum),
 		Size:      in.Size,
-		TTL:       h.svc.Config.Attachment.PresignTTL,
+		TTL:       h.attachmentOptions.PresignTTL,
 	})
 	if err != nil {
 		return pkgattachment.PresignOutput{}, err
@@ -234,7 +226,7 @@ func (h *AttachmentsController) presignRemote(ctx context.Context, actor pkgatta
 		UploadStatus: pkgattachment.UploadPending,
 		Status:       pkgattachment.StatusActive,
 	}
-	err = h.svc.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	err = h.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&attachment).Error; err != nil {
 			return pkgattachment.MapDBError(err)
 		}
@@ -253,7 +245,7 @@ func (h *AttachmentsController) completeRemote(ctx context.Context, actor pkgatt
 		return model.Attachment{}, err
 	}
 	var out model.Attachment
-	err := h.svc.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	err := h.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.First(&out, "id = ?", id).Error; err != nil {
 			return pkgattachment.MapDBError(err)
 		}

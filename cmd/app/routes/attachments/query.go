@@ -122,7 +122,7 @@ func (h *AttachmentsController) list(ctx context.Context, actor pkgattachment.Ac
 	if limit <= 0 || limit > 100 {
 		limit = 20
 	}
-	q := h.svc.DB.WithContext(ctx).Model(&model.Attachment{}).Order("id DESC").Limit(limit + 1)
+	q := h.db.WithContext(ctx).Model(&model.Attachment{}).Order("id DESC").Limit(limit + 1)
 	if in.OwnerUserID != nil {
 		q = q.Where("owner_user_id = ?", *in.OwnerUserID)
 	}
@@ -178,11 +178,7 @@ func (h *AttachmentsController) getPublicContent(ctx context.Context, id int64, 
 	if !admin && attachment.AccessScope != pkgattachment.AccessPublic {
 		return pkgattachment.ContentResult{}, pkgattachment.ErrForbidden
 	}
-	registry, err := h.storageRegistry()
-	if err != nil {
-		return pkgattachment.ContentResult{}, err
-	}
-	backend, err := registry.Backend(attachment.StorageType)
+	backend, err := h.storage.Backend(attachment.StorageType)
 	if err != nil {
 		return pkgattachment.ContentResult{}, err
 	}
@@ -199,7 +195,7 @@ func (h *AttachmentsController) getPublicContent(ctx context.Context, id int64, 
 	if attachment.ObjectKey == nil {
 		return pkgattachment.ContentResult{}, fmt.Errorf("%w: object key is missing", pkgattachment.ErrInvalid)
 	}
-	presigned, err := backend.PresignDownload(ctx, *attachment.ObjectKey, h.svc.Config.Attachment.PresignTTL)
+	presigned, err := backend.PresignDownload(ctx, *attachment.ObjectKey, h.attachmentOptions.PresignTTL)
 	if err != nil {
 		return pkgattachment.ContentResult{}, err
 	}
@@ -208,11 +204,11 @@ func (h *AttachmentsController) getPublicContent(ctx context.Context, id int64, 
 
 func (h *AttachmentsController) getWithCategories(ctx context.Context, id int64) (model.Attachment, []int64, error) {
 	var attachment model.Attachment
-	if err := h.svc.DB.WithContext(ctx).First(&attachment, "id = ?", id).Error; err != nil {
+	if err := h.db.WithContext(ctx).First(&attachment, "id = ?", id).Error; err != nil {
 		return model.Attachment{}, nil, pkgattachment.MapDBError(err)
 	}
 	var bindings []model.AttachmentCategoryBinding
-	if err := h.svc.DB.WithContext(ctx).Where("attachment_id = ?", id).Find(&bindings).Error; err != nil {
+	if err := h.db.WithContext(ctx).Where("attachment_id = ?", id).Find(&bindings).Error; err != nil {
 		return model.Attachment{}, nil, pkgattachment.MapDBError(err)
 	}
 	categoryIDs := make([]int64, 0, len(bindings))

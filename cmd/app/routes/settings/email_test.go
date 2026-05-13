@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
+	"strings"
 	"testing"
 	"time"
 
@@ -16,7 +18,9 @@ import (
 	routesettings "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/settings"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
-	pkgsettings "github.com/HappyLadySauce/Beehive-Blog/pkg/settings"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/config"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
 	settingtypes "github.com/HappyLadySauce/Beehive-Blog/pkg/settings/types"
 )
 
@@ -36,6 +40,17 @@ func TestToResponsePasswordSet(t *testing.T) {
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet sql expectations: %v", err)
+	}
+}
+
+func TestNewSettingsControllerRejectsMissingDependencies(t *testing.T) {
+	if _, err := routesettings.NewSettingsController(context.Background(), nil); err == nil || !strings.Contains(err.Error(), "service context is nil") {
+		t.Fatalf("NewSettingsController(nil) error = %v, want service context error", err)
+	}
+
+	_, err := routesettings.NewSettingsController(context.Background(), &svc.ServiceContext{Config: &config.Config{Email: options.NewEmailSMTPOptions()}})
+	if err == nil || !strings.Contains(err.Error(), "database handle is nil") {
+		t.Fatalf("NewSettingsController without DB error = %v, want database handle error", err)
 	}
 }
 
@@ -64,15 +79,22 @@ func newSettingsTestController(t *testing.T, s settingtypes.ApplicationSettings,
 		t.Fatalf("marshal settings payload: %v", err)
 	}
 	now := time.Date(2026, 5, 11, 0, 0, 0, 0, time.UTC)
+	mock.ExpectQuery(regexp.MustCompile(`SELECT count\(\*\) FROM "setting"\."application_settings"`).String()).
+		WithArgs(1).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(int64(1)))
 	mock.ExpectQuery(`SELECT .* FROM "setting"."application_settings"`).
 		WillReturnRows(sqlmock.NewRows([]string{"id", "revision", "payload", "created_at", "updated_at", "deleted_at"}).
 			AddRow(1, revision, payload, now, now, nil))
 
-	provider := pkgsettings.NewProvider(pkgsettings.NewStore(db))
-	if err := provider.Refresh(context.Background()); err != nil {
-		t.Fatalf("refresh settings provider: %v", err)
+	controller, err := routesettings.NewSettingsController(context.Background(), &svc.ServiceContext{
+		Config: &config.Config{Email: options.NewEmailSMTPOptions()},
+		DB:     db,
+		Token:  &jwt.Issuer{},
+	})
+	if err != nil {
+		t.Fatalf("NewSettingsController: %v", err)
 	}
-	return routesettings.NewSettingsController(&svc.ServiceContext{Settings: provider}), mock
+	return controller, mock
 }
 
 func performGetEmailSettings(t *testing.T, c *routesettings.SettingsController) (*httptest.ResponseRecorder, settingsEnvelope) {

@@ -1,10 +1,7 @@
 package settings
 
 import (
-	"context"
 	"sync"
-
-	"k8s.io/klog/v2"
 
 	settingtypes "github.com/HappyLadySauce/Beehive-Blog/pkg/settings/types"
 )
@@ -12,19 +9,17 @@ import (
 // Provider holds a validated in-memory snapshot for hot reads.
 // Provider 保存已校验的内存快照供热读。
 type Provider struct {
-	store *Store
-	mu    sync.RWMutex
-	snap  settingtypes.ApplicationSettings
-	rev   int64
+	mu   sync.RWMutex
+	snap settingtypes.ApplicationSettings
+	rev  int64
 }
 
-// NewProvider builds a Provider; call Refresh before serving traffic.
-// NewProvider 构造 Provider；对外服务前应调用 Refresh。
-func NewProvider(store *Store) *Provider {
+// NewProvider builds a Provider with the default in-memory snapshot.
+// NewProvider 使用默认内存快照构造 Provider。
+func NewProvider() *Provider {
 	return &Provider{
-		store: store,
-		snap:  settingtypes.DefaultApplicationSettings(),
-		rev:   0,
+		snap: settingtypes.DefaultApplicationSettings(),
+		rev:  0,
 	}
 }
 
@@ -44,46 +39,11 @@ func (p *Provider) CachedRevision() int64 {
 	return p.rev
 }
 
-// Refresh reloads from the database, validates, and swaps the snapshot.
-// On failure logs in English and keeps the previous snapshot.
-// Refresh 从数据库加载、校验并替换快照；失败时记录英文日志并保留旧快照。
-func (p *Provider) Refresh(ctx context.Context) error {
-	s, rev, err := p.store.Load(ctx)
-	if err != nil {
-		klog.ErrorS(err, "Failed to refresh application settings snapshot")
-		return err
-	}
+// Replace swaps the in-memory snapshot after persistence has succeeded.
+// Replace 在持久化成功后替换内存快照。
+func (p *Provider) Replace(s settingtypes.ApplicationSettings, rev int64) {
 	p.mu.Lock()
 	p.snap = s
 	p.rev = rev
 	p.mu.Unlock()
-	return nil
-}
-
-// SaveAndRefresh persists settings and swaps the in-process snapshot.
-// SaveAndRefresh 持久化设置并替换进程内快照。
-func (p *Provider) SaveAndRefresh(ctx context.Context, next settingtypes.ApplicationSettings) error {
-	rev, err := p.store.Save(ctx, next)
-	if err != nil {
-		return err
-	}
-	p.mu.Lock()
-	p.snap = next
-	p.rev = rev
-	p.mu.Unlock()
-	return nil
-}
-
-// PatchAndRefresh persists a partial update against the latest locked row and swaps the in-process snapshot.
-// PatchAndRefresh 基于最新加锁行持久化部分更新，并替换进程内快照。
-func (p *Provider) PatchAndRefresh(ctx context.Context, patch *settingtypes.SettingsPatchRequest) error {
-	next, rev, err := p.store.Patch(ctx, patch)
-	if err != nil {
-		return err
-	}
-	p.mu.Lock()
-	p.snap = next
-	p.rev = rev
-	p.mu.Unlock()
-	return nil
 }

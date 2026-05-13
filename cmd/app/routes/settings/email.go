@@ -63,17 +63,17 @@ func patchFromV1(p *v1.EmailSMTPPatchJSON) *settingtypes.EmailSMTPPatch {
 // @Failure      403  {object}  common.BaseResponse
 // @Router       /api/v1/settings/email [get]
 func (h *SettingsController) GetEmailSettings(ctx *gin.Context) {
-	if h.svc.Settings == nil {
+	if h.provider == nil {
 		common.Fail(ctx, common.NewInternal("settings provider is not configured", errors.New("nil settings provider")))
 		return
 	}
-	s := h.svc.Settings.Current()
-	rev := h.svc.Settings.CachedRevision()
+	s := h.provider.Current()
+	rev := h.provider.CachedRevision()
 	common.Success(ctx, toResponse(s, rev))
 }
 
 func (h *SettingsController) patchEmailSettings(ctx *gin.Context, req *v1.SettingsPatchRequestJSON) (v1.SettingsResponse, error) {
-	if h.svc.Settings == nil {
+	if h.provider == nil || h.store == nil {
 		return v1.SettingsResponse{}, common.NewInternal("settings provider is not configured", errors.New("nil settings provider"))
 	}
 	if req.Email == nil {
@@ -81,13 +81,15 @@ func (h *SettingsController) patchEmailSettings(ctx *gin.Context, req *v1.Settin
 	}
 
 	patch := &settingtypes.SettingsPatchRequest{Email: patchFromV1(req.Email)}
-	if err := h.svc.Settings.PatchAndRefresh(ctx.Request.Context(), patch); err != nil {
+	next, rev, err := h.store.Patch(ctx.Request.Context(), patch)
+	if err != nil {
 		if errors.Is(err, pkgsettings.ErrInvalidSettings) {
 			return v1.SettingsResponse{}, common.NewBadRequest("invalid settings", err)
 		}
 		return v1.SettingsResponse{}, common.NewInternal("failed to patch settings", err)
 	}
-	return toResponse(h.svc.Settings.Current(), h.svc.Settings.CachedRevision()), nil
+	h.provider.Replace(next, rev)
+	return toResponse(next, rev), nil
 }
 
 // PatchEmailSettings handles PATCH /api/v1/settings/email (partial merge).

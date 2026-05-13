@@ -16,7 +16,6 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/config"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/settings"
 )
 
 // ServiceContext wires shared infrastructure for HTTP handlers and background work.
@@ -26,7 +25,6 @@ type ServiceContext struct {
 	DB          *gorm.DB
 	Cache       *redis.Client
 	Token       *jwt.Issuer
-	Settings    *settings.Provider
 	PostgresDSN string
 }
 
@@ -108,29 +106,11 @@ func NewServiceContext(ctx context.Context, cfg *config.Config) (*ServiceContext
 		"refresh-ttl", cfg.JWT.RefreshTTL,
 	)
 
-	settingsStore := settings.NewStore(db)
-	seed, err := cfg.Email.ToApplicationSettings()
-	if err != nil {
-		_ = rdb.Close()
-		_ = sqlDB.Close()
-		return nil, fmt.Errorf("email options: %w", err)
-	}
-	if err := settingsStore.EnsureSingleton(ctx, seed); err != nil {
-		_ = rdb.Close()
-		_ = sqlDB.Close()
-		return nil, fmt.Errorf("ensure application settings: %w", err)
-	}
-	settingsProv := settings.NewProvider(settingsStore)
-	if err := settingsProv.Refresh(ctx); err != nil {
-		klog.ErrorS(err, "Initial application settings refresh failed; defaults kept until DB is ready")
-	}
-
 	return &ServiceContext{
 		Config:      cfg,
 		DB:          db,
 		Cache:       rdb,
 		Token:       issuer,
-		Settings:    settingsProv,
 		PostgresDSN: dsn,
 	}, nil
 }

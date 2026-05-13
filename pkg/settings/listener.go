@@ -12,11 +12,15 @@ import (
 // notifyChannelSettingRevision 为 PostgreSQL NOTIFY/LISTEN 通道名。
 const notifyChannelSettingRevision = "setting_revision"
 
-// StartNotifyListener runs in the background: dedicated pgx connection, LISTEN, Refresh on NOTIFY until ctx is canceled.
+// RefreshFunc reloads application settings after a database notification.
+// RefreshFunc 在数据库通知后重新加载应用设置。
+type RefreshFunc func(context.Context) error
+
+// StartNotifyListener runs in the background: dedicated pgx connection, LISTEN, refresh callback on NOTIFY until ctx is canceled.
 // Reconnects with exponential backoff on disconnect or errors.
-// StartNotifyListener 在后台运行：专用 pgx 连接 LISTEN，收到 NOTIFY 时 Refresh，直到 ctx 取消；断线或错误时指数退避重连。
-func StartNotifyListener(ctx context.Context, connString string, p *Provider) {
-	if p == nil || connString == "" {
+// StartNotifyListener 在后台运行：专用 pgx 连接 LISTEN，收到 NOTIFY 时调用 refresh 回调，直到 ctx 取消；断线或错误时指数退避重连。
+func StartNotifyListener(ctx context.Context, connString string, refresh RefreshFunc) {
+	if refresh == nil || connString == "" {
 		return
 	}
 	go func() {
@@ -25,7 +29,7 @@ func StartNotifyListener(ctx context.Context, connString string, p *Provider) {
 			if ctx.Err() != nil {
 				return
 			}
-			err := listenUntilError(ctx, connString, p)
+			err := listenUntilError(ctx, connString, refresh)
 			if ctx.Err() != nil {
 				return
 			}
@@ -42,7 +46,7 @@ func StartNotifyListener(ctx context.Context, connString string, p *Provider) {
 	}()
 }
 
-func listenUntilError(ctx context.Context, connString string, p *Provider) error {
+func listenUntilError(ctx context.Context, connString string, refresh RefreshFunc) error {
 	cfg, err := pgx.ParseConfig(connString)
 	if err != nil {
 		return err
@@ -63,7 +67,7 @@ func listenUntilError(ctx context.Context, connString string, p *Provider) error
 		if err != nil {
 			return err
 		}
-		if err := p.Refresh(ctx); err != nil {
+		if err := refresh(ctx); err != nil {
 			klog.ErrorS(err, "settings refresh after NOTIFY failed")
 		}
 	}

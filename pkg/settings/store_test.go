@@ -14,20 +14,13 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/settings"
+	pkgsettings "github.com/HappyLadySauce/Beehive-Blog/pkg/settings"
 	settingtypes "github.com/HappyLadySauce/Beehive-Blog/pkg/settings/types"
 )
 
 func TestEnsureSingletonInsertsWhenMissing(t *testing.T) {
-	sqlDB, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = sqlDB.Close() })
-	db, err := gorm.Open(postgres.New(postgres.Config{Conn: sqlDB}), &gorm.Config{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	db, mock, cleanup := newMockSettingsDB(t)
+	defer cleanup()
 
 	mock.ExpectQuery(regexp.MustCompile(`SELECT count\(\*\) FROM "setting"\."application_settings"`).String()).
 		WithArgs(1).
@@ -38,50 +31,32 @@ func TestEnsureSingletonInsertsWhenMissing(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(int16(1)))
 	mock.ExpectCommit()
 
-	store := settings.NewStore(db)
+	store := pkgsettings.NewStore(db)
 	seed := settingtypes.DefaultApplicationSettings()
 	if err := store.EnsureSingleton(context.Background(), seed); err != nil {
 		t.Fatalf("EnsureSingleton: %v", err)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatal(err)
-	}
+	assertSQLExpectations(t, mock)
 }
 
 func TestEnsureSingletonNoInsertWhenRowExists(t *testing.T) {
-	sqlDB, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = sqlDB.Close() })
-	db, err := gorm.Open(postgres.New(postgres.Config{Conn: sqlDB}), &gorm.Config{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	db, mock, cleanup := newMockSettingsDB(t)
+	defer cleanup()
 
 	mock.ExpectQuery(regexp.MustCompile(`SELECT count\(\*\) FROM "setting"\."application_settings"`).String()).
 		WithArgs(1).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(int64(1)))
 
-	store := settings.NewStore(db)
+	store := pkgsettings.NewStore(db)
 	if err := store.EnsureSingleton(context.Background(), settingtypes.DefaultApplicationSettings()); err != nil {
 		t.Fatalf("EnsureSingleton: %v", err)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatal(err)
-	}
+	assertSQLExpectations(t, mock)
 }
 
 func TestEnsureSingletonTreatsUniqueViolationAsSuccess(t *testing.T) {
-	sqlDB, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = sqlDB.Close() })
-	db, err := gorm.Open(postgres.New(postgres.Config{Conn: sqlDB}), &gorm.Config{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	db, mock, cleanup := newMockSettingsDB(t)
+	defer cleanup()
 
 	mock.ExpectQuery(regexp.MustCompile(`SELECT count\(\*\) FROM "setting"\."application_settings"`).String()).
 		WithArgs(1).
@@ -92,47 +67,29 @@ func TestEnsureSingletonTreatsUniqueViolationAsSuccess(t *testing.T) {
 		WillReturnError(&pgconn.PgError{Code: "23505"})
 	mock.ExpectRollback()
 
-	store := settings.NewStore(db)
+	store := pkgsettings.NewStore(db)
 	if err := store.EnsureSingleton(context.Background(), settingtypes.DefaultApplicationSettings()); err != nil {
 		t.Fatalf("EnsureSingleton: %v", err)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatal(err)
-	}
+	assertSQLExpectations(t, mock)
 }
 
 func TestEnsureSingletonInvalidPayloadRejected(t *testing.T) {
-	sqlDB, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = sqlDB.Close() })
-	db, err := gorm.Open(postgres.New(postgres.Config{Conn: sqlDB}), &gorm.Config{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	db, mock, cleanup := newMockSettingsDB(t)
+	defer cleanup()
 
-	store := settings.NewStore(db)
+	store := pkgsettings.NewStore(db)
 	bad := settingtypes.DefaultApplicationSettings()
 	bad.Email.TLS = "bad"
 	if err := store.EnsureSingleton(context.Background(), bad); err == nil {
 		t.Fatal("expected validation error")
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatal(err)
-	}
+	assertSQLExpectations(t, mock)
 }
 
 func TestPatchMergesAgainstLockedLatestPayload(t *testing.T) {
-	sqlDB, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = sqlDB.Close() })
-	db, err := gorm.Open(postgres.New(postgres.Config{Conn: sqlDB}), &gorm.Config{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	db, mock, cleanup := newMockSettingsDB(t)
+	defer cleanup()
 
 	now := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 	payload := []byte(`{"email":{"enabled":false,"host":"old.example.com","port":587,"username":"robot","password":"secret","from":"","from_name":"","tls":"starttls"}}`)
@@ -154,7 +111,7 @@ func TestPatchMergesAgainstLockedLatestPayload(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
 
-	store := settings.NewStore(db)
+	store := pkgsettings.NewStore(db)
 	next, rev, err := store.Patch(context.Background(), patch)
 	if err != nil {
 		t.Fatalf("Patch: %v", err)
@@ -165,9 +122,7 @@ func TestPatchMergesAgainstLockedLatestPayload(t *testing.T) {
 	if next.Email.Host != "smtp.example.com" || next.Email.Password != "secret" {
 		t.Fatalf("merged email = %+v", next.Email)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatal(err)
-	}
+	assertSQLExpectations(t, mock)
 }
 
 // Ensure model table name is wired for GORM queries.
@@ -176,6 +131,27 @@ func TestApplicationSettingTableName(t *testing.T) {
 	var m model.ApplicationSetting
 	if m.TableName() != "setting.application_settings" {
 		t.Fatalf("TableName = %q", m.TableName())
+	}
+}
+
+func newMockSettingsDB(t *testing.T) (*gorm.DB, sqlmock.Sqlmock, func()) {
+	t.Helper()
+	sqlDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	db, err := gorm.Open(postgres.New(postgres.Config{Conn: sqlDB}), &gorm.Config{})
+	if err != nil {
+		_ = sqlDB.Close()
+		t.Fatal(err)
+	}
+	return db, mock, func() { _ = sqlDB.Close() }
+}
+
+func assertSQLExpectations(t *testing.T, mock sqlmock.Sqlmock) {
+	t.Helper()
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
 	}
 }
 

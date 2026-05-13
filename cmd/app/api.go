@@ -18,7 +18,6 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/users"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/config"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/settings"
 )
 
 func NewAPICommand(ctx context.Context, basename string) *cobra.Command {
@@ -92,15 +91,11 @@ func run(ctx context.Context, opts *options.Options) error {
 	if err := users.Init(sc); err != nil {
 		return err
 	}
-	if err := routesettings.Init(sc); err != nil {
+	if err := routesettings.Init(ctx, sc); err != nil {
 		return err
 	}
 	if err := attachments.Init(sc); err != nil {
 		return err
-	}
-
-	if sc.Settings != nil && sc.PostgresDSN != "" {
-		settings.StartNotifyListener(ctx, sc.PostgresDSN, sc.Settings)
 	}
 
 	serve(opts)
