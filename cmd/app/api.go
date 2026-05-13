@@ -86,9 +86,15 @@ func run(ctx context.Context, opts *options.Options) error {
 
 	// Initialize HTTP route handlers after the service context is ready.
 	// 在服务上下文就绪后初始化 HTTP 路由处理器。
-	auth.Init(sc)
-	users.Init(sc)
-	routesettings.Init(sc)
+	if err := auth.Init(sc); err != nil {
+		return err
+	}
+	if err := users.Init(sc); err != nil {
+		return err
+	}
+	if err := routesettings.Init(sc); err != nil {
+		return err
+	}
 	if err := attachments.Init(sc); err != nil {
 		return err
 	}

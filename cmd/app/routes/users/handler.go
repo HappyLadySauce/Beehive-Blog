@@ -1,6 +1,8 @@
 package users
 
 import (
+	"fmt"
+
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/router"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
@@ -20,13 +22,27 @@ func NewUsersController(svcCtx *svc.ServiceContext) *UsersController {
 	}
 }
 
-// Init registers HTTP routes for the users domain.
-// Init 注册 users 域的 HTTP 路由。
-func Init(svcCtx *svc.ServiceContext) {
+// Init validates shared handles and registers HTTP routes for the users domain.
+// Init 校验共享句柄并注册 users 域的 HTTP 路由。
+func Init(svcCtx *svc.ServiceContext) error {
+	if svcCtx == nil {
+		return fmt.Errorf("service context is nil")
+	}
+	if svcCtx.Config == nil {
+		return fmt.Errorf("config is nil")
+	}
+	if svcCtx.DB == nil {
+		return fmt.Errorf("database handle is nil")
+	}
+	if svcCtx.Token == nil {
+		return fmt.Errorf("jwt issuer is nil")
+	}
+
 	u := NewUsersController(svcCtx)
 	rl := middleware.NewAuthPublicRateLimiter(10.0/60.0, 12)
 
 	users := router.V1().Group("/users")
 
 	users.POST("/register", rl.GinMiddleware(), u.Register)
+	return nil
 }

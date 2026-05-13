@@ -173,7 +173,7 @@ func newAttachmentDBTestController(t *testing.T) (*AttachmentsController, sqlmoc
 	}
 	opts := options.NewAttachmentOptions()
 	opts.LocalRoot = t.TempDir()
-	return NewController(&svc.ServiceContext{
+	return NewAttachmentsController(&svc.ServiceContext{
 		Config: &config.Config{Attachment: opts},
 		DB:     db,
 	}), mock

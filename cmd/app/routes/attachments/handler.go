@@ -9,15 +9,15 @@ import (
 	attachmentstorage "github.com/HappyLadySauce/Beehive-Blog/pkg/attachment/storage"
 )
 
-// Controller serves attachment HTTP endpoints.
-// Controller 提供附件 HTTP 接口。
+// AttachmentsController serves attachment HTTP endpoints.
+// AttachmentsController 提供附件 HTTP 接口。
 type AttachmentsController struct {
 	svc *svc.ServiceContext
 }
 
-// NewController builds a Controller bound to the given service context.
-// NewController 基于给定 ServiceContext 构造 Controller。
-func NewController(svcCtx *svc.ServiceContext) *AttachmentsController {
+// NewAttachmentsController builds an AttachmentsController bound to the given service context.
+// NewAttachmentsController 基于给定 ServiceContext 构造 AttachmentsController。
+func NewAttachmentsController(svcCtx *svc.ServiceContext) *AttachmentsController {
 	return &AttachmentsController{svc: svcCtx}
 }
 
@@ -36,7 +36,8 @@ func Init(svcCtx *svc.ServiceContext) error {
 	if _, err := attachmentstorage.NewRegistry(svcCtx.Config.Attachment); err != nil {
 		return fmt.Errorf("init attachment storage: %w", err)
 	}
-	h := NewController(svcCtx)
+	
+	h := NewAttachmentsController(svcCtx)
 
 	attachments := router.V1().Group("/attachments")
 	attachments.GET("/:id", h.GetAttachment)
