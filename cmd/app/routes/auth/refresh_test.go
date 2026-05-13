@@ -1,6 +1,8 @@
-package auth
+package auth_test
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,9 +13,9 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
+	routeauth "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/auth"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
 	authsession "github.com/HappyLadySauce/Beehive-Blog/pkg/auth/session"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
@@ -47,25 +49,25 @@ func TestRefreshRotatesSessionAndUsesCurrentDatabaseRole(t *testing.T) {
 	expectSessionHashUpdate(mock, 8)
 	mock.ExpectCommit()
 
-	resp, err := controller.refresh(testGinContext(), &v1.RefreshRequest{RefreshToken: pair.Refresh.Token})
-	if err != nil {
-		t.Fatalf("Refresh() error = %v", err)
+	rec, envelope := performRefresh(t, controller, pair.Refresh.Token)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d, body = %s", rec.Code, http.StatusOK, rec.Body.String())
 	}
-	accessClaims, err := issuer.ParseAccess(resp.Token.AccessToken)
+	accessClaims, err := issuer.ParseAccess(envelope.Data.Token.AccessToken)
 	if err != nil {
 		t.Fatalf("ParseAccess() error = %v", err)
 	}
 	if accessClaims.Role != "member" {
 		t.Fatalf("access role = %q, want member", accessClaims.Role)
 	}
-	refreshClaims, err := issuer.ParseRefresh(resp.Token.RefreshToken)
+	refreshClaims, err := issuer.ParseRefresh(envelope.Data.Token.RefreshToken)
 	if err != nil {
 		t.Fatalf("ParseRefresh() error = %v", err)
 	}
 	if refreshClaims.SID != 8 {
 		t.Fatalf("new refresh sid = %d, want 8", refreshClaims.SID)
 	}
-	if resp.Token.RefreshToken == pair.Refresh.Token {
+	if envelope.Data.Token.RefreshToken == pair.Refresh.Token {
 		t.Fatalf("refresh token was not rotated")
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
@@ -93,11 +95,8 @@ func TestRefreshRejectsDisabledUser(t *testing.T) {
 	expectUserQuery(mock, userRow{id: 42, username: "alice", role: "member", status: "disabled"})
 	mock.ExpectRollback()
 
-	_, err = controller.refresh(testGinContext(), &v1.RefreshRequest{RefreshToken: pair.Refresh.Token})
-	if err == nil {
-		t.Fatalf("Refresh() error = nil, want error")
-	}
-	assertAppError(t, err, http.StatusForbidden, "account is not allowed to login")
+	rec, envelope := performRefresh(t, controller, pair.Refresh.Token)
+	assertRefreshHTTPError(t, rec, envelope, http.StatusForbidden, "account is not allowed to login")
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet sql expectations: %v", err)
 	}
@@ -125,11 +124,8 @@ func TestRefreshRejectsReusedRotatedToken(t *testing.T) {
 	expectRevokeUpdate(mock)
 	mock.ExpectCommit()
 
-	_, err = controller.refresh(testGinContext(), &v1.RefreshRequest{RefreshToken: pair.Refresh.Token})
-	if err == nil {
-		t.Fatalf("Refresh() error = nil, want error")
-	}
-	assertAppError(t, err, http.StatusUnauthorized, "invalid or expired refresh token")
+	rec, envelope := performRefresh(t, controller, pair.Refresh.Token)
+	assertRefreshHTTPError(t, rec, envelope, http.StatusUnauthorized, "invalid or expired refresh token")
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet sql expectations: %v", err)
 	}
@@ -142,11 +138,8 @@ func TestRefreshRejectsAccessTokenUse(t *testing.T) {
 		t.Fatalf("IssueSessionPair() error = %v", err)
 	}
 
-	_, err = controller.refresh(testGinContext(), &v1.RefreshRequest{RefreshToken: pair.Access.Token})
-	if err == nil {
-		t.Fatalf("Refresh() error = nil, want error")
-	}
-	assertAppError(t, err, http.StatusUnauthorized, "invalid or expired refresh token")
+	rec, envelope := performRefresh(t, controller, pair.Access.Token)
+	assertRefreshHTTPError(t, rec, envelope, http.StatusUnauthorized, "invalid or expired refresh token")
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet sql expectations: %v", err)
 	}
@@ -177,11 +170,8 @@ func TestRefreshRejectsJTIOrHashMismatch(t *testing.T) {
 	expectRevokeUpdate(mock)
 	mock.ExpectCommit()
 
-	_, err = controller.refresh(testGinContext(), &v1.RefreshRequest{RefreshToken: pair.Refresh.Token})
-	if err == nil {
-		t.Fatalf("Refresh() error = nil, want error")
-	}
-	assertAppError(t, err, http.StatusUnauthorized, "invalid or expired refresh token")
+	rec, envelope := performRefresh(t, controller, pair.Refresh.Token)
+	assertRefreshHTTPError(t, rec, envelope, http.StatusUnauthorized, "invalid or expired refresh token")
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet sql expectations: %v", err)
 	}
@@ -209,7 +199,7 @@ type userRow struct {
 	status   string
 }
 
-func newRefreshTestController(t *testing.T) (*AuthController, sqlmock.Sqlmock, *jwt.Issuer) {
+func newRefreshTestController(t *testing.T) (*routeauth.AuthController, sqlmock.Sqlmock, *jwt.Issuer) {
 	t.Helper()
 	gin.SetMode(gin.TestMode)
 	sqlDB, mock, err := sqlmock.New()
@@ -233,22 +223,34 @@ func newRefreshTestController(t *testing.T) (*AuthController, sqlmock.Sqlmock, *
 	if err != nil {
 		t.Fatalf("NewIssuer() error = %v", err)
 	}
-	return &AuthController{
-		svc: &svc.ServiceContext{
+	return routeauth.NewAuthController(
+		&svc.ServiceContext{
 			DB:    db,
 			Token: issuer,
 		},
-	}, mock, issuer
+	), mock, issuer
 }
 
-func testGinContext() *gin.Context {
+func performRefresh(t *testing.T, controller *routeauth.AuthController, refreshToken string) (*httptest.ResponseRecorder, refreshEnvelope) {
+	t.Helper()
+	body, err := json.Marshal(v1.RefreshRequest{RefreshToken: refreshToken})
+	if err != nil {
+		t.Fatalf("Marshal refresh request: %v", err)
+	}
 	rec := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(rec)
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/refresh", nil)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/refresh", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
 	req.RemoteAddr = "203.0.113.10:12345"
 	req.Header.Set("User-Agent", "refresh-test")
 	ctx.Request = req
-	return ctx
+	controller.Refresh(ctx)
+
+	var envelope refreshEnvelope
+	if err := json.Unmarshal(rec.Body.Bytes(), &envelope); err != nil {
+		t.Fatalf("Unmarshal refresh response %q: %v", rec.Body.String(), err)
+	}
+	return rec, envelope
 }
 
 func expectSessionQuery(mock sqlmock.Sqlmock, row sessionRow) {
@@ -328,16 +330,18 @@ func userColumns() []string {
 	}
 }
 
-func assertAppError(t *testing.T, err error, status int, message string) {
+type refreshEnvelope struct {
+	Code    int                `json:"code"`
+	Message string             `json:"message"`
+	Data    v1.RefreshResponse `json:"data"`
+}
+
+func assertRefreshHTTPError(t *testing.T, rec *httptest.ResponseRecorder, envelope refreshEnvelope, status int, message string) {
 	t.Helper()
-	appErr, ok := err.(*common.AppError)
-	if !ok {
-		t.Fatalf("error type = %T, want *common.AppError", err)
+	if rec.Code != status {
+		t.Fatalf("status = %d, want %d, body = %s", rec.Code, status, rec.Body.String())
 	}
-	if appErr.HTTPStatus != status {
-		t.Fatalf("HTTPStatus = %d, want %d", appErr.HTTPStatus, status)
-	}
-	if appErr.Message != message {
-		t.Fatalf("Message = %q, want %q", appErr.Message, message)
+	if envelope.Message != message {
+		t.Fatalf("Message = %q, want %q", envelope.Message, message)
 	}
 }

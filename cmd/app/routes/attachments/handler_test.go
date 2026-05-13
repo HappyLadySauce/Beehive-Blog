@@ -1,8 +1,8 @@
-package attachments
+package attachments_test
 
 import (
-	"context"
-	"errors"
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -15,6 +15,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
+	routeattachments "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/attachments"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	pkgattachment "github.com/HappyLadySauce/Beehive-Blog/pkg/attachment"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
@@ -49,11 +50,11 @@ func TestAttachmentManagementRejectsMemberRole(t *testing.T) {
 }
 
 func TestAttachmentInitRejectsMissingDependencies(t *testing.T) {
-	if err := Init(nil); err == nil || !strings.Contains(err.Error(), "service context is nil") {
+	if err := routeattachments.Init(nil); err == nil || !strings.Contains(err.Error(), "service context is nil") {
 		t.Fatalf("Init(nil) error = %v, want service context error", err)
 	}
 
-	err := Init(&svc.ServiceContext{Config: &config.Config{}})
+	err := routeattachments.Init(&svc.ServiceContext{Config: &config.Config{}})
 	if err == nil || !strings.Contains(err.Error(), "attachment config is nil") {
 		t.Fatalf("Init without attachment config error = %v, want attachment config error", err)
 	}
@@ -75,9 +76,9 @@ func TestGetPublicContentRejectsPrivateAttachment(t *testing.T) {
 	})
 	expectCategoryBindings(mock)
 
-	_, err := h.getPublicContent(context.Background(), 10, false)
-	if !errors.Is(err, pkgattachment.ErrForbidden) {
-		t.Fatalf("getPublicContent error = %v, want ErrForbidden", err)
+	rec := performAttachmentRequest(http.MethodGet, "/api/v1/attachments/10", nil, "id", "10", nil, h.GetAttachment)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("status = %d, want %d, body = %s", rec.Code, http.StatusForbidden, rec.Body.String())
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet SQL expectations: %v", err)
@@ -102,11 +103,11 @@ func TestPatchRejectsPendingPublicAttachment(t *testing.T) {
 	})
 	mock.ExpectRollback()
 
-	_, err := h.patch(context.Background(), pkgattachment.Actor{UID: 1, Role: pkgattachment.RoleAdmin}, 11, pkgattachment.PatchInput{
-		AccessScope: &public,
-	})
-	if !errors.Is(err, pkgattachment.ErrInvalid) {
-		t.Fatalf("patch error = %v, want ErrInvalid", err)
+	rec := performAttachmentRequest(http.MethodPatch, "/api/v1/attachments/11", map[string]any{
+		"access_scope": public,
+	}, "id", "11", &jwt.Claims{UID: 1, Role: pkgattachment.RoleAdmin}, h.Patch)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d, body = %s", rec.Code, http.StatusBadRequest, rec.Body.String())
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet SQL expectations: %v", err)
@@ -136,9 +137,11 @@ func TestReplaceCategoriesRejectsDuplicateIDs(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 	mock.ExpectRollback()
 
-	err := h.replaceCategories(context.Background(), pkgattachment.Actor{UID: 1, Role: pkgattachment.RoleAdmin}, 12, []int64{1, 1})
-	if !errors.Is(err, pkgattachment.ErrInvalid) {
-		t.Fatalf("replaceCategories error = %v, want ErrInvalid", err)
+	rec := performAttachmentRequest(http.MethodPut, "/api/v1/attachments/12/categories", map[string]any{
+		"category_ids": []int64{1, 1},
+	}, "id", "12", &jwt.Claims{UID: 1, Role: pkgattachment.RoleAdmin}, h.ReplaceCategories)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want %d, body = %s", rec.Code, http.StatusBadRequest, rec.Body.String())
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet SQL expectations: %v", err)
@@ -159,7 +162,7 @@ func newAttachmentTestIssuer(t *testing.T) *jwt.Issuer {
 	return issuer
 }
 
-func newAttachmentDBTestController(t *testing.T) (*AttachmentsController, sqlmock.Sqlmock) {
+func newAttachmentDBTestController(t *testing.T) (*routeattachments.AttachmentsController, sqlmock.Sqlmock) {
 	t.Helper()
 	sqlDB, mock, err := sqlmock.New()
 	if err != nil {
@@ -173,10 +176,35 @@ func newAttachmentDBTestController(t *testing.T) (*AttachmentsController, sqlmoc
 	}
 	opts := options.NewAttachmentOptions()
 	opts.LocalRoot = t.TempDir()
-	return NewAttachmentsController(&svc.ServiceContext{
+	return routeattachments.NewAttachmentsController(&svc.ServiceContext{
 		Config: &config.Config{Attachment: opts},
 		DB:     db,
 	}), mock
+}
+
+func performAttachmentRequest(method string, target string, body any, paramKey string, paramValue string, claims *jwt.Claims, handler gin.HandlerFunc) *httptest.ResponseRecorder {
+	var reader *bytes.Reader
+	if body == nil {
+		reader = bytes.NewReader(nil)
+	} else {
+		raw, err := json.Marshal(body)
+		if err != nil {
+			panic(err)
+		}
+		reader = bytes.NewReader(raw)
+	}
+	rec := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(rec)
+	ctx.Request = httptest.NewRequest(method, target, reader)
+	ctx.Request.Header.Set("Content-Type", "application/json")
+	if paramKey != "" {
+		ctx.Params = gin.Params{{Key: paramKey, Value: paramValue}}
+	}
+	if claims != nil {
+		ctx.Set(jwt.ClaimsKey, claims)
+	}
+	handler(ctx)
+	return rec
 }
 
 type attachmentRow struct {

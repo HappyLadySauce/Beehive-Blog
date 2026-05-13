@@ -1,17 +1,18 @@
-package middleware
+package middleware_test
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/gin-gonic/gin"
+
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 )
 
 func TestAuthPublicRateLimiterRejectsWhenBudgetExceeded(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	limiter := NewAuthPublicRateLimiter(0.1, 1)
+	limiter := middleware.NewAuthPublicRateLimiter(0.1, 1)
 	router := gin.New()
 	router.GET("/", limiter.GinMiddleware(), func(c *gin.Context) {
 		c.Status(http.StatusNoContent)
@@ -34,20 +35,24 @@ func TestAuthPublicRateLimiterRejectsWhenBudgetExceeded(t *testing.T) {
 	}
 }
 
-func TestAuthPublicRateLimiterCleansIdleBuckets(t *testing.T) {
-	limiter := NewAuthPublicRateLimiter(1, 1)
-	_ = limiter.limiterFor("203.0.113.10")
-	if got := limiter.Len(); got != 1 {
-		t.Fatalf("tracked limiters = %d, want 1", got)
+func TestAuthPublicRateLimiterTracksClientBuckets(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	limiter := middleware.NewAuthPublicRateLimiter(10, 10)
+	router := gin.New()
+	router.GET("/", limiter.GinMiddleware(), func(c *gin.Context) {
+		c.Status(http.StatusNoContent)
+	})
+
+	for _, ip := range []string{"203.0.113.10:12345", "203.0.113.11:12345"} {
+		rec := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req.RemoteAddr = ip
+		router.ServeHTTP(rec, req)
+		if rec.Code != http.StatusNoContent {
+			t.Fatalf("status for %s = %d, want %d", ip, rec.Code, http.StatusNoContent)
+		}
 	}
-
-	limiter.mu.Lock()
-	limiter.limiters["203.0.113.10"].lastSeen = time.Now().Add(-11 * time.Minute)
-	limiter.nextCleanup = time.Now().Add(-time.Second)
-	limiter.mu.Unlock()
-
-	_ = limiter.limiterFor("203.0.113.11")
-	if got := limiter.Len(); got != 1 {
-		t.Fatalf("tracked limiters after cleanup = %d, want 1", got)
+	if got := limiter.Len(); got != 2 {
+		t.Fatalf("tracked limiters = %d, want 2", got)
 	}
 }

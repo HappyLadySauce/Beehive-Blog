@@ -1,4 +1,4 @@
-package auth
+package auth_test
 
 import (
 	"net/http"
@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	jwt5 "github.com/golang-jwt/jwt/v5"
 
+	routeauth "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/auth"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
 )
 
@@ -27,7 +28,7 @@ func TestSessionReturnsVerifiedAccessClaims(t *testing.T) {
 		},
 	})
 
-	controller := &AuthController{}
+	controller := routeauth.NewAuthController(nil)
 	controller.Session(ctx)
 
 	if rec.Code != http.StatusOK {
@@ -47,7 +48,7 @@ func TestSessionRejectsMissingVerifiedClaims(t *testing.T) {
 	ctx, _ := gin.CreateTestContext(rec)
 	ctx.Request = httptest.NewRequest(http.MethodGet, "/api/v1/auth/session", nil)
 
-	controller := &AuthController{}
+	controller := routeauth.NewAuthController(nil)
 	controller.Session(ctx)
 
 	if rec.Code != http.StatusUnauthorized {

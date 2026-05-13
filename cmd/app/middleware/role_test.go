@@ -1,4 +1,4 @@
-package middleware
+package middleware_test
 
 import (
 	"net/http"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
 )
 
@@ -15,7 +16,7 @@ func TestRequireRoleAllowsAdmin(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(rec)
 	c.Set(jwt.ClaimsKey, &jwt.Claims{Role: "admin"})
-	RequireRole("admin")(c)
+	middleware.RequireRole("admin")(c)
 	if c.IsAborted() {
 		t.Fatal("expected not aborted for admin")
 	}
@@ -29,7 +30,7 @@ func TestRequireRoleRejectsMember(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(rec)
 	c.Set(jwt.ClaimsKey, &jwt.Claims{Role: "member"})
-	RequireRole("admin")(c)
+	middleware.RequireRole("admin")(c)
 	if !c.IsAborted() {
 		t.Fatal("expected aborted")
 	}
