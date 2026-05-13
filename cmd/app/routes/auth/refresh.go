@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -35,7 +36,7 @@ func (a *AuthController) Refresh(ctx *gin.Context) {
 		common.Fail(ctx, common.NewBadRequest("invalid request body", err))
 		return
 	}
-	resp, err := a.refresh(ctx, &req)
+	resp, err := a.refresh(ctx.Request.Context(), &req, clientMetaFromGin(ctx))
 	if err != nil {
 		common.Fail(ctx, err)
 		return
@@ -45,7 +46,7 @@ func (a *AuthController) Refresh(ctx *gin.Context) {
 
 // refresh rotates a valid server-side refresh session and returns a new token pair.
 // refresh 轮换有效的服务端 refresh 会话并返回新的令牌对。
-func (a *AuthController) refresh(ctx *gin.Context, req *v1.RefreshRequest) (*v1.RefreshResponse, error) {
+func (a *AuthController) refresh(ctx context.Context, req *v1.RefreshRequest, meta authsession.ClientMeta) (*v1.RefreshResponse, error) {
 	claims, err := a.svc.Token.ParseRefresh(req.RefreshToken)
 	if err != nil {
 		return nil, common.NewUnauthorized("invalid or expired refresh token", nil)
@@ -98,10 +99,7 @@ func (a *AuthController) refresh(ctx *gin.Context, req *v1.RefreshRequest) (*v1.
 			return err
 		}
 
-		nextPair, _, err := authsession.Rotate(tx, a.svc.Token, &current, &user, authsession.ClientMeta{
-			IP:        ctx.ClientIP(),
-			UserAgent: ctx.Request.UserAgent(),
-		})
+		nextPair, _, err := authsession.Rotate(tx, a.svc.Token, &current, &user, meta)
 		if err != nil {
 			return common.NewInternal("failed to issue access token", err)
 		}

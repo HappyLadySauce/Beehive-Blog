@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	jwt5 "github.com/golang-jwt/jwt/v5"
 
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
@@ -225,17 +224,3 @@ const (
 	// RoleKey 存储已认证用户角色（string）。
 	RoleKey = "role"
 )
-
-// GetClaims extracts the *Claims from the Gin context; returns nil if absent.
-// GetClaims 从 Gin 上下文提取 *Claims；不存在时返回 nil。
-func GetClaims(ctx *gin.Context) *Claims {
-	v, ok := ctx.Get(ClaimsKey)
-	if !ok {
-		return nil
-	}
-	claims, ok := v.(*Claims)
-	if !ok {
-		return nil
-	}
-	return claims
-}

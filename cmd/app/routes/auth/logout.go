@@ -3,8 +3,8 @@ package auth
 import (
 	"github.com/gin-gonic/gin"
 
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
 	authsession "github.com/HappyLadySauce/Beehive-Blog/pkg/auth/session"
 )
 
@@ -21,7 +21,7 @@ import (
 // @Failure      500  {object}  common.BaseResponse
 // @Router       /api/v1/auth/logout [post]
 func (a *AuthController) Logout(ctx *gin.Context) {
-	claims := jwt.GetClaims(ctx)
+	claims := middleware.GetClaims(ctx)
 	if claims == nil || claims.UID <= 0 || claims.SID <= 0 {
 		common.Fail(ctx, common.NewUnauthorized("invalid or expired access token", nil))
 		return

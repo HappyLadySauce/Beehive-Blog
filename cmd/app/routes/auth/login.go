@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -45,9 +46,9 @@ func (a *AuthController) Login(ctx *gin.Context) {
 	)
 	switch req.GrantType {
 	case v1.GrantTypeLocal:
-		resp, err = a.loginByLocal(ctx, &req)
+		resp, err = a.loginByLocal(ctx.Request.Context(), &req, clientMetaFromGin(ctx))
 	case v1.GrantTypeGitHubOAuth2:
-		resp, err = a.loginByGitHub(ctx, &req)
+		resp, err = a.loginByGitHub(ctx.Request.Context(), &req, clientMetaFromGin(ctx))
 	default:
 		err = common.NewBadRequest("unsupported grant_type", fmt.Errorf("unsupported grant_type: %q", req.GrantType))
 	}
@@ -61,7 +62,7 @@ func (a *AuthController) Login(ctx *gin.Context) {
 
 // loginByLocal authenticates a local user via account (username or email) and password.
 // loginByLocal 通过账户（用户名或邮箱）和密码认证本地用户。
-func (a *AuthController) loginByLocal(ctx *gin.Context, req *v1.LoginRequest) (*v1.LoginResponse, error) {
+func (a *AuthController) loginByLocal(ctx context.Context, req *v1.LoginRequest, meta authsession.ClientMeta) (*v1.LoginResponse, error) {
 	if req.Account == "" || req.Password == "" {
 		return nil, common.NewBadRequest("account and password are required", nil)
 	}
@@ -92,22 +93,20 @@ func (a *AuthController) loginByLocal(ctx *gin.Context, req *v1.LoginRequest) (*
 		return nil, common.NewUnauthorized("invalid credentials", nil)
 	}
 
-	return a.finalizeLogin(ctx, &user)
+	return a.finalizeLogin(ctx, &user, meta)
 }
 
 // loginByGitHub performs the GitHub OAuth2 authorization code flow.
 // loginByGitHub 执行 GitHub OAuth2 授权码流程。
-func (a *AuthController) loginByGitHub(ctx *gin.Context, req *v1.LoginRequest) (*v1.LoginResponse, error) {
+func (a *AuthController) loginByGitHub(ctx context.Context, req *v1.LoginRequest, meta authsession.ClientMeta) (*v1.LoginResponse, error) {
 	if req.Code == "" {
 		return nil, common.NewBadRequest("code is required", nil)
 	}
 
-	httpCtx := ctx.Request.Context()
-
 	if req.State == "" {
 		return nil, common.NewUnauthorized("invalid or expired oauth session", nil)
 	}
-	ok, err := oauth.ConsumeGitHubOAuthState(httpCtx, a.svc.Cache, req.State)
+	ok, err := oauth.ConsumeGitHubOAuthState(ctx, a.svc.Cache, req.State)
 	if err != nil {
 		klog.ErrorS(err, "Failed to consume GitHub OAuth state")
 		return nil, common.NewUnauthorized("invalid or expired oauth session", err)
@@ -127,20 +126,20 @@ func (a *AuthController) loginByGitHub(ctx *gin.Context, req *v1.LoginRequest) (
 		},
 	}
 
-	token, err := oauthCfg.Exchange(httpCtx, req.Code)
+	token, err := oauthCfg.Exchange(ctx, req.Code)
 	if err != nil {
 		klog.ErrorS(err, "Failed to exchange GitHub authorization code")
 		return nil, common.NewUnauthorized("failed to exchange authorization code", err)
 	}
 
-	client := oauthCfg.Client(httpCtx, token)
+	client := oauthCfg.Client(ctx, token)
 
-	ghUser, err := oauth.FetchGitHubUser(httpCtx, client, cfg.UserInfoURL)
+	ghUser, err := oauth.FetchGitHubUser(ctx, client, cfg.UserInfoURL)
 	if err != nil {
 		return nil, common.NewUnauthorized("failed to fetch GitHub user info", err)
 	}
 
-	email, err := oauth.FetchGitHubPrimaryEmail(httpCtx, client)
+	email, err := oauth.FetchGitHubPrimaryEmail(ctx, client)
 	if err != nil {
 		return nil, common.NewUnauthorized("failed to fetch GitHub email", err)
 	}
@@ -153,7 +152,7 @@ func (a *AuthController) loginByGitHub(ctx *gin.Context, req *v1.LoginRequest) (
 		klog.InfoS("Created new user via GitHub OAuth2", "uid", user.ID, "username", user.Username, "email", email)
 	}
 
-	return a.finalizeLogin(ctx, user)
+	return a.finalizeLogin(ctx, user, meta)
 }
 
 // assertUserMayLogin rejects non-loginable account statuses for every auth path.
@@ -167,7 +166,7 @@ func assertUserMayLogin(user *model.User) error {
 
 // finalizeLogin updates last_login_at and issues a JWT token pair.
 // finalizeLogin 更新 last_login_at 并签发 JWT 令牌对。
-func (a *AuthController) finalizeLogin(ctx *gin.Context, user *model.User) (*v1.LoginResponse, error) {
+func (a *AuthController) finalizeLogin(ctx context.Context, user *model.User, meta authsession.ClientMeta) (*v1.LoginResponse, error) {
 	if err := assertUserMayLogin(user); err != nil {
 		return nil, err
 	}
@@ -176,10 +175,7 @@ func (a *AuthController) finalizeLogin(ctx *gin.Context, user *model.User) (*v1.
 		klog.ErrorS(err, "Failed to update last_login_at", "uid", user.ID)
 	}
 
-	pair, _, err := authsession.IssuePair(a.svc.DB, a.svc.Token, user, authsession.ClientMeta{
-		IP:        ctx.ClientIP(),
-		UserAgent: ctx.Request.UserAgent(),
-	})
+	pair, _, err := authsession.IssuePair(a.svc.DB, a.svc.Token, user, meta)
 	if err != nil {
 		return nil, common.NewInternal("failed to issue token", err)
 	}
@@ -192,4 +188,11 @@ func (a *AuthController) finalizeLogin(ctx *gin.Context, user *model.User) (*v1.
 			RefreshToken: pair.Refresh.Token,
 		},
 	}, nil
+}
+
+func clientMetaFromGin(ctx *gin.Context) authsession.ClientMeta {
+	return authsession.ClientMeta{
+		IP:        ctx.ClientIP(),
+		UserAgent: ctx.Request.UserAgent(),
+	}
 }

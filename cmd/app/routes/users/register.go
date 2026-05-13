@@ -1,6 +1,7 @@
 package users
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -22,7 +23,7 @@ import (
 // Avatar binding is intentionally omitted here (attachments lack ownership columns); bind avatars after authenticated flows.
 // Register 创建新用户并签发 JWT 凭证（自动登录）。
 // 头像绑定有意不在此完成（附件表无归属列）；请在登录态流程后再绑定头像。
-func (u *UsersController) register(ctx *gin.Context, req *v1.RegisterRequest) (*v1.RegisterResponse, error) {
+func (u *UsersController) register(ctx context.Context, req *v1.RegisterRequest, meta authsession.ClientMeta) (*v1.RegisterResponse, error) {
 	// Check username uniqueness among live rows.
 	// 检查用户名在活跃行中的唯一性。
 	var existing model.User
@@ -67,11 +68,6 @@ func (u *UsersController) register(ctx *gin.Context, req *v1.RegisterRequest) (*
 	}
 	if req.Phone != "" {
 		user.Phone = &req.Phone
-	}
-
-	meta := authsession.ClientMeta{
-		IP:        ctx.ClientIP(),
-		UserAgent: ctx.Request.UserAgent(),
 	}
 
 	var pair jwt.TokenPair
@@ -159,7 +155,10 @@ func (u *UsersController) Register(ctx *gin.Context) {
 		common.Fail(ctx, common.NewBadRequest("invalid request body", err))
 		return
 	}
-	resp, err := u.register(ctx, &req)
+	resp, err := u.register(ctx.Request.Context(), &req, authsession.ClientMeta{
+		IP:        ctx.ClientIP(),
+		UserAgent: ctx.Request.UserAgent(),
+	})
 	if err != nil {
 		common.Fail(ctx, err)
 		return

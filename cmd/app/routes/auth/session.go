@@ -3,9 +3,9 @@ package auth
 import (
 	"github.com/gin-gonic/gin"
 
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
 )
 
 // Session returns claims from an access token already verified by AuthMiddleware.
@@ -20,7 +20,7 @@ import (
 // @Failure      401  {object}  common.BaseResponse
 // @Router       /api/v1/auth/session [get]
 func (a *AuthController) Session(ctx *gin.Context) {
-	claims := jwt.GetClaims(ctx)
+	claims := middleware.GetClaims(ctx)
 	if claims == nil || claims.UID <= 0 || claims.Role == "" || claims.ExpiresAt == nil {
 		common.Fail(ctx, common.NewUnauthorized("invalid or expired access token", nil))
 		return

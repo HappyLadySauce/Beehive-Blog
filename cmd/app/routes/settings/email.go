@@ -1,6 +1,7 @@
 package settings
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -72,7 +73,7 @@ func (h *SettingsController) GetEmailSettings(ctx *gin.Context) {
 	common.Success(ctx, toResponse(s, rev))
 }
 
-func (h *SettingsController) patchEmailSettings(ctx *gin.Context, req *v1.SettingsPatchRequestJSON) (v1.SettingsResponse, error) {
+func (h *SettingsController) patchEmailSettings(ctx context.Context, req *v1.SettingsPatchRequestJSON) (v1.SettingsResponse, error) {
 	if h.provider == nil || h.store == nil {
 		return v1.SettingsResponse{}, common.NewInternal("settings provider is not configured", errors.New("nil settings provider"))
 	}
@@ -81,7 +82,7 @@ func (h *SettingsController) patchEmailSettings(ctx *gin.Context, req *v1.Settin
 	}
 
 	patch := &settingtypes.SettingsPatchRequest{Email: patchFromV1(req.Email)}
-	next, rev, err := h.store.Patch(ctx.Request.Context(), patch)
+	next, rev, err := h.store.Patch(ctx, patch)
 	if err != nil {
 		if errors.Is(err, pkgsettings.ErrInvalidSettings) {
 			return v1.SettingsResponse{}, common.NewBadRequest("invalid settings", err)
@@ -121,7 +122,7 @@ func (h *SettingsController) PatchEmailSettings(ctx *gin.Context) {
 		return
 	}
 
-	out, err := h.patchEmailSettings(ctx, &req)
+	out, err := h.patchEmailSettings(ctx.Request.Context(), &req)
 	if err != nil {
 		common.Fail(ctx, err)
 		return

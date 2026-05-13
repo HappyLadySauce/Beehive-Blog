@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	pkgattachment "github.com/HappyLadySauce/Beehive-Blog/pkg/attachment"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
 )
 
 func (h *AttachmentsController) optionalActor(ctx *gin.Context) (pkgattachment.Actor, bool, error) {
@@ -27,7 +27,7 @@ func (h *AttachmentsController) optionalActor(ctx *gin.Context) (pkgattachment.A
 }
 
 func actorFromClaims(ctx *gin.Context) pkgattachment.Actor {
-	claims := jwt.GetClaims(ctx)
+	claims := middleware.GetClaims(ctx)
 	if claims == nil {
 		return pkgattachment.Actor{}
 	}
