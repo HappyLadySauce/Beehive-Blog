@@ -8,6 +8,29 @@ definitions:
       message:
         type: string
     type: object
+  v1.AuthSessionResponse:
+    properties:
+      exp:
+        description: |-
+          Exp is the access token expiration time as a Unix timestamp.
+          Exp 为 access token 的过期时间（Unix 时间戳）。
+        type: integer
+      role:
+        description: |-
+          Role is the authenticated user's authorization role.
+          Role 为已认证用户的授权角色。
+        type: string
+      sid:
+        description: |-
+          SID is the server-side session ID bound to the access token.
+          SID 为 access token 绑定的服务端会话 ID。
+        type: integer
+      uid:
+        description: |-
+          UID is the authenticated user ID from the verified access token.
+          UID 为已验证 access token 中的用户 ID。
+        type: integer
+    type: object
   v1.AuthToken:
     properties:
       access_token:
@@ -29,6 +52,44 @@ definitions:
         description: |-
           TokenType is the credential scheme; "Bearer" for OAuth2-compatible clients.
           TokenType 为凭证类型；OAuth2 客户端固定为 "Bearer"。
+        type: string
+    type: object
+  v1.EmailSMTPPatchJSON:
+    properties:
+      enabled:
+        type: boolean
+      from:
+        type: string
+      from_name:
+        type: string
+      host:
+        type: string
+      password:
+        type: string
+      port:
+        type: integer
+      tls:
+        type: string
+      username:
+        type: string
+    type: object
+  v1.EmailSettingsPublic:
+    properties:
+      enabled:
+        type: boolean
+      from:
+        type: string
+      from_name:
+        type: string
+      host:
+        type: string
+      password_set:
+        type: boolean
+      port:
+        type: integer
+      tls:
+        type: string
+      username:
         type: string
     type: object
   v1.GithubOAuthBeginResponse:
@@ -142,6 +203,31 @@ definitions:
         description: |-
           Token is the auth credential bundle granted on successful registration (auto-login).
           Token 为注册成功后自动签发的鉴权凭证集合（自动登录）。
+    type: object
+  v1.SettingsEmailTestRequest:
+    properties:
+      recipient:
+        maxLength: 320
+        type: string
+    required:
+    - recipient
+    type: object
+  v1.SettingsEmailTestResponse:
+    properties:
+      recipient:
+        type: string
+    type: object
+  v1.SettingsPatchRequestJSON:
+    properties:
+      email:
+        $ref: '#/definitions/v1.EmailSMTPPatchJSON'
+    type: object
+  v1.SettingsResponse:
+    properties:
+      email:
+        $ref: '#/definitions/v1.EmailSettingsPublic'
+      revision:
+        type: integer
     type: object
 info:
   contact: {}
@@ -286,6 +372,151 @@ paths:
       summary: Refresh access token
       tags:
       - auth
+  /api/v1/auth/session:
+    get:
+      description: Verifies the presented access token and returns the signed session
+        claims used by browser-side BFF guards. 中文：校验传入的 access token，并返回浏览器 BFF 守卫使用的已签名会话声明。
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.AuthSessionResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current auth session
+      tags:
+      - auth
+  /api/v1/settings/email:
+    get:
+      description: Returns sanitized settings including email SMTP flags without secrets.
+        中文：返回脱敏应用设置（含 SMTP 开关，不含密码明文）。
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.SettingsResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Get application settings (admin)
+      tags:
+      - settings
+    patch:
+      consumes:
+      - application/json
+      description: Merges email subtree; omit password to keep existing. Empty string
+        clears password. 中文：合并 email 子树；省略 password 表示不改；传空字符串清空密码。
+      parameters:
+      - description: Partial settings
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.SettingsPatchRequestJSON'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.SettingsResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Patch application settings (admin)
+      tags:
+      - settings
+  /api/v1/settings/email/test:
+    post:
+      consumes:
+      - application/json
+      description: Sends a test email to the requested recipient using saved SMTP
+        settings. 中文：使用已保存 SMTP 设置向指定收件人发送测试邮件。
+      parameters:
+      - description: Test recipient
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.SettingsEmailTestRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.SettingsEmailTestResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Send SMTP test email (admin)
+      tags:
+      - settings
   /api/v1/users/register:
     post:
       consumes:

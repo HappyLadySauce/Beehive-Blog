@@ -221,6 +221,246 @@
                 }
             }
         },
+        "/api/v1/auth/session": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Verifies the presented access token and returns the signed session claims used by browser-side BFF guards. 中文：校验传入的 access token，并返回浏览器 BFF 守卫使用的已签名会话声明。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Get current auth session",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/v1.AuthSessionResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/settings/email": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns sanitized settings including email SMTP flags without secrets. 中文：返回脱敏应用设置（含 SMTP 开关，不含密码明文）。",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "settings"
+                ],
+                "summary": "Get application settings (admin)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/v1.SettingsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Merges email subtree; omit password to keep existing. Empty string clears password. 中文：合并 email 子树；省略 password 表示不改；传空字符串清空密码。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "settings"
+                ],
+                "summary": "Patch application settings (admin)",
+                "parameters": [
+                    {
+                        "description": "Partial settings",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.SettingsPatchRequestJSON"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/v1.SettingsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/settings/email/test": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Sends a test email to the requested recipient using saved SMTP settings. 中文：使用已保存 SMTP 设置向指定收件人发送测试邮件。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "settings"
+                ],
+                "summary": "Send SMTP test email (admin)",
+                "parameters": [
+                    {
+                        "description": "Test recipient",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.SettingsEmailTestRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/v1.SettingsEmailTestResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/users/register": {
             "post": {
                 "description": "Creates identity.users plus credentials and returns tokens (auto-login). Avatar binding is deferred until authenticated flows. 中文：创建用户与凭证并返回令牌（自动登录）；头像请在登录态流程中再绑定。",
@@ -299,6 +539,27 @@
                 }
             }
         },
+        "v1.AuthSessionResponse": {
+            "type": "object",
+            "properties": {
+                "exp": {
+                    "description": "Exp is the access token expiration time as a Unix timestamp.\nExp 为 access token 的过期时间（Unix 时间戳）。",
+                    "type": "integer"
+                },
+                "role": {
+                    "description": "Role is the authenticated user's authorization role.\nRole 为已认证用户的授权角色。",
+                    "type": "string"
+                },
+                "sid": {
+                    "description": "SID is the server-side session ID bound to the access token.\nSID 为 access token 绑定的服务端会话 ID。",
+                    "type": "integer"
+                },
+                "uid": {
+                    "description": "UID is the authenticated user ID from the verified access token.\nUID 为已验证 access token 中的用户 ID。",
+                    "type": "integer"
+                }
+            }
+        },
         "v1.AuthToken": {
             "type": "object",
             "properties": {
@@ -316,6 +577,64 @@
                 },
                 "token_type": {
                     "description": "TokenType is the credential scheme; \"Bearer\" for OAuth2-compatible clients.\nTokenType 为凭证类型；OAuth2 客户端固定为 \"Bearer\"。",
+                    "type": "string"
+                }
+            }
+        },
+        "v1.EmailSMTPPatchJSON": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "from": {
+                    "type": "string"
+                },
+                "from_name": {
+                    "type": "string"
+                },
+                "host": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "port": {
+                    "type": "integer"
+                },
+                "tls": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.EmailSettingsPublic": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "from": {
+                    "type": "string"
+                },
+                "from_name": {
+                    "type": "string"
+                },
+                "host": {
+                    "type": "string"
+                },
+                "password_set": {
+                    "type": "boolean"
+                },
+                "port": {
+                    "type": "integer"
+                },
+                "tls": {
+                    "type": "string"
+                },
+                "username": {
                     "type": "string"
                 }
             }
@@ -440,6 +759,45 @@
                             "$ref": "#/definitions/v1.AuthToken"
                         }
                     ]
+                }
+            }
+        },
+        "v1.SettingsEmailTestRequest": {
+            "type": "object",
+            "required": [
+                "recipient"
+            ],
+            "properties": {
+                "recipient": {
+                    "type": "string",
+                    "maxLength": 320
+                }
+            }
+        },
+        "v1.SettingsEmailTestResponse": {
+            "type": "object",
+            "properties": {
+                "recipient": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.SettingsPatchRequestJSON": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "$ref": "#/definitions/v1.EmailSMTPPatchJSON"
+                }
+            }
+        },
+        "v1.SettingsResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "$ref": "#/definitions/v1.EmailSettingsPublic"
+                },
+                "revision": {
+                    "type": "integer"
                 }
             }
         }
