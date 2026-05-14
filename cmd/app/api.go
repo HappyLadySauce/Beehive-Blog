@@ -83,18 +83,10 @@ func run(ctx context.Context, opts *options.Options) error {
 		}
 	}()
 
+
 	// Initialize HTTP route handlers after the service context is ready.
 	// 在服务上下文就绪后初始化 HTTP 路由处理器。
-	if err := auth.Init(sc); err != nil {
-		return err
-	}
-	if err := users.Init(sc); err != nil {
-		return err
-	}
-	if err := routesettings.Init(ctx, sc); err != nil {
-		return err
-	}
-	if err := attachments.Init(sc); err != nil {
+	if err := routesInit(ctx, sc); err != nil {
 		return err
 	}
 
@@ -109,4 +101,22 @@ func serve(opts *options.Options) {
 	go func() {
 		klog.Fatal(router.Router().Run(insecureAddress))
 	}()
+}
+
+// Initialize HTTP route handlers after the service context is ready.
+// 在服务上下文就绪后初始化 HTTP 路由处理器。
+func routesInit(ctx context.Context, sc *svc.ServiceContext) error {
+	if err := auth.Init(sc); err != nil {
+		return err
+	}
+	if err := users.Init(sc); err != nil {
+		return err
+	}
+	if err := routesettings.Init(ctx, sc); err != nil {
+		return err
+	}
+	if err := attachments.Init(sc); err != nil {
+		return err
+	}
+	return nil
 }

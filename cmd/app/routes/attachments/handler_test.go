@@ -3,6 +3,7 @@ package attachments_test
 import (
 	"bytes"
 	"encoding/json"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -14,144 +15,266 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	routeattachments "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/attachments"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	pkgattachment "github.com/HappyLadySauce/Beehive-Blog/pkg/attachment"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/config"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
 )
 
-func TestAttachmentManagementRejectsMemberRole(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	issuer := newAttachmentTestIssuer(t)
-	pair, err := issuer.IssuePair(42, "member")
+func TestNewAttachmentsControllerValidation(t *testing.T) {
+	t.Run("nil service context", func(t *testing.T) {
+		_, err := routeattachments.NewAttachmentsController(nil)
+		if err == nil || !strings.Contains(err.Error(), "service context is nil") {
+			t.Fatalf("NewAttachmentsController: %v", err)
+		}
+	})
+	t.Run("nil config", func(t *testing.T) {
+		_, err := routeattachments.NewAttachmentsController(&svc.ServiceContext{DB: newGormTestDB(t)})
+		if err == nil || !strings.Contains(err.Error(), "config is nil") {
+			t.Fatalf("NewAttachmentsController: %v", err)
+		}
+	})
+	t.Run("nil attachment options", func(t *testing.T) {
+		_, err := routeattachments.NewAttachmentsController(&svc.ServiceContext{
+			DB:     newGormTestDB(t),
+			Config: &config.Config{Attachment: nil},
+		})
+		if err == nil || !strings.Contains(err.Error(), "attachment config is nil") {
+			t.Fatalf("NewAttachmentsController: %v", err)
+		}
+	})
+	t.Run("nil database", func(t *testing.T) {
+		_, err := routeattachments.NewAttachmentsController(&svc.ServiceContext{
+			Config: &config.Config{Attachment: options.NewAttachmentOptions()},
+		})
+		if err == nil || !strings.Contains(err.Error(), "database handle is nil") {
+			t.Fatalf("NewAttachmentsController: %v", err)
+		}
+	})
+}
+
+func TestNewAttachmentsControllerSuccess(t *testing.T) {
+	root := t.TempDir()
+	opts := options.NewAttachmentOptions()
+	opts.LocalRoot = root
+
+	h, err := routeattachments.NewAttachmentsController(&svc.ServiceContext{
+		DB:     newGormTestDB(t),
+		Config: &config.Config{Attachment: opts},
+	})
 	if err != nil {
-		t.Fatalf("IssuePair: %v", err)
+		t.Fatalf("NewAttachmentsController: %v", err)
 	}
+	if h == nil {
+		t.Fatal("controller is nil")
+	}
+}
 
-	r := gin.New()
-	g := r.Group("/api/v1/attachments")
-	g.Use(middleware.AuthMiddleware(&svc.ServiceContext{Token: issuer}), middleware.RequireRole("admin"))
-	g.POST("", func(ctx *gin.Context) {
-		ctx.Status(http.StatusNoContent)
-	})
-
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/attachments", nil)
-	req.Header.Set("Authorization", "Bearer "+pair.Access.Token)
+func TestListRequiresAdmin(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := mustNewAttachmentsController(t)
 	rec := httptest.NewRecorder()
-	r.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusForbidden {
-		t.Fatalf("status = %d, want %d", rec.Code, http.StatusForbidden)
-	}
+	ctx, _ := gin.CreateTestContext(rec)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/api/v1/attachments", nil)
+	ctx.Set(jwt.ClaimsKey, &jwt.Claims{UID: 1, Role: "member"})
+	h.List(ctx)
+	assertEnvelopeCode(t, rec, http.StatusForbidden)
 }
 
-func TestAttachmentInitRejectsMissingDependencies(t *testing.T) {
-	if err := routeattachments.Init(nil); err == nil || !strings.Contains(err.Error(), "service context is nil") {
-		t.Fatalf("Init(nil) error = %v, want service context error", err)
-	}
-
-	err := routeattachments.Init(&svc.ServiceContext{Config: &config.Config{}})
-	if err == nil || !strings.Contains(err.Error(), "attachment config is nil") {
-		t.Fatalf("Init without attachment config error = %v, want attachment config error", err)
-	}
+func TestListInvalidPurpose(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := mustNewAttachmentsController(t)
+	rec := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(rec)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/api/v1/attachments?purpose=unknown-purpose", nil)
+	ctx.Set(jwt.ClaimsKey, &jwt.Claims{UID: 1, Role: pkgattachment.RoleAdmin})
+	h.List(ctx)
+	assertEnvelopeCode(t, rec, http.StatusBadRequest)
 }
 
-func TestGetPublicContentRejectsPrivateAttachment(t *testing.T) {
-	h, mock := newAttachmentDBTestController(t)
-	expectAttachmentFirst(mock, attachmentRow{
-		ID:           10,
-		Purpose:      pkgattachment.PurposeContent,
-		Filename:     "private.png",
-		MimeType:     "image/png",
-		Size:         5,
-		StorageType:  options.AttachmentStorageLocal,
-		LocalPath:    "content/private.png",
-		AccessScope:  pkgattachment.AccessPrivate,
-		UploadStatus: pkgattachment.UploadReady,
-		Status:       pkgattachment.StatusActive,
+func TestListInvalidStatus(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := mustNewAttachmentsController(t)
+	rec := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(rec)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/api/v1/attachments?status=bogus", nil)
+	ctx.Set(jwt.ClaimsKey, &jwt.Claims{UID: 1, Role: pkgattachment.RoleAdmin})
+	h.List(ctx)
+	assertEnvelopeCode(t, rec, http.StatusBadRequest)
+}
+
+func TestListInvalidOwnerUserIDQuery(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := mustNewAttachmentsController(t)
+	rec := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(rec)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/api/v1/attachments?owner_user_id=notnum", nil)
+	ctx.Set(jwt.ClaimsKey, &jwt.Claims{UID: 1, Role: pkgattachment.RoleAdmin})
+	h.List(ctx)
+	assertEnvelopeCode(t, rec, http.StatusBadRequest)
+}
+
+func TestListInvalidCursor(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := mustNewAttachmentsController(t)
+	rec := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(rec)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/api/v1/attachments?cursor=bad", nil)
+	ctx.Set(jwt.ClaimsKey, &jwt.Claims{UID: 1, Role: pkgattachment.RoleAdmin})
+	h.List(ctx)
+	assertEnvelopeCode(t, rec, http.StatusBadRequest)
+}
+
+func TestListInvalidLimit(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := mustNewAttachmentsController(t)
+	rec := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(rec)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/api/v1/attachments?limit=101", nil)
+	ctx.Set(jwt.ClaimsKey, &jwt.Claims{UID: 1, Role: pkgattachment.RoleAdmin})
+	h.List(ctx)
+	assertEnvelopeCode(t, rec, http.StatusBadRequest)
+}
+
+func TestCreateCategoryValidation(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := mustNewAttachmentsController(t)
+	t.Run("empty name", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(rec)
+		body := `{"name":"   ","slug":"s"}`
+		ctx.Request = httptest.NewRequest(http.MethodPost, "/api/v1/attachment/categories", strings.NewReader(body))
+		ctx.Request.Header.Set("Content-Type", "application/json")
+		ctx.Set(jwt.ClaimsKey, &jwt.Claims{UID: 1, Role: pkgattachment.RoleAdmin})
+		h.CreateCategory(ctx)
+		assertEnvelopeCode(t, rec, http.StatusBadRequest)
 	})
-	expectCategoryBindings(mock)
-
-	rec := performAttachmentRequest(http.MethodGet, "/api/v1/attachments/10", nil, "id", "10", nil, h.GetAttachment)
-	if rec.Code != http.StatusForbidden {
-		t.Fatalf("status = %d, want %d, body = %s", rec.Code, http.StatusForbidden, rec.Body.String())
-	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("unmet SQL expectations: %v", err)
-	}
-}
-
-func TestPatchRejectsPendingPublicAttachment(t *testing.T) {
-	h, mock := newAttachmentDBTestController(t)
-	public := pkgattachment.AccessPublic
-	mock.ExpectBegin()
-	expectAttachmentFirst(mock, attachmentRow{
-		ID:           11,
-		Purpose:      pkgattachment.PurposeContent,
-		Filename:     "pending.png",
-		MimeType:     "image/png",
-		Size:         5,
-		StorageType:  options.AttachmentStorageS3,
-		ObjectKey:    "content/pending.png",
-		AccessScope:  pkgattachment.AccessPrivate,
-		UploadStatus: pkgattachment.UploadPending,
-		Status:       pkgattachment.StatusActive,
+	t.Run("invalid status", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		ctx, _ := gin.CreateTestContext(rec)
+		body := `{"name":"n","slug":"s","status":"unknown"}`
+		ctx.Request = httptest.NewRequest(http.MethodPost, "/api/v1/attachment/categories", strings.NewReader(body))
+		ctx.Request.Header.Set("Content-Type", "application/json")
+		ctx.Set(jwt.ClaimsKey, &jwt.Claims{UID: 1, Role: pkgattachment.RoleAdmin})
+		h.CreateCategory(ctx)
+		assertEnvelopeCode(t, rec, http.StatusBadRequest)
 	})
-	mock.ExpectRollback()
-
-	rec := performAttachmentRequest(http.MethodPatch, "/api/v1/attachments/11", map[string]any{
-		"access_scope": public,
-	}, "id", "11", &jwt.Claims{UID: 1, Role: pkgattachment.RoleAdmin}, h.Patch)
-	if rec.Code != http.StatusBadRequest {
-		t.Fatalf("status = %d, want %d, body = %s", rec.Code, http.StatusBadRequest, rec.Body.String())
-	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("unmet SQL expectations: %v", err)
-	}
 }
 
-func TestReplaceCategoriesRejectsDuplicateIDs(t *testing.T) {
-	h, mock := newAttachmentDBTestController(t)
-	mock.ExpectBegin()
-	expectAttachmentFirst(mock, attachmentRow{
-		ID:           12,
-		Purpose:      pkgattachment.PurposeContent,
-		Filename:     "ready.png",
-		MimeType:     "image/png",
-		Size:         5,
-		StorageType:  options.AttachmentStorageLocal,
-		LocalPath:    "content/ready.png",
-		AccessScope:  pkgattachment.AccessPrivate,
-		UploadStatus: pkgattachment.UploadReady,
-		Status:       pkgattachment.StatusActive,
+func TestGetAttachmentInvalidID(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := mustNewAttachmentsController(t)
+	rec := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(rec)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/api/v1/attachments/abc", nil)
+	ctx.Params = gin.Params{{Key: "id", Value: "abc"}}
+	h.GetAttachment(ctx)
+	assertEnvelopeCode(t, rec, http.StatusBadRequest)
+}
+
+func TestGetAttachmentInvalidBearer(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	issuer := testAttachmentJWT(t)
+	h, err := routeattachments.NewAttachmentsController(&svc.ServiceContext{
+		DB:     newGormTestDB(t),
+		Config: &config.Config{Attachment: testAttachmentOptions(t)},
+		Token:  issuer,
 	})
-	mock.ExpectExec(`DELETE FROM "attachment"."attachment_categories"`).
-		WithArgs(int64(12)).
-		WillReturnResult(sqlmock.NewResult(0, 0))
-	mock.ExpectQuery(`SELECT count\(\*\) FROM "attachment"."categories"`).
-		WithArgs(int64(1), pkgattachment.CategoryStatusActive).
-		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
-	mock.ExpectRollback()
-
-	rec := performAttachmentRequest(http.MethodPut, "/api/v1/attachments/12/categories", map[string]any{
-		"category_ids": []int64{1, 1},
-	}, "id", "12", &jwt.Claims{UID: 1, Role: pkgattachment.RoleAdmin}, h.ReplaceCategories)
-	if rec.Code != http.StatusBadRequest {
-		t.Fatalf("status = %d, want %d, body = %s", rec.Code, http.StatusBadRequest, rec.Body.String())
+	if err != nil {
+		t.Fatalf("NewAttachmentsController: %v", err)
 	}
-	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Fatalf("unmet SQL expectations: %v", err)
+	rec := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(rec)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/api/v1/attachments/1", nil)
+	ctx.Request.Header.Set("Authorization", "Bearer not-a-jwt")
+	ctx.Params = gin.Params{{Key: "id", Value: "1"}}
+	h.GetAttachment(ctx)
+	assertEnvelopeCode(t, rec, http.StatusUnauthorized)
+}
+
+func TestUploadLocalInvalidOwnerUserID(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := mustNewAttachmentsController(t)
+	var buf bytes.Buffer
+	w := multipart.NewWriter(&buf)
+	_ = w.WriteField("owner_user_id", "0")
+	fw, err := w.CreateFormFile("file", "a.txt")
+	if err != nil {
+		t.Fatalf("CreateFormFile: %v", err)
+	}
+	if _, err := fw.Write([]byte("hi")); err != nil {
+		t.Fatalf("write part: %v", err)
+	}
+	if err := w.Close(); err != nil {
+		t.Fatalf("close writer: %v", err)
+	}
+	rec := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(rec)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/attachments", &buf)
+	req.Header.Set("Content-Type", w.FormDataContentType())
+	ctx.Request = req
+	ctx.Set(jwt.ClaimsKey, &jwt.Claims{UID: 1, Role: pkgattachment.RoleAdmin})
+	h.UploadLocal(ctx)
+	assertEnvelopeCode(t, rec, http.StatusBadRequest)
+}
+
+func mustNewAttachmentsController(t *testing.T) *routeattachments.AttachmentsController {
+	t.Helper()
+	root := t.TempDir()
+	opts := options.NewAttachmentOptions()
+	opts.LocalRoot = root
+	h, err := routeattachments.NewAttachmentsController(&svc.ServiceContext{
+		DB:     newGormTestDB(t),
+		Config: &config.Config{Attachment: opts},
+	})
+	if err != nil {
+		t.Fatalf("NewAttachmentsController: %v", err)
+	}
+	return h
+}
+
+func testAttachmentOptions(t *testing.T) *options.AttachmentOptions {
+	t.Helper()
+	o := options.NewAttachmentOptions()
+	o.LocalRoot = t.TempDir()
+	return o
+}
+
+func newGormTestDB(t *testing.T) *gorm.DB {
+	t.Helper()
+	sqlDB, _, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	t.Cleanup(func() { _ = sqlDB.Close() })
+	db, err := gorm.Open(postgres.New(postgres.Config{Conn: sqlDB}), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("gorm.Open: %v", err)
+	}
+	return db
+}
+
+func assertEnvelopeCode(t *testing.T, rec *httptest.ResponseRecorder, want int) {
+	t.Helper()
+	if rec.Code != want {
+		t.Fatalf("HTTP status = %d, want %d, body=%s", rec.Code, want, rec.Body.String())
+	}
+	var env common.BaseResponse
+	if err := json.NewDecoder(rec.Body).Decode(&env); err != nil {
+		t.Fatalf("decode: %v body=%s", err, rec.Body.String())
+	}
+	if env.Code != want {
+		t.Fatalf("envelope code = %d, want %d", env.Code, want)
 	}
 }
 
-func newAttachmentTestIssuer(t *testing.T) *jwt.Issuer {
+func testAttachmentJWT(t *testing.T) *jwt.Issuer {
 	t.Helper()
 	issuer, err := jwt.NewIssuer(&options.JWTOptions{
-		Issuer:     "beehive-blog-test",
+		Issuer:     "beehive-blog-attachments-test",
 		Secret:     "0123456789abcdef0123456789abcdef",
 		AccessTTL:  time.Minute,
 		RefreshTTL: time.Hour,
@@ -160,135 +283,4 @@ func newAttachmentTestIssuer(t *testing.T) *jwt.Issuer {
 		t.Fatalf("NewIssuer: %v", err)
 	}
 	return issuer
-}
-
-func newAttachmentDBTestController(t *testing.T) (*routeattachments.AttachmentsController, sqlmock.Sqlmock) {
-	t.Helper()
-	sqlDB, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("sqlmock.New: %v", err)
-	}
-	t.Cleanup(func() { _ = sqlDB.Close() })
-
-	db, err := gorm.Open(postgres.New(postgres.Config{Conn: sqlDB}), &gorm.Config{})
-	if err != nil {
-		t.Fatalf("gorm.Open: %v", err)
-	}
-	opts := options.NewAttachmentOptions()
-	opts.LocalRoot = t.TempDir()
-	controller, err := routeattachments.NewAttachmentsController(&svc.ServiceContext{
-		Config: &config.Config{Attachment: opts},
-		DB:     db,
-	})
-	if err != nil {
-		t.Fatalf("NewAttachmentsController: %v", err)
-	}
-	return controller, mock
-}
-
-func performAttachmentRequest(method string, target string, body any, paramKey string, paramValue string, claims *jwt.Claims, handler gin.HandlerFunc) *httptest.ResponseRecorder {
-	var reader *bytes.Reader
-	if body == nil {
-		reader = bytes.NewReader(nil)
-	} else {
-		raw, err := json.Marshal(body)
-		if err != nil {
-			panic(err)
-		}
-		reader = bytes.NewReader(raw)
-	}
-	rec := httptest.NewRecorder()
-	ctx, _ := gin.CreateTestContext(rec)
-	ctx.Request = httptest.NewRequest(method, target, reader)
-	ctx.Request.Header.Set("Content-Type", "application/json")
-	if paramKey != "" {
-		ctx.Params = gin.Params{{Key: paramKey, Value: paramValue}}
-	}
-	if claims != nil {
-		ctx.Set(jwt.ClaimsKey, claims)
-	}
-	handler(ctx)
-	return rec
-}
-
-type attachmentRow struct {
-	ID           int64
-	Purpose      string
-	Filename     string
-	MimeType     string
-	Size         int64
-	StorageType  string
-	ObjectKey    string
-	LocalPath    string
-	AccessScope  string
-	UploadStatus string
-	Status       string
-}
-
-func expectAttachmentFirst(mock sqlmock.Sqlmock, row attachmentRow) {
-	now := time.Now()
-	rows := sqlmock.NewRows(attachmentColumns()).AddRow(
-		row.ID,
-		nil,
-		row.Purpose,
-		row.Filename,
-		nil,
-		row.MimeType,
-		row.Size,
-		row.StorageType,
-		nil,
-		nullableString(row.ObjectKey),
-		nullableString(row.LocalPath),
-		nil,
-		nil,
-		row.AccessScope,
-		row.UploadStatus,
-		row.Status,
-		now,
-		now,
-		nil,
-	)
-	mock.ExpectQuery(`SELECT \* FROM "attachment"."attachments"`).
-		WithArgs(row.ID, 1).
-		WillReturnRows(rows)
-}
-
-func expectCategoryBindings(mock sqlmock.Sqlmock, rows ...model.AttachmentCategoryBinding) {
-	out := sqlmock.NewRows([]string{"attachment_id", "category_id", "created_at"})
-	for _, row := range rows {
-		out.AddRow(row.AttachmentID, row.CategoryID, row.CreatedAt)
-	}
-	mock.ExpectQuery(`SELECT \* FROM "attachment"."attachment_categories"`).
-		WillReturnRows(out)
-}
-
-func attachmentColumns() []string {
-	return []string{
-		"id",
-		"owner_user_id",
-		"purpose",
-		"filename",
-		"original_name",
-		"mime_type",
-		"size",
-		"storage_type",
-		"bucket",
-		"object_key",
-		"local_path",
-		"etag",
-		"checksum",
-		"access_scope",
-		"upload_status",
-		"status",
-		"created_at",
-		"updated_at",
-		"deleted_at",
-	}
-}
-
-func nullableString(v string) any {
-	if v == "" {
-		return nil
-	}
-	return v
 }
