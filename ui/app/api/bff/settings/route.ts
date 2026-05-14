@@ -10,6 +10,8 @@ type SettingsForwardResult = {
   refreshedAuth?: AuthPayload;
 };
 
+const settingsEmailPath = "/settings/email";
+
 export async function GET() {
   try {
     const result = await forwardSettingsRequest<SettingsResponse>({ method: "GET" });
@@ -39,7 +41,7 @@ async function forwardSettingsRequest<T extends SettingsResponse>(init: RequestI
 
   if (accessToken) {
     try {
-      const data = await forwardGoApi<T>("/settings", withBearer(init, accessToken));
+      const data = await forwardGoApi<T>(settingsEmailPath, withBearer(init, accessToken));
       return { data };
     } catch (error) {
       if (!(error instanceof BffAuthError) || error.status !== 401 || !refreshToken) {
@@ -53,7 +55,7 @@ async function forwardSettingsRequest<T extends SettingsResponse>(init: RequestI
   }
 
   const refreshedAuth = await refreshAuthSession(refreshToken);
-  const data = await forwardGoApi<T>("/settings", withBearer(init, refreshedAuth.token.access_token));
+  const data = await forwardGoApi<T>(settingsEmailPath, withBearer(init, refreshedAuth.token.access_token));
   return { data, refreshedAuth };
 }
 

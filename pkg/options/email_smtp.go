@@ -1,6 +1,8 @@
 package options
 
 import (
+	"strings"
+
 	"github.com/spf13/pflag"
 
 	settingtypes "github.com/HappyLadySauce/Beehive-Blog/pkg/settings/types"
@@ -51,26 +53,39 @@ func NewEmailSMTPOptions() *EmailSMTPOptions {
 	}
 }
 
-// ToApplicationSettings maps options into the persisted JSON shape and validates.
-// ToApplicationSettings 将选项映射为持久化 JSON 形态并校验。
+// ToApplicationSettings maps file/CLI/env options into the persisted settings shape and validates it.
+// When email is enabled but host and from are both empty, outbound mail cannot run; treat as seed placeholder and persist enabled=false.
+// ToApplicationSettings 将文件/CLI/环境选项映射为持久化设置形态并校验。
+// 若启用邮件但 host 与 from 皆空，出站无法投递；视为补种占位并持久化为 enabled=false。
 func (e *EmailSMTPOptions) ToApplicationSettings() (settingtypes.ApplicationSettings, error) {
-	s := settingtypes.DefaultApplicationSettings()
-	s.Email.Enabled = e.Enabled
-	s.Email.Host = e.Host
-	s.Email.Port = e.Port
-	s.Email.Username = e.Username
-	s.Email.Password = e.Password
-	s.Email.From = e.From
-	s.Email.FromName = e.FromName
-	s.Email.TLS = e.TLS
+	if e == nil {
+		s := settingtypes.DefaultApplicationSettings()
+		return s, s.Validate()
+	}
+	s := settingtypes.ApplicationSettings{
+		Email: settingtypes.EmailSMTPSettings{
+			Enabled:  e.Enabled,
+			Host:     e.Host,
+			Port:     e.Port,
+			Username: e.Username,
+			Password: e.Password,
+			From:     e.From,
+			FromName: e.FromName,
+			TLS:      e.TLS,
+		},
+	}
+	s.Normalize()
+	if s.Email.Enabled && (strings.TrimSpace(s.Email.Host) == "" || strings.TrimSpace(s.Email.From) == "") {
+		s.Email.Enabled = false
+	}
 	if err := s.Validate(); err != nil {
 		return settingtypes.ApplicationSettings{}, err
 	}
 	return s, nil
 }
 
-// Validate delegates to application settings rules (single source of truth).
-// Validate 委托应用设置校验规则（单一事实来源）。
+// Validate checks SMTP options using the same rules as stored application settings.
+// Validate 使用与已存储应用设置相同的规则校验 SMTP 选项。
 func (e *EmailSMTPOptions) Validate() error {
 	_, err := e.ToApplicationSettings()
 	return err
@@ -79,12 +94,12 @@ func (e *EmailSMTPOptions) Validate() error {
 // AddFlags registers email SMTP flags on the supplied FlagSet.
 // AddFlags 将邮箱 SMTP 相关命令行标志注册到给定的 FlagSet。
 func (e *EmailSMTPOptions) AddFlags(fs *pflag.FlagSet) {
-	fs.BoolVar(&e.Enabled, "email-enabled", e.Enabled, "SMTP: enable sending (seed when application_settings row is missing)")
+	fs.BoolVar(&e.Enabled, "email-enabled", e.Enabled, "SMTP: enable sending when host/from are set; optional placeholder when both empty (seed)")
 	fs.StringVar(&e.Host, "email-host", e.Host, "SMTP server hostname")
 	fs.IntVar(&e.Port, "email-port", e.Port, "SMTP server TCP port")
 	fs.StringVar(&e.Username, "email-username", e.Username, "SMTP AUTH username (optional)")
 	fs.StringVar(&e.Password, "email-password", e.Password, "SMTP AUTH password (optional; excluded from options JSON dump)")
-	fs.StringVar(&e.From, "email-from", e.From, "RFC5322 From address (required when email-enabled)")
+	fs.StringVar(&e.From, "email-from", e.From, "RFC5322 From address (required when email-enabled and host or from is non-empty)")
 	fs.StringVar(&e.FromName, "email-from-name", e.FromName, "Optional display name for From header")
 	fs.StringVar(&e.TLS, "email-tls", e.TLS, "TLS mode: none, starttls, or tls")
 }

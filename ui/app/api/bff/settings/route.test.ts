@@ -48,7 +48,7 @@ describe("BFF settings route", () => {
     expect(response.status).toBe(200);
     expect(body.data).toEqual(settingsPayload);
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://localhost:8080/api/v1/settings",
+      "http://localhost:8080/api/v1/settings/email",
       expect.objectContaining({
         method: "GET",
         headers: expect.objectContaining({ authorization: "Bearer access-token" })

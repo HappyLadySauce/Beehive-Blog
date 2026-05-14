@@ -46,6 +46,30 @@ describe("StudioSettingsPage", () => {
     expect(screen.getByText("Password set")).toBeInTheDocument();
   });
 
+  it("loads disabled SMTP settings with empty host and from fields", async () => {
+    getSettings.mockResolvedValue({
+      revision: 6,
+      email: {
+        enabled: false,
+        host: "",
+        port: 587,
+        username: "",
+        password_set: false,
+        from: "",
+        from_name: "",
+        tls: "starttls"
+      }
+    });
+
+    render(<StudioSettingsPage />);
+
+    await waitFor(() => expect(screen.getByLabelText("SMTP Host")).toHaveValue(""));
+    expect(screen.getByLabelText("发件人邮箱")).toHaveValue("");
+    expect(screen.getByLabelText("启用 SMTP 邮件发送")).not.toBeChecked();
+    expect(screen.getByText("Revision 6")).toBeInTheDocument();
+    expect(screen.getByText("No password")).toBeInTheDocument();
+  });
+
   it("saves visible fields without sending password by default", async () => {
     render(<StudioSettingsPage />);
     await waitFor(() => expect(screen.getByLabelText("SMTP Host")).toHaveValue("smtp.example.com"));
