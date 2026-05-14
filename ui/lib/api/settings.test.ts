@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { getSettings, patchSettings, testEmailSettings } from "./settings";
+import { getGithubOAuth2Settings, getSettings, patchGithubOAuth2Settings, patchSettings, testEmailSettings } from "./settings";
 
 describe("settings API client", () => {
   beforeEach(() => {
@@ -44,6 +44,32 @@ describe("settings API client", () => {
         body: JSON.stringify({ recipient: "reader@example.com" })
       })
     );
+  });
+
+  it("loads GitHub OAuth2 settings through the BFF route", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ revision: 3, github_oauth2: { enabled: false } }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await getGithubOAuth2Settings();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/bff/settings/github-oauth2",
+      expect.objectContaining({
+        method: "GET"
+      })
+    );
+  });
+
+  it("patches GitHub OAuth2 settings through the BFF route", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ revision: 4, github_oauth2: { enabled: true } }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await patchGithubOAuth2Settings({ enabled: true, client_id: "client-id" });
+
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/bff/settings/github-oauth2");
+    expect(init.method).toBe("PATCH");
+    expect(JSON.parse(String(init.body))).toEqual({ enabled: true, client_id: "client-id" });
   });
 });
 

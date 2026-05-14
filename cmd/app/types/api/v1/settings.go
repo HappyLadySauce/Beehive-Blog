@@ -13,11 +13,25 @@ type EmailSettingsPublic struct {
 	TLS         string `json:"tls"`
 }
 
+// GithubOAuth2SettingsPublic is the admin-visible GitHub OAuth2 configuration without secrets.
+// GithubOAuth2SettingsPublic 为管理员可见的 GitHub OAuth2 配置（不含密钥）。
+type GithubOAuth2SettingsPublic struct {
+	Enabled                 bool   `json:"enabled"`
+	ClientID                string `json:"client_id"`
+	ClientSecretSet         bool   `json:"client_secret_set"`
+	RedirectURL             string `json:"redirect_url"`
+	AuthURL                 string `json:"auth_url"`
+	TokenURL                string `json:"token_url"`
+	UserInfoURL             string `json:"user_info_url"`
+	AllowNonGitHubEndpoints bool   `json:"allow_non_github_endpoints"`
+}
+
 // SettingsResponse is returned by GET /api/v1/settings (sanitized).
 // SettingsResponse 为 GET /api/v1/settings 的脱敏响应。
 type SettingsResponse struct {
-	Revision int64               `json:"revision"`
-	Email    EmailSettingsPublic `json:"email"`
+	Revision     int64                      `json:"revision"`
+	Email        EmailSettingsPublic        `json:"email"`
+	GithubOAuth2 GithubOAuth2SettingsPublic `json:"github_oauth2"`
 }
 
 // EmailSMTPPatchJSON is the JSON body fragment for PATCH /api/v1/settings (partial email update).
@@ -33,10 +47,24 @@ type EmailSMTPPatchJSON struct {
 	TLS      *string `json:"tls"`
 }
 
+// GithubOAuth2PatchJSON is the JSON body fragment for PATCH /api/v1/settings (partial GitHub OAuth2 update).
+// GithubOAuth2PatchJSON 为 PATCH /api/v1/settings 的 github_oauth2 片段（部分更新）。
+type GithubOAuth2PatchJSON struct {
+	Enabled                 *bool   `json:"enabled"`
+	ClientID                *string `json:"client_id"`
+	ClientSecret            *string `json:"client_secret"`
+	RedirectURL             *string `json:"redirect_url"`
+	AuthURL                 *string `json:"auth_url"`
+	TokenURL                *string `json:"token_url"`
+	UserInfoURL             *string `json:"user_info_url"`
+	AllowNonGitHubEndpoints *bool   `json:"allow_non_github_endpoints"`
+}
+
 // SettingsPatchRequestJSON is the PATCH body; only keys present are merged server-side.
 // SettingsPatchRequestJSON 为 PATCH 请求体；仅出现的键在服务端参与合并。
 type SettingsPatchRequestJSON struct {
-	Email *EmailSMTPPatchJSON `json:"email"`
+	Email        *EmailSMTPPatchJSON        `json:"email"`
+	GithubOAuth2 *GithubOAuth2PatchJSON     `json:"github_oauth2"`
 }
 
 // SettingsEmailTestRequest is the body for sending a test email with saved SMTP settings.

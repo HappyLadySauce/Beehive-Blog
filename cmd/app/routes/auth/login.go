@@ -16,6 +16,7 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/passwd"
 	authsession "github.com/HappyLadySauce/Beehive-Blog/pkg/auth/session"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
+	settingtypes "github.com/HappyLadySauce/Beehive-Blog/pkg/settings/types"
 )
 
 // Login handles POST /api/v1/auth/login.
@@ -99,6 +100,11 @@ func (a *AuthController) loginByLocal(ctx context.Context, req *v1.LoginRequest,
 // loginByGitHub performs the GitHub OAuth2 authorization code flow.
 // loginByGitHub 执行 GitHub OAuth2 授权码流程。
 func (a *AuthController) loginByGitHub(ctx context.Context, req *v1.LoginRequest, meta authsession.ClientMeta) (*v1.LoginResponse, error) {
+	cfg := a.githubOAuth2Settings()
+	if !cfg.Enabled {
+		return nil, common.NewForbidden("github oauth2 is disabled", fmt.Errorf("github oauth2 is disabled"))
+	}
+
 	if req.Code == "" {
 		return nil, common.NewBadRequest("code is required", nil)
 	}
@@ -115,7 +121,6 @@ func (a *AuthController) loginByGitHub(ctx context.Context, req *v1.LoginRequest
 		return nil, common.NewUnauthorized("invalid or expired oauth session", nil)
 	}
 
-	cfg := a.svc.Config.GithubOAuth2
 	oauthCfg := &oauth2.Config{
 		ClientID:     cfg.ClientID,
 		ClientSecret: cfg.ClientSecret,
@@ -153,6 +158,19 @@ func (a *AuthController) loginByGitHub(ctx context.Context, req *v1.LoginRequest
 	}
 
 	return a.finalizeLogin(ctx, user, meta)
+}
+
+func (a *AuthController) githubOAuth2Settings() settingtypes.GithubOAuth2Settings {
+	if a != nil && a.svc != nil && a.svc.SettingsProvider != nil {
+		return a.svc.SettingsProvider.Current().GithubOAuth2
+	}
+	if a != nil && a.svc != nil && a.svc.Config != nil && a.svc.Config.GithubOAuth2 != nil {
+		s, err := a.svc.Config.GithubOAuth2.ToApplicationSettings()
+		if err == nil {
+			return s.GithubOAuth2
+		}
+	}
+	return settingtypes.DefaultApplicationSettings().GithubOAuth2
 }
 
 // assertUserMayLogin rejects non-loginable account statuses for every auth path.

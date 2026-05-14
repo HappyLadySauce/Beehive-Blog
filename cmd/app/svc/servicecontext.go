@@ -16,6 +16,7 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/config"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
+	pkgsettings "github.com/HappyLadySauce/Beehive-Blog/pkg/settings"
 )
 
 // ServiceContext wires shared infrastructure for HTTP handlers and background work.
@@ -26,6 +27,9 @@ type ServiceContext struct {
 	Cache       *redis.Client
 	Token       *jwt.Issuer
 	PostgresDSN string
+
+	SettingsStore    *pkgsettings.Store
+	SettingsProvider *pkgsettings.Provider
 }
 
 // NewServiceContext opens PostgreSQL (GORM) and Redis, applies pool settings, and verifies connectivity.

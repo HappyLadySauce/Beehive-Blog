@@ -464,6 +464,128 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/settings/github-oauth2": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns sanitized GitHub OAuth2 settings without client secret.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "settings"
+                ],
+                "summary": "Get GitHub OAuth2 settings (admin)",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/v1.SettingsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Merges github_oauth2 subtree; omit fields to keep existing. Pass empty string to clear.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "settings"
+                ],
+                "summary": "Patch GitHub OAuth2 settings (admin)",
+                "parameters": [
+                    {
+                        "description": "Partial GitHub OAuth2 settings",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.GithubOAuth2PatchJSON"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/v1.SettingsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/users/register": {
             "post": {
                 "description": "Creates identity.users plus credentials and returns tokens (auto-login). Avatar binding is deferred until authenticated flows. 中文：创建用户与凭证并返回令牌（自动登录）；头像请在登录态流程中再绑定。",
@@ -642,6 +764,64 @@ const docTemplate = `{
                 }
             }
         },
+        "v1.GithubOAuth2PatchJSON": {
+            "type": "object",
+            "properties": {
+                "allow_non_github_endpoints": {
+                    "type": "boolean"
+                },
+                "auth_url": {
+                    "type": "string"
+                },
+                "client_id": {
+                    "type": "string"
+                },
+                "client_secret": {
+                    "type": "string"
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "redirect_url": {
+                    "type": "string"
+                },
+                "token_url": {
+                    "type": "string"
+                },
+                "user_info_url": {
+                    "type": "string"
+                }
+            }
+        },
+        "v1.GithubOAuth2SettingsPublic": {
+            "type": "object",
+            "properties": {
+                "allow_non_github_endpoints": {
+                    "type": "boolean"
+                },
+                "auth_url": {
+                    "type": "string"
+                },
+                "client_id": {
+                    "type": "string"
+                },
+                "client_secret_set": {
+                    "type": "boolean"
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "redirect_url": {
+                    "type": "string"
+                },
+                "token_url": {
+                    "type": "string"
+                },
+                "user_info_url": {
+                    "type": "string"
+                }
+            }
+        },
         "v1.GithubOAuthBeginResponse": {
             "type": "object",
             "properties": {
@@ -790,6 +970,9 @@ const docTemplate = `{
             "properties": {
                 "email": {
                     "$ref": "#/definitions/v1.EmailSMTPPatchJSON"
+                },
+                "github_oauth2": {
+                    "$ref": "#/definitions/v1.GithubOAuth2PatchJSON"
                 }
             }
         },
@@ -798,6 +981,9 @@ const docTemplate = `{
             "properties": {
                 "email": {
                     "$ref": "#/definitions/v1.EmailSettingsPublic"
+                },
+                "github_oauth2": {
+                    "$ref": "#/definitions/v1.GithubOAuth2SettingsPublic"
                 },
                 "revision": {
                     "type": "integer"

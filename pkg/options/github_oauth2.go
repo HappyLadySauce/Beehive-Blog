@@ -6,11 +6,16 @@ import (
 	"net/url"
 
 	"github.com/spf13/pflag"
+
+	settingtypes "github.com/HappyLadySauce/Beehive-Blog/pkg/settings/types"
 )
 
 // GithubOAuth2Options holds configuration for the GitHub OAuth2 authorization code flow.
 // GithubOAuth2Options 保存 GitHub OAuth2 授权码流程的配置。
 type GithubOAuth2Options struct {
+	// Enabled toggles GitHub OAuth2 login; when false, endpoints are unreachable and validation is skipped.
+	// Enabled 启用 GitHub OAuth2 登录；false 时端点不可达且跳过校验。
+	Enabled bool `json:"enabled" mapstructure:"enabled"`
 	// ClientID is the OAuth2 application client ID registered with GitHub.
 	// ClientID 是在 GitHub 注册的 OAuth2 应用 Client ID。
 	ClientID string `json:"client-id" mapstructure:"client-id"`
@@ -44,6 +49,9 @@ func NewGithubOAuth2Options() *GithubOAuth2Options {
 // and that all endpoint URLs are valid.
 // Validate 强制 ClientID、ClientSecret、RedirectURL 非空，并校验所有端点 URL 格式合法。
 func (g *GithubOAuth2Options) Validate() error {
+	if !g.Enabled {
+		return nil
+	}
 	var err error
 	if g.ClientID == "" {
 		err = errors.Join(err, fmt.Errorf("github client-id is required"))
@@ -90,6 +98,31 @@ func (g *GithubOAuth2Options) Validate() error {
 	return err
 }
 
+// ToApplicationSettings maps CLI/env/file knobs into the persisted settings shape and validates.
+// ToApplicationSettings 将 CLI/环境/文件配置映射为持久化设置形态并校验。
+func (g *GithubOAuth2Options) ToApplicationSettings() (settingtypes.ApplicationSettings, error) {
+	if g == nil {
+		return settingtypes.DefaultApplicationSettings(), nil
+	}
+	s := settingtypes.ApplicationSettings{
+		GithubOAuth2: settingtypes.GithubOAuth2Settings{
+			Enabled:                 g.Enabled,
+			ClientID:                g.ClientID,
+			ClientSecret:            g.ClientSecret,
+			RedirectURL:             g.RedirectURL,
+			AuthURL:                 g.AuthURL,
+			TokenURL:                g.TokenURL,
+			UserInfoURL:             g.UserInfoURL,
+			AllowNonGitHubEndpoints: g.AllowNonGitHubEndpoints,
+		},
+	}
+	s.Normalize()
+	if err := s.Validate(); err != nil {
+		return settingtypes.ApplicationSettings{}, err
+	}
+	return s, nil
+}
+
 func parseAbsoluteHTTPURL(name, raw string) (*url.URL, error) {
 	parsed, err := url.Parse(raw)
 	if err != nil {
@@ -121,6 +154,7 @@ func validateGitHubEndpoint(name string, parsed *url.URL) error {
 // AddFlags registers GitHub OAuth2 flags on the supplied FlagSet.
 // AddFlags 将 GitHub OAuth2 相关命令行标志注册到给定的 FlagSet。
 func (g *GithubOAuth2Options) AddFlags(fs *pflag.FlagSet) {
+	fs.BoolVar(&g.Enabled, "github-enabled", g.Enabled, "Enable GitHub OAuth2 login; when false, credential validation is skipped")
 	fs.StringVar(&g.ClientID, "github-client-id", "", "GitHub OAuth2 application Client ID (required)")
 	fs.StringVar(&g.ClientSecret, "github-client-secret", "", "GitHub OAuth2 application Client Secret (required)")
 	fs.StringVar(&g.RedirectURL, "github-redirect-url", "", "OAuth2 redirect URL registered with GitHub (e.g., http://localhost:8080/api/v1/auth/callback)")

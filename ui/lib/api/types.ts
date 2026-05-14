@@ -68,9 +68,21 @@ export type EmailSettingsPublic = {
   tls: "none" | "starttls" | "tls" | string;
 };
 
+export type GithubOAuth2SettingsPublic = {
+  enabled: boolean;
+  client_id: string;
+  client_secret_set: boolean;
+  redirect_url: string;
+  auth_url: string;
+  token_url: string;
+  user_info_url: string;
+  allow_non_github_endpoints: boolean;
+};
+
 export type SettingsResponse = {
   revision: number;
   email: EmailSettingsPublic;
+  github_oauth2: GithubOAuth2SettingsPublic;
 };
 
 export type EmailSMTPPatch = {
@@ -86,6 +98,17 @@ export type EmailSMTPPatch = {
 
 export type SettingsPatchRequest = {
   email: EmailSMTPPatch;
+};
+
+export type GithubOAuth2Patch = {
+  enabled?: boolean;
+  client_id?: string;
+  client_secret?: string;
+  redirect_url?: string;
+  auth_url?: string;
+  token_url?: string;
+  user_info_url?: string;
+  allow_non_github_endpoints?: boolean;
 };
 
 export type SettingsEmailTestRequest = {

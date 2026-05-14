@@ -121,6 +121,42 @@
   justify-content: flex-end;
 }
 
+.segmentedTabs {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: inline-grid;
+  gap: 4px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  justify-self: start;
+  padding: 4px;
+}
+
+.segmentedTab,
+.segmentedTabActive {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: calc(var(--radius) - 2px);
+  color: var(--muted);
+  display: inline-flex;
+  font-weight: 800;
+  gap: 8px;
+  justify-content: center;
+  min-height: 38px;
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+
+.segmentedTab:hover,
+.segmentedTab:focus-visible,
+.segmentedTabActive {
+  background: #edf7f5;
+  color: var(--accent-dark);
+  outline: none;
+}
+
 .metricGrid,
 .workGrid {
   display: grid;
@@ -317,6 +353,29 @@
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
+.disclosureButton {
+  align-items: center;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--muted);
+  display: inline-flex;
+  font-weight: 800;
+  gap: 8px;
+  justify-content: flex-start;
+  min-height: 44px;
+  padding: 10px 12px;
+}
+
+.disclosureIcon,
+.disclosureIconOpen {
+  transition: transform 160ms ease;
+}
+
+.disclosureIconOpen {
+  transform: rotate(180deg);
+}
+
 .metaRow {
   align-items: center;
   display: flex;
@@ -384,6 +443,10 @@
 
   .actions {
     justify-content: flex-start;
+    width: 100%;
+  }
+
+  .segmentedTabs {
     width: 100%;
   }
 

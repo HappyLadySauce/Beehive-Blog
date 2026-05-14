@@ -24,13 +24,18 @@ import (
 // @Failure      500  {object}  common.BaseResponse                                  "Redis or configuration error"
 // @Router       /api/v1/auth/github/authorize [get]
 func (a *AuthController) GithubOAuthBegin(ctx *gin.Context) {
+	cfg := a.githubOAuth2Settings()
+	if !cfg.Enabled {
+		common.Fail(ctx, common.NewForbidden("github oauth2 is disabled", fmt.Errorf("github oauth2 is disabled")))
+		return
+	}
+
 	state, err := oauth.StoreGitHubOAuthState(ctx.Request.Context(), a.svc.Cache, 15*time.Minute)
 	if err != nil {
 		common.Fail(ctx, common.NewInternal("failed to start oauth session", err))
 		return
 	}
 
-	cfg := a.svc.Config.GithubOAuth2
 	u, err := url.Parse(cfg.AuthURL)
 	if err != nil {
 		common.Fail(ctx, common.NewInternal("invalid oauth configuration", fmt.Errorf("invalid github auth-url: %w", err)))

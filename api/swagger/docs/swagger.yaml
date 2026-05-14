@@ -92,6 +92,44 @@ definitions:
       username:
         type: string
     type: object
+  v1.GithubOAuth2PatchJSON:
+    properties:
+      allow_non_github_endpoints:
+        type: boolean
+      auth_url:
+        type: string
+      client_id:
+        type: string
+      client_secret:
+        type: string
+      enabled:
+        type: boolean
+      redirect_url:
+        type: string
+      token_url:
+        type: string
+      user_info_url:
+        type: string
+    type: object
+  v1.GithubOAuth2SettingsPublic:
+    properties:
+      allow_non_github_endpoints:
+        type: boolean
+      auth_url:
+        type: string
+      client_id:
+        type: string
+      client_secret_set:
+        type: boolean
+      enabled:
+        type: boolean
+      redirect_url:
+        type: string
+      token_url:
+        type: string
+      user_info_url:
+        type: string
+    type: object
   v1.GithubOAuthBeginResponse:
     properties:
       auth_url:
@@ -221,11 +259,15 @@ definitions:
     properties:
       email:
         $ref: '#/definitions/v1.EmailSMTPPatchJSON'
+      github_oauth2:
+        $ref: '#/definitions/v1.GithubOAuth2PatchJSON'
     type: object
   v1.SettingsResponse:
     properties:
       email:
         $ref: '#/definitions/v1.EmailSettingsPublic'
+      github_oauth2:
+        $ref: '#/definitions/v1.GithubOAuth2SettingsPublic'
       revision:
         type: integer
     type: object
@@ -515,6 +557,79 @@ paths:
       security:
       - BearerAuth: []
       summary: Send SMTP test email (admin)
+      tags:
+      - settings
+  /api/v1/settings/github-oauth2:
+    get:
+      description: Returns sanitized GitHub OAuth2 settings without client secret.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.SettingsResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Get GitHub OAuth2 settings (admin)
+      tags:
+      - settings
+    patch:
+      consumes:
+      - application/json
+      description: Merges github_oauth2 subtree; omit fields to keep existing. Pass
+        empty string to clear.
+      parameters:
+      - description: Partial GitHub OAuth2 settings
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.GithubOAuth2PatchJSON'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.SettingsResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Patch GitHub OAuth2 settings (admin)
       tags:
       - settings
   /api/v1/users/register:

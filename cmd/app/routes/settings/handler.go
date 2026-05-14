@@ -24,19 +24,34 @@ func NewSettingsController(ctx context.Context, svcCtx *svc.ServiceContext) (*Se
 	if err := validateDependencies(svcCtx); err != nil {
 		return nil, err
 	}
-	seed, err := svcCtx.Config.Email.ToApplicationSettings()
+	emailSeed, err := svcCtx.Config.Email.ToApplicationSettings()
 	if err != nil {
 		return nil, fmt.Errorf("email options: %w", err)
 	}
+	githubSeed, err := svcCtx.Config.GithubOAuth2.ToApplicationSettings()
+	if err != nil {
+		return nil, fmt.Errorf("github oauth2 options: %w", err)
+	}
+	seed := emailSeed
+	seed.GithubOAuth2 = githubSeed.GithubOAuth2
 
-	store := pkgsettings.NewStore(svcCtx.DB)
+	store := svcCtx.SettingsStore
+	if store == nil {
+		store = pkgsettings.NewStore(svcCtx.DB)
+		svcCtx.SettingsStore = store
+	}
 	if err := store.EnsureSingleton(ctx, seed); err != nil {
 		return nil, fmt.Errorf("ensure application settings: %w", err)
+	}
+	provider := svcCtx.SettingsProvider
+	if provider == nil {
+		provider = pkgsettings.NewProvider()
+		svcCtx.SettingsProvider = provider
 	}
 	h := &SettingsController{
 		svc:      svcCtx,
 		store:    store,
-		provider: pkgsettings.NewProvider(),
+		provider: provider,
 	}
 	if err := h.refresh(ctx); err != nil {
 		return nil, fmt.Errorf("refresh application settings: %w", err)
@@ -63,6 +78,10 @@ func Init(ctx context.Context, svcCtx *svc.ServiceContext) error {
 	email.GET("", h.GetEmailSettings)
 	email.PATCH("", h.PatchEmailSettings)
 	email.POST("/test", h.TestEmail)
+
+	githubOAuth2 := g.Group("/github-oauth2")
+	githubOAuth2.GET("", h.GetGithubOAuth2Settings)
+	githubOAuth2.PATCH("", h.PatchGithubOAuth2Settings)
 	return nil
 }
 

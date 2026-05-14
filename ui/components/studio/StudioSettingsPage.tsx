@@ -1,16 +1,17 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { Loader2, Save, Send, Settings } from "lucide-react";
+import { ChevronDown, Github, Loader2, Mail, Save, Send, Settings } from "lucide-react";
 
 import { humanizeApiError } from "@/lib/api/client";
-import { getSettings, patchSettings, testEmailSettings } from "@/lib/api/settings";
-import type { EmailSettingsPublic, SettingsResponse } from "@/lib/api/types";
+import { getGithubOAuth2Settings, getSettings, patchGithubOAuth2Settings, patchSettings, testEmailSettings } from "@/lib/api/settings";
+import type { EmailSettingsPublic, GithubOAuth2SettingsPublic, SettingsResponse } from "@/lib/api/types";
 import styles from "./Studio.module.css";
 import { StudioPanel } from "./StudioPanel";
 import { StudioTopbar } from "./StudioTopbar";
 
 type PasswordMode = "keep" | "set" | "clear";
+type SettingsSection = "email" | "github";
 
 const defaultEmail: EmailSettingsPublic = {
   enabled: false,
@@ -23,7 +24,19 @@ const defaultEmail: EmailSettingsPublic = {
   tls: "starttls"
 };
 
+const defaultGithubOAuth2: GithubOAuth2SettingsPublic = {
+  enabled: false,
+  client_id: "",
+  client_secret_set: false,
+  redirect_url: "",
+  auth_url: "https://github.com/login/oauth/authorize",
+  token_url: "https://github.com/login/oauth/access_token",
+  user_info_url: "https://api.github.com/user",
+  allow_non_github_endpoints: false
+};
+
 let settingsLoadRequest: Promise<SettingsResponse> | null = null;
+let githubSettingsLoadRequest: Promise<SettingsResponse> | null = null;
 
 function loadSettings() {
   if (!settingsLoadRequest) {
@@ -34,11 +47,25 @@ function loadSettings() {
   return settingsLoadRequest;
 }
 
+function loadGithubOAuth2Settings() {
+  if (!githubSettingsLoadRequest) {
+    githubSettingsLoadRequest = getGithubOAuth2Settings().finally(() => {
+      githubSettingsLoadRequest = null;
+    });
+  }
+  return githubSettingsLoadRequest;
+}
+
 export function StudioSettingsPage() {
   const [settings, setSettings] = useState<SettingsResponse | null>(null);
+  const [activeSection, setActiveSection] = useState<SettingsSection>("email");
   const [email, setEmail] = useState<EmailSettingsPublic>(defaultEmail);
+  const [githubOAuth2, setGithubOAuth2] = useState<GithubOAuth2SettingsPublic>(defaultGithubOAuth2);
   const [password, setPassword] = useState("");
   const [passwordMode, setPasswordMode] = useState<PasswordMode>("keep");
+  const [githubSecret, setGithubSecret] = useState("");
+  const [githubSecretMode, setGithubSecretMode] = useState<PasswordMode>("keep");
+  const [githubAdvancedOpen, setGithubAdvancedOpen] = useState(false);
   const [testRecipient, setTestRecipient] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -48,11 +75,17 @@ export function StudioSettingsPage() {
   useEffect(() => {
     let active = true;
 
-    loadSettings()
-      .then((payload) => {
+    Promise.all([loadSettings(), loadGithubOAuth2Settings()])
+      .then(([emailPayload, githubPayload]) => {
         if (!active) return;
+        const payload = {
+          ...emailPayload,
+          revision: Math.max(emailPayload.revision, githubPayload.revision),
+          github_oauth2: githubPayload.github_oauth2 ?? emailPayload.github_oauth2 ?? defaultGithubOAuth2
+        };
         setSettings(payload);
         setEmail(payload.email);
+        setGithubOAuth2(payload.github_oauth2 ?? defaultGithubOAuth2);
         setTestRecipient(payload.email.from || payload.email.username);
       })
       .catch((error) => {
@@ -76,8 +109,18 @@ export function StudioSettingsPage() {
     return email.password_set ? "当前已设置密码；留空保存不会修改密码。" : "当前未设置密码。";
   }, [email.password_set, password, passwordMode]);
 
+  const githubSecretHint = useMemo(() => {
+    if (githubSecretMode === "clear") return "保存后会清空当前 GitHub Client Secret。";
+    if (githubSecret.trim() !== "") return "保存后会更新 GitHub Client Secret。";
+    return githubOAuth2.client_secret_set ? "当前已设置 Client Secret；留空保存不会修改。" : "当前未设置 Client Secret。";
+  }, [githubOAuth2.client_secret_set, githubSecret, githubSecretMode]);
+
   function updateEmail<K extends keyof EmailSettingsPublic>(key: K, value: EmailSettingsPublic[K]) {
     setEmail((current) => ({ ...current, [key]: value }));
+  }
+
+  function updateGithubOAuth2<K extends keyof GithubOAuth2SettingsPublic>(key: K, value: GithubOAuth2SettingsPublic[K]) {
+    setGithubOAuth2((current) => ({ ...current, [key]: value }));
   }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -116,6 +159,39 @@ export function StudioSettingsPage() {
     }
   }
 
+  async function onSubmitGithubOAuth2(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const validation = validateGithubOAuth2(githubOAuth2, githubSecret, githubSecretMode);
+    if (validation) {
+      setMessage({ tone: "error", text: validation });
+      return;
+    }
+
+    setSaving(true);
+    setMessage(null);
+    try {
+      const next = await patchGithubOAuth2Settings({
+        enabled: githubOAuth2.enabled,
+        client_id: githubOAuth2.client_id,
+        redirect_url: githubOAuth2.redirect_url,
+        auth_url: githubOAuth2.auth_url,
+        token_url: githubOAuth2.token_url,
+        user_info_url: githubOAuth2.user_info_url,
+        allow_non_github_endpoints: githubOAuth2.allow_non_github_endpoints,
+        ...(githubSecretMode === "clear" ? { client_secret: "" } : githubSecret !== "" ? { client_secret: githubSecret } : {})
+      });
+      setSettings(next);
+      setGithubOAuth2(next.github_oauth2 ?? defaultGithubOAuth2);
+      setGithubSecret("");
+      setGithubSecretMode("keep");
+      setMessage({ tone: "success", text: "GitHub OAuth2 设置已保存。" });
+    } catch (error) {
+      setMessage({ tone: "error", text: humanizeApiError(error) });
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function onSendTestEmail() {
     const recipient = testRecipient.trim();
     const validation = validateTestRecipient(email, recipient);
@@ -145,12 +221,39 @@ export function StudioSettingsPage() {
             保存设置
           </button>
         }
-        description="配置应用级 SMTP 邮件发送能力；敏感字段只通过 BFF Cookie 会话写入。"
+        description="配置应用级邮件与登录集成；敏感字段只通过 BFF Cookie 会话写入。"
         eyebrow="Application settings"
         title="设置"
       />
 
-      <StudioPanel action={<Settings aria-hidden size={20} />} title="邮件 SMTP">
+      <div className={styles.segmentedTabs} aria-label="设置分类">
+        <button
+          aria-pressed={activeSection === "email"}
+          className={activeSection === "email" ? styles.segmentedTabActive : styles.segmentedTab}
+          type="button"
+          onClick={() => {
+            setActiveSection("email");
+            setMessage(null);
+          }}
+        >
+          <Mail aria-hidden size={18} />
+          Email
+        </button>
+        <button
+          aria-pressed={activeSection === "github"}
+          className={activeSection === "github" ? styles.segmentedTabActive : styles.segmentedTab}
+          type="button"
+          onClick={() => {
+            setActiveSection("github");
+            setMessage(null);
+          }}
+        >
+          <Github aria-hidden size={18} />
+          GitHub OAuth2
+        </button>
+      </div>
+
+      <StudioPanel action={activeSection === "email" ? <Settings aria-hidden size={20} /> : <Github aria-hidden size={20} />} title={activeSection === "email" ? "邮件 SMTP" : "GitHub OAuth2"}>
         {loading ? (
           <div className={styles.emptyState} role="status">
             <Loader2 aria-hidden className="spin" size={24} />
@@ -163,6 +266,7 @@ export function StudioSettingsPage() {
             <span>{message?.text ?? "无法读取应用设置，请稍后再试。"}</span>
           </div>
         ) : (
+          activeSection === "email" ? (
           <form className={styles.formGrid} id="studio-settings-form" onSubmit={onSubmit}>
             <label className={styles.checkboxField}>
               <input
@@ -281,6 +385,109 @@ export function StudioSettingsPage() {
               </p>
             ) : null}
           </form>
+          ) : (
+          <form className={styles.formGrid} id="studio-settings-form" onSubmit={onSubmitGithubOAuth2}>
+            <label className={styles.checkboxField}>
+              <input
+                aria-label="启用 GitHub OAuth2 登录"
+                checked={githubOAuth2.enabled}
+                type="checkbox"
+                onChange={(event) => updateGithubOAuth2("enabled", event.target.checked)}
+              />
+              <span>启用 GitHub OAuth2 登录</span>
+            </label>
+
+            <label className={styles.field}>
+              <span>Client ID</span>
+              <input value={githubOAuth2.client_id} onChange={(event) => updateGithubOAuth2("client_id", event.target.value)} />
+            </label>
+
+            <label className={styles.field}>
+              <span>Redirect URL</span>
+              <input value={githubOAuth2.redirect_url} onChange={(event) => updateGithubOAuth2("redirect_url", event.target.value)} />
+            </label>
+
+            <label className={styles.fieldFull}>
+              <span>Client Secret</span>
+              <div className={styles.passwordRow}>
+                <input
+                  autoComplete="new-password"
+                  placeholder={githubOAuth2.client_secret_set ? "已设置；留空保持不变" : "未设置"}
+                  type="password"
+                  value={githubSecret}
+                  onChange={(event) => {
+                    setGithubSecret(event.target.value);
+                    setGithubSecretMode(event.target.value === "" ? "keep" : "set");
+                  }}
+                />
+                <button
+                  className="secondary-button"
+                  disabled={!githubOAuth2.client_secret_set && githubSecret === ""}
+                  type="button"
+                  onClick={() => {
+                    setGithubSecret("");
+                    setGithubSecretMode("clear");
+                  }}
+                >
+                  清空 Client Secret
+                </button>
+              </div>
+            </label>
+
+            <div className={`${styles.metaRow} ${styles.fieldFull}`}>
+              <span className={`${styles.statusPill} ${githubOAuth2.client_secret_set ? styles.statusReady : styles.statusPending}`}>
+                {githubOAuth2.client_secret_set ? "Client secret set" : "Client secret not set"}
+              </span>
+              <span className={styles.muted}>{githubSecretHint}</span>
+              {settings ? <span className={styles.muted}>Revision {settings.revision}</span> : null}
+            </div>
+
+            <button
+              aria-expanded={githubAdvancedOpen}
+              className={`${styles.disclosureButton} ${styles.fieldFull}`}
+              type="button"
+              onClick={() => setGithubAdvancedOpen((open) => !open)}
+            >
+              <ChevronDown aria-hidden className={githubAdvancedOpen ? styles.disclosureIconOpen : styles.disclosureIcon} size={18} />
+              高级设置
+            </button>
+
+            {githubAdvancedOpen ? (
+              <>
+                <label className={styles.field}>
+                  <span>Auth URL</span>
+                  <input value={githubOAuth2.auth_url} onChange={(event) => updateGithubOAuth2("auth_url", event.target.value)} />
+                </label>
+                <label className={styles.field}>
+                  <span>Token URL</span>
+                  <input value={githubOAuth2.token_url} onChange={(event) => updateGithubOAuth2("token_url", event.target.value)} />
+                </label>
+                <label className={styles.fieldFull}>
+                  <span>User Info URL</span>
+                  <input value={githubOAuth2.user_info_url} onChange={(event) => updateGithubOAuth2("user_info_url", event.target.value)} />
+                </label>
+                <label className={styles.checkboxField}>
+                  <input
+                    aria-label="允许非 GitHub 端点"
+                    checked={githubOAuth2.allow_non_github_endpoints}
+                    type="checkbox"
+                    onChange={(event) => updateGithubOAuth2("allow_non_github_endpoints", event.target.checked)}
+                  />
+                  <span>允许非 GitHub 端点</span>
+                </label>
+              </>
+            ) : null}
+
+            {message ? (
+              <p
+                className={`${styles.message} ${message.tone === "success" ? styles.messageSuccess : styles.messageError}`}
+                role={message.tone === "error" ? "alert" : "status"}
+              >
+                {message.text}
+              </p>
+            ) : null}
+          </form>
+          )
         )}
       </StudioPanel>
     </>
@@ -318,6 +525,38 @@ function validateTestRecipient(email: EmailSettingsPublic, recipient: string) {
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)) {
     return "测试收件人邮箱格式不正确。";
+  }
+  return null;
+}
+
+function validateGithubOAuth2(githubOAuth2: GithubOAuth2SettingsPublic, githubSecret: string, githubSecretMode: PasswordMode) {
+  if (!githubOAuth2.enabled) {
+    return null;
+  }
+  if (githubOAuth2.client_id.trim() === "") {
+    return "启用 GitHub OAuth2 时必须填写 Client ID。";
+  }
+  if (!githubOAuth2.client_secret_set && githubSecret.trim() === "" && githubSecretMode !== "clear") {
+    return "启用 GitHub OAuth2 时必须填写 Client Secret。";
+  }
+  if (githubOAuth2.redirect_url.trim() === "") {
+    return "启用 GitHub OAuth2 时必须填写 Redirect URL。";
+  }
+  for (const [label, value] of [
+    ["Redirect URL", githubOAuth2.redirect_url],
+    ["Auth URL", githubOAuth2.auth_url],
+    ["Token URL", githubOAuth2.token_url],
+    ["User Info URL", githubOAuth2.user_info_url]
+  ] as const) {
+    if (value.trim() === "") continue;
+    try {
+      const parsed = new URL(value);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        return `${label} 必须使用 http 或 https。`;
+      }
+    } catch {
+      return `${label} 格式不正确。`;
+    }
   }
   return null;
 }
