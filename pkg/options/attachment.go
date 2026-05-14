@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/spf13/pflag"
+
+	settingtypes "github.com/HappyLadySauce/Beehive-Blog/pkg/settings/types"
 )
 
 const (
@@ -96,6 +98,38 @@ func (o *AttachmentOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&o.OSS.Bucket, "attachment-oss-bucket", o.OSS.Bucket, "OSS bucket for remote attachments")
 	fs.StringVar(&o.OSS.UploadBaseURL, "attachment-oss-upload-base-url", o.OSS.UploadBaseURL, "OSS-compatible direct upload base URL")
 	fs.StringVar(&o.OSS.DownloadBaseURL, "attachment-oss-download-base-url", o.OSS.DownloadBaseURL, "OSS-compatible public/download base URL")
+}
+
+// ToApplicationSettings maps CLI/env/file knobs into the persisted settings shape and validates.
+// ToApplicationSettings 将 CLI/环境/文件配置映射为持久化设置形态并校验。
+func (o *AttachmentOptions) ToApplicationSettings() (settingtypes.ApplicationSettings, error) {
+	if o == nil {
+		return settingtypes.DefaultApplicationSettings(), nil
+	}
+	s := settingtypes.ApplicationSettings{
+		Attachment: settingtypes.AttachmentSettings{
+			DefaultStorage:      o.DefaultStorage,
+			LocalRoot:           o.LocalRoot,
+			MaxBytes:            o.MaxBytes,
+			AllowedMIMEPrefixes: append([]string{}, o.AllowedMIMEPrefixes...),
+			PresignTTLSeconds:   int64(o.PresignTTL.Seconds()),
+			S3: settingtypes.AttachmentRemoteSettings{
+				Bucket:          o.S3.Bucket,
+				UploadBaseURL:   o.S3.UploadBaseURL,
+				DownloadBaseURL: o.S3.DownloadBaseURL,
+			},
+			OSS: settingtypes.AttachmentRemoteSettings{
+				Bucket:          o.OSS.Bucket,
+				UploadBaseURL:   o.OSS.UploadBaseURL,
+				DownloadBaseURL: o.OSS.DownloadBaseURL,
+			},
+		},
+	}
+	s.Normalize()
+	if err := s.Validate(); err != nil {
+		return settingtypes.ApplicationSettings{}, err
+	}
+	return s, nil
 }
 
 func attachmentStorageKnown(v string) bool {

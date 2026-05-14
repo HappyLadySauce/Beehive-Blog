@@ -32,8 +32,13 @@ func NewSettingsController(ctx context.Context, svcCtx *svc.ServiceContext) (*Se
 	if err != nil {
 		return nil, fmt.Errorf("github oauth2 options: %w", err)
 	}
+	attachmentSeed, err := svcCtx.Config.Attachment.ToApplicationSettings()
+	if err != nil {
+		return nil, fmt.Errorf("attachment options: %w", err)
+	}
 	seed := emailSeed
 	seed.GithubOAuth2 = githubSeed.GithubOAuth2
+	seed.Attachment = attachmentSeed.Attachment
 
 	store := svcCtx.SettingsStore
 	if store == nil {
@@ -82,6 +87,10 @@ func Init(ctx context.Context, svcCtx *svc.ServiceContext) error {
 	githubOAuth2 := g.Group("/github-oauth2")
 	githubOAuth2.GET("", h.GetGithubOAuth2Settings)
 	githubOAuth2.PATCH("", h.PatchGithubOAuth2Settings)
+
+	attachment := g.Group("/attachment")
+	attachment.GET("", h.GetAttachmentSettings)
+	attachment.PATCH("", h.PatchAttachmentSettings)
 	return nil
 }
 

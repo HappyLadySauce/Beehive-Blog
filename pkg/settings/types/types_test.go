@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/json"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -62,7 +63,7 @@ func TestMergePatch(t *testing.T) {
 		if err != nil {
 			t.Fatalf("MergePatch: %v", err)
 		}
-		if out != base {
+		if !reflect.DeepEqual(out, base) {
 			t.Fatalf("expected same values as base; got %+v want %+v", out, base)
 		}
 	})
@@ -117,7 +118,7 @@ func TestParsePayload(t *testing.T) {
 			t.Fatalf("ParsePayload: %v", err)
 		}
 		want := DefaultApplicationSettings()
-		if s != want {
+		if !reflect.DeepEqual(s, want) {
 			t.Fatalf("got %+v, want %+v", s, want)
 		}
 	})
@@ -126,7 +127,7 @@ func TestParsePayload(t *testing.T) {
 		if err != nil {
 			t.Fatalf("ParsePayload: %v", err)
 		}
-		if s != DefaultApplicationSettings() {
+		if !reflect.DeepEqual(s, DefaultApplicationSettings()) {
 			t.Fatalf("got %+v", s)
 		}
 	})
@@ -177,7 +178,7 @@ func TestMarshalPayload(t *testing.T) {
 	}
 	decoded.Normalize()
 	s.Normalize()
-	if decoded != s {
+	if !reflect.DeepEqual(decoded, s) {
 		t.Fatalf("round-trip mismatch: got %+v want %+v", decoded, s)
 	}
 }
