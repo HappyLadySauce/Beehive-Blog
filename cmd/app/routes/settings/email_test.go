@@ -48,7 +48,7 @@ func TestNewSettingsControllerRejectsMissingDependencies(t *testing.T) {
 		t.Fatalf("NewSettingsController(nil) error = %v, want service context error", err)
 	}
 
-	_, err := routesettings.NewSettingsController(context.Background(), &svc.ServiceContext{Config: &config.Config{Email: options.NewEmailSMTPOptions()}})
+	_, err := routesettings.NewSettingsController(context.Background(), &svc.ServiceContext{Config: &config.Config{Email: options.NewEmailSMTPOptions(), GithubOAuth2: options.NewGithubOAuth2Options()}})
 	if err == nil || !strings.Contains(err.Error(), "database handle is nil") {
 		t.Fatalf("NewSettingsController without DB error = %v, want database handle error", err)
 	}
@@ -87,7 +87,7 @@ func newSettingsTestController(t *testing.T, s settingtypes.ApplicationSettings,
 			AddRow(1, revision, payload, now, now, nil))
 
 	controller, err := routesettings.NewSettingsController(context.Background(), &svc.ServiceContext{
-		Config: &config.Config{Email: options.NewEmailSMTPOptions()},
+		Config: &config.Config{Email: options.NewEmailSMTPOptions(), GithubOAuth2: options.NewGithubOAuth2Options()},
 		DB:     db,
 		Token:  &jwt.Issuer{},
 	})

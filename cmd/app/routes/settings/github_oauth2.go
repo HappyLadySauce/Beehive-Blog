@@ -37,8 +37,11 @@ func (h *SettingsController) GetGithubOAuth2Settings(ctx *gin.Context) {
 }
 
 func (h *SettingsController) patchGithubOAuth2Settings(ctx context.Context, req *v1.GithubOAuth2PatchJSON) (v1.SettingsResponse, error) {
-	if h.provider == nil || h.store == nil {
+	if h.provider == nil {
 		return v1.SettingsResponse{}, common.NewInternal("settings provider is not configured", errors.New("nil settings provider"))
+	}
+	if h.store == nil {
+		return v1.SettingsResponse{}, common.NewInternal("settings store is not configured", errors.New("nil settings store"))
 	}
 
 	patch := &settingtypes.SettingsPatchRequest{GithubOAuth2: patchGithubFromV1(req)}

@@ -37,8 +37,11 @@ func (h *SettingsController) GetEmailSettings(ctx *gin.Context) {
 }
 
 func (h *SettingsController) patchEmailSettings(ctx context.Context, req *v1.SettingsPatchRequestJSON) (v1.SettingsResponse, error) {
-	if h.provider == nil || h.store == nil {
+	if h.provider == nil {
 		return v1.SettingsResponse{}, common.NewInternal("settings provider is not configured", errors.New("nil settings provider"))
+	}
+	if h.store == nil {
+		return v1.SettingsResponse{}, common.NewInternal("settings store is not configured", errors.New("nil settings store"))
 	}
 	if req.Email == nil {
 		return v1.SettingsResponse{}, common.NewBadRequest("email field is required for patch", nil)

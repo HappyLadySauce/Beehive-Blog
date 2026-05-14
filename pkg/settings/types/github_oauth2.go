@@ -93,6 +93,20 @@ func validateGithubOAuth2(s *GithubOAuth2Settings) error {
 		if parsed.Host == "" {
 			return fmt.Errorf("github_oauth2.%s must be an absolute URL with host", endpoint.name)
 		}
+		// When not opted-in, enforce GitHub official endpoints (HTTPS + correct host).
+		// 未显式允许非 GitHub 端点时，强制官方端点（HTTPS + 正确主机）。
+		if endpoint.name != "redirect_url" && !s.AllowNonGitHubEndpoints {
+			if parsed.Scheme != "https" {
+				return fmt.Errorf("github_oauth2.%s must use https scheme", endpoint.name)
+			}
+			expectedHost := "github.com"
+			if endpoint.name == "user_info_url" {
+				expectedHost = "api.github.com"
+			}
+			if parsed.Hostname() != expectedHost {
+				return fmt.Errorf("github_oauth2.%s host must be %s", endpoint.name, expectedHost)
+			}
+		}
 	}
 	return nil
 }

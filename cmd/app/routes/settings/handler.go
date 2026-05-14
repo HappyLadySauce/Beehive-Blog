@@ -98,6 +98,9 @@ func validateDependencies(svcCtx *svc.ServiceContext) error {
 	if svcCtx.Config.Email == nil {
 		return fmt.Errorf("email config is nil")
 	}
+	if svcCtx.Config.GithubOAuth2 == nil {
+		return fmt.Errorf("github oauth2 config is nil")
+	}
 	if svcCtx.Token == nil {
 		return fmt.Errorf("jwt issuer is nil")
 	}
