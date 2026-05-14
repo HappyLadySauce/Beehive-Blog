@@ -20,7 +20,7 @@ const (
 type GithubOAuth2Settings struct {
 	Enabled                 bool   `json:"enabled"`
 	ClientID                string `json:"client_id"`
-	ClientSecret            string `json:"-"`
+	ClientSecret            string `json:"client_secret"`
 	RedirectURL             string `json:"redirect_url"`
 	AuthURL                 string `json:"auth_url"`
 	TokenURL                string `json:"token_url"`

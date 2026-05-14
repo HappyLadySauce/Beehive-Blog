@@ -160,12 +160,16 @@ func TestParsePayload(t *testing.T) {
 
 func TestMarshalPayload(t *testing.T) {
 	s := DefaultApplicationSettings()
+	s.GithubOAuth2.ClientSecret = "client-secret"
 	raw, err := MarshalPayload(s)
 	if err != nil {
 		t.Fatalf("MarshalPayload: %v", err)
 	}
 	if !bytes.Contains(raw, []byte(`"enabled":false`)) {
 		t.Fatalf("unexpected JSON: %s", string(raw))
+	}
+	if !bytes.Contains(raw, []byte(`"client_secret":"client-secret"`)) {
+		t.Fatalf("expected github client secret to be persisted: %s", string(raw))
 	}
 	var decoded ApplicationSettings
 	if err := json.Unmarshal(raw, &decoded); err != nil {

@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgconn"
@@ -75,7 +76,10 @@ func (s *Store) EnsureSingleton(ctx context.Context, initial settingtypes.Applic
 		return fmt.Errorf("ensure application settings: count id=1: %w", err)
 	}
 	if count > 0 {
-		return nil
+		if !hasBackfillValues(initial) {
+			return nil
+		}
+		return s.backfillEmpty(ctx, initial)
 	}
 
 	now := time.Now()
@@ -93,6 +97,45 @@ func (s *Store) EnsureSingleton(ctx context.Context, initial settingtypes.Applic
 		return fmt.Errorf("ensure application settings: insert singleton: %w", err)
 	}
 	return nil
+}
+
+func (s *Store) backfillEmpty(ctx context.Context, initial settingtypes.ApplicationSettings) error {
+	if err := initial.Validate(); err != nil {
+		return err
+	}
+	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var row model.ApplicationSetting
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("id = ?", 1).
+			First(&row).Error; err != nil {
+			return fmt.Errorf("lock application settings: %w", err)
+		}
+		current, err := settingtypes.ParsePayload(row.Payload)
+		if err != nil {
+			return err
+		}
+		next, changed := backfillEmptySettings(current, initial)
+		if !changed {
+			return nil
+		}
+		if err := next.Validate(); err != nil {
+			return err
+		}
+		raw, err := settingtypes.MarshalPayload(next)
+		if err != nil {
+			return err
+		}
+		nextRev := row.Revision + 1
+		now := time.Now()
+		if err := tx.Model(&row).Updates(map[string]any{
+			"payload":    raw,
+			"revision":   nextRev,
+			"updated_at": now,
+		}).Error; err != nil {
+			return fmt.Errorf("backfill application settings: %w", err)
+		}
+		return nil
+	})
 }
 
 // Save persists settings inside a row-lock transaction and bumps revision only when the normalized payload changes.
@@ -196,4 +239,82 @@ func (s *Store) Patch(ctx context.Context, patch *settingtypes.SettingsPatchRequ
 func isPostgresUniqueViolation(err error) bool {
 	var pg *pgconn.PgError
 	return errors.As(err, &pg) && pg.Code == "23505"
+}
+
+func hasBackfillValues(s settingtypes.ApplicationSettings) bool {
+	s.Normalize()
+	e := s.Email
+	if e.Enabled ||
+		strings.TrimSpace(e.Host) != "" ||
+		e.Port != 587 ||
+		strings.TrimSpace(e.Username) != "" ||
+		strings.TrimSpace(e.Password) != "" ||
+		strings.TrimSpace(e.From) != "" ||
+		strings.TrimSpace(e.FromName) != "" ||
+		strings.TrimSpace(e.TLS) != settingtypes.EmailTLSStartTLS {
+		return true
+	}
+	g := s.GithubOAuth2
+	return g.Enabled ||
+		strings.TrimSpace(g.ClientID) != "" ||
+		strings.TrimSpace(g.ClientSecret) != "" ||
+		strings.TrimSpace(g.RedirectURL) != "" ||
+		strings.TrimSpace(g.AuthURL) != settingtypes.DefaultGitHubAuthURL ||
+		strings.TrimSpace(g.TokenURL) != settingtypes.DefaultGitHubTokenURL ||
+		strings.TrimSpace(g.UserInfoURL) != settingtypes.DefaultGitHubUserInfoURL ||
+		g.AllowNonGitHubEndpoints
+}
+
+func backfillEmptySettings(current, seed settingtypes.ApplicationSettings) (settingtypes.ApplicationSettings, bool) {
+	current.Normalize()
+	seed.Normalize()
+	out := current
+	changed := false
+
+	emailEmpty := !current.Email.Enabled &&
+		strings.TrimSpace(current.Email.Host) == "" &&
+		strings.TrimSpace(current.Email.Username) == "" &&
+		strings.TrimSpace(current.Email.Password) == "" &&
+		strings.TrimSpace(current.Email.From) == "" &&
+		strings.TrimSpace(current.Email.FromName) == ""
+	if emailEmpty {
+		if current.Email != seed.Email {
+			out.Email = seed.Email
+			changed = true
+		}
+	} else {
+		changed = fillString(&out.Email.Host, seed.Email.Host) || changed
+		changed = fillString(&out.Email.Username, seed.Email.Username) || changed
+		changed = fillString(&out.Email.Password, seed.Email.Password) || changed
+		changed = fillString(&out.Email.From, seed.Email.From) || changed
+		changed = fillString(&out.Email.FromName, seed.Email.FromName) || changed
+	}
+
+	githubEmpty := !current.GithubOAuth2.Enabled &&
+		strings.TrimSpace(current.GithubOAuth2.ClientID) == "" &&
+		strings.TrimSpace(current.GithubOAuth2.ClientSecret) == "" &&
+		strings.TrimSpace(current.GithubOAuth2.RedirectURL) == ""
+	if githubEmpty {
+		if current.GithubOAuth2 != seed.GithubOAuth2 {
+			out.GithubOAuth2 = seed.GithubOAuth2
+			changed = true
+		}
+	} else {
+		changed = fillString(&out.GithubOAuth2.ClientID, seed.GithubOAuth2.ClientID) || changed
+		changed = fillString(&out.GithubOAuth2.ClientSecret, seed.GithubOAuth2.ClientSecret) || changed
+		changed = fillString(&out.GithubOAuth2.RedirectURL, seed.GithubOAuth2.RedirectURL) || changed
+		changed = fillString(&out.GithubOAuth2.AuthURL, seed.GithubOAuth2.AuthURL) || changed
+		changed = fillString(&out.GithubOAuth2.TokenURL, seed.GithubOAuth2.TokenURL) || changed
+		changed = fillString(&out.GithubOAuth2.UserInfoURL, seed.GithubOAuth2.UserInfoURL) || changed
+	}
+
+	return out, changed
+}
+
+func fillString(dst *string, seed string) bool {
+	if strings.TrimSpace(*dst) != "" || strings.TrimSpace(seed) == "" {
+		return false
+	}
+	*dst = seed
+	return true
 }

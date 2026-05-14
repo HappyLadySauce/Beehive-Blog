@@ -54,6 +54,50 @@ func TestEnsureSingletonNoInsertWhenRowExists(t *testing.T) {
 	assertSQLExpectations(t, mock)
 }
 
+func TestEnsureSingletonBackfillsEmptyExistingPayloadFromInitial(t *testing.T) {
+	db, mock, cleanup := newMockSettingsDB(t)
+	defer cleanup()
+
+	now := time.Date(2026, 5, 14, 0, 0, 0, 0, time.UTC)
+	currentPayload := []byte(`{"email":{"enabled":false,"host":"","port":587,"username":"","password":"","from":"","from_name":"","tls":"starttls"},"github_oauth2":{"enabled":false,"client_id":"","client_secret":"","redirect_url":"","auth_url":"https://github.com/login/oauth/authorize","token_url":"https://github.com/login/oauth/access_token","user_info_url":"https://api.github.com/user","allow_non_github_endpoints":false}}`)
+	initial := settingtypes.DefaultApplicationSettings()
+	initial.Email.Host = "smtp.example.com"
+	initial.Email.Port = 465
+	initial.Email.Username = "mailer"
+	initial.Email.Password = "smtp-secret"
+	initial.Email.From = "robot@example.com"
+	initial.Email.TLS = settingtypes.EmailTLSDirect
+	initial.GithubOAuth2.Enabled = true
+	initial.GithubOAuth2.ClientID = "config-client"
+	initial.GithubOAuth2.ClientSecret = "config-secret"
+	initial.GithubOAuth2.RedirectURL = "https://blog.example.com/auth/github/callback"
+
+	mock.ExpectQuery(regexp.MustCompile(`SELECT count\(\*\) FROM "setting"\."application_settings"`).String()).
+		WithArgs(1).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(int64(1)))
+	mock.ExpectBegin()
+	mock.ExpectQuery(regexp.MustCompile(`SELECT .* FROM "setting"\."application_settings".*FOR UPDATE`).String()).
+		WithArgs(1, 1).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "revision", "payload", "created_at", "updated_at", "deleted_at"}).
+			AddRow(1, 2, currentPayload, now, now, nil))
+	mock.ExpectExec(regexp.MustCompile(`UPDATE "setting"\."application_settings"`).String()).
+		WithArgs(jsonPayloadHas(t, map[string]string{
+			"email.host":                  "smtp.example.com",
+			"email.password":              "smtp-secret",
+			"github_oauth2.client_id":     "config-client",
+			"github_oauth2.client_secret": "config-secret",
+			"github_oauth2.redirect_url":  "https://blog.example.com/auth/github/callback",
+		}), int64(3), sqlmock.AnyArg(), int16(1)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectCommit()
+
+	store := pkgsettings.NewStore(db)
+	if err := store.EnsureSingleton(context.Background(), initial); err != nil {
+		t.Fatalf("EnsureSingleton: %v", err)
+	}
+	assertSQLExpectations(t, mock)
+}
+
 func TestEnsureSingletonTreatsUniqueViolationAsSuccess(t *testing.T) {
 	db, mock, cleanup := newMockSettingsDB(t)
 	defer cleanup()
@@ -217,6 +261,7 @@ func (m jsonPayloadMatcher) Match(v driver.Value) bool {
 		m.t.Logf("payload.email missing or invalid: %v", doc["email"])
 		return false
 	}
+	githubOAuth2, _ := doc["github_oauth2"].(map[string]any)
 	for path, want := range m.want {
 		var got any
 		switch path {
@@ -224,6 +269,12 @@ func (m jsonPayloadMatcher) Match(v driver.Value) bool {
 			got = email["host"]
 		case "email.password":
 			got = email["password"]
+		case "github_oauth2.client_id":
+			got = githubOAuth2["client_id"]
+		case "github_oauth2.client_secret":
+			got = githubOAuth2["client_secret"]
+		case "github_oauth2.redirect_url":
+			got = githubOAuth2["redirect_url"]
 		default:
 			m.t.Logf("unsupported json path %q", path)
 			return false
