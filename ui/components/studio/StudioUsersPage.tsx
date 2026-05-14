@@ -26,7 +26,15 @@ const roleOptions = [
   { value: "admin", label: "管理员" }
 ] as const;
 
-function fetchUsersForView(page: number, statusFilter: string, roleFilter: string, search: string) {
+// Dedupe identical in-flight list requests (e.g. React Strict Mode remount in dev).
+// 对相同查询参数的进行中列表请求去重（例如开发环境 React Strict Mode 重复挂载）。
+let usersListInflight: { key: string; promise: Promise<ListUsersResponse> } | null = null;
+
+function usersListKey(page: number, statusFilter: string, roleFilter: string, search: string) {
+  return `${page}\x1e${statusFilter}\x1e${roleFilter}\x1e${search}`;
+}
+
+function requestUsersList(page: number, statusFilter: string, roleFilter: string, search: string) {
   return listUsers({
     page,
     page_size: defaultPageSize,
@@ -34,6 +42,20 @@ function fetchUsersForView(page: number, statusFilter: string, roleFilter: strin
     role: roleFilter || undefined,
     search: search || undefined
   });
+}
+
+function loadUsersList(page: number, statusFilter: string, roleFilter: string, search: string) {
+  const key = usersListKey(page, statusFilter, roleFilter, search);
+  if (usersListInflight?.key === key) {
+    return usersListInflight.promise;
+  }
+  const promise = requestUsersList(page, statusFilter, roleFilter, search).finally(() => {
+    if (usersListInflight?.promise === promise) {
+      usersListInflight = null;
+    }
+  });
+  usersListInflight = { key, promise };
+  return promise;
 }
 
 export function StudioUsersPage() {
@@ -62,7 +84,9 @@ export function StudioUsersPage() {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const result = await fetchUsersForView(page, statusFilter, roleFilter, search);
+      // Always hit the network after mutations; do not share the in-flight dedupe slot.
+      // 创建/更新/删除后必须重新拉取列表，不走进行中去重，避免拿到陈旧 Promise。
+      const result = await requestUsersList(page, statusFilter, roleFilter, search);
       setData(result);
     } catch (error) {
       setMessage({ tone: "error", text: humanizeApiError(error) });
@@ -72,21 +96,21 @@ export function StudioUsersPage() {
   }, [page, statusFilter, roleFilter, search]);
 
   useEffect(() => {
-    let ignore = false;
+    let active = true;
 
-    fetchUsersForView(page, statusFilter, roleFilter, search)
+    loadUsersList(page, statusFilter, roleFilter, search)
       .then((result) => {
-        if (!ignore) setData(result);
+        if (active) setData(result);
       })
       .catch((error: unknown) => {
-        if (!ignore) setMessage({ tone: "error", text: humanizeApiError(error) });
+        if (active) setMessage({ tone: "error", text: humanizeApiError(error) });
       })
       .finally(() => {
-        if (!ignore) setLoading(false);
+        if (active) setLoading(false);
       });
 
     return () => {
-      ignore = true;
+      active = false;
     };
   }, [page, statusFilter, roleFilter, search]);
 
