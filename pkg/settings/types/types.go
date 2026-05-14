@@ -34,6 +34,22 @@ func (s *ApplicationSettings) Validate() error {
 	return nil
 }
 
+// DefaultApplicationSettings returns the canonical empty configuration used on first boot.
+// DefaultApplicationSettings 返回首次启动用的默认配置。
+func DefaultApplicationSettings() ApplicationSettings {
+	return ApplicationSettings{
+		Email: EmailSMTPSettings{
+			Enabled:  false,
+			Host:     "",
+			Port:     587,
+			Username: "",
+			Password: "",
+			From:     "",
+			FromName: "",
+			TLS:      EmailTLSStartTLS,
+		},
+	}
+}
 
 // MergePatch merges a patch into a deep copy of base and returns the result.
 // MergePatch 将补丁合并到 base 的深拷贝并返回结果。
@@ -74,6 +90,12 @@ func MergePatch(base ApplicationSettings, patch *SettingsPatchRequest) (Applicat
 		return ApplicationSettings{}, err
 	}
 	return out, nil
+}
+
+// SettingsPatchRequest is a partial update body; only present top-level keys are merged.
+// SettingsPatchRequest 为部分更新请求体；仅出现的顶层键参与合并。
+type SettingsPatchRequest struct {
+	Email *EmailSMTPPatch `json:"email"`
 }
 
 // ParsePayload decodes JSON bytes into ApplicationSettings and validates.

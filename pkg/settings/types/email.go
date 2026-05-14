@@ -30,12 +30,6 @@ type EmailSMTPSettings struct {
 	TLS      string `json:"tls"`
 }
 
-// SettingsPatchRequest is a partial update body; only present top-level keys are merged.
-// SettingsPatchRequest 为部分更新请求体；仅出现的顶层键参与合并。
-type SettingsPatchRequest struct {
-	Email *EmailSMTPPatch `json:"email"`
-}
-
 // EmailSMTPPatch uses pointers so omitted JSON fields leave existing values unchanged.
 // EmailSMTPPatch 使用指针，JSON 省略的字段保留原值。
 type EmailSMTPPatch struct {
@@ -47,23 +41,6 @@ type EmailSMTPPatch struct {
 	From     *string `json:"from"`
 	FromName *string `json:"from_name"`
 	TLS      *string `json:"tls"`
-}
-
-// DefaultApplicationSettings returns the canonical empty configuration used on first boot.
-// DefaultApplicationSettings 返回首次启动用的默认配置。
-func DefaultApplicationSettings() ApplicationSettings {
-	return ApplicationSettings{
-		Email: EmailSMTPSettings{
-			Enabled:  false,
-			Host:     "",
-			Port:     587,
-			Username: "",
-			Password: "",
-			From:     "",
-			FromName: "",
-			TLS:      EmailTLSStartTLS,
-		},
-	}
 }
 
 func validateEmailSMTP(e *EmailSMTPSettings) error {
