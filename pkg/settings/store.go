@@ -1,6 +1,7 @@
 package settings
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -94,8 +95,8 @@ func (s *Store) EnsureSingleton(ctx context.Context, initial settingtypes.Applic
 	return nil
 }
 
-// Save persists settings and increments revision inside a row-lock transaction.
-// Save 在行锁事务内持久化设置并递增 revision。
+// Save persists settings inside a row-lock transaction and bumps revision only when the normalized payload changes.
+// Save 在行锁事务内持久化设置；仅当规范化后的 payload 发生变化时才递增 revision。
 func (s *Store) Save(ctx context.Context, next settingtypes.ApplicationSettings) (int64, error) {
 	if err := next.Validate(); err != nil {
 		return 0, err
@@ -111,6 +112,18 @@ func (s *Store) Save(ctx context.Context, next settingtypes.ApplicationSettings)
 			Where("id = ?", 1).
 			First(&row).Error; err != nil {
 			return fmt.Errorf("lock application settings: %w", err)
+		}
+		current, err := settingtypes.ParsePayload(row.Payload)
+		if err != nil {
+			return err
+		}
+		rawCurrent, err := settingtypes.MarshalPayload(current)
+		if err != nil {
+			return err
+		}
+		if bytes.Equal(raw, rawCurrent) {
+			savedRev = row.Revision
+			return nil
 		}
 		nextRev := row.Revision + 1
 		now := time.Now()
@@ -129,8 +142,8 @@ func (s *Store) Save(ctx context.Context, next settingtypes.ApplicationSettings)
 	return savedRev, nil
 }
 
-// Patch locks the singleton row, merges the patch against the latest payload, and increments revision.
-// Patch 锁定单行配置，基于最新 payload 合并补丁，并递增 revision。
+// Patch locks the singleton row, merges the patch against the latest payload, and bumps revision only when the merged payload changes.
+// Patch 锁定单行配置并合并补丁；仅当合并后的规范化 payload 发生变化时才递增 revision。
 func (s *Store) Patch(ctx context.Context, patch *settingtypes.SettingsPatchRequest) (settingtypes.ApplicationSettings, int64, error) {
 	var saved settingtypes.ApplicationSettings
 	var savedRev int64
@@ -152,6 +165,15 @@ func (s *Store) Patch(ctx context.Context, patch *settingtypes.SettingsPatchRequ
 		raw, err := settingtypes.MarshalPayload(next)
 		if err != nil {
 			return err
+		}
+		rawCurrent, err := settingtypes.MarshalPayload(current)
+		if err != nil {
+			return err
+		}
+		if bytes.Equal(raw, rawCurrent) {
+			saved = next
+			savedRev = row.Revision
+			return nil
 		}
 		nextRev := row.Revision + 1
 		now := time.Now()

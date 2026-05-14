@@ -125,6 +125,38 @@ func TestPatchMergesAgainstLockedLatestPayload(t *testing.T) {
 	assertSQLExpectations(t, mock)
 }
 
+func TestPatchNoOpSkipsUpdate(t *testing.T) {
+	db, mock, cleanup := newMockSettingsDB(t)
+	defer cleanup()
+
+	now := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+	payload := []byte(`{"email":{"enabled":false,"host":"old.example.com","port":587,"username":"robot","password":"secret","from":"","from_name":"","tls":"starttls"}}`)
+	host := "old.example.com"
+	patch := &settingtypes.SettingsPatchRequest{
+		Email: &settingtypes.EmailSMTPPatch{Host: &host},
+	}
+
+	mock.ExpectBegin()
+	mock.ExpectQuery(regexp.MustCompile(`SELECT .* FROM "setting"\."application_settings".*FOR UPDATE`).String()).
+		WithArgs(1, 1).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "revision", "payload", "created_at", "updated_at", "deleted_at"}).
+			AddRow(1, 2, payload, now, now, nil))
+	mock.ExpectCommit()
+
+	store := pkgsettings.NewStore(db)
+	next, rev, err := store.Patch(context.Background(), patch)
+	if err != nil {
+		t.Fatalf("Patch: %v", err)
+	}
+	if rev != 2 {
+		t.Fatalf("revision = %d, want 2 (unchanged)", rev)
+	}
+	if next.Email.Host != "old.example.com" {
+		t.Fatalf("email.host = %q", next.Email.Host)
+	}
+	assertSQLExpectations(t, mock)
+}
+
 // Ensure model table name is wired for GORM queries.
 // 确保 GORM 使用正确的表名。
 func TestApplicationSettingTableName(t *testing.T) {

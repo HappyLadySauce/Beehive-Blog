@@ -3,7 +3,6 @@
 package types
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/mail"
@@ -17,12 +16,6 @@ const (
 	EmailTLSStartTLS = "starttls"
 	EmailTLSDirect   = "tls"
 )
-
-// ApplicationSettings is the validated JSON shape stored in setting.application_settings.payload.
-// ApplicationSettings 为写入 setting.application_settings.payload 的已校验 JSON 形态。
-type ApplicationSettings struct {
-	Email EmailSMTPSettings `json:"email"`
-}
 
 // EmailSMTPSettings holds SMTP transport options persisted in the database.
 // EmailSMTPSettings 保存于数据库的 SMTP 传输选项。
@@ -73,27 +66,6 @@ func DefaultApplicationSettings() ApplicationSettings {
 	}
 }
 
-// Normalize fills defaults for omitted JSON fields after decode.
-// Normalize 在解码后为缺省字段填充默认值。
-func (s *ApplicationSettings) Normalize() {
-	if s.Email.Port <= 0 {
-		s.Email.Port = 587
-	}
-	if strings.TrimSpace(s.Email.TLS) == "" {
-		s.Email.TLS = EmailTLSStartTLS
-	}
-}
-
-// Validate checks business rules for the full settings document.
-// Validate 校验整份设置文档的业务规则。
-func (s *ApplicationSettings) Validate() error {
-	s.Normalize()
-	if err := validateEmailSMTP(&s.Email); err != nil {
-		return err
-	}
-	return nil
-}
-
 func validateEmailSMTP(e *EmailSMTPSettings) error {
 	tls := strings.TrimSpace(strings.ToLower(e.TLS))
 	switch tls {
@@ -126,69 +98,4 @@ func validateEmailSMTP(e *EmailSMTPSettings) error {
 // ValidateForSend 在建立网络连接前校验 SMTP 设置。
 func (e EmailSMTPSettings) ValidateForSend() error {
 	return validateEmailSMTP(&e)
-}
-
-// MergePatch merges a patch into a deep copy of base and returns the result.
-// MergePatch 将补丁合并到 base 的深拷贝并返回结果。
-func MergePatch(base ApplicationSettings, patch *SettingsPatchRequest) (ApplicationSettings, error) {
-	if patch == nil {
-		return base, errors.New("patch is nil")
-	}
-	out := base
-	if patch.Email != nil {
-		p := patch.Email
-		if p.Enabled != nil {
-			out.Email.Enabled = *p.Enabled
-		}
-		if p.Host != nil {
-			out.Email.Host = *p.Host
-		}
-		if p.Port != nil {
-			out.Email.Port = *p.Port
-		}
-		if p.Username != nil {
-			out.Email.Username = *p.Username
-		}
-		if p.Password != nil {
-			out.Email.Password = *p.Password
-		}
-		if p.From != nil {
-			out.Email.From = *p.From
-		}
-		if p.FromName != nil {
-			out.Email.FromName = *p.FromName
-		}
-		if p.TLS != nil {
-			out.Email.TLS = *p.TLS
-		}
-	}
-	out.Normalize()
-	if err := out.Validate(); err != nil {
-		return ApplicationSettings{}, err
-	}
-	return out, nil
-}
-
-// ParsePayload decodes JSON bytes into ApplicationSettings and validates.
-// ParsePayload 将 JSON 字节解码为 ApplicationSettings 并校验。
-func ParsePayload(raw []byte) (ApplicationSettings, error) {
-	if len(raw) == 0 || string(raw) == "null" {
-		s := DefaultApplicationSettings()
-		return s, s.Validate()
-	}
-	var s ApplicationSettings
-	if err := json.Unmarshal(raw, &s); err != nil {
-		return ApplicationSettings{}, fmt.Errorf("decode settings payload: %w", err)
-	}
-	s.Normalize()
-	if err := s.Validate(); err != nil {
-		return ApplicationSettings{}, err
-	}
-	return s, nil
-}
-
-// MarshalPayload serializes settings to JSON for persistence.
-// MarshalPayload 将设置序列化为 JSON 以便持久化。
-func MarshalPayload(s ApplicationSettings) ([]byte, error) {
-	return json.Marshal(s)
 }
