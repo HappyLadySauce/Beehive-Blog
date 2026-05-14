@@ -24,12 +24,12 @@ describe("parseBaseResponse", () => {
       { status: 429, headers: { "content-type": "application/json" } }
     );
 
-    await expect(parseBaseResponse(response)).rejects.toMatchObject<ApiError>({
+    await expect(parseBaseResponse(response)).rejects.toMatchObject({
       name: "ApiError",
       status: 429,
       code: 429,
       message: "rate limited"
-    });
+    } satisfies Partial<ApiError>);
   });
 
   it("throws ApiError when the server returns non-json content", async () => {
@@ -38,10 +38,10 @@ describe("parseBaseResponse", () => {
       headers: { "content-type": "text/plain" }
     });
 
-    await expect(parseBaseResponse(response)).rejects.toMatchObject<ApiError>({
+    await expect(parseBaseResponse(response)).rejects.toMatchObject({
       status: 502,
       code: 502,
       message: "API returned an invalid response"
-    });
+    } satisfies Partial<ApiError>);
   });
 });

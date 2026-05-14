@@ -44,5 +44,14 @@ func Init(svcCtx *svc.ServiceContext) error {
 	users := router.V1().Group("/users")
 
 	users.POST("/register", rl.GinMiddleware(), u.Register)
+
+	adminUsers := users.Group("")
+	adminUsers.Use(middleware.AuthMiddleware(svcCtx), middleware.RequireRole("admin"))
+	adminUsers.GET("", u.List)
+	adminUsers.POST("", u.Create)
+	adminUsers.GET("/:id", u.Get)
+	adminUsers.PATCH("/:id", u.Update)
+	adminUsers.DELETE("/:id", u.Delete)
+
 	return nil
 }

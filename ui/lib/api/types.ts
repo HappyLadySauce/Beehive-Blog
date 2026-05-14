@@ -151,3 +151,61 @@ export type SettingsEmailTestRequest = {
 export type SettingsEmailTestResponse = {
   recipient: string;
 };
+
+export type UserItem = {
+  id: number;
+  username: string;
+  email: string | null;
+  nickname: string | null;
+  phone: string | null;
+  role: string;
+  status: string;
+  last_login_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ListUsersRequest = {
+  page?: number;
+  page_size?: number;
+  status?: string;
+  role?: string;
+  search?: string;
+};
+
+export type ListUsersResponse = {
+  items: UserItem[];
+  total: number;
+  page: number;
+  page_size: number;
+};
+
+export type UserDetailResponse = UserItem & {
+  avatar_attachment_id: number | null;
+};
+
+export type CreateUserRequest = {
+  username: string;
+  password?: string;
+  email?: string;
+  nickname?: string;
+  phone?: string;
+  role?: string;
+  status?: string;
+};
+
+export type CreateUserResponse = {
+  id: number;
+};
+
+export type UpdateUserRequest = {
+  username?: string;
+  email?: string | null;
+  nickname?: string | null;
+  phone?: string | null;
+  role?: string;
+  status?: string;
+  password?: string;
+};
+
+export type DeleteUserResponse = Record<string, never>;

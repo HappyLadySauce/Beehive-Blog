@@ -427,6 +427,105 @@
   padding: 20px;
 }
 
+.table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.table th,
+.table td {
+  border-bottom: 1px solid var(--line);
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.table th {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.tableActions {
+  display: flex;
+  gap: 8px;
+}
+
+.filterBar {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.filterBar select {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  min-height: 44px;
+  padding: 10px 12px;
+}
+
+.searchInput {
+  min-width: 240px;
+  max-width: 320px;
+}
+
+.searchInput input {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  min-height: 44px;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+.overlay {
+  align-items: center;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  position: fixed;
+  z-index: 100;
+}
+
+.modal {
+  background: white;
+  border-radius: var(--radius);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  max-height: 90vh;
+  max-width: 520px;
+  overflow-y: auto;
+  padding: 24px;
+  width: 100%;
+}
+
+.modal h3 {
+  margin: 0;
+}
+
+.modal p {
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 12px 0;
+}
+
+.modalActions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.pagination {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 16px;
+}
+
 @media (max-width: 920px) {
   .layout,
   .metricGrid,
