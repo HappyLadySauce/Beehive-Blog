@@ -12,13 +12,14 @@ export type StudioSelectOption = {
 
 type StudioSelectProps = {
   ariaLabel: string;
+  className?: string;
   disabled?: boolean;
   options: readonly StudioSelectOption[];
   value: string;
   onChange: (value: string) => void;
 };
 
-export function StudioSelect({ ariaLabel, disabled = false, options, value, onChange }: StudioSelectProps) {
+export function StudioSelect({ ariaLabel, className, disabled = false, options, value, onChange }: StudioSelectProps) {
   const id = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
@@ -65,7 +66,7 @@ export function StudioSelect({ ariaLabel, disabled = false, options, value, onCh
   }
 
   return (
-    <div className={styles.selectRoot} ref={rootRef}>
+    <div className={className ? `${styles.selectRoot} ${className}` : styles.selectRoot} ref={rootRef}>
       <button
         aria-controls={`${id}-listbox`}
         aria-expanded={open}

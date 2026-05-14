@@ -17,6 +17,7 @@
   /* 与顶栏、公开页、Studio 横向内边距对齐。 */
   --shell-pad-x: clamp(20px, 3vw, 48px);
   --page-max-width: min(100%, 1680px);
+  --site-header-height: 86px;
 }
 
 * {
@@ -52,11 +53,16 @@ input {
 
 .site-header {
   align-items: center;
+  background: color-mix(in srgb, var(--bg) 94%, white);
   border-bottom: 1px solid var(--line);
   display: flex;
   gap: 24px;
   justify-content: space-between;
+  min-height: var(--site-header-height);
   padding: 18px var(--shell-pad-x);
+  position: sticky;
+  top: 0;
+  z-index: 200;
 }
 
 .brand,

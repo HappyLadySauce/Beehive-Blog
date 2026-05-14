@@ -238,6 +238,7 @@ export function StudioUsersPage() {
         </div>
         <StudioSelect
           ariaLabel="按状态筛选"
+          className={styles.filterSelect}
           options={statusOptions}
           value={statusFilter}
           onChange={(value) => {
@@ -249,6 +250,7 @@ export function StudioUsersPage() {
         />
         <StudioSelect
           ariaLabel="按角色筛选"
+          className={styles.filterSelect}
           options={roleOptions}
           value={roleFilter}
           onChange={(value) => {

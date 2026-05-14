@@ -30,4 +30,21 @@ describe("StudioSelect", () => {
 
     expect(onChange).toHaveBeenCalledWith("s3");
   });
+
+  it("accepts layout class names from parent surfaces", () => {
+    render(
+      <StudioSelect
+        ariaLabel="按状态筛选"
+        className="compactSelect"
+        options={[
+          { value: "", label: "全部状态" },
+          { value: "active", label: "活跃" }
+        ]}
+        value=""
+        onChange={() => undefined}
+      />
+    );
+
+    expect(screen.getByRole("combobox", { name: "按状态筛选" }).parentElement).toHaveClass("compactSelect");
+  });
 });
