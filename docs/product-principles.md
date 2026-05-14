@@ -126,6 +126,7 @@ flowchart LR
 | 主题 | 路径 |
 | --- | --- |
 | v1 登录与注册 API 约定 | [v1/login-and-registration-rules.md](v1/login-and-registration-rules.md) |
+| v1 文件存储驱动架构 | [v1/file-storage-driver-architecture.md](v1/file-storage-driver-architecture.md) |
 | 前端 SSR / SEO / BFF | [frontend/react-ssr-seo-architecture.md](frontend/react-ssr-seo-architecture.md) |
 | Studio 布局约定 | [frontend/studio-layout-implementation-plan.md](frontend/studio-layout-implementation-plan.md) |
 | 仓库开发说明（构建、迁移、日志） | [CLAUDE.md](../CLAUDE.md) |
