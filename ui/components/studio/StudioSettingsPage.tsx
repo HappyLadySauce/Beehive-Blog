@@ -1,17 +1,25 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { ChevronDown, Github, Loader2, Mail, Save, Send, Settings } from "lucide-react";
+import { ChevronDown, Github, Loader2, Mail, Paperclip, Save, Send, Settings } from "lucide-react";
 
 import { humanizeApiError } from "@/lib/api/client";
-import { getGithubOAuth2Settings, getSettings, patchGithubOAuth2Settings, patchSettings, testEmailSettings } from "@/lib/api/settings";
-import type { EmailSettingsPublic, GithubOAuth2SettingsPublic, SettingsResponse } from "@/lib/api/types";
+import {
+  getAttachmentSettings,
+  getGithubOAuth2Settings,
+  getSettings,
+  patchAttachmentSettings,
+  patchGithubOAuth2Settings,
+  patchSettings,
+  testEmailSettings
+} from "@/lib/api/settings";
+import type { AttachmentSettingsPublic, EmailSettingsPublic, GithubOAuth2SettingsPublic, SettingsResponse } from "@/lib/api/types";
 import styles from "./Studio.module.css";
 import { StudioPanel } from "./StudioPanel";
 import { StudioTopbar } from "./StudioTopbar";
 
 type PasswordMode = "keep" | "set" | "clear";
-type SettingsSection = "email" | "github";
+type SettingsSection = "email" | "github" | "attachment";
 
 const defaultEmail: EmailSettingsPublic = {
   enabled: false,
@@ -35,8 +43,27 @@ const defaultGithubOAuth2: GithubOAuth2SettingsPublic = {
   allow_non_github_endpoints: false
 };
 
+const defaultAttachment: AttachmentSettingsPublic = {
+  default_storage: "local",
+  local_root: "data/attachments",
+  max_bytes: 10 * 1024 * 1024,
+  allowed_mime_prefixes: ["image/", "application/pdf"],
+  presign_ttl_seconds: 900,
+  s3: {
+    bucket: "",
+    upload_base_url: "",
+    download_base_url: ""
+  },
+  oss: {
+    bucket: "",
+    upload_base_url: "",
+    download_base_url: ""
+  }
+};
+
 let settingsLoadRequest: Promise<SettingsResponse> | null = null;
 let githubSettingsLoadRequest: Promise<SettingsResponse> | null = null;
+let attachmentSettingsLoadRequest: Promise<SettingsResponse> | null = null;
 
 function loadSettings() {
   if (!settingsLoadRequest) {
@@ -56,16 +83,28 @@ function loadGithubOAuth2Settings() {
   return githubSettingsLoadRequest;
 }
 
+function loadAttachmentSettings() {
+  if (!attachmentSettingsLoadRequest) {
+    attachmentSettingsLoadRequest = getAttachmentSettings().finally(() => {
+      attachmentSettingsLoadRequest = null;
+    });
+  }
+  return attachmentSettingsLoadRequest;
+}
+
 export function StudioSettingsPage() {
   const [settings, setSettings] = useState<SettingsResponse | null>(null);
   const [activeSection, setActiveSection] = useState<SettingsSection>("email");
   const [email, setEmail] = useState<EmailSettingsPublic>(defaultEmail);
   const [githubOAuth2, setGithubOAuth2] = useState<GithubOAuth2SettingsPublic>(defaultGithubOAuth2);
+  const [attachment, setAttachment] = useState<AttachmentSettingsPublic>(defaultAttachment);
+  const [mimePrefixesText, setMimePrefixesText] = useState(defaultAttachment.allowed_mime_prefixes.join("\n"));
   const [password, setPassword] = useState("");
   const [passwordMode, setPasswordMode] = useState<PasswordMode>("keep");
   const [githubSecret, setGithubSecret] = useState("");
   const [githubSecretMode, setGithubSecretMode] = useState<PasswordMode>("keep");
   const [githubAdvancedOpen, setGithubAdvancedOpen] = useState(false);
+  const [attachmentRemoteOpen, setAttachmentRemoteOpen] = useState(false);
   const [testRecipient, setTestRecipient] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -75,17 +114,20 @@ export function StudioSettingsPage() {
   useEffect(() => {
     let active = true;
 
-    Promise.all([loadSettings(), loadGithubOAuth2Settings()])
-      .then(([emailPayload, githubPayload]) => {
+    Promise.all([loadSettings(), loadGithubOAuth2Settings(), loadAttachmentSettings()])
+      .then(([emailPayload, githubPayload, attachmentPayload]) => {
         if (!active) return;
         const payload = {
           ...emailPayload,
-          revision: Math.max(emailPayload.revision, githubPayload.revision),
-          github_oauth2: githubPayload.github_oauth2 ?? emailPayload.github_oauth2 ?? defaultGithubOAuth2
+          revision: Math.max(emailPayload.revision, githubPayload.revision, attachmentPayload.revision),
+          github_oauth2: githubPayload.github_oauth2 ?? emailPayload.github_oauth2 ?? defaultGithubOAuth2,
+          attachment: attachmentPayload.attachment ?? emailPayload.attachment ?? defaultAttachment
         };
         setSettings(payload);
         setEmail(payload.email);
         setGithubOAuth2(payload.github_oauth2 ?? defaultGithubOAuth2);
+        setAttachment(payload.attachment ?? defaultAttachment);
+        setMimePrefixesText((payload.attachment ?? defaultAttachment).allowed_mime_prefixes.join("\n"));
         setTestRecipient(payload.email.from || payload.email.username);
       })
       .catch((error) => {
@@ -121,6 +163,20 @@ export function StudioSettingsPage() {
 
   function updateGithubOAuth2<K extends keyof GithubOAuth2SettingsPublic>(key: K, value: GithubOAuth2SettingsPublic[K]) {
     setGithubOAuth2((current) => ({ ...current, [key]: value }));
+  }
+
+  function updateAttachment<K extends keyof AttachmentSettingsPublic>(key: K, value: AttachmentSettingsPublic[K]) {
+    setAttachment((current) => ({ ...current, [key]: value }));
+  }
+
+  function updateAttachmentRemote(storage: "s3" | "oss", key: keyof AttachmentSettingsPublic["s3"], value: string) {
+    setAttachment((current) => ({
+      ...current,
+      [storage]: {
+        ...current[storage],
+        [key]: value
+      }
+    }));
   }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -192,6 +248,38 @@ export function StudioSettingsPage() {
     }
   }
 
+  async function onSubmitAttachment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const allowedMIMEPrefixes = parseMimePrefixes(mimePrefixesText);
+    const validation = validateAttachment(attachment, allowedMIMEPrefixes);
+    if (validation) {
+      setMessage({ tone: "error", text: validation });
+      return;
+    }
+
+    setSaving(true);
+    setMessage(null);
+    try {
+      const next = await patchAttachmentSettings({
+        default_storage: attachment.default_storage,
+        local_root: attachment.local_root,
+        max_bytes: attachment.max_bytes,
+        allowed_mime_prefixes: allowedMIMEPrefixes,
+        presign_ttl_seconds: attachment.presign_ttl_seconds,
+        s3: attachment.s3,
+        oss: attachment.oss
+      });
+      setSettings(next);
+      setAttachment(next.attachment ?? defaultAttachment);
+      setMimePrefixesText((next.attachment ?? defaultAttachment).allowed_mime_prefixes.join("\n"));
+      setMessage({ tone: "success", text: "附件设置已保存。" });
+    } catch (error) {
+      setMessage({ tone: "error", text: humanizeApiError(error) });
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function onSendTestEmail() {
     const recipient = testRecipient.trim();
     const validation = validateTestRecipient(email, recipient);
@@ -221,7 +309,7 @@ export function StudioSettingsPage() {
             保存设置
           </button>
         }
-        description="配置应用级邮件与登录集成；敏感字段只通过 BFF Cookie 会话写入。"
+        description="配置应用级邮件、登录集成与附件存储；敏感字段只通过 BFF Cookie 会话写入。"
         eyebrow="Application settings"
         title="设置"
       />
@@ -251,9 +339,21 @@ export function StudioSettingsPage() {
           <Github aria-hidden size={18} />
           GitHub OAuth2
         </button>
+        <button
+          aria-pressed={activeSection === "attachment"}
+          className={activeSection === "attachment" ? styles.segmentedTabActive : styles.segmentedTab}
+          type="button"
+          onClick={() => {
+            setActiveSection("attachment");
+            setMessage(null);
+          }}
+        >
+          <Paperclip aria-hidden size={18} />
+          Attachments
+        </button>
       </div>
 
-      <StudioPanel action={activeSection === "email" ? <Settings aria-hidden size={20} /> : <Github aria-hidden size={20} />} title={activeSection === "email" ? "邮件 SMTP" : "GitHub OAuth2"}>
+      <StudioPanel action={settingsPanelIcon(activeSection)} title={settingsPanelTitle(activeSection)}>
         {loading ? (
           <div className={styles.emptyState} role="status">
             <Loader2 aria-hidden className="spin" size={24} />
@@ -385,7 +485,7 @@ export function StudioSettingsPage() {
               </p>
             ) : null}
           </form>
-          ) : (
+          ) : activeSection === "github" ? (
           <form className={styles.formGrid} id="studio-settings-form" onSubmit={onSubmitGithubOAuth2}>
             <label className={styles.checkboxField}>
               <input
@@ -487,11 +587,155 @@ export function StudioSettingsPage() {
               </p>
             ) : null}
           </form>
+          ) : (
+          <form className={styles.formGrid} id="studio-settings-form" onSubmit={onSubmitAttachment}>
+            <label className={styles.field}>
+              <span>默认存储</span>
+              <select value={attachment.default_storage} onChange={(event) => updateAttachment("default_storage", event.target.value)}>
+                <option value="local">Local</option>
+                <option value="s3">S3</option>
+                <option value="oss">OSS</option>
+              </select>
+            </label>
+
+            <label className={styles.field}>
+              <span>本地存储目录</span>
+              <input value={attachment.local_root} onChange={(event) => updateAttachment("local_root", event.target.value)} />
+            </label>
+
+            <label className={styles.field}>
+              <span>最大上传大小 (MB)</span>
+              <input
+                min={1}
+                step={1}
+                type="number"
+                value={bytesToMegabytes(attachment.max_bytes)}
+                onChange={(event) => updateAttachment("max_bytes", megabytesToBytes(Number(event.target.value)))}
+              />
+            </label>
+
+            <label className={styles.field}>
+              <span>预签名有效期 (秒)</span>
+              <input
+                min={1}
+                step={1}
+                type="number"
+                value={attachment.presign_ttl_seconds}
+                onChange={(event) => updateAttachment("presign_ttl_seconds", Number(event.target.value))}
+              />
+            </label>
+
+            <label className={styles.fieldFull}>
+              <span>允许的 MIME 前缀</span>
+              <textarea
+                aria-label="允许的 MIME 前缀"
+                className={styles.textarea}
+                value={mimePrefixesText}
+                onChange={(event) => setMimePrefixesText(event.target.value)}
+              />
+              <span className={styles.muted}>每行一个前缀，例如 image/ 或 application/pdf。</span>
+            </label>
+
+            <div className={`${styles.metaRow} ${styles.fieldFull}`}>
+              <span className={`${styles.statusPill} ${attachment.default_storage === "local" ? styles.statusReady : styles.statusPending}`}>
+                {attachment.default_storage}
+              </span>
+              <span className={styles.muted}>最大 {formatBytes(attachment.max_bytes)}，预签名 {attachment.presign_ttl_seconds} 秒。</span>
+              {settings ? <span className={styles.muted}>Revision {settings.revision}</span> : null}
+            </div>
+
+            <button
+              aria-expanded={attachmentRemoteOpen}
+              className={`${styles.disclosureButton} ${styles.fieldFull}`}
+              type="button"
+              onClick={() => setAttachmentRemoteOpen((open) => !open)}
+            >
+              <ChevronDown aria-hidden className={attachmentRemoteOpen ? styles.disclosureIconOpen : styles.disclosureIcon} size={18} />
+              远端存储设置
+            </button>
+
+            {attachmentRemoteOpen ? (
+              <>
+                <div className={`${styles.subsectionTitle} ${styles.fieldFull}`}>S3</div>
+                <label className={styles.field}>
+                  <span>S3 Bucket</span>
+                  <input value={attachment.s3.bucket} onChange={(event) => updateAttachmentRemote("s3", "bucket", event.target.value)} />
+                </label>
+                <label className={styles.field}>
+                  <span>S3 Upload Base URL</span>
+                  <input value={attachment.s3.upload_base_url} onChange={(event) => updateAttachmentRemote("s3", "upload_base_url", event.target.value)} />
+                </label>
+                <label className={styles.fieldFull}>
+                  <span>S3 Download Base URL</span>
+                  <input value={attachment.s3.download_base_url} onChange={(event) => updateAttachmentRemote("s3", "download_base_url", event.target.value)} />
+                </label>
+
+                <div className={`${styles.subsectionTitle} ${styles.fieldFull}`}>OSS</div>
+                <label className={styles.field}>
+                  <span>OSS Bucket</span>
+                  <input value={attachment.oss.bucket} onChange={(event) => updateAttachmentRemote("oss", "bucket", event.target.value)} />
+                </label>
+                <label className={styles.field}>
+                  <span>OSS Upload Base URL</span>
+                  <input value={attachment.oss.upload_base_url} onChange={(event) => updateAttachmentRemote("oss", "upload_base_url", event.target.value)} />
+                </label>
+                <label className={styles.fieldFull}>
+                  <span>OSS Download Base URL</span>
+                  <input value={attachment.oss.download_base_url} onChange={(event) => updateAttachmentRemote("oss", "download_base_url", event.target.value)} />
+                </label>
+              </>
+            ) : null}
+
+            {message ? (
+              <p
+                className={`${styles.message} ${message.tone === "success" ? styles.messageSuccess : styles.messageError}`}
+                role={message.tone === "error" ? "alert" : "status"}
+              >
+                {message.text}
+              </p>
+            ) : null}
+          </form>
           )
         )}
       </StudioPanel>
     </>
   );
+}
+
+function settingsPanelTitle(section: SettingsSection) {
+  if (section === "github") return "GitHub OAuth2";
+  if (section === "attachment") return "附件存储";
+  return "邮件 SMTP";
+}
+
+function settingsPanelIcon(section: SettingsSection) {
+  if (section === "github") return <Github aria-hidden size={20} />;
+  if (section === "attachment") return <Paperclip aria-hidden size={20} />;
+  return <Settings aria-hidden size={20} />;
+}
+
+function parseMimePrefixes(value: string) {
+  return value
+    .split(/\r?\n|,/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function bytesToMegabytes(value: number) {
+  if (!Number.isFinite(value) || value <= 0) return 1;
+  return Math.max(1, Math.round(value / 1024 / 1024));
+}
+
+function megabytesToBytes(value: number) {
+  if (!Number.isFinite(value) || value <= 0) return 0;
+  return Math.round(value * 1024 * 1024);
+}
+
+function formatBytes(value: number) {
+  if (!Number.isFinite(value) || value <= 0) return "0 MB";
+  const mb = value / 1024 / 1024;
+  if (mb >= 1) return `${Number.isInteger(mb) ? mb : mb.toFixed(1)} MB`;
+  return `${value} bytes`;
 }
 
 function validateEmail(email: EmailSettingsPublic) {
@@ -525,6 +769,60 @@ function validateTestRecipient(email: EmailSettingsPublic, recipient: string) {
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)) {
     return "测试收件人邮箱格式不正确。";
+  }
+  return null;
+}
+
+function validateAttachment(attachment: AttachmentSettingsPublic, allowedMIMEPrefixes: string[]) {
+  if (!["local", "s3", "oss"].includes(attachment.default_storage)) {
+    return "默认存储必须是 local、s3 或 oss。";
+  }
+  if (attachment.local_root.trim() === "") {
+    return "本地存储目录不能为空。";
+  }
+  if (!Number.isInteger(attachment.max_bytes) || attachment.max_bytes <= 0) {
+    return "最大上传大小必须大于 0。";
+  }
+  if (!Number.isInteger(attachment.presign_ttl_seconds) || attachment.presign_ttl_seconds <= 0) {
+    return "预签名有效期必须大于 0 秒。";
+  }
+  if (allowedMIMEPrefixes.length === 0) {
+    return "至少需要填写一个允许的 MIME 前缀。";
+  }
+  for (const prefix of allowedMIMEPrefixes) {
+    if (prefix.trim() === "") {
+      return "允许的 MIME 前缀不能包含空值。";
+    }
+  }
+  return validateRemoteAttachment("S3", attachment.s3) ?? validateRemoteAttachment("OSS", attachment.oss);
+}
+
+function validateRemoteAttachment(label: string, remote: AttachmentSettingsPublic["s3"]) {
+  const values = [remote.bucket, remote.upload_base_url, remote.download_base_url].map((value) => value.trim());
+  if (values.every((value) => value === "")) {
+    return null;
+  }
+  if (remote.bucket.trim() === "") {
+    return `${label} Bucket 不能为空。`;
+  }
+  if (remote.upload_base_url.trim() === "") {
+    return `${label} Upload Base URL 不能为空。`;
+  }
+  if (remote.download_base_url.trim() === "") {
+    return `${label} Download Base URL 不能为空。`;
+  }
+  for (const [urlLabel, value] of [
+    [`${label} Upload Base URL`, remote.upload_base_url],
+    [`${label} Download Base URL`, remote.download_base_url]
+  ] as const) {
+    try {
+      const parsed = new URL(value);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        return `${urlLabel} 必须使用 http 或 https。`;
+      }
+    } catch {
+      return `${urlLabel} 格式不正确。`;
+    }
   }
   return null;
 }

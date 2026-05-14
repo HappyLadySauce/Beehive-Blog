@@ -5,13 +5,17 @@ import { StudioSettingsPage } from "./StudioSettingsPage";
 
 const getSettings = vi.hoisted(() => vi.fn());
 const getGithubOAuth2Settings = vi.hoisted(() => vi.fn());
+const getAttachmentSettings = vi.hoisted(() => vi.fn());
 const patchSettings = vi.hoisted(() => vi.fn());
 const patchGithubOAuth2Settings = vi.hoisted(() => vi.fn());
+const patchAttachmentSettings = vi.hoisted(() => vi.fn());
 const testEmailSettings = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api/settings", () => ({
+  getAttachmentSettings,
   getGithubOAuth2Settings,
   getSettings,
+  patchAttachmentSettings,
   patchGithubOAuth2Settings,
   patchSettings,
   testEmailSettings
@@ -38,6 +42,15 @@ const baseSettings = {
     token_url: "https://github.com/login/oauth/access_token",
     user_info_url: "https://api.github.com/user",
     allow_non_github_endpoints: false
+  },
+  attachment: {
+    default_storage: "local",
+    local_root: "data/attachments",
+    max_bytes: 10485760,
+    allowed_mime_prefixes: ["image/", "application/pdf"],
+    presign_ttl_seconds: 900,
+    s3: { bucket: "", upload_base_url: "", download_base_url: "" },
+    oss: { bucket: "", upload_base_url: "", download_base_url: "" }
   }
 };
 
@@ -45,13 +58,17 @@ describe("StudioSettingsPage", () => {
   beforeEach(() => {
     getSettings.mockReset();
     getGithubOAuth2Settings.mockReset();
+    getAttachmentSettings.mockReset();
     patchSettings.mockReset();
     patchGithubOAuth2Settings.mockReset();
+    patchAttachmentSettings.mockReset();
     testEmailSettings.mockReset();
     getSettings.mockResolvedValue(baseSettings);
     getGithubOAuth2Settings.mockResolvedValue(baseSettings);
+    getAttachmentSettings.mockResolvedValue(baseSettings);
     patchSettings.mockResolvedValue({ ...baseSettings, revision: 6 });
     patchGithubOAuth2Settings.mockResolvedValue({ ...baseSettings, revision: 6 });
+    patchAttachmentSettings.mockResolvedValue({ ...baseSettings, revision: 6 });
     testEmailSettings.mockResolvedValue({ recipient: "reader@example.com" });
   });
 
@@ -178,6 +195,61 @@ describe("StudioSettingsPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "高级设置" }));
     expect(screen.getByLabelText("Auth URL")).toHaveValue("https://github.com/login/oauth/authorize");
     expect(screen.getByLabelText("允许非 GitHub 端点")).not.toBeChecked();
+  });
+
+  it("switches to attachment settings and renders storage defaults", async () => {
+    render(<StudioSettingsPage />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Attachments" })).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "Attachments" }));
+
+    expect(screen.getByLabelText("默认存储")).toHaveValue("local");
+    expect(screen.getByLabelText("本地存储目录")).toHaveValue("data/attachments");
+    expect(screen.getByLabelText("最大上传大小 (MB)")).toHaveValue(10);
+    expect(screen.getByLabelText("预签名有效期 (秒)")).toHaveValue(900);
+    expect(screen.getByLabelText("允许的 MIME 前缀")).toHaveValue("image/\napplication/pdf");
+  });
+
+  it("saves attachment settings with parsed MIME prefixes", async () => {
+    render(<StudioSettingsPage />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Attachments" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Attachments" }));
+
+    fireEvent.change(screen.getByLabelText("默认存储"), { target: { value: "s3" } });
+    fireEvent.change(screen.getByLabelText("最大上传大小 (MB)"), { target: { value: "20" } });
+    fireEvent.change(screen.getByLabelText("允许的 MIME 前缀"), { target: { value: "image/\ntext/" } });
+    fireEvent.click(screen.getByRole("button", { name: "保存设置" }));
+
+    await waitFor(() => expect(patchAttachmentSettings).toHaveBeenCalled());
+    expect(patchAttachmentSettings.mock.calls[0][0]).toMatchObject({
+      default_storage: "s3",
+      max_bytes: 20971520,
+      allowed_mime_prefixes: ["image/", "text/"]
+    });
+    expect(await screen.findByText("附件设置已保存。")).toBeInTheDocument();
+  });
+
+  it("keeps attachment remote settings collapsed until expanded", async () => {
+    render(<StudioSettingsPage />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Attachments" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Attachments" }));
+
+    expect(screen.queryByLabelText("S3 Bucket")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "远端存储设置" }));
+    expect(screen.getByLabelText("S3 Bucket")).toHaveValue("");
+    expect(screen.getByLabelText("OSS Bucket")).toHaveValue("");
+  });
+
+  it("validates incomplete attachment remote settings before saving", async () => {
+    render(<StudioSettingsPage />);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Attachments" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Attachments" }));
+    fireEvent.click(screen.getByRole("button", { name: "远端存储设置" }));
+    fireEvent.change(screen.getByLabelText("S3 Upload Base URL"), { target: { value: "https://s3.example.com/upload" } });
+    fireEvent.click(screen.getByRole("button", { name: "保存设置" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("S3 Bucket 不能为空。");
+    expect(patchAttachmentSettings).not.toHaveBeenCalled();
   });
 
   it("validates enabled SMTP before saving", async () => {
