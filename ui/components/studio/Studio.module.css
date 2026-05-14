@@ -323,7 +323,6 @@
 
 .field input,
 .fieldFull input,
-.field select,
 .textarea {
   background: white;
   border: 1px solid var(--line);
@@ -331,6 +330,91 @@
   min-height: 44px;
   padding: 10px 12px;
   width: 100%;
+}
+
+.selectRoot {
+  position: relative;
+  width: 100%;
+}
+
+.selectTrigger {
+  align-items: center;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--ink);
+  display: flex;
+  font: inherit;
+  gap: 10px;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 10px 12px;
+  text-align: left;
+  width: 100%;
+}
+
+.selectTrigger:hover,
+.selectTrigger:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px #d8f1ec;
+  outline: none;
+}
+
+.selectTrigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.selectIcon,
+.selectIconOpen {
+  color: var(--muted);
+  flex: 0 0 auto;
+  transition: transform 160ms ease;
+}
+
+.selectIconOpen {
+  transform: rotate(180deg);
+}
+
+.selectPopover {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
+  display: grid;
+  gap: 4px;
+  left: 0;
+  margin-top: 6px;
+  padding: 6px;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 120;
+}
+
+.selectOption,
+.selectOptionActive {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: calc(var(--radius) - 2px);
+  color: var(--ink);
+  display: flex;
+  font: inherit;
+  gap: 10px;
+  justify-content: space-between;
+  min-height: 36px;
+  padding: 8px 10px;
+  text-align: left;
+  width: 100%;
+}
+
+.selectOption:hover,
+.selectOption:focus-visible,
+.selectOptionActive {
+  background: #edf7f5;
+  color: var(--accent-dark);
+  outline: none;
 }
 
 .textarea {
@@ -456,14 +540,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-}
-
-.filterBar select {
-  background: white;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  min-height: 44px;
-  padding: 10px 12px;
 }
 
 .searchInput {

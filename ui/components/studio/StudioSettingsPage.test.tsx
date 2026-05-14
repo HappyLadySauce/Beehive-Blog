@@ -54,6 +54,11 @@ const baseSettings = {
   }
 };
 
+function chooseOption(label: string, option: string) {
+  fireEvent.click(screen.getByRole("combobox", { name: label }));
+  fireEvent.click(screen.getByRole("option", { name: option }));
+}
+
 describe("StudioSettingsPage", () => {
   beforeEach(() => {
     getSettings.mockReset();
@@ -203,7 +208,7 @@ describe("StudioSettingsPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Attachments" }));
 
-    expect(screen.getByLabelText("默认存储")).toHaveValue("local");
+    expect(screen.getByRole("combobox", { name: "默认存储" })).toHaveTextContent("Local");
     expect(screen.getByLabelText("本地存储目录")).toHaveValue("data/attachments");
     expect(screen.getByLabelText("最大上传大小 (MB)")).toHaveValue(10);
     expect(screen.getByLabelText("预签名有效期 (秒)")).toHaveValue(900);
@@ -215,7 +220,7 @@ describe("StudioSettingsPage", () => {
     await waitFor(() => expect(screen.getByRole("button", { name: "Attachments" })).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: "Attachments" }));
 
-    fireEvent.change(screen.getByLabelText("默认存储"), { target: { value: "s3" } });
+    chooseOption("默认存储", "S3");
     fireEvent.change(screen.getByLabelText("最大上传大小 (MB)"), { target: { value: "20" } });
     fireEvent.change(screen.getByLabelText("允许的 MIME 前缀"), { target: { value: "image/\ntext/" } });
     fireEvent.click(screen.getByRole("button", { name: "保存设置" }));

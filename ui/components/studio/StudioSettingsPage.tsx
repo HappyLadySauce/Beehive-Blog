@@ -16,6 +16,7 @@ import {
 import type { AttachmentSettingsPublic, EmailSettingsPublic, GithubOAuth2SettingsPublic, SettingsResponse } from "@/lib/api/types";
 import styles from "./Studio.module.css";
 import { StudioPanel } from "./StudioPanel";
+import { StudioSelect } from "./StudioSelect";
 import { StudioTopbar } from "./StudioTopbar";
 
 type PasswordMode = "keep" | "set" | "clear";
@@ -60,6 +61,18 @@ const defaultAttachment: AttachmentSettingsPublic = {
     download_base_url: ""
   }
 };
+
+const tlsOptions = [
+  { value: "none", label: "None" },
+  { value: "starttls", label: "STARTTLS" },
+  { value: "tls", label: "TLS" }
+];
+
+const storageOptions = [
+  { value: "local", label: "Local" },
+  { value: "s3", label: "S3" },
+  { value: "oss", label: "OSS" }
+];
 
 let settingsLoadRequest: Promise<SettingsResponse> | null = null;
 let githubSettingsLoadRequest: Promise<SettingsResponse> | null = null;
@@ -400,11 +413,7 @@ export function StudioSettingsPage() {
 
             <label className={styles.field}>
               <span>TLS 模式</span>
-              <select value={email.tls} onChange={(event) => updateEmail("tls", event.target.value)}>
-                <option value="none">None</option>
-                <option value="starttls">STARTTLS</option>
-                <option value="tls">TLS</option>
-              </select>
+              <StudioSelect ariaLabel="TLS 模式" options={tlsOptions} value={email.tls} onChange={(value) => updateEmail("tls", value)} />
             </label>
 
             <label className={styles.field}>
@@ -591,11 +600,12 @@ export function StudioSettingsPage() {
           <form className={styles.formGrid} id="studio-settings-form" onSubmit={onSubmitAttachment}>
             <label className={styles.field}>
               <span>默认存储</span>
-              <select value={attachment.default_storage} onChange={(event) => updateAttachment("default_storage", event.target.value)}>
-                <option value="local">Local</option>
-                <option value="s3">S3</option>
-                <option value="oss">OSS</option>
-              </select>
+              <StudioSelect
+                ariaLabel="默认存储"
+                options={storageOptions}
+                value={attachment.default_storage}
+                onChange={(value) => updateAttachment("default_storage", value)}
+              />
             </label>
 
             <label className={styles.field}>

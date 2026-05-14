@@ -8,6 +8,7 @@ import type { ListUsersResponse, UpdateUserRequest, UserItem } from "@/lib/api/t
 import { createUser, deleteUser, listUsers, updateUser } from "@/lib/api/users";
 import styles from "./Studio.module.css";
 import { StudioPanel } from "./StudioPanel";
+import { StudioSelect } from "./StudioSelect";
 import { StudioTopbar } from "./StudioTopbar";
 
 const defaultPageSize = 20;
@@ -235,34 +236,28 @@ export function StudioUsersPage() {
             }}
           />
         </div>
-        <select
-          aria-label="按状态筛选"
+        <StudioSelect
+          ariaLabel="按状态筛选"
+          options={statusOptions}
           value={statusFilter}
-          onChange={(event) => {
+          onChange={(value) => {
             setLoading(true);
             setMessage(null);
-            setStatusFilter(event.target.value);
+            setStatusFilter(value);
             setPage(1);
           }}
-        >
-          {statusOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
-        <select
-          aria-label="按角色筛选"
+        />
+        <StudioSelect
+          ariaLabel="按角色筛选"
+          options={roleOptions}
           value={roleFilter}
-          onChange={(event) => {
+          onChange={(value) => {
             setLoading(true);
             setMessage(null);
-            setRoleFilter(event.target.value);
+            setRoleFilter(value);
             setPage(1);
           }}
-        >
-          {roleOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
+        />
       </div>
 
       <StudioPanel title="用户列表">
@@ -434,19 +429,11 @@ export function StudioUsersPage() {
               </label>
               <label className={styles.field}>
                 <span>角色</span>
-                <select value={formRole} onChange={(event) => setFormRole(event.target.value)}>
-                  <option value="member">成员</option>
-                  <option value="admin">管理员</option>
-                </select>
+                <StudioSelect ariaLabel="角色" options={roleOptions.slice(1)} value={formRole} onChange={setFormRole} />
               </label>
               <label className={styles.field}>
                 <span>状态</span>
-                <select value={formStatus} onChange={(event) => setFormStatus(event.target.value)}>
-                  <option value="active">活跃</option>
-                  <option value="disabled">已禁用</option>
-                  <option value="locked">已锁定</option>
-                  <option value="pending">待激活</option>
-                </select>
+                <StudioSelect ariaLabel="状态" options={statusOptions.slice(1)} value={formStatus} onChange={setFormStatus} />
               </label>
               <div className={`${styles.modalActions} ${styles.fieldFull}`}>
                 <button className="secondary-button" type="button" onClick={closeForm}>
