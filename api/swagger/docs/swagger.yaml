@@ -8,6 +8,62 @@ definitions:
       message:
         type: string
     type: object
+  v1.AttachmentPatchJSON:
+    properties:
+      allowed_mime_prefixes:
+        items:
+          type: string
+        type: array
+      default_storage:
+        type: string
+      local_root:
+        type: string
+      max_bytes:
+        type: integer
+      oss:
+        $ref: '#/definitions/v1.AttachmentRemotePatchJSON'
+      presign_ttl_seconds:
+        type: integer
+      s3:
+        $ref: '#/definitions/v1.AttachmentRemotePatchJSON'
+    type: object
+  v1.AttachmentRemotePatchJSON:
+    properties:
+      bucket:
+        type: string
+      download_base_url:
+        type: string
+      upload_base_url:
+        type: string
+    type: object
+  v1.AttachmentRemoteSettingsPublic:
+    properties:
+      bucket:
+        type: string
+      download_base_url:
+        type: string
+      upload_base_url:
+        type: string
+    type: object
+  v1.AttachmentSettingsPublic:
+    properties:
+      allowed_mime_prefixes:
+        items:
+          type: string
+        type: array
+      default_storage:
+        type: string
+      local_root:
+        type: string
+      max_bytes:
+        type: integer
+      oss:
+        $ref: '#/definitions/v1.AttachmentRemoteSettingsPublic'
+      presign_ttl_seconds:
+        type: integer
+      s3:
+        $ref: '#/definitions/v1.AttachmentRemoteSettingsPublic'
+    type: object
   v1.AuthSessionResponse:
     properties:
       exp:
@@ -53,6 +109,44 @@ definitions:
           TokenType is the credential scheme; "Bearer" for OAuth2-compatible clients.
           TokenType 为凭证类型；OAuth2 客户端固定为 "Bearer"。
         type: string
+    type: object
+  v1.CreateUserRequest:
+    properties:
+      email:
+        maxLength: 320
+        type: string
+      nickname:
+        maxLength: 128
+        type: string
+      password:
+        maxLength: 72
+        minLength: 8
+        type: string
+      phone:
+        maxLength: 16
+        type: string
+      role:
+        enum:
+        - member
+        - admin
+        type: string
+      status:
+        enum:
+        - active
+        - disabled
+        - locked
+        - pending
+        type: string
+      username:
+        maxLength: 64
+        type: string
+    required:
+    - username
+    type: object
+  v1.CreateUserResponse:
+    properties:
+      id:
+        type: integer
     type: object
   v1.EmailSMTPPatchJSON:
     properties:
@@ -142,6 +236,19 @@ definitions:
           State must be echoed to POST /auth/login (github_oauth2) and matches a Redis one-time entry.
           State 必须在 POST /auth/login（github_oauth2）回传，并与 Redis 中一次性条目匹配。
         type: string
+    type: object
+  v1.ListUsersResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/v1.UserItem'
+        type: array
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total:
+        type: integer
     type: object
   v1.LoginRequest:
     properties:
@@ -257,6 +364,8 @@ definitions:
     type: object
   v1.SettingsPatchRequestJSON:
     properties:
+      attachment:
+        $ref: '#/definitions/v1.AttachmentPatchJSON'
       email:
         $ref: '#/definitions/v1.EmailSMTPPatchJSON'
       github_oauth2:
@@ -264,12 +373,118 @@ definitions:
     type: object
   v1.SettingsResponse:
     properties:
+      attachment:
+        $ref: '#/definitions/v1.AttachmentSettingsPublic'
       email:
         $ref: '#/definitions/v1.EmailSettingsPublic'
       github_oauth2:
         $ref: '#/definitions/v1.GithubOAuth2SettingsPublic'
       revision:
         type: integer
+    type: object
+  v1.UpdateUserRequest:
+    properties:
+      email:
+        maxLength: 320
+        type: string
+      nickname:
+        maxLength: 128
+        type: string
+      password:
+        maxLength: 72
+        minLength: 8
+        type: string
+      phone:
+        maxLength: 16
+        type: string
+      role:
+        enum:
+        - member
+        - admin
+        type: string
+      status:
+        enum:
+        - active
+        - disabled
+        - locked
+        - pending
+        type: string
+      username:
+        maxLength: 64
+        type: string
+    type: object
+  v1.UpdateUserResponse:
+    properties:
+      avatar_attachment_id:
+        type: integer
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      last_login_at:
+        type: string
+      nickname:
+        type: string
+      phone:
+        type: string
+      role:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+  v1.UserDetailResponse:
+    properties:
+      avatar_attachment_id:
+        type: integer
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      last_login_at:
+        type: string
+      nickname:
+        type: string
+      phone:
+        type: string
+      role:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
+    type: object
+  v1.UserItem:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      last_login_at:
+        type: string
+      nickname:
+        type: string
+      phone:
+        type: string
+      role:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
     type: object
 info:
   contact: {}
@@ -439,6 +654,78 @@ paths:
       summary: Get current auth session
       tags:
       - auth
+  /api/v1/settings/attachment:
+    get:
+      description: Returns sanitized attachment storage and validation settings.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.SettingsResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Get attachment settings (admin)
+      tags:
+      - settings
+    patch:
+      consumes:
+      - application/json
+      description: Merges attachment subtree; omit fields to keep existing.
+      parameters:
+      - description: Partial attachment settings
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.AttachmentPatchJSON'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.SettingsResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Patch attachment settings (admin)
+      tags:
+      - settings
   /api/v1/settings/email:
     get:
       description: Returns sanitized settings including email SMTP flags without secrets.
@@ -632,6 +919,201 @@ paths:
       summary: Patch GitHub OAuth2 settings (admin)
       tags:
       - settings
+  /api/v1/users:
+    get:
+      description: Paginated list with optional status, role and search filters. 中文：分页用户列表，支持状态、角色和搜索筛选。
+      parameters:
+      - default: 1
+        description: Page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page (default 20, max 100)
+        in: query
+        name: page_size
+        type: integer
+      - description: Filter by status
+        enum:
+        - active
+        - disabled
+        - locked
+        - pending
+        in: query
+        name: status
+        type: string
+      - description: Filter by role
+        enum:
+        - member
+        - admin
+        in: query
+        name: role
+        type: string
+      - description: Search username or email
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.ListUsersResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: List users
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Admin creates a user with optional password. 中文：管理员创建用户，可附带密码。
+      parameters:
+      - description: Create user payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.CreateUserResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a user
+      tags:
+      - users
+  /api/v1/users/{id}:
+    delete:
+      description: Soft-deletes a user by ID. 中文：根据 ID 软删除用户。
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete user
+      tags:
+      - users
+    get:
+      description: Returns full user detail by ID. 中文：根据 ID 返回用户完整详情。
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.UserDetailResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user detail
+      tags:
+      - users
+    patch:
+      consumes:
+      - application/json
+      description: 'Partially update user fields. Pointer fields: nil=unchanged, ""=clear,
+        "v"=set. 中文：部分更新用户字段。指针字段：nil=不修改，空串=清空，有值=设置。'
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update user payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.UpdateUserResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user
+      tags:
+      - users
   /api/v1/users/register:
     post:
       consumes:
