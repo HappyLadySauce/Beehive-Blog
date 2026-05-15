@@ -12,7 +12,6 @@ import (
 type ApplicationSettings struct {
 	Email        EmailSMTPSettings    `json:"email"`
 	GithubOAuth2 GithubOAuth2Settings `json:"github_oauth2"`
-	Attachment   AttachmentSettings   `json:"attachment"`
 }
 
 // Normalize fills defaults for omitted JSON fields after decode.
@@ -25,7 +24,6 @@ func (s *ApplicationSettings) Normalize() {
 		s.Email.TLS = EmailTLSStartTLS
 	}
 	s.GithubOAuth2.Normalize()
-	s.Attachment.Normalize()
 }
 
 // Validate checks business rules for the full settings document.
@@ -36,9 +34,6 @@ func (s *ApplicationSettings) Validate() error {
 		return err
 	}
 	if err := validateGithubOAuth2(&s.GithubOAuth2); err != nil {
-		return err
-	}
-	if err := validateAttachments(&s.Attachment); err != nil {
 		return err
 	}
 	return nil
@@ -63,7 +58,6 @@ func DefaultApplicationSettings() ApplicationSettings {
 		},
 	}
 	s.GithubOAuth2.Normalize()
-	s.Attachment.Normalize()
 	return s
 }
 
@@ -128,46 +122,6 @@ func MergePatch(base ApplicationSettings, patch *SettingsPatchRequest) (Applicat
 			out.GithubOAuth2.AllowNonGitHubEndpoints = *p.AllowNonGitHubEndpoints
 		}
 	}
-	if patch.Attachment != nil {
-		p := patch.Attachment
-		if p.DefaultStorage != nil {
-			out.Attachment.DefaultStorage = *p.DefaultStorage
-		}
-		if p.LocalRoot != nil {
-			out.Attachment.LocalRoot = *p.LocalRoot
-		}
-		if p.MaxBytes != nil {
-			out.Attachment.MaxBytes = *p.MaxBytes
-		}
-		if p.AllowedMIMEPrefixes != nil {
-			out.Attachment.AllowedMIMEPrefixes = append([]string{}, *p.AllowedMIMEPrefixes...)
-		}
-		if p.PresignTTLSeconds != nil {
-			out.Attachment.PresignTTLSeconds = *p.PresignTTLSeconds
-		}
-		if p.S3 != nil {
-			if p.S3.Bucket != nil {
-				out.Attachment.S3.Bucket = *p.S3.Bucket
-			}
-			if p.S3.UploadBaseURL != nil {
-				out.Attachment.S3.UploadBaseURL = *p.S3.UploadBaseURL
-			}
-			if p.S3.DownloadBaseURL != nil {
-				out.Attachment.S3.DownloadBaseURL = *p.S3.DownloadBaseURL
-			}
-		}
-		if p.OSS != nil {
-			if p.OSS.Bucket != nil {
-				out.Attachment.OSS.Bucket = *p.OSS.Bucket
-			}
-			if p.OSS.UploadBaseURL != nil {
-				out.Attachment.OSS.UploadBaseURL = *p.OSS.UploadBaseURL
-			}
-			if p.OSS.DownloadBaseURL != nil {
-				out.Attachment.OSS.DownloadBaseURL = *p.OSS.DownloadBaseURL
-			}
-		}
-	}
 	out.Normalize()
 	if err := out.Validate(); err != nil {
 		return ApplicationSettings{}, err
@@ -178,9 +132,8 @@ func MergePatch(base ApplicationSettings, patch *SettingsPatchRequest) (Applicat
 // SettingsPatchRequest is a partial update body; only present top-level keys are merged.
 // SettingsPatchRequest 为部分更新请求体；仅出现的顶层键参与合并。
 type SettingsPatchRequest struct {
-	Email        *EmailSMTPPatch        `json:"email"`
-	GithubOAuth2 *GithubOAuth2Patch     `json:"github_oauth2"`
-	Attachment   *AttachmentPatch       `json:"attachment"`
+	Email        *EmailSMTPPatch    `json:"email"`
+	GithubOAuth2 *GithubOAuth2Patch `json:"github_oauth2"`
 }
 
 // ParsePayload decodes JSON bytes into ApplicationSettings and validates.
@@ -206,5 +159,3 @@ func ParsePayload(raw []byte) (ApplicationSettings, error) {
 func MarshalPayload(s ApplicationSettings) ([]byte, error) {
 	return json.Marshal(s)
 }
-
-

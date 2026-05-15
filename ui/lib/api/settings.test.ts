@@ -1,10 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  getAttachmentSettings,
   getGithubOAuth2Settings,
   getSettings,
-  patchAttachmentSettings,
   patchGithubOAuth2Settings,
   patchSettings,
   testEmailSettings
@@ -78,32 +76,6 @@ describe("settings API client", () => {
     expect(fetchMock.mock.calls[0][0]).toBe("/api/bff/settings/github-oauth2");
     expect(init.method).toBe("PATCH");
     expect(JSON.parse(String(init.body))).toEqual({ enabled: true, client_id: "client-id" });
-  });
-
-  it("loads attachment settings through the BFF route", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ revision: 5, attachment: { default_storage: "local" } }));
-    vi.stubGlobal("fetch", fetchMock);
-
-    await getAttachmentSettings();
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/bff/settings/attachment",
-      expect.objectContaining({
-        method: "GET"
-      })
-    );
-  });
-
-  it("patches attachment settings through the BFF route", async () => {
-    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ revision: 6, attachment: { default_storage: "s3" } }));
-    vi.stubGlobal("fetch", fetchMock);
-
-    await patchAttachmentSettings({ default_storage: "s3", max_bytes: 20971520 });
-
-    const init = fetchMock.mock.calls[0][1] as RequestInit;
-    expect(fetchMock.mock.calls[0][0]).toBe("/api/bff/settings/attachment");
-    expect(init.method).toBe("PATCH");
-    expect(JSON.parse(String(init.body))).toEqual({ default_storage: "s3", max_bytes: 20971520 });
   });
 });
 

@@ -14,6 +14,7 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/router"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/attachments"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/auth"
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/filedrivers"
 	routesettings "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/settings"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/users"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
@@ -65,7 +66,6 @@ func run(ctx context.Context, opts *options.Options) error {
 		JWT:             opts.JWT,
 		GithubOAuth2:    opts.GithubOAuth2,
 		Email:           opts.Email,
-		Attachment:      opts.Attachment,
 	}
 	config.Init(cfg)
 
@@ -82,7 +82,6 @@ func run(ctx context.Context, opts *options.Options) error {
 			klog.ErrorS(closeErr, "failed to close service context")
 		}
 	}()
-
 
 	// Initialize HTTP route handlers after the service context is ready.
 	// 在服务上下文就绪后初始化 HTTP 路由处理器。
@@ -116,6 +115,9 @@ func routesInit(ctx context.Context, sc *svc.ServiceContext) error {
 		return err
 	}
 	if err := attachments.Init(sc); err != nil {
+		return err
+	}
+	if err := filedrivers.Init(sc); err != nil {
 		return err
 	}
 	return nil

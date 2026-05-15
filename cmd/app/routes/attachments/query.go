@@ -6,14 +6,15 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	pkgattachment "github.com/HappyLadySauce/Beehive-Blog/pkg/attachment"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/attachment/driver"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
 )
 
 // List handles GET /api/v1/attachments (admin).
@@ -112,8 +113,6 @@ func (h *AttachmentsController) GetAttachmentContent(ctx *gin.Context) {
 	ctx.FileAttachment(out.LocalPath, out.Attachment.Filename)
 }
 
-// list returns admin-visible attachments.
-// list 返回管理员可见附件列表。
 func (h *AttachmentsController) list(ctx context.Context, actor pkgattachment.Actor, in pkgattachment.ListInput) ([]model.Attachment, string, error) {
 	if err := pkgattachment.RequireAdmin(actor); err != nil {
 		return nil, "", err
@@ -156,8 +155,6 @@ func (h *AttachmentsController) list(ctx context.Context, actor pkgattachment.Ac
 	return rows, next, nil
 }
 
-// getAdmin returns full attachment metadata for admins.
-// getAdmin 返回管理员可见的完整附件元数据。
 func (h *AttachmentsController) getAdmin(ctx context.Context, actor pkgattachment.Actor, id int64) (model.Attachment, []int64, error) {
 	if err := pkgattachment.RequireAdmin(actor); err != nil {
 		return model.Attachment{}, nil, err
@@ -178,24 +175,22 @@ func (h *AttachmentsController) getPublicContent(ctx context.Context, id int64, 
 	if !admin && attachment.AccessScope != pkgattachment.AccessPublic {
 		return pkgattachment.ContentResult{}, pkgattachment.ErrForbidden
 	}
-	backend, err := h.storage.Backend(attachment.StorageType)
+
+	mount, be, err := driver.ResolveMountForRead(ctx, h.driverStore, h.driverRegistry, attachment.StorageMountID)
 	if err != nil {
 		return pkgattachment.ContentResult{}, err
 	}
-	if attachment.StorageType == options.AttachmentStorageLocal {
-		if attachment.LocalPath == nil {
-			return pkgattachment.ContentResult{}, fmt.Errorf("%w: local path is missing", pkgattachment.ErrInvalid)
-		}
-		localPath, err := backend.LocalFilePath(*attachment.LocalPath)
+	if attachment.ObjectKey == "" {
+		return pkgattachment.ContentResult{}, fmt.Errorf("%w: object key is missing", pkgattachment.ErrInvalid)
+	}
+	if mount.DriverName == driver.DriverLocal {
+		localPath, err := be.LocalFilePath(attachment.ObjectKey)
 		if err != nil {
 			return pkgattachment.ContentResult{}, err
 		}
 		return pkgattachment.ContentResult{Attachment: attachment, LocalPath: localPath}, nil
 	}
-	if attachment.ObjectKey == nil {
-		return pkgattachment.ContentResult{}, fmt.Errorf("%w: object key is missing", pkgattachment.ErrInvalid)
-	}
-	presigned, err := backend.PresignDownload(ctx, *attachment.ObjectKey, h.attachmentOptions.PresignTTL)
+	presigned, err := be.PresignDownload(ctx, attachment.ObjectKey, time.Duration(pkgattachment.PresignTTLSeconds)*time.Second)
 	if err != nil {
 		return pkgattachment.ContentResult{}, err
 	}

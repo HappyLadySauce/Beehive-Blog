@@ -64,7 +64,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - 所有表使用 GORM 标准时间字段：`created_at`, `updated_at`, `deleted_at`（软删）
 - 唯一约束通过 `WHERE deleted_at IS NULL` 部分索引实现（允许软删后复用）
-- 附件系统：`attachment.attachments` 支持 s3/oss/local 三种后端，`attachment.categories` 使用物化路径树
+- 附件系统：文件存储通过 `attachment.storage_drivers`、`attachment.storage_mounts`、`attachment.file_nodes` 和 `attachment.attachments.storage_mount_id + object_key` 定位，驱动配置来自数据库 mount；`attachment.categories` 使用物化路径树
 - 用户系统：`identity.users` 头像外键指向 `attachment.attachments`，附件软删时由数据库触发器自动清空头像引用
 
 ## 代码注释规范

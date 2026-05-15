@@ -8,10 +8,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"k8s.io/klog/v2"
 
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	pkgattachment "github.com/HappyLadySauce/Beehive-Blog/pkg/attachment"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/attachment/driver"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
 )
 
@@ -119,12 +121,18 @@ func (h *AttachmentsController) patch(ctx context.Context, actor pkgattachment.A
 	return out, nil
 }
 
-// delete soft-deletes an attachment.
-// delete 软删附件。
+// delete soft-deletes an attachment and removes the storage object.
+// delete 软删附件并删除存储对象。
 func (h *AttachmentsController) delete(ctx context.Context, actor pkgattachment.Actor, id int64) error {
 	if err := pkgattachment.RequireAdmin(actor); err != nil {
 		return err
 	}
+
+	var attachment model.Attachment
+	if err := h.db.WithContext(ctx).First(&attachment, "id = ?", id).Error; err != nil {
+		return pkgattachment.MapDBError(err)
+	}
+
 	res := h.db.WithContext(ctx).Delete(&model.Attachment{}, "id = ?", id)
 	if res.Error != nil {
 		return pkgattachment.MapDBError(res.Error)
@@ -132,7 +140,25 @@ func (h *AttachmentsController) delete(ctx context.Context, actor pkgattachment.
 	if res.RowsAffected == 0 {
 		return pkgattachment.ErrNotFound
 	}
+
+	if err := h.deleteStorageObject(ctx, attachment); err != nil {
+		klog.V(2).ErrorS(err, "failed to delete storage object", "attachment_id", id)
+	}
+
 	return nil
+}
+
+// deleteStorageObject removes the backing file/object from the storage driver.
+// deleteStorageObject 从存储驱动中删除对应的文件/对象。
+func (h *AttachmentsController) deleteStorageObject(ctx context.Context, attachment model.Attachment) error {
+	_, be, err := driver.ResolveMountForRead(ctx, h.driverStore, h.driverRegistry, attachment.StorageMountID)
+	if err != nil {
+		return fmt.Errorf("resolve backend for delete: %w", err)
+	}
+	if attachment.ObjectKey == "" {
+		return fmt.Errorf("no object key for attachment %d", attachment.ID)
+	}
+	return be.Delete(ctx, attachment.ObjectKey)
 }
 
 // replaceCategories replaces all category bindings for an attachment.

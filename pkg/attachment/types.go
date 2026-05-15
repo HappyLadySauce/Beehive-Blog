@@ -4,7 +4,7 @@ import (
 	"errors"
 	"io"
 
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/attachment/storage"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/attachment/driver"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
 )
 
@@ -48,37 +48,38 @@ type Actor struct {
 // LocalUploadInput describes a multipart upload accepted by an admin.
 // LocalUploadInput 描述管理员提交的 multipart 上传。
 type LocalUploadInput struct {
-	OwnerUserID  *int64
-	Purpose      string
-	Filename     string
-	OriginalName *string
-	MimeType     string
-	Size         int64
-	Reader       io.Reader
-	AccessScope  string
-	CategoryIDs  []int64
+	OwnerUserID    *int64
+	Purpose        string
+	Filename       string
+	OriginalName   *string
+	MimeType       string
+	Size           int64
+	Reader         io.Reader
+	AccessScope    string
+	CategoryIDs    []int64
+	StorageMountID *int64
 }
 
 // RemotePresignInput describes a remote direct-upload request.
 // RemotePresignInput 描述远端直传请求。
 type RemotePresignInput struct {
-	StorageType  string
-	OwnerUserID  *int64
-	Purpose      string
-	Filename     string
-	OriginalName *string
-	MimeType     string
-	Size         int64
-	AccessScope  string
-	Checksum     *string
-	CategoryIDs  []int64
+	OwnerUserID    *int64
+	Purpose        string
+	Filename       string
+	OriginalName   *string
+	MimeType       string
+	Size           int64
+	AccessScope    string
+	Checksum       *string
+	CategoryIDs    []int64
+	StorageMountID *int64
 }
 
 // PresignOutput returns the created pending row and upload instructions.
 // PresignOutput 返回已创建的 pending 行与上传指令。
 type PresignOutput struct {
 	Attachment model.Attachment
-	Upload     storage.PresignResult
+	Upload     driver.PresignResult
 }
 
 // CompleteInput describes upload confirmation metadata.

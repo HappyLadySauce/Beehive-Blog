@@ -267,128 +267,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/settings/attachment": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Returns sanitized attachment storage and validation settings.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "settings"
-                ],
-                "summary": "Get attachment settings (admin)",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/common.BaseResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/v1.SettingsResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/common.BaseResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/common.BaseResponse"
-                        }
-                    }
-                }
-            },
-            "patch": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Merges attachment subtree; omit fields to keep existing.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "settings"
-                ],
-                "summary": "Patch attachment settings (admin)",
-                "parameters": [
-                    {
-                        "description": "Partial attachment settings",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/v1.AttachmentPatchJSON"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/common.BaseResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/v1.SettingsResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/common.BaseResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/common.BaseResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/common.BaseResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/common.BaseResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/api/v1/settings/email": {
             "get": {
                 "security": [
@@ -1104,92 +982,6 @@ const docTemplate = `{
                 }
             }
         },
-        "v1.AttachmentPatchJSON": {
-            "type": "object",
-            "properties": {
-                "allowed_mime_prefixes": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "default_storage": {
-                    "type": "string"
-                },
-                "local_root": {
-                    "type": "string"
-                },
-                "max_bytes": {
-                    "type": "integer"
-                },
-                "oss": {
-                    "$ref": "#/definitions/v1.AttachmentRemotePatchJSON"
-                },
-                "presign_ttl_seconds": {
-                    "type": "integer"
-                },
-                "s3": {
-                    "$ref": "#/definitions/v1.AttachmentRemotePatchJSON"
-                }
-            }
-        },
-        "v1.AttachmentRemotePatchJSON": {
-            "type": "object",
-            "properties": {
-                "bucket": {
-                    "type": "string"
-                },
-                "download_base_url": {
-                    "type": "string"
-                },
-                "upload_base_url": {
-                    "type": "string"
-                }
-            }
-        },
-        "v1.AttachmentRemoteSettingsPublic": {
-            "type": "object",
-            "properties": {
-                "bucket": {
-                    "type": "string"
-                },
-                "download_base_url": {
-                    "type": "string"
-                },
-                "upload_base_url": {
-                    "type": "string"
-                }
-            }
-        },
-        "v1.AttachmentSettingsPublic": {
-            "type": "object",
-            "properties": {
-                "allowed_mime_prefixes": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "default_storage": {
-                    "type": "string"
-                },
-                "local_root": {
-                    "type": "string"
-                },
-                "max_bytes": {
-                    "type": "integer"
-                },
-                "oss": {
-                    "$ref": "#/definitions/v1.AttachmentRemoteSettingsPublic"
-                },
-                "presign_ttl_seconds": {
-                    "type": "integer"
-                },
-                "s3": {
-                    "$ref": "#/definitions/v1.AttachmentRemoteSettingsPublic"
-                }
-            }
-        },
         "v1.AuthSessionResponse": {
             "type": "object",
             "properties": {
@@ -1567,9 +1359,6 @@ const docTemplate = `{
         "v1.SettingsPatchRequestJSON": {
             "type": "object",
             "properties": {
-                "attachment": {
-                    "$ref": "#/definitions/v1.AttachmentPatchJSON"
-                },
                 "email": {
                     "$ref": "#/definitions/v1.EmailSMTPPatchJSON"
                 },
@@ -1581,9 +1370,6 @@ const docTemplate = `{
         "v1.SettingsResponse": {
             "type": "object",
             "properties": {
-                "attachment": {
-                    "$ref": "#/definitions/v1.AttachmentSettingsPublic"
-                },
                 "email": {
                     "$ref": "#/definitions/v1.EmailSettingsPublic"
                 },

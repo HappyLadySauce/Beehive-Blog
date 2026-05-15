@@ -26,33 +26,12 @@ type GithubOAuth2SettingsPublic struct {
 	AllowNonGitHubEndpoints bool   `json:"allow_non_github_endpoints"`
 }
 
-// AttachmentRemoteSettingsPublic is the admin-visible remote storage configuration.
-// AttachmentRemoteSettingsPublic 为管理员可见的远端存储配置。
-type AttachmentRemoteSettingsPublic struct {
-	Bucket          string `json:"bucket"`
-	UploadBaseURL   string `json:"upload_base_url"`
-	DownloadBaseURL string `json:"download_base_url"`
-}
-
-// AttachmentSettingsPublic is the admin-visible attachment configuration.
-// AttachmentSettingsPublic 为管理员可见的附件配置。
-type AttachmentSettingsPublic struct {
-	DefaultStorage      string                          `json:"default_storage"`
-	LocalRoot           string                          `json:"local_root"`
-	MaxBytes            int64                           `json:"max_bytes"`
-	AllowedMIMEPrefixes []string                        `json:"allowed_mime_prefixes"`
-	PresignTTLSeconds   int64                           `json:"presign_ttl_seconds"`
-	S3                  AttachmentRemoteSettingsPublic  `json:"s3"`
-	OSS                 AttachmentRemoteSettingsPublic  `json:"oss"`
-}
-
 // SettingsResponse is returned by GET /api/v1/settings (sanitized).
 // SettingsResponse 为 GET /api/v1/settings 的脱敏响应。
 type SettingsResponse struct {
 	Revision     int64                      `json:"revision"`
 	Email        EmailSettingsPublic        `json:"email"`
 	GithubOAuth2 GithubOAuth2SettingsPublic `json:"github_oauth2"`
-	Attachment   AttachmentSettingsPublic   `json:"attachment"`
 }
 
 // EmailSMTPPatchJSON is the JSON body fragment for PATCH /api/v1/settings (partial email update).
@@ -81,32 +60,11 @@ type GithubOAuth2PatchJSON struct {
 	AllowNonGitHubEndpoints *bool   `json:"allow_non_github_endpoints"`
 }
 
-// AttachmentRemotePatchJSON is the JSON body fragment for remote storage partial update.
-// AttachmentRemotePatchJSON 为远端存储部分更新的 JSON 片段。
-type AttachmentRemotePatchJSON struct {
-	Bucket          *string `json:"bucket"`
-	UploadBaseURL   *string `json:"upload_base_url"`
-	DownloadBaseURL *string `json:"download_base_url"`
-}
-
-// AttachmentPatchJSON is the JSON body fragment for PATCH /api/v1/settings (partial attachment update).
-// AttachmentPatchJSON 为 PATCH /api/v1/settings 的 attachment 片段（部分更新）。
-type AttachmentPatchJSON struct {
-	DefaultStorage      *string                     `json:"default_storage"`
-	LocalRoot           *string                     `json:"local_root"`
-	MaxBytes            *int64                      `json:"max_bytes"`
-	AllowedMIMEPrefixes *[]string                   `json:"allowed_mime_prefixes"`
-	PresignTTLSeconds   *int64                      `json:"presign_ttl_seconds"`
-	S3                  *AttachmentRemotePatchJSON  `json:"s3"`
-	OSS                 *AttachmentRemotePatchJSON  `json:"oss"`
-}
-
 // SettingsPatchRequestJSON is the PATCH body; only keys present are merged server-side.
 // SettingsPatchRequestJSON 为 PATCH 请求体；仅出现的键在服务端参与合并。
 type SettingsPatchRequestJSON struct {
-	Email        *EmailSMTPPatchJSON        `json:"email"`
-	GithubOAuth2 *GithubOAuth2PatchJSON     `json:"github_oauth2"`
-	Attachment   *AttachmentPatchJSON       `json:"attachment"`
+	Email        *EmailSMTPPatchJSON    `json:"email"`
+	GithubOAuth2 *GithubOAuth2PatchJSON `json:"github_oauth2"`
 }
 
 // SettingsEmailTestRequest is the body for sending a test email with saved SMTP settings.

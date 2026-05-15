@@ -8,62 +8,6 @@ definitions:
       message:
         type: string
     type: object
-  v1.AttachmentPatchJSON:
-    properties:
-      allowed_mime_prefixes:
-        items:
-          type: string
-        type: array
-      default_storage:
-        type: string
-      local_root:
-        type: string
-      max_bytes:
-        type: integer
-      oss:
-        $ref: '#/definitions/v1.AttachmentRemotePatchJSON'
-      presign_ttl_seconds:
-        type: integer
-      s3:
-        $ref: '#/definitions/v1.AttachmentRemotePatchJSON'
-    type: object
-  v1.AttachmentRemotePatchJSON:
-    properties:
-      bucket:
-        type: string
-      download_base_url:
-        type: string
-      upload_base_url:
-        type: string
-    type: object
-  v1.AttachmentRemoteSettingsPublic:
-    properties:
-      bucket:
-        type: string
-      download_base_url:
-        type: string
-      upload_base_url:
-        type: string
-    type: object
-  v1.AttachmentSettingsPublic:
-    properties:
-      allowed_mime_prefixes:
-        items:
-          type: string
-        type: array
-      default_storage:
-        type: string
-      local_root:
-        type: string
-      max_bytes:
-        type: integer
-      oss:
-        $ref: '#/definitions/v1.AttachmentRemoteSettingsPublic'
-      presign_ttl_seconds:
-        type: integer
-      s3:
-        $ref: '#/definitions/v1.AttachmentRemoteSettingsPublic'
-    type: object
   v1.AuthSessionResponse:
     properties:
       exp:
@@ -364,8 +308,6 @@ definitions:
     type: object
   v1.SettingsPatchRequestJSON:
     properties:
-      attachment:
-        $ref: '#/definitions/v1.AttachmentPatchJSON'
       email:
         $ref: '#/definitions/v1.EmailSMTPPatchJSON'
       github_oauth2:
@@ -373,8 +315,6 @@ definitions:
     type: object
   v1.SettingsResponse:
     properties:
-      attachment:
-        $ref: '#/definitions/v1.AttachmentSettingsPublic'
       email:
         $ref: '#/definitions/v1.EmailSettingsPublic'
       github_oauth2:
@@ -654,78 +594,6 @@ paths:
       summary: Get current auth session
       tags:
       - auth
-  /api/v1/settings/attachment:
-    get:
-      description: Returns sanitized attachment storage and validation settings.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/common.BaseResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/v1.SettingsResponse'
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/common.BaseResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/common.BaseResponse'
-      security:
-      - BearerAuth: []
-      summary: Get attachment settings (admin)
-      tags:
-      - settings
-    patch:
-      consumes:
-      - application/json
-      description: Merges attachment subtree; omit fields to keep existing.
-      parameters:
-      - description: Partial attachment settings
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/v1.AttachmentPatchJSON'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/common.BaseResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/v1.SettingsResponse'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/common.BaseResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/common.BaseResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/common.BaseResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/common.BaseResponse'
-      security:
-      - BearerAuth: []
-      summary: Patch attachment settings (admin)
-      tags:
-      - settings
   /api/v1/settings/email:
     get:
       description: Returns sanitized settings including email SMTP flags without secrets.

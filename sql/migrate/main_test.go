@@ -40,29 +40,37 @@ func TestSchemaMigrationsPlaceAvatarSoftDeleteTriggerWithAttachmentLifecycle(t *
 	}
 }
 
-func TestAttachmentSchemaMigrationsOptimizeForRemoteTupleLookupAndStorageTypeListing(t *testing.T) {
+func TestAttachmentSchemaMigrationsFinalizeStorageMountLocator(t *testing.T) {
 	t.Helper()
 
 	root := repoRootFromWorkingDir(t)
-	attachmentSQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "attachment", "000_attachment_attachments.sql"))
+	finalSQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "attachment", "007_attachment_finalize_storage_mounts.sql"))
 
-	if !strings.Contains(attachmentSQL, "CREATE INDEX idx_attachment_attachments_live_storage_type_created_at") {
-		t.Fatalf("attachment migration should define a live storage_type + created_at listing index")
+	if !strings.Contains(finalSQL, "ALTER COLUMN storage_mount_id SET NOT NULL") {
+		t.Fatalf("final storage migration should require storage_mount_id")
 	}
-	if !strings.Contains(attachmentSQL, "ON attachment.attachments (storage_type, created_at DESC, id DESC)") {
-		t.Fatalf("attachment migration should order the listing index by storage_type, created_at DESC, id DESC")
+	if !strings.Contains(finalSQL, "ALTER COLUMN object_key SET NOT NULL") {
+		t.Fatalf("final storage migration should require object_key")
 	}
-	if !strings.Contains(attachmentSQL, "storage_type + bucket + object_key") {
-		t.Fatalf("attachment migration should document remote tuple lookup by storage_type + bucket + object_key")
+	for _, oldColumn := range []string{"DROP COLUMN storage_type", "DROP COLUMN bucket", "DROP COLUMN local_path"} {
+		if !strings.Contains(finalSQL, oldColumn) {
+			t.Fatalf("final storage migration should remove old column statement %q", oldColumn)
+		}
 	}
-	if strings.Contains(attachmentSQL, "CREATE INDEX idx_attachment_attachments_storage_type") {
-		t.Fatalf("attachment migration should remove the live storage_type-only index")
+	if !strings.Contains(finalSQL, "CREATE UNIQUE INDEX ux_attachment_attachments_mount_object_key") {
+		t.Fatalf("final storage migration should define mount + object_key uniqueness")
 	}
-	if strings.Contains(attachmentSQL, "CREATE INDEX idx_attachment_attachments_object_key") {
-		t.Fatalf("attachment migration should remove the object_key-only lookup index")
+	if !strings.Contains(finalSQL, "ON attachment.attachments (storage_mount_id, created_at DESC, id DESC)") {
+		t.Fatalf("final storage migration should list by storage_mount_id, created_at DESC, id DESC")
 	}
-	if strings.Contains(attachmentSQL, "CREATE INDEX idx_attachment_attachments_created_at") {
-		t.Fatalf("attachment migration should remove the global live created_at index when no global timeline is required")
+	for _, legacyIndex := range []string{
+		"idx_attachment_attachments_live_storage_type_created_at",
+		"ux_attachment_attachments_remote_object",
+		"ux_attachment_attachments_local_path",
+	} {
+		if !strings.Contains(finalSQL, legacyIndex) {
+			t.Fatalf("final storage migration should explicitly drop legacy index %q", legacyIndex)
+		}
 	}
 }
 

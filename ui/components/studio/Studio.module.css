@@ -128,9 +128,8 @@
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  display: inline-grid;
+  display: inline-flex;
   gap: 4px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
   justify-self: start;
   padding: 4px;
 }
@@ -647,6 +646,11 @@
 
   .segmentedTabs {
     width: 100%;
+  }
+
+  .segmentedTab,
+  .segmentedTabActive {
+    flex: 1 1 0;
   }
 
   .formGrid {

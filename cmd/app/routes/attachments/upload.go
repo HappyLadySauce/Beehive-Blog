@@ -13,15 +13,14 @@ import (
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	pkgattachment "github.com/HappyLadySauce/Beehive-Blog/pkg/attachment"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/attachment/storage"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/attachment/driver"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
 )
 
 // UploadLocal handles POST /api/v1/attachments multipart uploads (admin).
 // UploadLocal 处理 POST /api/v1/attachments multipart 上传（管理员）。
 func (h *AttachmentsController) UploadLocal(ctx *gin.Context) {
-	ctx.Request.Body = http.MaxBytesReader(ctx.Writer, ctx.Request.Body, h.attachmentOptions.MaxBytes+1<<20)
+	ctx.Request.Body = http.MaxBytesReader(ctx.Writer, ctx.Request.Body, pkgattachment.MaxUploadBytes+1<<20)
 	file, header, err := ctx.Request.FormFile("file")
 	if err != nil {
 		common.Fail(ctx, common.NewBadRequest("file field is required", err))
@@ -39,6 +38,11 @@ func (h *AttachmentsController) UploadLocal(ctx *gin.Context) {
 		common.Fail(ctx, common.NewBadRequest("invalid category_ids", err))
 		return
 	}
+	storageMountID, err := optionalInt64Form(ctx, "storage_mount_id")
+	if err != nil {
+		common.Fail(ctx, common.NewBadRequest("invalid storage_mount_id", err))
+		return
+	}
 	mimeType := strings.TrimSpace(header.Header.Get("Content-Type"))
 	if mimeType == "" {
 		mimeType = "application/octet-stream"
@@ -48,15 +52,16 @@ func (h *AttachmentsController) UploadLocal(ctx *gin.Context) {
 		originalName = header.Filename
 	}
 	in := pkgattachment.LocalUploadInput{
-		OwnerUserID:  ownerUserID,
-		Purpose:      defaultString(ctx.PostForm("purpose"), pkgattachment.PurposeContent),
-		Filename:     header.Filename,
-		OriginalName: &originalName,
-		MimeType:     mimeType,
-		Size:         header.Size,
-		Reader:       file,
-		AccessScope:  defaultString(ctx.PostForm("access_scope"), pkgattachment.AccessPrivate),
-		CategoryIDs:  categoryIDs,
+		OwnerUserID:    ownerUserID,
+		Purpose:        defaultString(ctx.PostForm("purpose"), pkgattachment.PurposeContent),
+		Filename:       header.Filename,
+		OriginalName:   &originalName,
+		MimeType:       mimeType,
+		Size:           header.Size,
+		Reader:         file,
+		AccessScope:    defaultString(ctx.PostForm("access_scope"), pkgattachment.AccessPrivate),
+		CategoryIDs:    categoryIDs,
+		StorageMountID: storageMountID,
 	}
 	out, err := h.uploadLocal(ctx.Request.Context(), actorFromClaims(ctx), in)
 	if err != nil {
@@ -75,16 +80,16 @@ func (h *AttachmentsController) PresignRemote(ctx *gin.Context) {
 		return
 	}
 	out, err := h.presignRemote(ctx.Request.Context(), actorFromClaims(ctx), pkgattachment.RemotePresignInput{
-		StorageType:  req.StorageType,
-		OwnerUserID:  req.OwnerUserID,
-		Purpose:      req.Purpose,
-		Filename:     req.Filename,
-		OriginalName: req.OriginalName,
-		MimeType:     req.MimeType,
-		Size:         req.Size,
-		AccessScope:  req.AccessScope,
-		Checksum:     req.Checksum,
-		CategoryIDs:  req.CategoryIDs,
+		OwnerUserID:    req.OwnerUserID,
+		Purpose:        req.Purpose,
+		Filename:       req.Filename,
+		OriginalName:   req.OriginalName,
+		MimeType:       req.MimeType,
+		Size:           req.Size,
+		AccessScope:    req.AccessScope,
+		Checksum:       req.Checksum,
+		CategoryIDs:    req.CategoryIDs,
+		StorageMountID: req.StorageMountID,
 	})
 	if err != nil {
 		writeAttachmentError(ctx, err)
@@ -129,7 +134,7 @@ func (h *AttachmentsController) uploadLocal(ctx context.Context, actor pkgattach
 	if err := pkgattachment.RequireAdmin(actor); err != nil {
 		return model.Attachment{}, err
 	}
-	if err := pkgattachment.ValidateCommon(h.attachmentOptions, in.OwnerUserID, in.Purpose, in.MimeType, in.Size, in.AccessScope); err != nil {
+	if err := pkgattachment.ValidateCommon(in.OwnerUserID, in.Purpose, in.MimeType, in.Size, in.AccessScope); err != nil {
 		return model.Attachment{}, err
 	}
 	if in.Reader == nil {
@@ -143,29 +148,30 @@ func (h *AttachmentsController) uploadLocal(ctx context.Context, actor pkgattach
 	if err != nil {
 		return model.Attachment{}, err
 	}
-	backend, err := h.storage.Backend(options.AttachmentStorageLocal)
+
+	mount, drv, err := driver.ResolveMountForWrite(ctx, h.driverStore, h.driverRegistry, in.StorageMountID)
 	if err != nil {
-		return model.Attachment{}, err
+		return model.Attachment{}, fmt.Errorf("%w: %v", pkgattachment.ErrInvalid, err)
 	}
-	stored, err := backend.Save(ctx, storage.PutRequest{ObjectKey: objectKey, Reader: in.Reader, Size: in.Size})
+	stored, err := drv.Save(ctx, driver.PutRequest{ObjectKey: objectKey, Reader: in.Reader, Size: in.Size})
 	if err != nil {
 		return model.Attachment{}, err
 	}
 
 	attachment := model.Attachment{
-		OwnerUserID:  in.OwnerUserID,
-		Purpose:      in.Purpose,
-		Filename:     filename,
-		OriginalName: pkgattachment.CleanOptional(in.OriginalName),
-		MimeType:     in.MimeType,
-		Size:         in.Size,
-		StorageType:  options.AttachmentStorageLocal,
-		LocalPath:    &stored.LocalPath,
-		ETag:         pkgattachment.CleanOptional(&stored.ETag),
-		Checksum:     pkgattachment.CleanOptional(&stored.Checksum),
-		AccessScope:  in.AccessScope,
-		UploadStatus: pkgattachment.UploadReady,
-		Status:       pkgattachment.StatusActive,
+		OwnerUserID:    in.OwnerUserID,
+		Purpose:        in.Purpose,
+		Filename:       filename,
+		OriginalName:   pkgattachment.CleanOptional(in.OriginalName),
+		MimeType:       in.MimeType,
+		Size:           in.Size,
+		StorageMountID: mount.ID,
+		ObjectKey:      objectKey,
+		ETag:           pkgattachment.CleanOptional(&stored.ETag),
+		Checksum:       pkgattachment.CleanOptional(&stored.Checksum),
+		AccessScope:    in.AccessScope,
+		UploadStatus:   pkgattachment.UploadReady,
+		Status:         pkgattachment.StatusActive,
 	}
 	err = h.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&attachment).Error; err != nil {
@@ -185,46 +191,45 @@ func (h *AttachmentsController) presignRemote(ctx context.Context, actor pkgatta
 	if err := pkgattachment.RequireAdmin(actor); err != nil {
 		return pkgattachment.PresignOutput{}, err
 	}
-	if in.StorageType != options.AttachmentStorageS3 && in.StorageType != options.AttachmentStorageOSS {
-		return pkgattachment.PresignOutput{}, fmt.Errorf("%w: storage_type must be s3 or oss", pkgattachment.ErrInvalid)
-	}
-	if err := pkgattachment.ValidateCommon(h.attachmentOptions, in.OwnerUserID, in.Purpose, in.MimeType, in.Size, in.AccessScope); err != nil {
+	if err := pkgattachment.ValidateCommon(in.OwnerUserID, in.Purpose, in.MimeType, in.Size, in.AccessScope); err != nil {
 		return pkgattachment.PresignOutput{}, err
 	}
 	objectKey, filename, err := pkgattachment.ObjectKeyFor(in.Purpose, in.Filename)
 	if err != nil {
 		return pkgattachment.PresignOutput{}, err
 	}
-	backend, err := h.storage.Backend(in.StorageType)
+
+	mount, drv, err := driver.ResolveMountForWrite(ctx, h.driverStore, h.driverRegistry, in.StorageMountID)
 	if err != nil {
-		return pkgattachment.PresignOutput{}, err
+		return pkgattachment.PresignOutput{}, fmt.Errorf("%w: %v", pkgattachment.ErrInvalid, err)
 	}
-	upload, err := backend.PresignUpload(ctx, storage.PresignRequest{
+	if mount.DriverName == driver.DriverLocal {
+		return pkgattachment.PresignOutput{}, fmt.Errorf("%w: local storage does not support presign upload", pkgattachment.ErrInvalid)
+	}
+	upload, err := drv.PresignUpload(ctx, driver.PresignRequest{
 		ObjectKey: objectKey,
 		MimeType:  in.MimeType,
 		Checksum:  pkgattachment.DerefString(in.Checksum),
 		Size:      in.Size,
-		TTL:       h.attachmentOptions.PresignTTL,
+		TTL:       time.Duration(pkgattachment.PresignTTLSeconds) * time.Second,
 	})
 	if err != nil {
 		return pkgattachment.PresignOutput{}, err
 	}
 
-	bucket := upload.Bucket
 	attachment := model.Attachment{
-		OwnerUserID:  in.OwnerUserID,
-		Purpose:      in.Purpose,
-		Filename:     filename,
-		OriginalName: pkgattachment.CleanOptional(in.OriginalName),
-		MimeType:     in.MimeType,
-		Size:         in.Size,
-		StorageType:  in.StorageType,
-		Bucket:       &bucket,
-		ObjectKey:    &upload.ObjectKey,
-		Checksum:     pkgattachment.CleanOptional(in.Checksum),
-		AccessScope:  in.AccessScope,
-		UploadStatus: pkgattachment.UploadPending,
-		Status:       pkgattachment.StatusActive,
+		OwnerUserID:    in.OwnerUserID,
+		Purpose:        in.Purpose,
+		Filename:       filename,
+		OriginalName:   pkgattachment.CleanOptional(in.OriginalName),
+		MimeType:       in.MimeType,
+		Size:           in.Size,
+		StorageMountID: mount.ID,
+		ObjectKey:      upload.ObjectKey,
+		Checksum:       pkgattachment.CleanOptional(in.Checksum),
+		AccessScope:    in.AccessScope,
+		UploadStatus:   pkgattachment.UploadPending,
+		Status:         pkgattachment.StatusActive,
 	}
 	err = h.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(&attachment).Error; err != nil {
@@ -249,7 +254,11 @@ func (h *AttachmentsController) completeRemote(ctx context.Context, actor pkgatt
 		if err := tx.First(&out, "id = ?", id).Error; err != nil {
 			return pkgattachment.MapDBError(err)
 		}
-		if out.StorageType == options.AttachmentStorageLocal {
+		mount, _, err := driver.ResolveMountForRead(ctx, h.driverStore, h.driverRegistry, out.StorageMountID)
+		if err != nil {
+			return fmt.Errorf("%w: %v", pkgattachment.ErrInvalid, err)
+		}
+		if mount.DriverName == driver.DriverLocal {
 			return fmt.Errorf("%w: local attachments do not need completion", pkgattachment.ErrInvalid)
 		}
 		if out.UploadStatus != pkgattachment.UploadPending {

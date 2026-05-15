@@ -6,12 +6,24 @@ import (
 	"testing"
 
 	pkgattachment "github.com/HappyLadySauce/Beehive-Blog/pkg/attachment"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
 )
 
 func TestValidateCommonRejectsAvatarMime(t *testing.T) {
-	opts := options.NewAttachmentOptions()
-	err := pkgattachment.ValidateCommon(opts, int64Ptr(10), pkgattachment.PurposeAvatar, "text/plain", 5, pkgattachment.AccessPrivate)
+	err := pkgattachment.ValidateCommon(int64Ptr(10), pkgattachment.PurposeAvatar, "text/plain", 5, pkgattachment.AccessPrivate)
+	if !errors.Is(err, pkgattachment.ErrInvalid) {
+		t.Fatalf("ValidateCommon error = %v, want ErrInvalid", err)
+	}
+}
+
+func TestValidateCommonAllowsAnyNonAvatarMime(t *testing.T) {
+	err := pkgattachment.ValidateCommon(int64Ptr(10), pkgattachment.PurposeContent, "application/x-custom", 5, pkgattachment.AccessPrivate)
+	if err != nil {
+		t.Fatalf("ValidateCommon error = %v, want nil", err)
+	}
+}
+
+func TestValidateCommonRejectsFilesOverTwoGiB(t *testing.T) {
+	err := pkgattachment.ValidateCommon(int64Ptr(10), pkgattachment.PurposeContent, "application/octet-stream", pkgattachment.MaxUploadBytes+1, pkgattachment.AccessPrivate)
 	if !errors.Is(err, pkgattachment.ErrInvalid) {
 		t.Fatalf("ValidateCommon error = %v, want ErrInvalid", err)
 	}

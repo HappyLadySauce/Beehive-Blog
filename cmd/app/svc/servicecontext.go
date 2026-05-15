@@ -13,6 +13,7 @@ import (
 	"gorm.io/gorm"
 	"k8s.io/klog/v2"
 
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/attachment/driver"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/config"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
@@ -30,6 +31,13 @@ type ServiceContext struct {
 
 	SettingsStore    *pkgsettings.Store
 	SettingsProvider *pkgsettings.Provider
+
+	// DriverStore provides GORM-backed queries for storage drivers and mounts.
+	// DriverStore 提供基于 GORM 的存储驱动与挂载项查询。
+	DriverStore *driver.Store
+	// DriverRegistry maps driver_name to DriverFactory for creating DriverBackend instances.
+	// DriverRegistry 将 driver_name 映射到 DriverFactory，用于创建 DriverBackend 实例。
+	DriverRegistry *driver.DriverRegistry
 }
 
 // NewServiceContext opens PostgreSQL (GORM) and Redis, applies pool settings, and verifies connectivity.
@@ -49,9 +57,6 @@ func NewServiceContext(ctx context.Context, cfg *config.Config) (*ServiceContext
 	}
 	if cfg.Email == nil {
 		return nil, fmt.Errorf("email config is nil")
-	}
-	if cfg.Attachment == nil {
-		return nil, fmt.Errorf("attachment config is nil")
 	}
 
 	dsn, err := postgreDSN(cfg.Database)
@@ -76,11 +81,7 @@ func NewServiceContext(ctx context.Context, cfg *config.Config) (*ServiceContext
 		_ = sqlDB.Close()
 		return nil, fmt.Errorf("postgres ping: %w", err)
 	}
-	klog.InfoS("PostgreSQL connection established",
-		"host", cfg.Database.Host,
-		"port", cfg.Database.Port,
-		"database", cfg.Database.DB,
-	)
+	klog.InfoS("PostgreSQL connection established")
 
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     net.JoinHostPort(cfg.Cache.Host, strconv.Itoa(cfg.Cache.Port)),
@@ -92,11 +93,7 @@ func NewServiceContext(ctx context.Context, cfg *config.Config) (*ServiceContext
 		_ = sqlDB.Close()
 		return nil, fmt.Errorf("redis ping: %w", err)
 	}
-	klog.InfoS("Redis connection established",
-		"host", cfg.Cache.Host,
-		"port", cfg.Cache.Port,
-		"db", cfg.Cache.DB,
-	)
+	klog.InfoS("Redis connection established")
 
 	issuer, err := jwt.NewIssuer(cfg.JWT)
 	if err != nil {
@@ -104,11 +101,7 @@ func NewServiceContext(ctx context.Context, cfg *config.Config) (*ServiceContext
 		_ = sqlDB.Close()
 		return nil, fmt.Errorf("init token issuer: %w", err)
 	}
-	klog.InfoS("JWT issuer initialized",
-		"issuer", cfg.JWT.Issuer,
-		"access-ttl", cfg.JWT.AccessTTL,
-		"refresh-ttl", cfg.JWT.RefreshTTL,
-	)
+	klog.InfoS("JWT issuer initialized")
 
 	return &ServiceContext{
 		Config:      cfg,

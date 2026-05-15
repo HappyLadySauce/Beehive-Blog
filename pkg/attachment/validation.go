@@ -3,16 +3,16 @@ package attachment
 import (
 	"fmt"
 	"strings"
+)
 
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
+const (
+	MaxUploadBytes    = 2 * 1024 * 1024 * 1024
+	PresignTTLSeconds = 15 * 60
 )
 
 // ValidateCommon checks shared attachment metadata constraints.
 // ValidateCommon 校验附件元数据的通用约束。
-func ValidateCommon(opts *options.AttachmentOptions, ownerUserID *int64, purpose string, mimeType string, size int64, accessScope string) error {
-	if opts == nil {
-		return fmt.Errorf("%w: attachment options is nil", ErrInvalid)
-	}
+func ValidateCommon(ownerUserID *int64, purpose string, mimeType string, size int64, accessScope string) error {
 	if !PurposeKnown(purpose) {
 		return fmt.Errorf("%w: invalid purpose", ErrInvalid)
 	}
@@ -25,36 +25,13 @@ func ValidateCommon(opts *options.AttachmentOptions, ownerUserID *int64, purpose
 	if purpose == PurposeAvatar && !strings.HasPrefix(mimeType, "image/") {
 		return fmt.Errorf("%w: avatar attachments must be images", ErrInvalid)
 	}
-	if size <= 0 || size > opts.MaxBytes {
-		return fmt.Errorf("%w: attachment size must be between 1 and %d bytes", ErrInvalid, opts.MaxBytes)
-	}
-	if !MIMEAllowed(opts, mimeType) {
-		return fmt.Errorf("%w: mime_type is not allowed", ErrInvalid)
+	if size <= 0 || size > MaxUploadBytes {
+		return fmt.Errorf("%w: attachment size must be between 1 and %d bytes", ErrInvalid, MaxUploadBytes)
 	}
 	if !AccessScopeKnown(accessScope) {
 		return fmt.Errorf("%w: invalid access_scope", ErrInvalid)
 	}
 	return nil
-}
-
-// MIMEAllowed reports whether mimeType matches configured allow-list prefixes.
-// MIMEAllowed 判断 mimeType 是否匹配配置的允许列表前缀。
-func MIMEAllowed(opts *options.AttachmentOptions, mimeType string) bool {
-	if opts == nil {
-		return false
-	}
-	for _, prefix := range opts.AllowedMIMEPrefixes {
-		if strings.HasSuffix(prefix, "/") {
-			if strings.HasPrefix(mimeType, prefix) {
-				return true
-			}
-			continue
-		}
-		if mimeType == prefix {
-			return true
-		}
-	}
-	return false
 }
 
 // RequireAdmin rejects non-admin attachment management callers.

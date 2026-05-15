@@ -79,27 +79,10 @@ export type GithubOAuth2SettingsPublic = {
   allow_non_github_endpoints: boolean;
 };
 
-export type AttachmentRemoteSettingsPublic = {
-  bucket: string;
-  upload_base_url: string;
-  download_base_url: string;
-};
-
-export type AttachmentSettingsPublic = {
-  default_storage: "local" | "s3" | "oss" | string;
-  local_root: string;
-  max_bytes: number;
-  allowed_mime_prefixes: string[];
-  presign_ttl_seconds: number;
-  s3: AttachmentRemoteSettingsPublic;
-  oss: AttachmentRemoteSettingsPublic;
-};
-
 export type SettingsResponse = {
   revision: number;
   email: EmailSettingsPublic;
   github_oauth2: GithubOAuth2SettingsPublic;
-  attachment: AttachmentSettingsPublic;
 };
 
 export type EmailSMTPPatch = {
@@ -126,22 +109,6 @@ export type GithubOAuth2Patch = {
   token_url?: string;
   user_info_url?: string;
   allow_non_github_endpoints?: boolean;
-};
-
-export type AttachmentRemotePatch = {
-  bucket?: string;
-  upload_base_url?: string;
-  download_base_url?: string;
-};
-
-export type AttachmentPatch = {
-  default_storage?: string;
-  local_root?: string;
-  max_bytes?: number;
-  allowed_mime_prefixes?: string[];
-  presign_ttl_seconds?: number;
-  s3?: AttachmentRemotePatch;
-  oss?: AttachmentRemotePatch;
 };
 
 export type SettingsEmailTestRequest = {

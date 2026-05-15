@@ -37,18 +37,9 @@ func TestNewAttachmentsControllerValidation(t *testing.T) {
 			t.Fatalf("NewAttachmentsController: %v", err)
 		}
 	})
-	t.Run("nil attachment options", func(t *testing.T) {
-		_, err := routeattachments.NewAttachmentsController(&svc.ServiceContext{
-			DB:     newGormTestDB(t),
-			Config: &config.Config{Attachment: nil},
-		})
-		if err == nil || !strings.Contains(err.Error(), "attachment config is nil") {
-			t.Fatalf("NewAttachmentsController: %v", err)
-		}
-	})
 	t.Run("nil database", func(t *testing.T) {
 		_, err := routeattachments.NewAttachmentsController(&svc.ServiceContext{
-			Config: &config.Config{Attachment: options.NewAttachmentOptions()},
+			Config: &config.Config{},
 		})
 		if err == nil || !strings.Contains(err.Error(), "database handle is nil") {
 			t.Fatalf("NewAttachmentsController: %v", err)
@@ -57,13 +48,9 @@ func TestNewAttachmentsControllerValidation(t *testing.T) {
 }
 
 func TestNewAttachmentsControllerSuccess(t *testing.T) {
-	root := t.TempDir()
-	opts := options.NewAttachmentOptions()
-	opts.LocalRoot = root
-
 	h, err := routeattachments.NewAttachmentsController(&svc.ServiceContext{
 		DB:     newGormTestDB(t),
-		Config: &config.Config{Attachment: opts},
+		Config: &config.Config{},
 	})
 	if err != nil {
 		t.Fatalf("NewAttachmentsController: %v", err)
@@ -180,7 +167,7 @@ func TestGetAttachmentInvalidBearer(t *testing.T) {
 	issuer := testAttachmentJWT(t)
 	h, err := routeattachments.NewAttachmentsController(&svc.ServiceContext{
 		DB:     newGormTestDB(t),
-		Config: &config.Config{Attachment: testAttachmentOptions(t)},
+		Config: &config.Config{},
 		Token:  issuer,
 	})
 	if err != nil {
@@ -223,24 +210,14 @@ func TestUploadLocalInvalidOwnerUserID(t *testing.T) {
 
 func mustNewAttachmentsController(t *testing.T) *routeattachments.AttachmentsController {
 	t.Helper()
-	root := t.TempDir()
-	opts := options.NewAttachmentOptions()
-	opts.LocalRoot = root
 	h, err := routeattachments.NewAttachmentsController(&svc.ServiceContext{
 		DB:     newGormTestDB(t),
-		Config: &config.Config{Attachment: opts},
+		Config: &config.Config{},
 	})
 	if err != nil {
 		t.Fatalf("NewAttachmentsController: %v", err)
 	}
 	return h
-}
-
-func testAttachmentOptions(t *testing.T) *options.AttachmentOptions {
-	t.Helper()
-	o := options.NewAttachmentOptions()
-	o.LocalRoot = t.TempDir()
-	return o
 }
 
 func newGormTestDB(t *testing.T) *gorm.DB {

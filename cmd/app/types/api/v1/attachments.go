@@ -1,30 +1,33 @@
 package v1
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 // AttachmentResponse is the public metadata shape for an attachment row.
 // AttachmentResponse 是附件行的对外元数据结构。
 type AttachmentResponse struct {
-	ID           int64      `json:"id"`
-	OwnerUserID  *int64     `json:"owner_user_id,omitempty"`
-	Purpose      string     `json:"purpose"`
-	Filename     string     `json:"filename"`
-	OriginalName *string    `json:"original_name,omitempty"`
-	MimeType     string     `json:"mime_type"`
-	Size         int64      `json:"size"`
-	StorageType  string     `json:"storage_type"`
-	Bucket       *string    `json:"bucket,omitempty"`
-	ObjectKey    *string    `json:"object_key,omitempty"`
-	LocalPath    *string    `json:"local_path,omitempty"`
-	ETag         *string    `json:"etag,omitempty"`
-	Checksum     *string    `json:"checksum,omitempty"`
-	AccessScope  string     `json:"access_scope"`
-	UploadStatus string     `json:"upload_status"`
-	Status       string     `json:"status"`
-	CategoryIDs  []int64    `json:"category_ids,omitempty"`
-	CreatedAt    time.Time  `json:"created_at"`
-	UpdatedAt    time.Time  `json:"updated_at"`
-	DeletedAt    *time.Time `json:"deleted_at,omitempty"`
+	ID              int64           `json:"id"`
+	OwnerUserID     *int64          `json:"owner_user_id,omitempty"`
+	Purpose         string          `json:"purpose"`
+	Filename        string          `json:"filename"`
+	OriginalName    *string         `json:"original_name,omitempty"`
+	MimeType        string          `json:"mime_type"`
+	Size            int64           `json:"size"`
+	StorageMountID  int64           `json:"storage_mount_id"`
+	FileNodeID      *int64          `json:"file_node_id,omitempty"`
+	ObjectKey       string          `json:"object_key"`
+	StorageMetadata json.RawMessage `json:"storage_metadata,omitempty"`
+	ETag            *string         `json:"etag,omitempty"`
+	Checksum        *string         `json:"checksum,omitempty"`
+	AccessScope     string          `json:"access_scope"`
+	UploadStatus    string          `json:"upload_status"`
+	Status          string          `json:"status"`
+	CategoryIDs     []int64         `json:"category_ids,omitempty"`
+	CreatedAt       time.Time       `json:"created_at"`
+	UpdatedAt       time.Time       `json:"updated_at"`
+	DeletedAt       *time.Time      `json:"deleted_at,omitempty"`
 }
 
 // AttachmentListResponse returns cursor-paginated attachments.
@@ -37,16 +40,16 @@ type AttachmentListResponse struct {
 // AttachmentPresignRequest creates a pending remote attachment.
 // AttachmentPresignRequest 创建 pending 状态远端附件。
 type AttachmentPresignRequest struct {
-	StorageType  string  `json:"storage_type" binding:"required,oneof=s3 oss"`
-	OwnerUserID  *int64  `json:"owner_user_id,omitempty"`
-	Purpose      string  `json:"purpose" binding:"required"`
-	Filename     string  `json:"filename" binding:"required,max=255"`
-	OriginalName *string `json:"original_name,omitempty"`
-	MimeType     string  `json:"mime_type" binding:"required,max=127"`
-	Size         int64   `json:"size" binding:"required,min=1"`
-	AccessScope  string  `json:"access_scope" binding:"required,oneof=private public"`
-	Checksum     *string `json:"checksum,omitempty"`
-	CategoryIDs  []int64 `json:"category_ids,omitempty"`
+	OwnerUserID    *int64  `json:"owner_user_id,omitempty"`
+	Purpose        string  `json:"purpose" binding:"required"`
+	Filename       string  `json:"filename" binding:"required,max=255"`
+	OriginalName   *string `json:"original_name,omitempty"`
+	MimeType       string  `json:"mime_type" binding:"required,max=127"`
+	Size           int64   `json:"size" binding:"required,min=1"`
+	AccessScope    string  `json:"access_scope" binding:"required,oneof=private public"`
+	Checksum       *string `json:"checksum,omitempty"`
+	CategoryIDs    []int64 `json:"category_ids,omitempty"`
+	StorageMountID *int64  `json:"storage_mount_id,omitempty"`
 }
 
 // AttachmentPresignResponse returns upload instructions for direct upload.
