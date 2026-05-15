@@ -1,4 +1,4 @@
-import { BookOpen, FileText, Search, Settings, ShieldCheck, Sparkles, Tags, Users } from "lucide-react";
+import { BookOpen, Database, FileText, Search, Settings, ShieldCheck, Sparkles, Tags, Users } from "lucide-react";
 
 export const studioNavItems = [
   { href: "/studio", label: "总览", icon: BookOpen },
@@ -6,6 +6,7 @@ export const studioNavItems = [
   { href: "/studio/search", label: "搜索", icon: Search },
   { href: "/studio/tags", label: "标签", icon: Tags },
   { href: "/studio/users", label: "用户", icon: Users },
+  { href: "/studio/storage", label: "存储", icon: Database },
   { href: "/studio/permissions", label: "权限", icon: ShieldCheck },
   { href: "/studio/settings", label: "设置", icon: Settings }
 ];

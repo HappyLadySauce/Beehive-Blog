@@ -176,3 +176,69 @@ export type UpdateUserRequest = {
 };
 
 export type DeleteUserResponse = Record<string, never>;
+
+export type JsonObject = Record<string, unknown>;
+
+export type DriverResponse = {
+  id: number;
+  name: string;
+  display_name: string;
+  description?: string | null;
+  config_schema: JsonObject;
+  capabilities: JsonObject;
+  status: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DriverListResponse = {
+  items: DriverResponse[];
+};
+
+export type StorageMountResponse = {
+  id: number;
+  driver_name: string;
+  mount_path: string;
+  name: string;
+  remark?: string | null;
+  config: JsonObject;
+  order_index: number;
+  is_default: boolean;
+  disabled: boolean;
+  status: string;
+  last_checked_at?: string | null;
+  last_error?: string | null;
+  created_by?: number | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type StorageMountListResponse = {
+  items: StorageMountResponse[];
+};
+
+export type StorageMountCreateRequest = {
+  driver_name: string;
+  mount_path: string;
+  name: string;
+  remark?: string | null;
+  config: JsonObject;
+  order_index?: number;
+  is_default?: boolean;
+};
+
+export type StorageMountPatchRequest = {
+  name?: string;
+  remark?: string | null;
+  config?: JsonObject;
+  order_index?: number;
+  is_default?: boolean;
+};
+
+export type StorageMountCheckResponse = {
+  status: string;
+  error?: string | null;
+  checked: string;
+};
+
+export type DeleteStorageMountResponse = Record<string, never>;

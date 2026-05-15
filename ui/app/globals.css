@@ -17,7 +17,7 @@
   /* 与顶栏、公开页、Studio 横向内边距对齐。 */
   --shell-pad-x: clamp(20px, 3vw, 48px);
   --page-max-width: min(100%, 1680px);
-  --site-header-height: 86px;
+  --site-header-height: 64px;
 }
 
 * {
@@ -59,7 +59,7 @@ input {
   gap: 24px;
   justify-content: space-between;
   min-height: var(--site-header-height);
-  padding: 18px var(--shell-pad-x);
+  padding: 12px var(--shell-pad-x);
   position: sticky;
   top: 0;
   z-index: 200;
@@ -69,6 +69,8 @@ input {
 .main-nav,
 .nav-action,
 .avatar-button,
+.danger-button,
+.icon-button,
 .primary-button,
 .secondary-button,
 .status-line {
@@ -222,6 +224,8 @@ input {
 }
 
 .primary-button,
+.danger-button,
+.icon-button,
 .secondary-button {
   border: 1px solid transparent;
   border-radius: 8px;
@@ -243,7 +247,23 @@ input {
   color: var(--ink);
 }
 
+.danger-button {
+  background: #fff1f0;
+  border-color: #ffd2cc;
+  color: var(--danger);
+}
+
+.icon-button {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--ink);
+  min-height: 40px;
+  padding: 9px;
+}
+
 .primary-button:disabled,
+.danger-button:disabled,
+.icon-button:disabled,
 .secondary-button:disabled {
   cursor: not-allowed;
   opacity: 0.65;
