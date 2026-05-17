@@ -170,17 +170,33 @@ Studio panels:
 - Prefer tables, rows, and grouped controls over large marketing cards.
 - Keep repeated items consistent in height, spacing, and action placement.
 
-### Storage Page
+### Storage, File, and Attachment Pages
 
-The storage page is operational and should be easy to scan.
+Storage, file, and attachment management are related but visually separate work modes.
 
-- Left/main area: storage mount list or table.
-- Right/support area: driver templates and capability summaries.
-- Mount item hierarchy: name, path, status/default, driver, updated/check time, config preview, actions.
+存储、文件与附件管理相关，但属于不同工作模式，界面不得混成一个大表单。
+
+Storage instance and driver views:
+
+- Focus on storage mounts, driver templates, config, default state, enable/disable, health check, and delete.
+- Mount item hierarchy: name, mount path, status/default, driver, updated/check time, config preview, actions.
 - Remote config errors must be visible near the affected mount, not hidden in a toast only.
-- Health check, enable/disable, set default, edit, and delete should have consistent positions.
 - JSON config blocks must be scrollable and visually secondary.
 - Driver capability JSON should be compact; do not let it dominate the page.
+
+File management view:
+
+- Use an OpenList-like file list, not an attachment metadata table.
+- Root path `/` displays all storage mount paths as folder-like entries.
+- Entering a mount path displays directories and files from `file_nodes`.
+- Columns should be limited to name, size, modified time, status, and actions.
+- Do not show attachment purpose, attachment category CRUD, article references, or business aggregation in the file list.
+
+Attachment management view:
+
+- Handles business metadata above files: categories, visibility, upload status, article/avatar/system references, reference count, orphan attachments, and deletion safety.
+- Category management belongs here, not in the file management view.
+- Attachment rows may link to the underlying file location, but the page should not become a directory browser.
 
 ### Status Badges
 
@@ -333,4 +349,3 @@ When an AI agent changes Beehive-Blog UI, use this prompt:
 - 是否保持 8px 圆角、清晰状态、可访问按钮、响应式不溢出。
 - 是否避免把 Studio 做成营销页面。
 - 是否没有削弱 BFF Cookie、HttpOnly、admin-only、SEO 分离等安全边界。
-

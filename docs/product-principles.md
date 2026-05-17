@@ -38,6 +38,14 @@
 
 同一套内容在两侧通过**状态 + 可见性 + 发布动作**区分「管理员维护中的草稿」与「读者可见的已发布内容」。工程上须保持 **路由与 SEO 策略分离**（可索引页 vs `noindex` 工作台），见 [react-ssr-seo-architecture.md](frontend/react-ssr-seo-architecture.md) §4.2。
 
+### Studio 文件与附件边界
+
+Studio 的文件能力拆为三层，避免把目录浏览、业务索引和上传规则混在同一个页面里：
+
+- **文件管理**：类 OpenList 的文件系统视图，`/` 展示所有存储实例挂载路径，进入挂载后展示目录和文件；不展示用途、附件分类或文章引用。
+- **附件管理**：文件之上的业务索引层，维护附件分类、文章/头像/系统资源引用、引用计数、孤儿附件和可删除性判断。
+- **上传策略**：决定上传目标、路径模板、大小、MIME/扩展名、重名策略和默认访问范围；前端不再要求管理员直接理解 `purpose`。
+
 ---
 
 ## 4. 内容类型与表达分工（理论层）
@@ -127,6 +135,9 @@ flowchart LR
 | --- | --- |
 | v1 登录与注册 API 约定 | [v1/login-and-registration-rules.md](v1/login-and-registration-rules.md) |
 | v1 文件存储驱动架构 | [v1/file-storage-driver-architecture.md](v1/file-storage-driver-architecture.md) |
+| v1 文件管理架构 | [v1/file-management-architecture.md](v1/file-management-architecture.md) |
+| v1 附件管理架构 | [v1/attachment-management-architecture.md](v1/attachment-management-architecture.md) |
+| v1 上传策略架构 | [v1/upload-policy-architecture.md](v1/upload-policy-architecture.md) |
 | 前端 SSR / SEO / BFF | [frontend/react-ssr-seo-architecture.md](frontend/react-ssr-seo-architecture.md) |
 | Studio 布局约定 | [frontend/studio-layout-implementation-plan.md](frontend/studio-layout-implementation-plan.md) |
 | 仓库开发说明（构建、迁移、日志） | [CLAUDE.md](../CLAUDE.md) |
