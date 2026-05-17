@@ -282,19 +282,33 @@
 
 .statusPill {
   border-radius: 999px;
+  display: inline-flex;
   font-size: 0.78rem;
   font-weight: 800;
+  line-height: 1;
   padding: 5px 9px;
 }
 
 .statusReady {
   background: #edf7f5;
+  border-radius: 999px;
   color: var(--accent-dark);
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+  padding: 5px 9px;
 }
 
 .statusPending {
   background: #fff7e6;
+  border-radius: 999px;
   color: #925d05;
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1;
+  padding: 5px 9px;
 }
 
 .emptyState {
@@ -448,6 +462,31 @@
   width: 18px;
 }
 
+.checkboxGrid {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+}
+
+.inlineCheck {
+  align-items: center;
+  background: #fbfaf6;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: inline-flex;
+  gap: 8px;
+  min-height: 36px;
+  padding: 8px 10px;
+}
+
+.inlineCheck input {
+  height: 16px;
+  width: 16px;
+}
+
 .passwordRow {
   align-items: center;
   display: grid;
@@ -527,6 +566,15 @@
   width: 100%;
 }
 
+.tableScroll {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.fileTable {
+  min-width: 980px;
+}
+
 .table th,
 .table td {
   border-bottom: 1px solid var(--line);
@@ -544,6 +592,34 @@
 .tableActions {
   display: flex;
   gap: 8px;
+}
+
+.panelActions,
+.categoryActions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.categoryActions {
+  justify-content: flex-start;
+}
+
+.categoryManager {
+  display: grid;
+  gap: 18px;
+}
+
+.fileNameCell {
+  display: grid;
+  gap: 6px;
+  min-width: 240px;
+}
+
+.fileNameCell strong {
+  overflow-wrap: anywhere;
 }
 
 .filterBar {

@@ -242,3 +242,121 @@ export type StorageMountCheckResponse = {
 };
 
 export type DeleteStorageMountResponse = Record<string, never>;
+
+export type AttachmentResponse = {
+  id: number;
+  owner_user_id?: number | null;
+  purpose: string;
+  filename: string;
+  original_name?: string | null;
+  mime_type: string;
+  size: number;
+  storage_mount_id: number;
+  file_node_id?: number | null;
+  object_key: string;
+  storage_metadata?: JsonObject | null;
+  etag?: string | null;
+  checksum?: string | null;
+  access_scope: "private" | "public" | string;
+  upload_status: "pending" | "ready" | string;
+  status: "active" | "archived" | string;
+  category_ids?: number[];
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+};
+
+export type AttachmentListRequest = {
+  purpose?: string;
+  status?: string;
+  category_id?: number;
+  owner_user_id?: number;
+  cursor?: string;
+  limit?: number;
+};
+
+export type AttachmentListResponse = {
+  items: AttachmentResponse[];
+  next_cursor?: string;
+};
+
+export type AttachmentPresignRequest = {
+  owner_user_id?: number;
+  purpose: string;
+  filename: string;
+  original_name?: string | null;
+  mime_type: string;
+  size: number;
+  access_scope: "private" | "public" | string;
+  checksum?: string | null;
+  category_ids?: number[];
+  storage_mount_id?: number;
+};
+
+export type AttachmentPresignResponse = {
+  attachment: AttachmentResponse;
+  upload_url: string;
+  method: string;
+  headers?: Record<string, string>;
+  expires_at: string;
+};
+
+export type AttachmentCompleteRequest = {
+  etag?: string | null;
+  checksum?: string | null;
+  size?: number;
+};
+
+export type AttachmentPatchRequest = {
+  original_name?: string | null;
+  status?: string;
+  access_scope?: string;
+  category_ids?: number[];
+};
+
+export type AttachmentCategoryReplaceRequest = {
+  category_ids: number[];
+};
+
+export type AttachmentCategoryResponse = {
+  id: number;
+  parent_id?: number | null;
+  name: string;
+  slug: string;
+  description?: string | null;
+  icon?: string | null;
+  path: string;
+  depth: number;
+  sort_order: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
+};
+
+export type AttachmentCategoryListResponse = {
+  items: AttachmentCategoryResponse[];
+};
+
+export type AttachmentCategoryCreateRequest = {
+  parent_id?: number | null;
+  name: string;
+  slug: string;
+  description?: string | null;
+  icon?: string | null;
+  sort_order?: number;
+  status?: string;
+};
+
+export type AttachmentCategoryPatchRequest = {
+  parent_id?: number | null;
+  name?: string;
+  slug?: string;
+  description?: string | null;
+  icon?: string | null;
+  sort_order?: number;
+  status?: string;
+};
+
+export type DeleteAttachmentResponse = Record<string, never>;
+export type DeleteAttachmentCategoryResponse = Record<string, never>;

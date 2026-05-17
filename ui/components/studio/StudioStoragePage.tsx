@@ -29,6 +29,7 @@ import {
 } from "@/lib/api/storage";
 import type { DriverResponse, JsonObject, StorageMountResponse } from "@/lib/api/types";
 import styles from "./Studio.module.css";
+import { StudioFileManager } from "./StudioFileManager";
 import { StudioPanel } from "./StudioPanel";
 import { StudioSelect } from "./StudioSelect";
 import { StudioTopbar } from "./StudioTopbar";
@@ -60,6 +61,7 @@ function loadStorageData() {
 }
 
 export function StudioStoragePage() {
+  const [activeSection, setActiveSection] = useState<"files" | "mounts" | "drivers">("files");
   const [data, setData] = useState<StorageData>(emptyData);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -270,16 +272,40 @@ export function StudioStoragePage() {
   return (
     <>
       <StudioTopbar
-        actions={
+        actions={activeSection === "mounts" ? (
           <button className="primary-button" type="button" onClick={openCreate}>
             <Plus aria-hidden size={18} />
             添加存储
           </button>
-        }
-        description="管理文件驱动模板与存储实例；上传未指定存储时使用默认启用实例。"
+        ) : null}
+        description="管理文件、存储实例与驱动模板；上传未指定存储时使用默认启用实例。"
         eyebrow="File storage"
         title="存储"
       />
+
+      <div className={styles.segmentedTabs} role="tablist" aria-label="存储页面分段">
+        <button
+          className={activeSection === "files" ? styles.segmentedTabActive : styles.segmentedTab}
+          type="button"
+          onClick={() => setActiveSection("files")}
+        >
+          文件
+        </button>
+        <button
+          className={activeSection === "mounts" ? styles.segmentedTabActive : styles.segmentedTab}
+          type="button"
+          onClick={() => setActiveSection("mounts")}
+        >
+          存储实例
+        </button>
+        <button
+          className={activeSection === "drivers" ? styles.segmentedTabActive : styles.segmentedTab}
+          type="button"
+          onClick={() => setActiveSection("drivers")}
+        >
+          文件驱动
+        </button>
+      </div>
 
       {message ? (
         <p className={`${styles.message} ${message.tone === "success" ? styles.messageSuccess : styles.messageError}`} role="alert">
@@ -287,7 +313,9 @@ export function StudioStoragePage() {
         </p>
       ) : null}
 
-      <div className={styles.storageGrid}>
+      {activeSection === "files" ? <StudioFileManager mounts={data.mounts} /> : null}
+
+      {activeSection === "mounts" ? (
         <StudioPanel action={<Database aria-hidden size={22} />} title="存储实例">
           {loading ? (
             <div className={styles.emptyState} role="status">
@@ -367,7 +395,9 @@ export function StudioStoragePage() {
             </div>
           )}
         </StudioPanel>
+      ) : null}
 
+      {activeSection === "drivers" ? (
         <StudioPanel action={<HardDrive aria-hidden size={22} />} title="文件驱动">
           {loading ? (
             <div className={styles.emptyState} role="status">
@@ -397,7 +427,7 @@ export function StudioStoragePage() {
             </div>
           )}
         </StudioPanel>
-      </div>
+      ) : null}
 
       {showForm &&
         createPortal(

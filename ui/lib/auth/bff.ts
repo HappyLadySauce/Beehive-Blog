@@ -7,6 +7,10 @@ import { accessCookieName, refreshCookieName, secureCookieEnabled } from "@/lib/
 const goApiBaseUrl = process.env.BEEHIVE_API_BASE_URL ?? "http://localhost:8080";
 const fallbackRefreshMaxAge = 60 * 60 * 24 * 30;
 
+export function goApiUrl(path: string) {
+  return `${goApiBaseUrl}/api/v1${path}`;
+}
+
 export class BffAuthError extends Error {
   readonly status: number;
   readonly code: number;
@@ -19,13 +23,19 @@ export class BffAuthError extends Error {
   }
 }
 
-export async function forwardGoApi<T>(path: string, init: RequestInit): Promise<T> {
-  const response = await fetch(`${goApiBaseUrl}/api/v1${path}`, {
+export async function forwardGoApi<T>(
+  path: string,
+  init: RequestInit,
+  options: { defaultContentType?: boolean } = {}
+): Promise<T> {
+  const headers: HeadersInit = {
+    ...(options.defaultContentType === false ? {} : { "content-type": "application/json" }),
+    ...init.headers
+  };
+
+  const response = await fetch(goApiUrl(path), {
     ...init,
-    headers: {
-      "content-type": "application/json",
-      ...init.headers
-    },
+    headers,
     cache: "no-store"
   });
 
