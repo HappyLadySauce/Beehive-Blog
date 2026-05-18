@@ -72,6 +72,7 @@ func Init(svcCtx *svc.ServiceContext) error {
 	adminAttachments := attachments.Group("")
 	adminAttachments.Use(middleware.AuthMiddleware(svcCtx), middleware.RequireRole("admin"))
 	adminAttachments.POST("", h.UploadLocal)
+	adminAttachments.POST("/batch", h.UploadBatch)
 	adminAttachments.POST("/upload-url", h.PresignRemote)
 	adminAttachments.GET("", h.List)
 	adminAttachments.GET("/references", h.ListReferences)

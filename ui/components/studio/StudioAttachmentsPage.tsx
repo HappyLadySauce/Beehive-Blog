@@ -34,7 +34,8 @@ import {
   listAttachments,
   updateAttachment,
   updateAttachmentCategory,
-  uploadLocalAttachment
+  uploadLocalAttachment,
+  uploadLocalAttachmentsBatch
 } from "@/lib/api/attachments";
 import { humanizeApiError } from "@/lib/api/client";
 import { listStorageMounts } from "@/lib/api/storage";
@@ -435,29 +436,32 @@ export function StudioAttachmentsPage() {
         setMessage({ tone: "error", text: "当前会话缺少用户 ID，请重新登录后再上传。" });
         return;
       }
-      let uploaded = 0;
+      const formData = new FormData();
       for (const file of uploadFiles) {
-        const formData = new FormData();
-        formData.set("file", file);
-        formData.set("owner_user_id", String(claims.uid));
-        formData.set("purpose", uploadPurpose);
-        formData.set("access_scope", uploadAccess);
-        if (uploadMountID) formData.set("storage_mount_id", uploadMountID);
-        if (uploadCategoryID) formData.set("category_ids", uploadCategoryID);
-        try {
-          await uploadLocalAttachment(formData);
-          uploaded += 1;
-        } catch (error) {
-          const detail = humanizeApiError(error);
-          if (uploaded > 0) {
-            setMessage({ tone: "error", text: `已上传 ${uploaded} 个，第 ${uploaded + 1} 个失败：${detail}` });
-          } else {
-            setMessage({ tone: "error", text: detail });
-          }
-          if (uploaded > 0) await loadData();
-          return;
-        }
+        formData.append("files", file);
       }
+      formData.set("owner_user_id", String(claims.uid));
+      formData.set("purpose", uploadPurpose);
+      formData.set("access_scope", uploadAccess);
+      if (uploadMountID) formData.set("storage_mount_id", uploadMountID);
+      if (uploadCategoryID) formData.set("category_ids", uploadCategoryID);
+
+      const result = await uploadLocalAttachmentsBatch(formData);
+
+      if (result.failed > 0) {
+        const errors = result.items
+          .filter((item) => item.error)
+          .map((item) => `${item.filename}: ${item.error}`)
+          .join("; ");
+        if (result.uploaded > 0) {
+          setMessage({ tone: "error", text: `已上传 ${result.uploaded} 个，${result.failed} 个失败：${errors}` });
+        } else {
+          setMessage({ tone: "error", text: errors });
+        }
+        if (result.uploaded > 0) await loadData();
+        return;
+      }
+
       setShowUpload(false);
       setMessage({
         tone: "success",

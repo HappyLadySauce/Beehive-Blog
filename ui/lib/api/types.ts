@@ -360,6 +360,19 @@ export type AttachmentCategoryListResponse = {
   items: AttachmentCategoryResponse[];
 };
 
+export type AttachmentBatchItemResponse = {
+  attachment: AttachmentResponse;
+  index: number;
+  filename: string;
+  error?: string;
+};
+
+export type AttachmentBatchUploadResponse = {
+  items: AttachmentBatchItemResponse[];
+  uploaded: number;
+  failed: number;
+};
+
 export type AttachmentCategoryCreateRequest = {
   parent_id?: number | null;
   name: string;

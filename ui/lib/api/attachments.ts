@@ -1,5 +1,6 @@
 import { apiFetch } from "./client";
 import type {
+  AttachmentBatchUploadResponse,
   AttachmentCategoryCreateRequest,
   AttachmentCategoryListResponse,
   AttachmentCategoryPatchRequest,
@@ -36,6 +37,14 @@ export function listAttachments(params: AttachmentListRequest = {}) {
 
 export function uploadLocalAttachment(formData: FormData) {
   return apiFetch<AttachmentResponse>("/bff/attachments", {
+    method: "POST",
+    body: formData,
+    headers: {}
+  });
+}
+
+export function uploadLocalAttachmentsBatch(formData: FormData) {
+  return apiFetch<AttachmentBatchUploadResponse>("/bff/attachments/batch", {
     method: "POST",
     body: formData,
     headers: {}

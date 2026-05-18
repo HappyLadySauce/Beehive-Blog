@@ -243,6 +243,163 @@ func (h *AttachmentsController) presignRemote(ctx context.Context, actor pkgatta
 	return pkgattachment.PresignOutput{Attachment: attachment, Upload: upload}, nil
 }
 
+// UploadBatch handles POST /api/v1/attachments/batch multipart uploads (admin).
+// UploadBatch 处理 POST /api/v1/attachments/batch 批量 multipart 上传（管理员）。
+func (h *AttachmentsController) UploadBatch(ctx *gin.Context) {
+	ctx.Request.Body = http.MaxBytesReader(ctx.Writer, ctx.Request.Body, pkgattachment.MaxUploadBytes+1<<20)
+	ownerUserID, err := optionalInt64Form(ctx, "owner_user_id")
+	if err != nil {
+		common.Fail(ctx, common.NewBadRequest("invalid owner_user_id", err))
+		return
+	}
+	categoryIDs, err := int64ListForm(ctx, "category_ids")
+	if err != nil {
+		common.Fail(ctx, common.NewBadRequest("invalid category_ids", err))
+		return
+	}
+	storageMountID, err := optionalInt64Form(ctx, "storage_mount_id")
+	if err != nil {
+		common.Fail(ctx, common.NewBadRequest("invalid storage_mount_id", err))
+		return
+	}
+	purpose := defaultString(ctx.PostForm("purpose"), pkgattachment.PurposeContent)
+	accessScope := defaultString(ctx.PostForm("access_scope"), pkgattachment.AccessPrivate)
+
+	// Resolve the mount once (shared across all files in the batch).
+	// 解析挂载点一次（批量内所有文件共用）。
+	mount, drv, err := driver.ResolveMountForWrite(ctx.Request.Context(), h.driverStore, h.driverRegistry, storageMountID)
+	if err != nil {
+		common.Fail(ctx, common.NewBadRequest("resolve storage mount", err))
+		return
+	}
+
+	form := ctx.Request.MultipartForm
+	files := form.File["files"]
+	if len(files) == 0 {
+		common.Fail(ctx, common.NewBadRequest("files field is required with at least one file", nil))
+		return
+	}
+
+	actor := actorFromClaims(ctx)
+	results := make([]v1.AttachmentBatchResponse, 0, len(files))
+	uploaded, failed := 0, 0
+
+	for i, fh := range files {
+		file, openErr := fh.Open()
+		if openErr != nil {
+			results = append(results, v1.AttachmentBatchResponse{
+				Index:    i,
+				Filename: fh.Filename,
+				Error:    "failed to open uploaded file",
+			})
+			failed++
+			continue
+		}
+
+		mimeType := strings.TrimSpace(fh.Header.Get("Content-Type"))
+		if mimeType == "" {
+			mimeType = "application/octet-stream"
+		}
+
+		in := pkgattachment.LocalUploadInput{
+			OwnerUserID:    ownerUserID,
+			Purpose:        purpose,
+			Filename:       fh.Filename,
+			OriginalName:   &fh.Filename,
+			MimeType:       mimeType,
+			Size:           fh.Size,
+			Reader:         file,
+			AccessScope:    accessScope,
+			CategoryIDs:    categoryIDs,
+			StorageMountID: storageMountID,
+		}
+
+		attachment, uploadErr := h.uploadLocalFile(ctx.Request.Context(), actor, in, mount, drv)
+		file.Close()
+
+		if uploadErr != nil {
+			results = append(results, v1.AttachmentBatchResponse{
+				Index:    i,
+				Filename: fh.Filename,
+				Error:    uploadErr.Error(),
+			})
+			failed++
+		} else {
+			results = append(results, v1.AttachmentBatchResponse{
+				Attachment: toAttachmentResponse(attachment, categoryIDs),
+				Index:      i,
+				Filename:   fh.Filename,
+			})
+			uploaded++
+		}
+	}
+
+	common.Success(ctx, v1.AttachmentBatchUploadResponse{
+		Items:    results,
+		Uploaded: uploaded,
+		Failed:   failed,
+	})
+}
+
+// uploadLocalFile runs the core upload steps for a file whose mount/driver are already resolved.
+// uploadLocalFile 为已解析挂载/驱动的文件执行核心上传步骤。
+func (h *AttachmentsController) uploadLocalFile(
+	ctx context.Context,
+	actor pkgattachment.Actor,
+	in pkgattachment.LocalUploadInput,
+	mount *model.StorageMount,
+	drv driver.DriverBackend,
+) (model.Attachment, error) {
+	if err := pkgattachment.RequireAdmin(actor); err != nil {
+		return model.Attachment{}, err
+	}
+	if err := pkgattachment.ValidateCommon(in.OwnerUserID, in.Purpose, in.MimeType, in.Size, in.AccessScope); err != nil {
+		return model.Attachment{}, err
+	}
+	if in.Reader == nil {
+		return model.Attachment{}, fmt.Errorf("%w: upload reader is required", pkgattachment.ErrInvalid)
+	}
+	if strings.TrimSpace(in.Filename) == "" {
+		return model.Attachment{}, fmt.Errorf("%w: filename is required", pkgattachment.ErrInvalid)
+	}
+
+	objectKey, filename, err := pkgattachment.ObjectKeyFor(in.Purpose, in.Filename)
+	if err != nil {
+		return model.Attachment{}, err
+	}
+
+	stored, err := drv.Save(ctx, driver.PutRequest{ObjectKey: objectKey, Reader: in.Reader, Size: in.Size})
+	if err != nil {
+		return model.Attachment{}, err
+	}
+
+	attachment := model.Attachment{
+		OwnerUserID:    in.OwnerUserID,
+		Purpose:        in.Purpose,
+		Filename:       filename,
+		OriginalName:   pkgattachment.CleanOptional(in.OriginalName),
+		MimeType:       in.MimeType,
+		Size:           in.Size,
+		StorageMountID: mount.ID,
+		ObjectKey:      objectKey,
+		ETag:           pkgattachment.CleanOptional(&stored.ETag),
+		Checksum:       pkgattachment.CleanOptional(&stored.Checksum),
+		AccessScope:    in.AccessScope,
+		UploadStatus:   pkgattachment.UploadReady,
+		Status:         pkgattachment.StatusActive,
+	}
+	err = h.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&attachment).Error; err != nil {
+			return pkgattachment.MapDBError(err)
+		}
+		return replaceCategoriesTx(tx, attachment.ID, in.CategoryIDs)
+	})
+	if err != nil {
+		return model.Attachment{}, err
+	}
+	return attachment, nil
+}
+
 // completeRemote marks a pending remote attachment ready.
 // completeRemote 将 pending 远端附件标记为 ready。
 func (h *AttachmentsController) completeRemote(ctx context.Context, actor pkgattachment.Actor, id int64, in pkgattachment.CompleteInput) (model.Attachment, error) {

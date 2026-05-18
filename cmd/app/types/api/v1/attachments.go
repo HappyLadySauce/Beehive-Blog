@@ -142,6 +142,23 @@ type AttachmentCategoryCreateRequest struct {
 	Status      string  `json:"status" binding:"omitempty,oneof=active disabled"`
 }
 
+// AttachmentBatchResponse reports per-file results from a batch upload.
+// AttachmentBatchResponse 批量上传的单文件结果。
+type AttachmentBatchResponse struct {
+	Attachment AttachmentResponse `json:"attachment"`
+	Index      int                `json:"index"`
+	Filename   string             `json:"filename"`
+	Error      string             `json:"error,omitempty"`
+}
+
+// AttachmentBatchUploadResponse wraps results from a batch upload.
+// AttachmentBatchUploadResponse 批量上传的响应结构。
+type AttachmentBatchUploadResponse struct {
+	Items    []AttachmentBatchResponse `json:"items"`
+	Uploaded int                       `json:"uploaded"`
+	Failed   int                       `json:"failed"`
+}
+
 // AttachmentCategoryPatchRequest updates a category.
 // AttachmentCategoryPatchRequest 更新附件分类。
 type AttachmentCategoryPatchRequest struct {
