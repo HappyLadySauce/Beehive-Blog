@@ -68,6 +68,23 @@ func (u *UsersController) update(ctx context.Context, id int64, req *v1.UpdateUs
 	if req.Status != nil {
 		updates["status"] = *req.Status
 	}
+	if req.AvatarAttachmentID != nil {
+		if *req.AvatarAttachmentID == 0 {
+			updates["avatar_attachment_id"] = nil
+		} else {
+			var attachment model.Attachment
+			err := u.svc.DB.WithContext(ctx).
+				Where("id = ? AND purpose = ? AND upload_status = ? AND status = ?", *req.AvatarAttachmentID, "avatar", "ready", "active").
+				First(&attachment).Error
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, common.NewBadRequest("avatar attachment is not available", nil)
+			}
+			if err != nil {
+				return nil, common.NewInternal("failed to validate avatar attachment", fmt.Errorf("avatar lookup: %w", err))
+			}
+			updates["avatar_attachment_id"] = *req.AvatarAttachmentID
+		}
+	}
 
 	err := u.svc.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(&user).Updates(updates).Error; err != nil {

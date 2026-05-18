@@ -110,6 +110,8 @@ export function StudioAttachmentsPage() {
   const [referenceDetail, setReferenceDetail] = useState<AttachmentReferenceResponse[]>([]);
   const [categoryEditing, setCategoryEditing] = useState<AttachmentCategoryResponse | null>(null);
   const [categoryDeleting, setCategoryDeleting] = useState<AttachmentCategoryResponse | null>(null);
+  const [selectedAttachmentIDs, setSelectedAttachmentIDs] = useState<number[]>([]);
+  const [bulkEditing, setBulkEditing] = useState(false);
 
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadPurpose, setUploadPurpose] = useState("content");
@@ -120,6 +122,9 @@ export function StudioAttachmentsPage() {
   const [editAccess, setEditAccess] = useState("private");
   const [editStatus, setEditStatus] = useState("active");
   const [editCategoryIDs, setEditCategoryIDs] = useState<number[]>([]);
+  const [bulkAccess, setBulkAccess] = useState("private");
+  const [bulkStatus, setBulkStatus] = useState("active");
+  const [bulkCategoryIDs, setBulkCategoryIDs] = useState<number[]>([]);
   const [completeETag, setCompleteETag] = useState("");
   const [completeChecksum, setCompleteChecksum] = useState("");
   const [completeSize, setCompleteSize] = useState("");
@@ -133,7 +138,7 @@ export function StudioAttachmentsPage() {
 
   const categoryOptions = useMemo(
     () => [
-      { value: "", label: "全部分组" },
+      { value: "", label: "未分组" },
       ...categories.map((category) => ({ value: String(category.id), label: category.name }))
     ],
     [categories]
@@ -171,13 +176,21 @@ export function StudioAttachmentsPage() {
     if (sort === "size") items.sort((a, b) => b.size - a.size);
     return items;
   }, [data.items, sort]);
+  const selectedAttachments = useMemo(
+    () => data.items.filter((attachment) => selectedAttachmentIDs.includes(attachment.id)),
+    [data.items, selectedAttachmentIDs]
+  );
+  const visibleAttachmentIDs = useMemo(() => visibleItems.map((attachment) => attachment.id), [visibleItems]);
+  const allVisibleSelected = visibleAttachmentIDs.length > 0 && visibleAttachmentIDs.every((id) => selectedAttachmentIDs.includes(id));
+  const unassignedCount = data.items.filter((attachment) => (attachment.category_ids ?? []).length === 0).length;
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [attachments, categoryPayload, mountPayload, referencePayload] = await Promise.all([
         listAttachments({
-          category_id: categoryID ? Number(categoryID) : undefined,
+          category_id: categoryID && categoryID !== "unassigned" ? Number(categoryID) : undefined,
+          category_mode: categoryID === "unassigned" ? "unassigned" : undefined,
           cursor: cursor || undefined,
           limit: attachmentLimit,
           purpose: purpose || undefined,
@@ -204,7 +217,8 @@ export function StudioAttachmentsPage() {
     let active = true;
     Promise.all([
       listAttachments({
-        category_id: categoryID ? Number(categoryID) : undefined,
+        category_id: categoryID && categoryID !== "unassigned" ? Number(categoryID) : undefined,
+        category_mode: categoryID === "unassigned" ? "unassigned" : undefined,
         cursor: cursor || undefined,
         limit: attachmentLimit,
         purpose: purpose || undefined,
@@ -244,7 +258,7 @@ export function StudioAttachmentsPage() {
     setUploadPurpose("content");
     setUploadAccess("public");
     setUploadMountID("");
-    setUploadCategoryID(categoryID);
+    setUploadCategoryID(categoryID && categoryID !== "unassigned" ? categoryID : "");
   }
 
   function resetCategoryForm() {
@@ -289,6 +303,29 @@ export function StudioAttachmentsPage() {
     setEditAccess(attachment.access_scope);
     setEditStatus(attachment.status);
     setEditCategoryIDs(attachment.category_ids ?? []);
+    setMessage(null);
+  }
+
+  function toggleAttachmentSelection(id: number, checked: boolean) {
+    setSelectedAttachmentIDs((current) => (checked ? Array.from(new Set([...current, id])) : current.filter((item) => item !== id)));
+  }
+
+  function toggleVisibleSelection(checked: boolean) {
+    setSelectedAttachmentIDs((current) => {
+      if (!checked) {
+        return current.filter((id) => !visibleAttachmentIDs.includes(id));
+      }
+      return Array.from(new Set([...current, ...visibleAttachmentIDs]));
+    });
+  }
+
+  function openBulkEdit() {
+    if (selectedAttachments.length === 0) return;
+    const first = selectedAttachments[0];
+    setBulkAccess(first.access_scope);
+    setBulkStatus(first.status);
+    setBulkCategoryIDs(first.category_ids ?? []);
+    setBulkEditing(true);
     setMessage(null);
   }
 
@@ -357,6 +394,32 @@ export function StudioAttachmentsPage() {
       });
       setEditing(null);
       setMessage({ tone: "success", text: "附件信息已更新。" });
+      await loadData();
+    } catch (error) {
+      setMessage({ tone: "error", text: humanizeApiError(error) });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function onSaveBulkEdit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (selectedAttachmentIDs.length === 0) return;
+    setSaving(true);
+    setMessage(null);
+    try {
+      await Promise.all(
+        selectedAttachmentIDs.map((id) =>
+          updateAttachment(id, {
+            access_scope: bulkAccess,
+            category_ids: bulkCategoryIDs,
+            status: bulkStatus
+          })
+        )
+      );
+      setBulkEditing(false);
+      setSelectedAttachmentIDs([]);
+      setMessage({ tone: "success", text: "已批量更新附件。" });
       await loadData();
     } catch (error) {
       setMessage({ tone: "error", text: humanizeApiError(error) });
@@ -474,7 +537,7 @@ export function StudioAttachmentsPage() {
     setCursor(data.next_cursor);
   }
 
-  function previousPage() {
+function previousPage() {
     setCursorStack((current) => {
       const next = [...current];
       setCursor(next.pop() ?? "");
@@ -542,13 +605,28 @@ export function StudioAttachmentsPage() {
             <RefreshCw aria-hidden size={18} />
           </button>
         </div>
+        {selectedAttachmentIDs.length > 0 ? (
+          <div className={styles.selectionBar}>
+            <span>已选择 {selectedAttachmentIDs.length} 个附件</span>
+            <button className="secondary-button" type="button" onClick={() => setSelectedAttachmentIDs([])}>
+              清除选择
+            </button>
+            <button className="primary-button" type="button" onClick={openBulkEdit}>
+              <Pencil aria-hidden size={16} />
+              编辑已选
+            </button>
+          </div>
+        ) : null}
 
         <div className={styles.categoryStrip}>
           <CategoryCard active={!categoryID} count={data.items.length} title="全部" onClick={() => {
             setCategoryID("");
             resetPage();
           }} />
-          <CategoryCard active={categoryID === "unassigned"} count={0} title="未分组" disabled />
+          <CategoryCard active={categoryID === "unassigned"} count={unassignedCount} title="未分组" onClick={() => {
+            setCategoryID("unassigned");
+            resetPage();
+          }} />
           {categories.map((category) => (
             <CategoryCard
               active={categoryID === String(category.id)}
@@ -573,11 +651,25 @@ export function StudioAttachmentsPage() {
             正在加载附件...
           </div>
         ) : visibleItems.length === 0 ? (
-          <div className={styles.emptyState}>暂无附件。上传内容附件后会显示在这里。</div>
+          viewMode === "list" ? (
+            <div className={styles.attachmentList}>
+              <AttachmentListHeader checked={allVisibleSelected} onChange={toggleVisibleSelection} />
+              <div className={styles.emptyState}>暂无附件。上传内容附件后会显示在这里。</div>
+            </div>
+          ) : (
+            <div className={styles.emptyState}>暂无附件。上传内容附件后会显示在这里。</div>
+          )
         ) : viewMode === "grid" ? (
           <div className={styles.attachmentGrid}>
             {visibleItems.map((attachment) => (
               <article className={styles.attachmentTile} key={attachment.id}>
+                <label className={styles.tileCheck} aria-label={`选择附件 ${displayName(attachment)}`}>
+                  <input
+                    checked={selectedAttachmentIDs.includes(attachment.id)}
+                    type="checkbox"
+                    onChange={(event) => toggleAttachmentSelection(attachment.id, event.target.checked)}
+                  />
+                </label>
                 <div className={styles.attachmentThumb}>
                   <FileImage aria-hidden size={34} />
                 </div>
@@ -595,11 +687,18 @@ export function StudioAttachmentsPage() {
           </div>
         ) : (
           <div className={styles.attachmentList}>
+            <AttachmentListHeader checked={allVisibleSelected} onChange={toggleVisibleSelection} />
             {visibleItems.map((attachment) => {
               const refs = referencesByAttachment.get(attachment.id) ?? [];
               return (
                 <article className={styles.attachmentRow} key={attachment.id}>
-                  <div className={styles.rowCheck} aria-hidden />
+                  <label className={styles.selectCell} aria-label={`选择附件 ${displayName(attachment)}`}>
+                    <input
+                      checked={selectedAttachmentIDs.includes(attachment.id)}
+                      type="checkbox"
+                      onChange={(event) => toggleAttachmentSelection(attachment.id, event.target.checked)}
+                    />
+                  </label>
                   <div className={styles.attachmentThumbSmall}>
                     <FileImage aria-hidden size={22} />
                   </div>
@@ -650,6 +749,7 @@ export function StudioAttachmentsPage() {
           access={uploadAccess}
           categoryID={uploadCategoryID}
           categoryOptions={categoryOptions}
+          file={uploadFile}
           mountID={uploadMountID}
           mountOptions={mountOptions}
           purpose={uploadPurpose}
@@ -717,6 +817,22 @@ export function StudioAttachmentsPage() {
         />
       ) : null}
 
+      {bulkEditing ? (
+        <BulkAttachmentEditModal
+          access={bulkAccess}
+          categoryIDs={bulkCategoryIDs}
+          categories={categories}
+          count={selectedAttachmentIDs.length}
+          saving={saving}
+          status={bulkStatus}
+          onAccess={setBulkAccess}
+          onCategoryIDs={setBulkCategoryIDs}
+          onClose={() => setBulkEditing(false)}
+          onStatus={setBulkStatus}
+          onSubmit={onSaveBulkEdit}
+        />
+      ) : null}
+
       {completing ? (
         <CompleteModal
           checksum={completeChecksum}
@@ -760,6 +876,26 @@ export function StudioAttachmentsPage() {
   );
 }
 
+function AttachmentListHeader(props: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <div className={styles.attachmentListHeader}>
+      <label className={styles.selectCell} aria-label="选择当前页附件">
+        <input checked={props.checked} type="checkbox" onChange={(event) => props.onChange(event.target.checked)} />
+      </label>
+      <span>预览</span>
+      <span>名称 / 类型 / 路径</span>
+      <span>存储实例</span>
+      <span>上传者</span>
+      <span>引用</span>
+      <span>更新时间</span>
+      <span>操作</span>
+    </div>
+  );
+}
+
 function CategoryCard({
   active,
   count,
@@ -797,6 +933,7 @@ function AttachmentUploadModal(props: {
   access: string;
   categoryID: string;
   categoryOptions: { value: string; label: string }[];
+  file: File | null;
   mountID: string;
   mountOptions: { value: string; label: string }[];
   purpose: string;
@@ -878,6 +1015,11 @@ function AttachmentUploadModal(props: {
               </button>
             </strong>
             <span>本地上传</span>
+            {props.file ? (
+              <span className={styles.uploadFileName}>
+                已选择：{props.file.name} · {formatBytes(props.file.size)}
+              </span>
+            ) : null}
           </div>
         </form>
         <div className={styles.modalActions}>
@@ -1046,6 +1188,79 @@ function EditAttachmentModal(props: {
           </button>
           <button className="primary-button" disabled={props.saving} form="attachment-edit-form" type="submit">
             保存
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+function BulkAttachmentEditModal(props: {
+  access: string;
+  categoryIDs: number[];
+  categories: AttachmentCategoryResponse[];
+  count: number;
+  saving: boolean;
+  status: string;
+  onAccess: (value: string) => void;
+  onCategoryIDs: (value: number[]) => void;
+  onClose: () => void;
+  onStatus: (value: string) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+}) {
+  return createPortal(
+    <div className={styles.overlay} role="presentation">
+      <div aria-modal="true" className={styles.modalWide} role="dialog">
+        <div className={styles.modalHeader}>
+          <div>
+            <h3>批量编辑附件</h3>
+            <p>将对已选择的 {props.count} 个附件统一更新访问范围、状态和分组。</p>
+          </div>
+          <button aria-label="关闭" className="icon-button" type="button" onClick={props.onClose}>
+            <X aria-hidden size={18} />
+          </button>
+        </div>
+        <form className={styles.formGrid} id="attachment-bulk-edit-form" onSubmit={props.onSubmit}>
+          <label className={styles.field}>
+            <span>访问范围</span>
+            <StudioSelect ariaLabel="批量访问范围" options={accessOptions} value={props.access} onChange={props.onAccess} />
+          </label>
+          <label className={styles.field}>
+            <span>状态</span>
+            <StudioSelect ariaLabel="批量状态" options={statusOptions.filter((option) => option.value)} value={props.status} onChange={props.onStatus} />
+          </label>
+          <div className={styles.fieldFull}>
+            <span className={styles.subsectionTitle}>分组</span>
+            <div className={styles.checkboxGrid}>
+              {props.categories.length === 0 ? (
+                <span className={styles.muted}>暂无分组。</span>
+              ) : (
+                props.categories.map((category) => (
+                  <label className={styles.inlineCheck} key={category.id}>
+                    <input
+                      checked={props.categoryIDs.includes(category.id)}
+                      type="checkbox"
+                      onChange={(event) => {
+                        props.onCategoryIDs(
+                          event.target.checked ? [...props.categoryIDs, category.id] : props.categoryIDs.filter((id) => id !== category.id)
+                        );
+                      }}
+                    />
+                    {category.name}
+                  </label>
+                ))
+              )}
+            </div>
+          </div>
+        </form>
+        <div className={styles.modalActions}>
+          <button className="secondary-button" type="button" onClick={props.onClose}>
+            取消
+          </button>
+          <button className="primary-button" disabled={props.saving} form="attachment-bulk-edit-form" type="submit">
+            {props.saving ? <Loader2 aria-hidden className="spin" size={18} /> : <Save aria-hidden size={18} />}
+            保存批量修改
           </button>
         </div>
       </div>

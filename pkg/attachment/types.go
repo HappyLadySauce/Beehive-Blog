@@ -106,6 +106,7 @@ type ListInput struct {
 	Purpose         string
 	Status          string
 	CategoryID      *int64
+	CategoryMode    string
 	Search          string
 	ReferenceStatus string
 	CursorID        int64

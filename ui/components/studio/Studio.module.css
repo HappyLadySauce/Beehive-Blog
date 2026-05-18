@@ -929,6 +929,19 @@
   display: grid;
 }
 
+.attachmentListHeader {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  display: grid;
+  font-size: 0.82rem;
+  font-weight: 900;
+  gap: 12px;
+  grid-template-columns: 18px 44px minmax(260px, 1fr) minmax(110px, 0.35fr) 80px 92px 110px auto;
+  min-height: 42px;
+  text-transform: uppercase;
+}
+
 .attachmentRow {
   align-items: center;
   border-bottom: 1px solid var(--line);
@@ -939,11 +952,74 @@
   padding: 10px 0;
 }
 
-.rowCheck {
+.selectCell {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+}
+
+.selectCell input,
+.tileCheck input {
+  height: 16px;
+  width: 16px;
+}
+
+.selectionBar {
+  align-items: center;
+  background: #edf7f5;
+  border: 1px solid #cde8e3;
+  border-radius: var(--radius);
+  color: var(--accent-dark);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 10px 12px;
+}
+
+.selectionBar span {
+  font-weight: 800;
+  margin-right: auto;
+}
+
+.avatarEditor {
+  align-items: center;
   border: 1px solid var(--line);
-  border-radius: 3px;
-  height: 14px;
-  width: 14px;
+  border-radius: var(--radius);
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 86px minmax(0, 1fr);
+  padding: 12px;
+}
+
+.avatarPreview {
+  align-items: center;
+  background: #edf7f5;
+  border: 1px solid #cde8e3;
+  border-radius: var(--radius);
+  color: var(--accent-dark);
+  display: flex;
+  font-weight: 900;
+  height: 72px;
+  justify-content: center;
+  overflow: hidden;
+  width: 72px;
+}
+
+.avatarPreview img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.avatarControls {
+  display: grid;
+  gap: 8px;
+}
+
+.avatarControls span {
+  color: var(--muted);
+  font-size: 0.86rem;
 }
 
 .attachmentThumbSmall,
@@ -981,6 +1057,15 @@
   font-size: 0.86rem;
 }
 
+.uploadFileName {
+  background: #edf7f5;
+  border: 1px solid #cde8e3;
+  border-radius: 999px;
+  color: var(--accent-dark) !important;
+  font-weight: 800;
+  padding: 6px 10px;
+}
+
 .attachmentGrid {
   display: grid;
   gap: 12px;
@@ -994,6 +1079,18 @@
   gap: 10px;
   min-height: 190px;
   padding: 12px;
+  position: relative;
+}
+
+.tileCheck {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  display: inline-flex;
+  padding: 4px;
+  position: absolute;
+  right: 10px;
+  top: 10px;
 }
 
 .attachmentThumb {
@@ -1105,6 +1202,10 @@
     grid-template-columns: 1fr;
   }
 
+  .avatarEditor {
+    grid-template-columns: 1fr;
+  }
+
   .passwordRow {
     grid-template-columns: 1fr;
   }
@@ -1112,6 +1213,10 @@
   .attachmentRow {
     align-items: flex-start;
     grid-template-columns: 18px 34px minmax(0, 1fr);
+  }
+
+  .attachmentListHeader {
+    display: none;
   }
 
   .attachmentRow > span,

@@ -125,6 +125,7 @@ export type UserItem = {
   email: string | null;
   nickname: string | null;
   phone: string | null;
+  avatar_attachment_id: number | null;
   role: string;
   status: string;
   last_login_at: string | null;
@@ -147,9 +148,7 @@ export type ListUsersResponse = {
   page_size: number;
 };
 
-export type UserDetailResponse = UserItem & {
-  avatar_attachment_id: number | null;
-};
+export type UserDetailResponse = UserItem;
 
 export type CreateUserRequest = {
   username: string;
@@ -173,6 +172,7 @@ export type UpdateUserRequest = {
   role?: string;
   status?: string;
   password?: string;
+  avatar_attachment_id?: number;
 };
 
 export type DeleteUserResponse = Record<string, never>;
@@ -272,6 +272,7 @@ export type AttachmentListRequest = {
   search?: string;
   reference_status?: "referenced" | "orphan" | string;
   category_id?: number;
+  category_mode?: "unassigned" | string;
   owner_user_id?: number;
   cursor?: string;
   limit?: number;

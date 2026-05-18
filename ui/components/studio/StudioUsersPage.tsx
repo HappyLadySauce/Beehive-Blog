@@ -1,8 +1,10 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { Loader2, Pencil, Plus, Save, Trash2, Users, X } from "lucide-react";
+import Image from "next/image";
+import { FileUp, Loader2, Pencil, Plus, Save, Trash2, Users, X } from "lucide-react";
 
+import { attachmentContentUrl, uploadLocalAttachment } from "@/lib/api/attachments";
 import { humanizeApiError } from "@/lib/api/client";
 import type { ListUsersResponse, UpdateUserRequest, UserItem } from "@/lib/api/types";
 import { createUser, deleteUser, listUsers, updateUser } from "@/lib/api/users";
@@ -73,6 +75,8 @@ export function StudioUsersPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState<UserItem | null>(null);
   const [showDelete, setShowDelete] = useState<UserItem | null>(null);
+  const [selectedUserIDs, setSelectedUserIDs] = useState<number[]>([]);
+  const [showBulkEdit, setShowBulkEdit] = useState(false);
 
   // Form state
   const [formUsername, setFormUsername] = useState("");
@@ -82,6 +86,10 @@ export function StudioUsersPage() {
   const [formPhone, setFormPhone] = useState("");
   const [formRole, setFormRole] = useState("member");
   const [formStatus, setFormStatus] = useState("active");
+  const [formAvatarAttachmentID, setFormAvatarAttachmentID] = useState<number | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [bulkRole, setBulkRole] = useState("member");
+  const [bulkStatus, setBulkStatus] = useState("active");
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -124,6 +132,7 @@ export function StudioUsersPage() {
     setFormPhone("");
     setFormRole("member");
     setFormStatus("active");
+    setFormAvatarAttachmentID(null);
     setShowForm(true);
   }
 
@@ -136,6 +145,7 @@ export function StudioUsersPage() {
     setFormPhone(user.phone ?? "");
     setFormRole(user.role);
     setFormStatus(user.status);
+    setFormAvatarAttachmentID(user.avatar_attachment_id ?? null);
     setShowForm(true);
   }
 
@@ -165,6 +175,9 @@ export function StudioUsersPage() {
         if (formPhone !== (editingUser.phone ?? "")) payload.phone = formPhone || null;
         if (formRole !== editingUser.role) payload.role = formRole;
         if (formStatus !== editingUser.status) payload.status = formStatus;
+        if (formAvatarAttachmentID !== (editingUser.avatar_attachment_id ?? null)) {
+          payload.avatar_attachment_id = formAvatarAttachmentID ?? 0;
+        }
         await updateUser(editingUser.id, payload);
         setMessage({ tone: "success", text: "用户已更新。" });
       } else {
@@ -204,7 +217,68 @@ export function StudioUsersPage() {
     }
   }
 
+  async function onAvatarFile(file: File | null) {
+    if (!file || !editingUser) return;
+    setAvatarUploading(true);
+    setMessage(null);
+    try {
+      const formData = new FormData();
+      formData.set("file", file);
+      formData.set("owner_user_id", String(editingUser.id));
+      formData.set("purpose", "avatar");
+      formData.set("access_scope", "public");
+      const uploaded = await uploadLocalAttachment(formData);
+      setFormAvatarAttachmentID(uploaded.id);
+      setMessage({ tone: "success", text: "头像已上传，保存用户后生效。" });
+    } catch (error) {
+      setMessage({ tone: "error", text: humanizeApiError(error) });
+    } finally {
+      setAvatarUploading(false);
+    }
+  }
+
+  function toggleUserSelection(id: number, checked: boolean) {
+    setSelectedUserIDs((current) => (checked ? Array.from(new Set([...current, id])) : current.filter((item) => item !== id)));
+  }
+
+  function toggleVisibleUsers(checked: boolean) {
+    const ids = data?.items.map((user) => user.id) ?? [];
+    setSelectedUserIDs((current) => {
+      if (!checked) return current.filter((id) => !ids.includes(id));
+      return Array.from(new Set([...current, ...ids]));
+    });
+  }
+
+  function openBulkEdit() {
+    const selected = data?.items.find((user) => selectedUserIDs.includes(user.id));
+    if (!selected) return;
+    setBulkRole(selected.role);
+    setBulkStatus(selected.status);
+    setShowBulkEdit(true);
+    setMessage(null);
+  }
+
+  async function onBulkSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (selectedUserIDs.length === 0) return;
+    setSaving(true);
+    setMessage(null);
+    try {
+      await Promise.all(selectedUserIDs.map((id) => updateUser(id, { role: bulkRole, status: bulkStatus })));
+      setSelectedUserIDs([]);
+      setShowBulkEdit(false);
+      setMessage({ tone: "success", text: "已批量更新用户。" });
+      await fetchUsers();
+    } catch (error) {
+      setMessage({ tone: "error", text: humanizeApiError(error) });
+    } finally {
+      setSaving(false);
+    }
+  }
+
   const totalPages = data ? Math.max(1, Math.ceil(data.total / data.page_size)) : 1;
+  const visibleUserIDs = data?.items.map((user) => user.id) ?? [];
+  const allVisibleUsersSelected = visibleUserIDs.length > 0 && visibleUserIDs.every((id) => selectedUserIDs.includes(id));
 
   return (
     <>
@@ -274,9 +348,26 @@ export function StudioUsersPage() {
           </div>
         ) : (
           <>
+            {selectedUserIDs.length > 0 ? (
+              <div className={styles.selectionBar}>
+                <span>已选择 {selectedUserIDs.length} 个用户</span>
+                <button className="secondary-button" type="button" onClick={() => setSelectedUserIDs([])}>
+                  清除选择
+                </button>
+                <button className="primary-button" type="button" onClick={openBulkEdit}>
+                  <Pencil aria-hidden size={16} />
+                  编辑已选
+                </button>
+              </div>
+            ) : null}
             <table className={styles.table}>
               <thead>
                 <tr>
+                  <th>
+                    <label className={styles.selectCell} aria-label="选择当前页用户">
+                      <input checked={allVisibleUsersSelected} type="checkbox" onChange={(event) => toggleVisibleUsers(event.target.checked)} />
+                    </label>
+                  </th>
                   <th>ID</th>
                   <th>用户名</th>
                   <th>邮箱</th>
@@ -289,6 +380,15 @@ export function StudioUsersPage() {
               <tbody>
                 {data.items.map((user) => (
                   <tr key={user.id}>
+                    <td>
+                      <label className={styles.selectCell} aria-label={`选择用户 ${user.username}`}>
+                        <input
+                          checked={selectedUserIDs.includes(user.id)}
+                          type="checkbox"
+                          onChange={(event) => toggleUserSelection(user.id, event.target.checked)}
+                        />
+                      </label>
+                    </td>
                     <td>{user.id}</td>
                     <td>{user.username}</td>
                     <td>{user.email ?? "—"}</td>
@@ -382,6 +482,47 @@ export function StudioUsersPage() {
               </button>
             </div>
             <form className={styles.formGrid} onSubmit={onSubmitForm}>
+              {editingUser ? (
+                <div className={`${styles.avatarEditor} ${styles.fieldFull}`}>
+                  <div className={styles.avatarPreview}>
+                    {formAvatarAttachmentID ? (
+                      <Image
+                        alt={`${editingUser.username} 头像`}
+                        height={72}
+                        src={attachmentContentUrl(formAvatarAttachmentID)}
+                        unoptimized
+                        width={72}
+                      />
+                    ) : (
+                      <span>{editingUser.username.slice(0, 2).toUpperCase()}</span>
+                    )}
+                  </div>
+                  <div className={styles.avatarControls}>
+                    <strong>头像</strong>
+                    <span>上传头像后点击保存修改完成绑定。</span>
+                    <div className={styles.metaRow}>
+                      <label className="secondary-button">
+                        {avatarUploading ? <Loader2 aria-hidden className="spin" size={18} /> : <FileUp aria-hidden size={18} />}
+                        上传头像
+                        <input
+                          accept="image/*"
+                          className={styles.fileInputHidden}
+                          type="file"
+                          onChange={(event) => {
+                            void onAvatarFile(event.target.files?.[0] ?? null);
+                            event.currentTarget.value = "";
+                          }}
+                        />
+                      </label>
+                      {formAvatarAttachmentID ? (
+                        <button className="secondary-button" type="button" onClick={() => setFormAvatarAttachmentID(null)}>
+                          清除头像
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
               <label className={styles.fieldFull}>
                 <span>用户名</span>
                 <input
@@ -442,6 +583,39 @@ export function StudioUsersPage() {
                 <button className="primary-button" disabled={saving} type="submit">
                   {saving ? <Loader2 aria-hidden className="spin" size={18} /> : <Save aria-hidden size={18} />}
                   {editingUser ? "保存修改" : "创建用户"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
+
+      {showBulkEdit ? (
+        <div className={styles.overlay} role="dialog" aria-label="批量编辑用户">
+          <div className={styles.modal}>
+            <div className={styles.panelHeader}>
+              <h3>批量编辑用户</h3>
+              <button aria-label="关闭" className="secondary-button" type="button" onClick={() => setShowBulkEdit(false)}>
+                <X aria-hidden size={18} />
+              </button>
+            </div>
+            <form className={styles.formGrid} onSubmit={onBulkSubmit}>
+              <p className={styles.fieldFull}>将对已选择的 {selectedUserIDs.length} 个用户统一更新角色和状态。</p>
+              <label className={styles.field}>
+                <span>角色</span>
+                <StudioSelect ariaLabel="批量角色" options={roleOptions.slice(1)} value={bulkRole} onChange={setBulkRole} />
+              </label>
+              <label className={styles.field}>
+                <span>状态</span>
+                <StudioSelect ariaLabel="批量状态" options={statusOptions.slice(1)} value={bulkStatus} onChange={setBulkStatus} />
+              </label>
+              <div className={`${styles.modalActions} ${styles.fieldFull}`}>
+                <button className="secondary-button" type="button" onClick={() => setShowBulkEdit(false)}>
+                  取消
+                </button>
+                <button className="primary-button" disabled={saving} type="submit">
+                  {saving ? <Loader2 aria-hidden className="spin" size={18} /> : <Save aria-hidden size={18} />}
+                  保存批量修改
                 </button>
               </div>
             </form>

@@ -43,16 +43,17 @@ type ListUsersRequest struct {
 // UserItem is the safe public subset for list responses.
 // UserItem 为列表响应中的用户公开字段子集。
 type UserItem struct {
-	ID          int64      `json:"id"`
-	Username    string     `json:"username"`
-	Email       *string    `json:"email"`
-	Nickname    *string    `json:"nickname"`
-	Phone       *string    `json:"phone"`
-	Role        string     `json:"role"`
-	Status      string     `json:"status"`
-	LastLoginAt *time.Time `json:"last_login_at"`
-	CreatedAt   time.Time  `json:"created_at"`
-	UpdatedAt   time.Time  `json:"updated_at"`
+	ID                 int64      `json:"id"`
+	Username           string     `json:"username"`
+	Email              *string    `json:"email"`
+	Nickname           *string    `json:"nickname"`
+	Phone              *string    `json:"phone"`
+	AvatarAttachmentID *int64     `json:"avatar_attachment_id"`
+	Role               string     `json:"role"`
+	Status             string     `json:"status"`
+	LastLoginAt        *time.Time `json:"last_login_at"`
+	CreatedAt          time.Time  `json:"created_at"`
+	UpdatedAt          time.Time  `json:"updated_at"`
 }
 
 // ListUsersResponse wraps the paginated result set.
@@ -68,7 +69,6 @@ type ListUsersResponse struct {
 // UserDetailResponse 在 UserItem 基础上扩展管理员可见字段。
 type UserDetailResponse struct {
 	UserItem
-	AvatarAttachmentID *int64 `json:"avatar_attachment_id"`
 }
 
 // CreateUserRequest is the admin-only payload for creating a user.
@@ -94,13 +94,14 @@ type CreateUserResponse struct {
 // Pointer fields: nil = leave unchanged, pointer to empty string = clear to NULL, pointer to value = set.
 // UpdateUserRequest 为管理员更新用户的 PATCH 请求体。指针字段：nil=不修改，指向空串=清空为 NULL，指向值=设置。
 type UpdateUserRequest struct {
-	Username *string `json:"username" binding:"omitempty,max=64"`
-	Email    *string `json:"email" binding:"omitempty,max=320"`
-	Nickname *string `json:"nickname" binding:"omitempty,max=128"`
-	Phone    *string `json:"phone" binding:"omitempty,max=16"`
-	Role     *string `json:"role" binding:"omitempty,oneof=member admin"`
-	Status   *string `json:"status" binding:"omitempty,oneof=active disabled locked pending"`
-	Password *string `json:"password" binding:"omitempty,min=8,max=72"`
+	Username           *string `json:"username" binding:"omitempty,max=64"`
+	Email              *string `json:"email" binding:"omitempty,max=320"`
+	Nickname           *string `json:"nickname" binding:"omitempty,max=128"`
+	Phone              *string `json:"phone" binding:"omitempty,max=16"`
+	Role               *string `json:"role" binding:"omitempty,oneof=member admin"`
+	Status             *string `json:"status" binding:"omitempty,oneof=active disabled locked pending"`
+	Password           *string `json:"password" binding:"omitempty,min=8,max=72"`
+	AvatarAttachmentID *int64  `json:"avatar_attachment_id" binding:"omitempty,min=0"`
 }
 
 // UpdateUserResponse returns the full user detail after update.

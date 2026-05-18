@@ -151,6 +151,8 @@ describe("StudioAttachmentsPage", () => {
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
     expect(screen.getByText("附件库")).toBeInTheDocument();
     expect(screen.getByText("文章素材")).toBeInTheDocument();
+    expect(screen.getByText("名称 / 类型 / 路径")).toBeInTheDocument();
+    expect(screen.getByText("存储实例")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "1 引用" })).toBeInTheDocument();
   });
 
@@ -167,6 +169,15 @@ describe("StudioAttachmentsPage", () => {
     );
   });
 
+  it("passes the unassigned category filter to the attachment API", async () => {
+    render(<StudioAttachmentsPage />);
+    await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "未分组 0" }));
+
+    await waitFor(() => expect(listAttachments).toHaveBeenLastCalledWith(expect.objectContaining({ category_mode: "unassigned" })));
+  });
+
   it("uploads a local attachment", async () => {
     render(<StudioAttachmentsPage />);
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
@@ -174,6 +185,7 @@ describe("StudioAttachmentsPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "上传" }));
     const file = new File(["hello"], "hello.txt", { type: "text/plain" });
     fireEvent.change(screen.getByLabelText("文件"), { target: { files: [file] } });
+    expect(screen.getByText("已选择：hello.txt · 5 B")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "上传附件" }));
 
     await waitFor(() => expect(uploadLocalAttachment).toHaveBeenCalled());
@@ -181,6 +193,22 @@ describe("StudioAttachmentsPage", () => {
     expect(formData.get("purpose")).toBe("content");
     expect(formData.get("access_scope")).toBe("public");
     expect(formData.get("owner_user_id")).toBe("1");
+  });
+
+  it("bulk edits selected attachments", async () => {
+    render(<StudioAttachmentsPage />);
+    await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByLabelText("选择附件 Note.md"));
+    fireEvent.click(screen.getByRole("button", { name: "编辑已选" }));
+    fireEvent.click(screen.getByRole("button", { name: "保存批量修改" }));
+
+    await waitFor(() =>
+      expect(updateAttachment).toHaveBeenCalledWith(
+        99,
+        expect.objectContaining({ access_scope: "private", category_ids: [7], status: "active" })
+      )
+    );
   });
 
   it("opens the reference dialog", async () => {

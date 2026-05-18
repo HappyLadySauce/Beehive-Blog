@@ -24,6 +24,7 @@ export function listAttachments(params: AttachmentListRequest = {}) {
   if (params.search) search.set("search", params.search);
   if (params.reference_status) search.set("reference_status", params.reference_status);
   if (params.category_id) search.set("category_id", String(params.category_id));
+  if (params.category_mode) search.set("category_mode", params.category_mode);
   if (params.owner_user_id) search.set("owner_user_id", String(params.owner_user_id));
   if (params.cursor) search.set("cursor", params.cursor);
   if (params.limit) search.set("limit", String(params.limit));

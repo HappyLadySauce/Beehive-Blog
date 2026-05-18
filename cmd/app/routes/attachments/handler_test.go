@@ -108,6 +108,17 @@ func TestListInvalidStatus(t *testing.T) {
 	assertEnvelopeCode(t, rec, http.StatusBadRequest)
 }
 
+func TestListInvalidCategoryMode(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := mustNewAttachmentsController(t)
+	rec := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(rec)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/api/v1/attachments?category_mode=unknown", nil)
+	ctx.Set(jwt.ClaimsKey, &jwt.Claims{UID: 1, Role: pkgattachment.RoleAdmin})
+	h.List(ctx)
+	assertEnvelopeCode(t, rec, http.StatusBadRequest)
+}
+
 func TestListInvalidOwnerUserIDQuery(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := mustNewAttachmentsController(t)

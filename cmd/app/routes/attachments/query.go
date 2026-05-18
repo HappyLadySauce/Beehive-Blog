@@ -45,6 +45,7 @@ func (h *AttachmentsController) List(ctx *gin.Context) {
 		Purpose:         strings.TrimSpace(ctx.Query("purpose")),
 		Status:          strings.TrimSpace(ctx.Query("status")),
 		CategoryID:      categoryID,
+		CategoryMode:    strings.TrimSpace(ctx.Query("category_mode")),
 		Search:          strings.TrimSpace(ctx.Query("search")),
 		ReferenceStatus: strings.TrimSpace(ctx.Query("reference_status")),
 		CursorID:        cursorID,
@@ -164,6 +165,13 @@ func (h *AttachmentsController) list(ctx context.Context, actor pkgattachment.Ac
 	}
 	if in.CategoryID != nil {
 		q = q.Joins("JOIN attachment.attachment_categories ac ON ac.attachment_id = attachment.attachments.id AND ac.category_id = ?", *in.CategoryID)
+	} else if in.CategoryMode != "" {
+		switch in.CategoryMode {
+		case "unassigned":
+			q = q.Where("NOT EXISTS (SELECT 1 FROM attachment.attachment_categories ac WHERE ac.attachment_id = attachment.attachments.id)")
+		default:
+			return nil, "", fmt.Errorf("%w: invalid category_mode", pkgattachment.ErrInvalid)
+		}
 	}
 	var rows []model.Attachment
 	if err := q.Find(&rows).Error; err != nil {

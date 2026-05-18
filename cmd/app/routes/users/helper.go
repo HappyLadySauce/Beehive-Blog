@@ -53,23 +53,23 @@ func (u *UsersController) checkEmailConflict(ctx context.Context, email string, 
 
 func toUserItem(u model.User) v1.UserItem {
 	return v1.UserItem{
-		ID:          u.ID,
-		Username:    u.Username,
-		Email:       u.Email,
-		Nickname:    u.Nickname,
-		Phone:       u.Phone,
-		Role:        u.Role,
-		Status:      u.Status,
-		LastLoginAt: u.LastLoginAt,
-		CreatedAt:   u.CreatedAt,
-		UpdatedAt:   u.UpdatedAt,
+		ID:                 u.ID,
+		Username:           u.Username,
+		Email:              u.Email,
+		Nickname:           u.Nickname,
+		Phone:              u.Phone,
+		AvatarAttachmentID: u.AvatarAttachmentID,
+		Role:               u.Role,
+		Status:             u.Status,
+		LastLoginAt:        u.LastLoginAt,
+		CreatedAt:          u.CreatedAt,
+		UpdatedAt:          u.UpdatedAt,
 	}
 }
 
 func toUserDetail(u model.User) *v1.UserDetailResponse {
 	return &v1.UserDetailResponse{
-		UserItem:           toUserItem(u),
-		AvatarAttachmentID: u.AvatarAttachmentID,
+		UserItem: toUserItem(u),
 	}
 }
 
