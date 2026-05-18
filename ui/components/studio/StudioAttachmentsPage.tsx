@@ -8,7 +8,6 @@ import {
   FileImage,
   FileUp,
   Grid3X3,
-  Layers,
   List,
   Loader2,
   MoreHorizontal,
@@ -496,10 +495,6 @@ export function StudioAttachmentsPage() {
             <button className="secondary-button" type="button" onClick={() => setViewMode((value) => (value === "list" ? "grid" : "list"))}>
               {viewMode === "list" ? <Grid3X3 aria-hidden size={18} /> : <List aria-hidden size={18} />}
               缩略图
-            </button>
-            <button className="secondary-button" type="button" onClick={() => setReferenceStatus((value) => (value === "orphan" ? "" : "orphan"))}>
-              <Layers aria-hidden size={18} />
-              存储策略
             </button>
             <button className="primary-button" type="button" onClick={openUpload}>
               <FileUp aria-hidden size={18} />

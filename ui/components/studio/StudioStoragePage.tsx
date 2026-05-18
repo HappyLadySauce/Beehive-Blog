@@ -279,7 +279,7 @@ export function StudioStoragePage() {
         ) : null}
         description="管理存储实例与驱动模板；附件上传未指定存储时使用默认启用实例。"
         eyebrow="Storage management"
-        title="存储管理"
+        title="存储"
       />
 
       <div className={styles.segmentedTabs} role="tablist" aria-label="存储页面分段">
