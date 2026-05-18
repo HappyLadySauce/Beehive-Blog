@@ -434,6 +434,47 @@ describe("StudioAttachmentsPage", () => {
     expect(screen.queryByRole("button", { name: "批量删除" })).not.toBeInTheDocument();
   });
 
+  it("keeps force deletion for referenced selections after loading another attachment batch", async () => {
+    const firstBatch = {
+      items: [attachments.items[0]],
+      total: 250,
+      page: 1,
+      page_size: 100
+    };
+    const secondBatch = {
+      items: [
+        {
+          ...attachments.items[0],
+          id: 101,
+          original_name: "File-101.md",
+          filename: "file-101.md"
+        }
+      ],
+      total: 250,
+      page: 2,
+      page_size: 100
+    };
+    listAttachments.mockImplementation((params) => {
+      if (params.page === 2) return Promise.resolve(secondBatch);
+      return Promise.resolve(firstBatch);
+    });
+
+    render(<StudioAttachmentsPage />);
+    await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByLabelText("选择附件 Note.md"));
+    for (let step = 0; step < 10; step += 1) {
+      fireEvent.click(screen.getByRole("button", { name: "下一页" }));
+    }
+    await waitFor(() => expect(screen.getByText("File-101.md")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "批量删除" }));
+    expect(screen.getByText("确认删除已选择的 1 个附件？其中 1 个附件仍被业务对象引用；确认后会删除附件，并将用户头像等引用切换为默认头像。")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "确认" }));
+
+    await waitFor(() => expect(deleteAttachment).toHaveBeenCalledWith(99, { force: true }));
+  });
+
   it("opens the reference dialog", async () => {
     render(<StudioAttachmentsPage />);
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());

@@ -293,6 +293,21 @@ func TestUploadLocalInvalidOwnerUserID(t *testing.T) {
 	assertEnvelopeCode(t, rec, http.StatusBadRequest)
 }
 
+func TestUploadBatchRejectsInvalidMultipart(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := mustNewAttachmentsController(t)
+	rec := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(rec)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/attachments/batch", strings.NewReader("not-a-valid-multipart-body"))
+	req.Header.Set("Content-Type", "multipart/form-data; boundary=broken")
+	ctx.Request = req
+	ctx.Set(jwt.ClaimsKey, &jwt.Claims{UID: 1, Role: pkgattachment.RoleAdmin})
+
+	h.UploadBatch(ctx)
+
+	assertEnvelopeCode(t, rec, http.StatusBadRequest)
+}
+
 func TestGetReferencesReturnsUserAvatarReference(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h, mock := mustNewAttachmentsControllerWithMock(t)

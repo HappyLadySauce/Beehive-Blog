@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"k8s.io/klog/v2"
 
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
@@ -247,6 +248,21 @@ func (h *AttachmentsController) presignRemote(ctx context.Context, actor pkgatta
 // UploadBatch 处理 POST /api/v1/attachments/batch 批量 multipart 上传（管理员）。
 func (h *AttachmentsController) UploadBatch(ctx *gin.Context) {
 	ctx.Request.Body = http.MaxBytesReader(ctx.Writer, ctx.Request.Body, pkgattachment.MaxUploadBytes+1<<20)
+	form, err := ctx.MultipartForm()
+	if err != nil {
+		common.Fail(ctx, common.NewBadRequest("invalid multipart form", err))
+		return
+	}
+	if form == nil {
+		common.Fail(ctx, common.NewBadRequest("multipart form is required", nil))
+		return
+	}
+	files := form.File["files"]
+	if len(files) == 0 {
+		common.Fail(ctx, common.NewBadRequest("files field is required with at least one file", nil))
+		return
+	}
+
 	ownerUserID, err := optionalInt64Form(ctx, "owner_user_id")
 	if err != nil {
 		common.Fail(ctx, common.NewBadRequest("invalid owner_user_id", err))
@@ -270,13 +286,6 @@ func (h *AttachmentsController) UploadBatch(ctx *gin.Context) {
 	mount, drv, err := driver.ResolveMountForWrite(ctx.Request.Context(), h.driverStore, h.driverRegistry, storageMountID)
 	if err != nil {
 		common.Fail(ctx, common.NewBadRequest("resolve storage mount", err))
-		return
-	}
-
-	form := ctx.Request.MultipartForm
-	files := form.File["files"]
-	if len(files) == 0 {
-		common.Fail(ctx, common.NewBadRequest("files field is required with at least one file", nil))
 		return
 	}
 
@@ -395,6 +404,9 @@ func (h *AttachmentsController) uploadLocalFile(
 		return replaceCategoriesTx(tx, attachment.ID, in.CategoryIDs)
 	})
 	if err != nil {
+		if cleanupErr := drv.Delete(ctx, objectKey); cleanupErr != nil {
+			klog.ErrorS(cleanupErr, "failed to cleanup uploaded object after database error", "object_key", objectKey)
+		}
 		return model.Attachment{}, err
 	}
 	return attachment, nil

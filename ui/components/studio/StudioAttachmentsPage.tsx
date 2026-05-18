@@ -210,8 +210,8 @@ export function StudioAttachmentsPage() {
     [batchItems, selectedAttachmentIDs]
   );
   const selectedReferencedCount = useMemo(
-    () => selectedAttachments.filter((attachment) => hasAttachmentReferences(attachment.id, referencesByAttachment)).length,
-    [referencesByAttachment, selectedAttachments]
+    () => selectedAttachmentIDs.filter((id) => hasAttachmentReferences(id, referencesByAttachment)).length,
+    [referencesByAttachment, selectedAttachmentIDs]
   );
   const visibleAttachmentIDs = useMemo(() => visibleItems.map((attachment) => attachment.id), [visibleItems]);
   const allVisibleSelected = visibleAttachmentIDs.length > 0 && visibleAttachmentIDs.every((id) => selectedAttachmentIDs.includes(id));
@@ -538,7 +538,6 @@ export function StudioAttachmentsPage() {
 
   async function onConfirmBulkDelete() {
     if (selectedAttachmentIDs.length === 0) return;
-    const force = selectedReferencedCount > 0;
     setSaving(true);
     setMessage(null);
     const ids = [...selectedAttachmentIDs];
@@ -546,7 +545,7 @@ export function StudioAttachmentsPage() {
     try {
       for (const id of ids) {
         try {
-          await deleteAttachment(id, { force });
+          await deleteAttachment(id, { force: hasAttachmentReferences(id, referencesByAttachment) });
           deleted += 1;
         } catch (error) {
           const detail = humanizeApiError(error);
