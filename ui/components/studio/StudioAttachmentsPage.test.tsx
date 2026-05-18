@@ -191,4 +191,37 @@ describe("StudioAttachmentsPage", () => {
     await waitFor(() => expect(getAttachmentReferences).toHaveBeenCalledWith(99));
     expect(screen.getByText("Admin")).toBeInTheDocument();
   });
+
+  it("closes the category dialog after creating a category", async () => {
+    render(<StudioAttachmentsPage />);
+    await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "新建" }));
+    fireEvent.change(screen.getByLabelText("分类名称"), { target: { value: "图库" } });
+    fireEvent.change(screen.getByLabelText("分类 slug"), { target: { value: "gallery" } });
+    fireEvent.click(screen.getByRole("button", { name: "创建分组" }));
+
+    await waitFor(() => expect(createAttachmentCategory).toHaveBeenCalled());
+    expect(screen.queryByRole("button", { name: "创建分组" })).not.toBeInTheDocument();
+    expect(screen.getByText("分组已创建。")).toBeInTheDocument();
+  });
+
+  it("deletes an existing attachment category from the edit dialog", async () => {
+    render(<StudioAttachmentsPage />);
+    await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
+
+    const categoryCard = screen.getByText("文章素材").closest("button");
+    const editIcon = categoryCard?.querySelector("svg");
+    expect(editIcon).toBeTruthy();
+
+    fireEvent.click(editIcon as SVGElement);
+    expect(screen.getByRole("button", { name: "删除分组" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "删除分组" }));
+    expect(screen.queryByRole("button", { name: "保存分组" })).not.toBeInTheDocument();
+    expect(screen.getByText("确认删除 文章素材？后端会软删分组，已绑定附件不会被删除。")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "确认" }));
+    await waitFor(() => expect(deleteAttachmentCategory).toHaveBeenCalledWith(7));
+  });
 });

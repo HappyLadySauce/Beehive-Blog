@@ -432,6 +432,7 @@ export function StudioAttachmentsPage() {
         await createAttachmentCategory(payload);
         setMessage({ tone: "success", text: "分组已创建。" });
       }
+      setShowCategories(false);
       resetCategoryForm();
       await loadData();
     } catch (error) {
@@ -680,10 +681,17 @@ export function StudioAttachmentsPage() {
             resetCategoryForm();
           }}
           onDescription={setCategoryDescription}
+          onDelete={
+            categoryEditing
+              ? () => {
+                  setShowCategories(false);
+                  setCategoryDeleting(categoryEditing);
+                }
+              : undefined
+          }
           onIcon={setCategoryIcon}
           onName={setCategoryName}
           onParent={setCategoryParentID}
-          onReset={resetCategoryForm}
           onSlug={setCategorySlug}
           onSortOrder={setCategorySortOrder}
           onStatus={setCategoryStatus}
@@ -899,11 +907,11 @@ function CategoryModal(props: {
   categoryStatus: string;
   saving: boolean;
   onClose: () => void;
+  onDelete?: () => void;
   onDescription: (value: string) => void;
   onIcon: (value: string) => void;
   onName: (value: string) => void;
   onParent: (value: string) => void;
-  onReset: () => void;
   onSlug: (value: string) => void;
   onSortOrder: (value: string) => void;
   onStatus: (value: string) => void;
@@ -952,9 +960,11 @@ function CategoryModal(props: {
           </label>
         </form>
         <div className={styles.modalActions}>
-          <button className="secondary-button" type="button" onClick={props.onReset}>
-            新建分组
-          </button>
+          {props.onDelete ? (
+            <button className="danger-button" type="button" onClick={props.onDelete}>
+              删除分组
+            </button>
+          ) : null}
           <button className="primary-button" disabled={props.saving} form="attachment-category-form" type="submit">
             {props.saving ? <Loader2 aria-hidden className="spin" size={18} /> : <Save aria-hidden size={18} />}
             {props.categoryEditing ? "保存分组" : "创建分组"}
