@@ -28,6 +28,8 @@ export function listAttachments(params: AttachmentListRequest = {}) {
   if (params.owner_user_id) search.set("owner_user_id", String(params.owner_user_id));
   if (params.cursor) search.set("cursor", params.cursor);
   if (params.limit) search.set("limit", String(params.limit));
+  if (params.page) search.set("page", String(params.page));
+  if (params.page_size) search.set("page_size", String(params.page_size));
   const query = search.toString();
   return apiFetch<AttachmentListResponse>(`/bff/attachments${query ? `?${query}` : ""}`, { method: "GET" });
 }

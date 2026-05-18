@@ -868,6 +868,55 @@
   margin-top: 16px;
 }
 
+.paginationEnd {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.pageNumberGroup {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pageNumber,
+.pageNumberActive {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 700;
+  min-width: 36px;
+  padding: 6px 10px;
+}
+
+.pageNumber:hover:not(:disabled),
+.pageNumber:focus-visible:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent-dark);
+}
+
+.pageNumberActive {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+.pageEllipsis {
+  color: var(--muted);
+  font-weight: 800;
+  padding: 0 4px;
+}
+
+.pageTotalHint {
+  color: var(--muted);
+  font-size: 0.86rem;
+  white-space: nowrap;
+}
+
 .attachmentShell {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -1103,6 +1152,12 @@
   justify-content: flex-end;
 }
 
+.uploadSection {
+  display: grid;
+  gap: 12px;
+  grid-column: 1 / -1;
+}
+
 .uploadDropzone {
   align-items: center;
   border: 1px dashed var(--line);
@@ -1110,10 +1165,56 @@
   cursor: pointer;
   display: grid;
   gap: 8px;
-  grid-column: 1 / -1;
-  min-height: 360px;
+  min-height: 180px;
   place-items: center;
   text-align: center;
+}
+
+.uploadFileList {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 0;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.uploadFileListEmpty {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0;
+  padding: 16px;
+  text-align: center;
+}
+
+.uploadFileRow {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 10px 12px;
+}
+
+.uploadFileRow:last-child {
+  border-bottom: 0;
+}
+
+.uploadFileRowMeta {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.uploadFileRowMeta strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.uploadFileRowMeta span {
+  color: var(--muted);
+  font-size: 0.86rem;
 }
 
 .uploadBrowseButton {

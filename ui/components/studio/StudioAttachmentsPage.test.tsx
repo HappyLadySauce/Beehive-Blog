@@ -82,7 +82,10 @@ const attachments = {
       created_at: "2026-05-15T00:00:00Z",
       updated_at: "2026-05-15T00:00:00Z"
     }
-  ]
+  ],
+  total: 1,
+  page: 1,
+  page_size: 100
 };
 
 const categories = {
@@ -156,6 +159,22 @@ describe("StudioAttachmentsPage", () => {
     expect(screen.getByRole("button", { name: "1 引用" })).toBeInTheDocument();
   });
 
+  it("requests attachments with batched offset pagination", async () => {
+    render(<StudioAttachmentsPage />);
+    await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
+
+    expect(listAttachments).toHaveBeenCalledWith(expect.objectContaining({ page: 1, page_size: 100 }));
+  });
+
+  it("shows pagination when all results fit on one page", async () => {
+    render(<StudioAttachmentsPage />);
+    await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
+
+    expect(screen.getByRole("navigation", { name: "分页" })).toBeInTheDocument();
+    expect(screen.getByText("共 1 页")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "第 1 页" })).toHaveAttribute("aria-current", "page");
+  });
+
   it("passes search and reference filters to the attachment API", async () => {
     render(<StudioAttachmentsPage />);
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
@@ -165,8 +184,71 @@ describe("StudioAttachmentsPage", () => {
     fireEvent.click(screen.getByRole("option", { name: "孤儿附件" }));
 
     await waitFor(() =>
-      expect(listAttachments).toHaveBeenLastCalledWith(expect.objectContaining({ reference_status: "orphan", search: "note" }))
+      expect(listAttachments).toHaveBeenLastCalledWith(
+        expect.objectContaining({ reference_status: "orphan", search: "note", page: 1, page_size: 100 })
+      )
     );
+  });
+
+  it("switches pages within the current batch without refetching", async () => {
+    const batchedAttachments = {
+      items: Array.from({ length: 25 }, (_, index) => ({
+        ...attachments.items[0],
+        id: index + 1,
+        original_name: `File-${index + 1}.md`,
+        filename: `file-${index + 1}.md`
+      })),
+      total: 25,
+      page: 1,
+      page_size: 100
+    };
+    listAttachments.mockResolvedValue(batchedAttachments);
+
+    render(<StudioAttachmentsPage />);
+    await waitFor(() => expect(screen.getByText("File-1.md")).toBeInTheDocument());
+    expect(listAttachments).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "第 2 页" }));
+    expect(screen.getByText("File-11.md")).toBeInTheDocument();
+    expect(listAttachments).toHaveBeenCalledTimes(1);
+  });
+
+  it("fetches the next batch when jumping beyond the first ten pages", async () => {
+    const firstBatch = {
+      items: Array.from({ length: 100 }, (_, index) => ({
+        ...attachments.items[0],
+        id: index + 1,
+        original_name: `File-${index + 1}.md`,
+        filename: `file-${index + 1}.md`
+      })),
+      total: 250,
+      page: 1,
+      page_size: 100
+    };
+    const secondBatch = {
+      items: Array.from({ length: 100 }, (_, index) => ({
+        ...attachments.items[0],
+        id: index + 101,
+        original_name: `File-${index + 101}.md`,
+        filename: `file-${index + 101}.md`
+      })),
+      total: 250,
+      page: 2,
+      page_size: 100
+    };
+    listAttachments.mockImplementation((params) => {
+      if (params.page === 2) return Promise.resolve(secondBatch);
+      return Promise.resolve(firstBatch);
+    });
+
+    render(<StudioAttachmentsPage />);
+    await waitFor(() => expect(screen.getByText("File-1.md")).toBeInTheDocument());
+
+    for (let step = 0; step < 10; step += 1) {
+      fireEvent.click(screen.getByRole("button", { name: "下一页" }));
+    }
+    await waitFor(() => expect(screen.getByText("File-101.md")).toBeInTheDocument());
+    expect(listAttachments).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2, page_size: 100 }));
   });
 
   it("passes the unassigned category filter to the attachment API", async () => {
@@ -185,14 +267,48 @@ describe("StudioAttachmentsPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "上传" }));
     const file = new File(["hello"], "hello.txt", { type: "text/plain" });
     fireEvent.change(screen.getByLabelText("文件"), { target: { files: [file] } });
-    expect(screen.getByText("已选择：hello.txt · 5 B")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "上传附件" }));
+    expect(screen.getByText("hello.txt")).toBeInTheDocument();
+    expect(screen.getByText("5 B")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "上传 1 个附件" }));
 
-    await waitFor(() => expect(uploadLocalAttachment).toHaveBeenCalled());
+    await waitFor(() => expect(uploadLocalAttachment).toHaveBeenCalledTimes(1));
     const formData = uploadLocalAttachment.mock.calls[0][0] as FormData;
     expect(formData.get("purpose")).toBe("content");
     expect(formData.get("access_scope")).toBe("public");
     expect(formData.get("owner_user_id")).toBe("1");
+  });
+
+  it("uploads multiple local attachments", async () => {
+    render(<StudioAttachmentsPage />);
+    await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "上传" }));
+    const file1 = new File(["hello"], "hello.txt", { type: "text/plain" });
+    const file2 = new File(["world"], "world.txt", { type: "text/plain" });
+    fireEvent.change(screen.getByLabelText("文件"), { target: { files: [file1, file2] } });
+    expect(screen.getByText("hello.txt")).toBeInTheDocument();
+    expect(screen.getByText("world.txt")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "上传 2 个附件" }));
+
+    await waitFor(() => expect(uploadLocalAttachment).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(screen.getByText("已上传 2 个附件。")).toBeInTheDocument());
+  });
+
+  it("uploads remaining files after removing one from the queue", async () => {
+    render(<StudioAttachmentsPage />);
+    await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "上传" }));
+    const file1 = new File(["hello"], "hello.txt", { type: "text/plain" });
+    const file2 = new File(["world"], "world.txt", { type: "text/plain" });
+    fireEvent.change(screen.getByLabelText("文件"), { target: { files: [file1, file2] } });
+    fireEvent.click(screen.getByRole("button", { name: "移除 hello.txt" }));
+    expect(screen.queryByText("hello.txt")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "上传 1 个附件" }));
+
+    await waitFor(() => expect(uploadLocalAttachment).toHaveBeenCalledTimes(1));
+    const formData = uploadLocalAttachment.mock.calls[0][0] as FormData;
+    expect((formData.get("file") as File).name).toBe("world.txt");
   });
 
   it("bulk edits selected attachments", async () => {
@@ -209,6 +325,28 @@ describe("StudioAttachmentsPage", () => {
         expect.objectContaining({ access_scope: "private", category_ids: [7], status: "active" })
       )
     );
+  });
+
+  it("does not show clear selection in the selection bar", async () => {
+    render(<StudioAttachmentsPage />);
+    await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByLabelText("选择附件 Note.md"));
+    expect(screen.getByRole("button", { name: "批量删除" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "清除选择" })).not.toBeInTheDocument();
+  });
+
+  it("bulk deletes selected attachments", async () => {
+    render(<StudioAttachmentsPage />);
+    await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByLabelText("选择附件 Note.md"));
+    fireEvent.click(screen.getByRole("button", { name: "批量删除" }));
+    fireEvent.click(screen.getByRole("button", { name: "确认" }));
+
+    await waitFor(() => expect(deleteAttachment).toHaveBeenCalledWith(99));
+    await waitFor(() => expect(screen.getByText("附件已删除。")).toBeInTheDocument());
+    expect(screen.queryByRole("button", { name: "批量删除" })).not.toBeInTheDocument();
   });
 
   it("opens the reference dialog", async () => {

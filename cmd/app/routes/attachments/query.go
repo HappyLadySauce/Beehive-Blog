@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
@@ -30,6 +31,47 @@ func (h *AttachmentsController) List(ctx *gin.Context) {
 		common.Fail(ctx, common.NewBadRequest("invalid category_id", err))
 		return
 	}
+	in := pkgattachment.ListInput{
+		OwnerUserID:     ownerUserID,
+		Purpose:         strings.TrimSpace(ctx.Query("purpose")),
+		Status:          strings.TrimSpace(ctx.Query("status")),
+		CategoryID:      categoryID,
+		CategoryMode:    strings.TrimSpace(ctx.Query("category_mode")),
+		Search:          strings.TrimSpace(ctx.Query("search")),
+		ReferenceStatus: strings.TrimSpace(ctx.Query("reference_status")),
+	}
+
+	if hasPageQuery(ctx) {
+		page, err := optionalPage(ctx.Query("page"))
+		if err != nil {
+			common.Fail(ctx, common.NewBadRequest("invalid page", err))
+			return
+		}
+		pageSize, err := optionalPageSize(ctx.Query("page_size"))
+		if err != nil {
+			common.Fail(ctx, common.NewBadRequest("invalid page_size", err))
+			return
+		}
+		in.Page = page
+		in.PageSize = pageSize
+		rows, total, page, pageSize, err := h.listOffset(ctx.Request.Context(), actorFromClaims(ctx), in)
+		if err != nil {
+			writeAttachmentError(ctx, err)
+			return
+		}
+		items := make([]v1.AttachmentResponse, 0, len(rows))
+		for _, row := range rows {
+			items = append(items, toAttachmentResponse(row, nil))
+		}
+		common.Success(ctx, v1.AttachmentListResponse{
+			Items:    items,
+			Total:    total,
+			Page:     page,
+			PageSize: pageSize,
+		})
+		return
+	}
+
 	cursorID, err := optionalCursor(ctx.Query("cursor"))
 	if err != nil {
 		common.Fail(ctx, common.NewBadRequest("invalid cursor", err))
@@ -40,17 +82,9 @@ func (h *AttachmentsController) List(ctx *gin.Context) {
 		common.Fail(ctx, common.NewBadRequest("invalid limit", err))
 		return
 	}
-	rows, next, err := h.list(ctx.Request.Context(), actorFromClaims(ctx), pkgattachment.ListInput{
-		OwnerUserID:     ownerUserID,
-		Purpose:         strings.TrimSpace(ctx.Query("purpose")),
-		Status:          strings.TrimSpace(ctx.Query("status")),
-		CategoryID:      categoryID,
-		CategoryMode:    strings.TrimSpace(ctx.Query("category_mode")),
-		Search:          strings.TrimSpace(ctx.Query("search")),
-		ReferenceStatus: strings.TrimSpace(ctx.Query("reference_status")),
-		CursorID:        cursorID,
-		Limit:           limit,
-	})
+	in.CursorID = cursorID
+	in.Limit = limit
+	rows, next, err := h.listCursor(ctx.Request.Context(), actorFromClaims(ctx), in)
 	if err != nil {
 		writeAttachmentError(ctx, err)
 		return
@@ -116,27 +150,20 @@ func (h *AttachmentsController) GetAttachmentContent(ctx *gin.Context) {
 	ctx.FileAttachment(out.LocalPath, out.Attachment.Filename)
 }
 
-func (h *AttachmentsController) list(ctx context.Context, actor pkgattachment.Actor, in pkgattachment.ListInput) ([]model.Attachment, string, error) {
-	if err := pkgattachment.RequireAdmin(actor); err != nil {
-		return nil, "", err
-	}
-	limit := in.Limit
-	if limit <= 0 || limit > 100 {
-		limit = 20
-	}
-	q := h.db.WithContext(ctx).Model(&model.Attachment{}).Order("id DESC").Limit(limit + 1)
+func (h *AttachmentsController) buildListQuery(ctx context.Context, in pkgattachment.ListInput) (*gorm.DB, error) {
+	q := h.db.WithContext(ctx).Model(&model.Attachment{})
 	if in.OwnerUserID != nil {
 		q = q.Where("owner_user_id = ?", *in.OwnerUserID)
 	}
 	if in.Purpose != "" {
 		if !pkgattachment.PurposeKnown(in.Purpose) {
-			return nil, "", fmt.Errorf("%w: invalid purpose", pkgattachment.ErrInvalid)
+			return nil, fmt.Errorf("%w: invalid purpose", pkgattachment.ErrInvalid)
 		}
 		q = q.Where("purpose = ?", in.Purpose)
 	}
 	if in.Status != "" {
 		if !pkgattachment.StatusKnown(in.Status) {
-			return nil, "", fmt.Errorf("%w: invalid status", pkgattachment.ErrInvalid)
+			return nil, fmt.Errorf("%w: invalid status", pkgattachment.ErrInvalid)
 		}
 		q = q.Where("status = ?", in.Status)
 	}
@@ -157,11 +184,8 @@ func (h *AttachmentsController) list(ctx context.Context, actor pkgattachment.Ac
 		case "orphan":
 			q = q.Where("NOT EXISTS (SELECT 1 FROM identity.users u WHERE u.avatar_attachment_id = attachment.attachments.id AND u.deleted_at IS NULL)")
 		default:
-			return nil, "", fmt.Errorf("%w: invalid reference_status", pkgattachment.ErrInvalid)
+			return nil, fmt.Errorf("%w: invalid reference_status", pkgattachment.ErrInvalid)
 		}
-	}
-	if in.CursorID > 0 {
-		q = q.Where("id < ?", in.CursorID)
 	}
 	if in.CategoryID != nil {
 		q = q.Joins("JOIN attachment.attachment_categories ac ON ac.attachment_id = attachment.attachments.id AND ac.category_id = ?", *in.CategoryID)
@@ -170,9 +194,28 @@ func (h *AttachmentsController) list(ctx context.Context, actor pkgattachment.Ac
 		case "unassigned":
 			q = q.Where("NOT EXISTS (SELECT 1 FROM attachment.attachment_categories ac WHERE ac.attachment_id = attachment.attachments.id)")
 		default:
-			return nil, "", fmt.Errorf("%w: invalid category_mode", pkgattachment.ErrInvalid)
+			return nil, fmt.Errorf("%w: invalid category_mode", pkgattachment.ErrInvalid)
 		}
 	}
+	return q, nil
+}
+
+func (h *AttachmentsController) listCursor(ctx context.Context, actor pkgattachment.Actor, in pkgattachment.ListInput) ([]model.Attachment, string, error) {
+	if err := pkgattachment.RequireAdmin(actor); err != nil {
+		return nil, "", err
+	}
+	limit := in.Limit
+	if limit <= 0 || limit > 200 {
+		limit = 20
+	}
+	q, err := h.buildListQuery(ctx, in)
+	if err != nil {
+		return nil, "", err
+	}
+	if in.CursorID > 0 {
+		q = q.Where("id < ?", in.CursorID)
+	}
+	q = q.Order("id DESC").Limit(limit + 1)
 	var rows []model.Attachment
 	if err := q.Find(&rows).Error; err != nil {
 		return nil, "", pkgattachment.MapDBError(err)
@@ -183,6 +226,33 @@ func (h *AttachmentsController) list(ctx context.Context, actor pkgattachment.Ac
 		rows = rows[:limit]
 	}
 	return rows, next, nil
+}
+
+func (h *AttachmentsController) listOffset(ctx context.Context, actor pkgattachment.Actor, in pkgattachment.ListInput) ([]model.Attachment, int64, int, int, error) {
+	if err := pkgattachment.RequireAdmin(actor); err != nil {
+		return nil, 0, 0, 0, err
+	}
+	page := in.Page
+	if page < 1 {
+		page = 1
+	}
+	pageSize := in.PageSize
+	if pageSize <= 0 || pageSize > 200 {
+		pageSize = 20
+	}
+	q, err := h.buildListQuery(ctx, in)
+	if err != nil {
+		return nil, 0, 0, 0, err
+	}
+	var total int64
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, 0, 0, pkgattachment.MapDBError(err)
+	}
+	var rows []model.Attachment
+	if err := q.Order("id DESC").Offset((page - 1) * pageSize).Limit(pageSize).Find(&rows).Error; err != nil {
+		return nil, 0, 0, 0, pkgattachment.MapDBError(err)
+	}
+	return rows, total, page, pageSize, nil
 }
 
 func (h *AttachmentsController) getAdmin(ctx context.Context, actor pkgattachment.Actor, id int64) (model.Attachment, []int64, error) {

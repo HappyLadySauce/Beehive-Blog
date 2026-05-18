@@ -146,10 +146,69 @@ func TestListInvalidLimit(t *testing.T) {
 	h := mustNewAttachmentsController(t)
 	rec := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(rec)
-	ctx.Request = httptest.NewRequest(http.MethodGet, "/api/v1/attachments?limit=101", nil)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/api/v1/attachments?limit=201", nil)
 	ctx.Set(jwt.ClaimsKey, &jwt.Claims{UID: 1, Role: pkgattachment.RoleAdmin})
 	h.List(ctx)
 	assertEnvelopeCode(t, rec, http.StatusBadRequest)
+}
+
+func TestListInvalidPageSize(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := mustNewAttachmentsController(t)
+	rec := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(rec)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/api/v1/attachments?page=1&page_size=201", nil)
+	ctx.Set(jwt.ClaimsKey, &jwt.Claims{UID: 1, Role: pkgattachment.RoleAdmin})
+	h.List(ctx)
+	assertEnvelopeCode(t, rec, http.StatusBadRequest)
+}
+
+func TestListOffsetPagination(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h, mock := mustNewAttachmentsControllerWithMock(t)
+	now := time.Now()
+	mock.ExpectQuery(`SELECT count\(\*\)`).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(int64(25)))
+	mock.ExpectQuery(`SELECT .* FROM "attachment"."attachments"`).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id", "purpose", "filename", "mime_type", "size", "storage_mount_id", "object_key", "storage_metadata", "access_scope", "upload_status", "status", "created_at", "updated_at", "deleted_at",
+		}).AddRow(int64(80), "content", "note.md", "text/markdown", int64(128), int64(10), "content/note.md", []byte(`{}`), "private", "ready", "active", now, now, nil))
+
+	rec := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(rec)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/api/v1/attachments?page=2&page_size=20", nil)
+	ctx.Set(jwt.ClaimsKey, &jwt.Claims{UID: 1, Role: pkgattachment.RoleAdmin})
+	h.List(ctx)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("HTTP status = %d, body=%s", rec.Code, rec.Body.String())
+	}
+	var envelope struct {
+		Code int `json:"code"`
+		Data struct {
+			Total    int64 `json:"total"`
+			Page     int   `json:"page"`
+			PageSize int   `json:"page_size"`
+			Items    []struct {
+				ID int64 `json:"id"`
+			} `json:"items"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &envelope); err != nil {
+		t.Fatalf("unmarshal: %v body=%s", err, rec.Body.String())
+	}
+	if envelope.Code != http.StatusOK {
+		t.Fatalf("envelope code = %d", envelope.Code)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("sql expectations: %v", err)
+	}
+	if envelope.Data.Total != 25 || envelope.Data.Page != 2 || envelope.Data.PageSize != 20 {
+		t.Fatalf("pagination metadata: %+v", envelope.Data)
+	}
+	if len(envelope.Data.Items) != 1 || envelope.Data.Items[0].ID != 80 {
+		t.Fatalf("items: %+v", envelope.Data.Items)
+	}
 }
 
 func TestCreateCategoryValidation(t *testing.T) {

@@ -81,10 +81,39 @@ func optionalLimit(value string) (int, error) {
 		return 20, nil
 	}
 	n, err := strconv.Atoi(value)
-	if err != nil || n <= 0 || n > 100 {
-		return 0, fmt.Errorf("limit must be between 1 and 100")
+	if err != nil || n <= 0 || n > 200 {
+		return 0, fmt.Errorf("limit must be between 1 and 200")
 	}
 	return n, nil
+}
+
+func optionalPage(value string) (int, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return 1, nil
+	}
+	n, err := strconv.Atoi(value)
+	if err != nil || n < 1 {
+		return 0, fmt.Errorf("page must be a positive integer")
+	}
+	return n, nil
+}
+
+func optionalPageSize(value string) (int, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return 20, nil
+	}
+	n, err := strconv.Atoi(value)
+	if err != nil || n <= 0 || n > 200 {
+		return 0, fmt.Errorf("page_size must be between 1 and 200")
+	}
+	return n, nil
+}
+
+func hasPageQuery(ctx *gin.Context) bool {
+	_, ok := ctx.GetQuery("page")
+	return ok
 }
 
 func defaultString(value string, fallback string) string {

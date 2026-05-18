@@ -77,6 +77,7 @@ export function StudioUsersPage() {
   const [showDelete, setShowDelete] = useState<UserItem | null>(null);
   const [selectedUserIDs, setSelectedUserIDs] = useState<number[]>([]);
   const [showBulkEdit, setShowBulkEdit] = useState(false);
+  const [showBulkDelete, setShowBulkDelete] = useState(false);
 
   // Form state
   const [formUsername, setFormUsername] = useState("");
@@ -217,6 +218,42 @@ export function StudioUsersPage() {
     }
   }
 
+  async function onConfirmBulkDelete() {
+    if (selectedUserIDs.length === 0) return;
+    setSaving(true);
+    setMessage(null);
+    const ids = [...selectedUserIDs];
+    let deleted = 0;
+    try {
+      for (const id of ids) {
+        try {
+          await deleteUser(id);
+          deleted += 1;
+        } catch (error) {
+          const detail = humanizeApiError(error);
+          if (deleted > 0) {
+            setMessage({ tone: "error", text: `已删除 ${deleted} 个，第 ${deleted + 1} 个失败：${detail}` });
+            setShowBulkDelete(false);
+            setSelectedUserIDs(ids.slice(deleted));
+            await fetchUsers();
+          } else {
+            setMessage({ tone: "error", text: detail });
+          }
+          return;
+        }
+      }
+      setShowBulkDelete(false);
+      setSelectedUserIDs([]);
+      setMessage({
+        tone: "success",
+        text: ids.length === 1 ? `用户已删除。` : `已删除 ${ids.length} 个用户。`
+      });
+      await fetchUsers();
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function onAvatarFile(file: File | null) {
     if (!file || !editingUser) return;
     setAvatarUploading(true);
@@ -255,6 +292,12 @@ export function StudioUsersPage() {
     setBulkRole(selected.role);
     setBulkStatus(selected.status);
     setShowBulkEdit(true);
+    setMessage(null);
+  }
+
+  function openBulkDelete() {
+    if (selectedUserIDs.length === 0) return;
+    setShowBulkDelete(true);
     setMessage(null);
   }
 
@@ -351,12 +394,13 @@ export function StudioUsersPage() {
             {selectedUserIDs.length > 0 ? (
               <div className={styles.selectionBar}>
                 <span>已选择 {selectedUserIDs.length} 个用户</span>
-                <button className="secondary-button" type="button" onClick={() => setSelectedUserIDs([])}>
-                  清除选择
-                </button>
                 <button className="primary-button" type="button" onClick={openBulkEdit}>
                   <Pencil aria-hidden size={16} />
                   编辑已选
+                </button>
+                <button className="danger-button" type="button" onClick={openBulkDelete}>
+                  <Trash2 aria-hidden size={16} />
+                  批量删除
                 </button>
               </div>
             ) : null}
@@ -619,6 +663,26 @@ export function StudioUsersPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      ) : null}
+
+      {showBulkDelete ? (
+        <div className={styles.overlay} role="alertdialog" aria-label="确认批量删除">
+          <div className={styles.modal}>
+            <h3>批量删除用户</h3>
+            <p>
+              确认删除已选择的 {selectedUserIDs.length} 个用户？删除后其用户名和邮箱可被新用户复用。
+            </p>
+            <div className={styles.modalActions}>
+              <button className="secondary-button" type="button" onClick={() => setShowBulkDelete(false)}>
+                取消
+              </button>
+              <button className="danger-button" disabled={saving} type="button" onClick={onConfirmBulkDelete}>
+                {saving ? <Loader2 aria-hidden className="spin" size={18} /> : null}
+                确认删除
+              </button>
+            </div>
           </div>
         </div>
       ) : null}

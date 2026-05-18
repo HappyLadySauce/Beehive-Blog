@@ -276,11 +276,16 @@ export type AttachmentListRequest = {
   owner_user_id?: number;
   cursor?: string;
   limit?: number;
+  page?: number;
+  page_size?: number;
 };
 
 export type AttachmentListResponse = {
   items: AttachmentResponse[];
   next_cursor?: string;
+  total?: number;
+  page?: number;
+  page_size?: number;
 };
 
 export type AttachmentReferenceResponse = {

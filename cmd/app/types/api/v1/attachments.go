@@ -30,11 +30,14 @@ type AttachmentResponse struct {
 	DeletedAt       *time.Time      `json:"deleted_at,omitempty"`
 }
 
-// AttachmentListResponse returns cursor-paginated attachments.
-// AttachmentListResponse 返回游标分页附件列表。
+// AttachmentListResponse returns paginated attachments (offset or cursor).
+// AttachmentListResponse 返回分页附件列表（偏移或游标）。
 type AttachmentListResponse struct {
 	Items      []AttachmentResponse `json:"items"`
 	NextCursor string               `json:"next_cursor,omitempty"`
+	Total      int64                `json:"total,omitempty"`
+	Page       int                  `json:"page,omitempty"`
+	PageSize   int                  `json:"page_size,omitempty"`
 }
 
 // AttachmentReferenceResponse describes one business object referencing an attachment.

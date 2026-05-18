@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, DragEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   CheckCircle2,
@@ -45,13 +45,27 @@ import type {
   StorageMountResponse
 } from "@/lib/api/types";
 import styles from "./Studio.module.css";
+import { StudioPagePagination } from "./StudioPagePagination";
 import { StudioSelect } from "./StudioSelect";
 import { StudioTopbar } from "./StudioTopbar";
 
 type Message = { tone: "success" | "error"; text: string } | null;
 type ViewMode = "list" | "grid";
 
-const attachmentLimit = 20;
+const attachmentPageSize = 10;
+const attachmentPagesPerFetch = 10;
+const attachmentFetchSize = attachmentPageSize * attachmentPagesPerFetch;
+
+function batchStartPageFor(pageNumber: number) {
+  return Math.floor((pageNumber - 1) / attachmentPagesPerFetch) * attachmentPagesPerFetch + 1;
+}
+
+// listPageForBatchStart maps UI batch start to API page (offset uses page_size as fetch window).
+// listPageForBatchStart 将 UI 批次起始页映射为 API 的 page（偏移按 page_size 窗口计算）。
+function listPageForBatchStart(batchStartPage: number) {
+  const offset = (batchStartPage - 1) * attachmentPageSize;
+  return Math.floor(offset / attachmentFetchSize) + 1;
+}
 const purposeOptions = [
   { value: "", label: "类型：全部" },
   { value: "content", label: "内容" },
@@ -99,8 +113,10 @@ export function StudioAttachmentsPage() {
   const [referenceStatus, setReferenceStatus] = useState("");
   const [categoryID, setCategoryID] = useState("");
   const [sort, setSort] = useState("default");
-  const [cursor, setCursor] = useState("");
-  const [cursorStack, setCursorStack] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
+  const [batchStartPage, setBatchStartPage] = useState(1);
+  const [batchItems, setBatchItems] = useState<AttachmentResponse[]>([]);
+  const [total, setTotal] = useState(0);
   const [showUpload, setShowUpload] = useState(false);
   const [showCategories, setShowCategories] = useState(false);
   const [editing, setEditing] = useState<AttachmentResponse | null>(null);
@@ -112,8 +128,9 @@ export function StudioAttachmentsPage() {
   const [categoryDeleting, setCategoryDeleting] = useState<AttachmentCategoryResponse | null>(null);
   const [selectedAttachmentIDs, setSelectedAttachmentIDs] = useState<number[]>([]);
   const [bulkEditing, setBulkEditing] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [uploadPurpose, setUploadPurpose] = useState("content");
   const [uploadAccess, setUploadAccess] = useState("public");
   const [uploadMountID, setUploadMountID] = useState("");
@@ -170,39 +187,53 @@ export function StudioAttachmentsPage() {
     }
     return map;
   }, [references]);
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(total / attachmentPageSize)), [total]);
+  const pageItems = useMemo(() => {
+    const start = (page - batchStartPage) * attachmentPageSize;
+    return batchItems.slice(start, start + attachmentPageSize);
+  }, [batchItems, batchStartPage, page]);
   const visibleItems = useMemo(() => {
-    const items = [...data.items];
+    const items = [...pageItems];
     if (sort === "name") items.sort((a, b) => displayName(a).localeCompare(displayName(b), "zh-CN"));
     if (sort === "size") items.sort((a, b) => b.size - a.size);
     return items;
-  }, [data.items, sort]);
+  }, [pageItems, sort]);
   const selectedAttachments = useMemo(
-    () => data.items.filter((attachment) => selectedAttachmentIDs.includes(attachment.id)),
-    [data.items, selectedAttachmentIDs]
+    () => batchItems.filter((attachment) => selectedAttachmentIDs.includes(attachment.id)),
+    [batchItems, selectedAttachmentIDs]
   );
   const visibleAttachmentIDs = useMemo(() => visibleItems.map((attachment) => attachment.id), [visibleItems]);
   const allVisibleSelected = visibleAttachmentIDs.length > 0 && visibleAttachmentIDs.every((id) => selectedAttachmentIDs.includes(id));
-  const unassignedCount = data.items.filter((attachment) => (attachment.category_ids ?? []).length === 0).length;
+  const unassignedCount = batchItems.filter((attachment) => (attachment.category_ids ?? []).length === 0).length;
+
+  const listFilters = useMemo(
+    () => ({
+      category_id: categoryID && categoryID !== "unassigned" ? Number(categoryID) : undefined,
+      category_mode: categoryID === "unassigned" ? ("unassigned" as const) : undefined,
+      purpose: purpose || undefined,
+      reference_status: referenceStatus || undefined,
+      search: search.trim() || undefined,
+      status: status || undefined
+    }),
+    [categoryID, purpose, referenceStatus, search, status]
+  );
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [attachments, categoryPayload, mountPayload, referencePayload] = await Promise.all([
         listAttachments({
-          category_id: categoryID && categoryID !== "unassigned" ? Number(categoryID) : undefined,
-          category_mode: categoryID === "unassigned" ? "unassigned" : undefined,
-          cursor: cursor || undefined,
-          limit: attachmentLimit,
-          purpose: purpose || undefined,
-          reference_status: referenceStatus || undefined,
-          search: search.trim() || undefined,
-          status: status || undefined
+          ...listFilters,
+          page: listPageForBatchStart(batchStartPage),
+          page_size: attachmentFetchSize
         }),
         listAttachmentCategories(),
         listStorageMounts(),
         listAttachmentReferences()
       ]);
       setData(attachments);
+      setBatchItems(attachments.items);
+      setTotal(attachments.total ?? attachments.items.length);
       setCategories(categoryPayload.items);
       setMounts(mountPayload.items);
       setReferences(referencePayload.items);
@@ -211,20 +242,16 @@ export function StudioAttachmentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [categoryID, cursor, purpose, referenceStatus, search, status]);
+  }, [batchStartPage, listFilters]);
 
   useEffect(() => {
     let active = true;
+    setLoading(true);
     Promise.all([
       listAttachments({
-        category_id: categoryID && categoryID !== "unassigned" ? Number(categoryID) : undefined,
-        category_mode: categoryID === "unassigned" ? "unassigned" : undefined,
-        cursor: cursor || undefined,
-        limit: attachmentLimit,
-        purpose: purpose || undefined,
-        reference_status: referenceStatus || undefined,
-        search: search.trim() || undefined,
-        status: status || undefined
+        ...listFilters,
+        page: listPageForBatchStart(batchStartPage),
+        page_size: attachmentFetchSize
       }),
       listAttachmentCategories(),
       listStorageMounts(),
@@ -233,6 +260,8 @@ export function StudioAttachmentsPage() {
       .then(([attachments, categoryPayload, mountPayload, referencePayload]) => {
         if (!active) return;
         setData(attachments);
+        setBatchItems(attachments.items);
+        setTotal(attachments.total ?? attachments.items.length);
         setCategories(categoryPayload.items);
         setMounts(mountPayload.items);
         setReferences(referencePayload.items);
@@ -246,19 +275,48 @@ export function StudioAttachmentsPage() {
     return () => {
       active = false;
     };
-  }, [categoryID, cursor, purpose, referenceStatus, search, status]);
+  }, [batchStartPage, listFilters]);
 
   function resetPage() {
-    setCursor("");
-    setCursorStack([]);
+    setPage(1);
+    setBatchStartPage(1);
+  }
+
+  function goToPage(nextPage: number) {
+    if (nextPage < 1 || nextPage > totalPages) return;
+    const nextBatchStart = batchStartPageFor(nextPage);
+    setPage(nextPage);
+    if (nextBatchStart !== batchStartPage) {
+      setBatchStartPage(nextBatchStart);
+    }
   }
 
   function resetUploadForm() {
-    setUploadFile(null);
+    setUploadFiles([]);
     setUploadPurpose("content");
     setUploadAccess("public");
     setUploadMountID("");
     setUploadCategoryID(categoryID && categoryID !== "unassigned" ? categoryID : "");
+  }
+
+  function addUploadFiles(incoming: File[]) {
+    const valid = incoming.filter((file) => file.name);
+    if (valid.length === 0) return;
+    setUploadFiles((current) => {
+      const seen = new Set(current.map(uploadFileKey));
+      const next = [...current];
+      for (const file of valid) {
+        const key = uploadFileKey(file);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        next.push(file);
+      }
+      return next;
+    });
+  }
+
+  function removeUploadFile(index: number) {
+    setUploadFiles((current) => current.filter((_, itemIndex) => itemIndex !== index));
   }
 
   function resetCategoryForm() {
@@ -329,6 +387,12 @@ export function StudioAttachmentsPage() {
     setMessage(null);
   }
 
+  function openBulkDelete() {
+    if (selectedAttachmentIDs.length === 0) return;
+    setBulkDeleting(true);
+    setMessage(null);
+  }
+
   function openComplete(attachment: AttachmentResponse) {
     setCompleting(attachment);
     setCompleteETag(attachment.etag ?? "");
@@ -354,27 +418,43 @@ export function StudioAttachmentsPage() {
     setSaving(true);
     setMessage(null);
     try {
-      if (!uploadFile) {
-        setMessage({ tone: "error", text: "请选择要上传的附件。" });
+      if (uploadFiles.length === 0) {
+        setMessage({ tone: "error", text: "请至少添加一个文件。" });
         return;
       }
       if (!claims?.uid) {
         setMessage({ tone: "error", text: "当前会话缺少用户 ID，请重新登录后再上传。" });
         return;
       }
-      const formData = new FormData();
-      formData.set("file", uploadFile);
-      formData.set("owner_user_id", String(claims.uid));
-      formData.set("purpose", uploadPurpose);
-      formData.set("access_scope", uploadAccess);
-      if (uploadMountID) formData.set("storage_mount_id", uploadMountID);
-      if (uploadCategoryID) formData.set("category_ids", uploadCategoryID);
-      await uploadLocalAttachment(formData);
+      let uploaded = 0;
+      for (const file of uploadFiles) {
+        const formData = new FormData();
+        formData.set("file", file);
+        formData.set("owner_user_id", String(claims.uid));
+        formData.set("purpose", uploadPurpose);
+        formData.set("access_scope", uploadAccess);
+        if (uploadMountID) formData.set("storage_mount_id", uploadMountID);
+        if (uploadCategoryID) formData.set("category_ids", uploadCategoryID);
+        try {
+          await uploadLocalAttachment(formData);
+          uploaded += 1;
+        } catch (error) {
+          const detail = humanizeApiError(error);
+          if (uploaded > 0) {
+            setMessage({ tone: "error", text: `已上传 ${uploaded} 个，第 ${uploaded + 1} 个失败：${detail}` });
+          } else {
+            setMessage({ tone: "error", text: detail });
+          }
+          if (uploaded > 0) await loadData();
+          return;
+        }
+      }
       setShowUpload(false);
-      setMessage({ tone: "success", text: "附件已上传。" });
+      setMessage({
+        tone: "success",
+        text: uploadFiles.length === 1 ? "附件已上传。" : `已上传 ${uploadFiles.length} 个附件。`
+      });
       await loadData();
-    } catch (error) {
-      setMessage({ tone: "error", text: humanizeApiError(error) });
     } finally {
       setSaving(false);
     }
@@ -439,6 +519,42 @@ export function StudioAttachmentsPage() {
       await loadData();
     } catch (error) {
       setMessage({ tone: "error", text: humanizeApiError(error) });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function onConfirmBulkDelete() {
+    if (selectedAttachmentIDs.length === 0) return;
+    setSaving(true);
+    setMessage(null);
+    const ids = [...selectedAttachmentIDs];
+    let deleted = 0;
+    try {
+      for (const id of ids) {
+        try {
+          await deleteAttachment(id);
+          deleted += 1;
+        } catch (error) {
+          const detail = humanizeApiError(error);
+          if (deleted > 0) {
+            setMessage({ tone: "error", text: `已删除 ${deleted} 个，第 ${deleted + 1} 个失败：${detail}` });
+            setBulkDeleting(false);
+            setSelectedAttachmentIDs(ids.slice(deleted));
+            await loadData();
+          } else {
+            setMessage({ tone: "error", text: detail });
+          }
+          return;
+        }
+      }
+      setBulkDeleting(false);
+      setSelectedAttachmentIDs([]);
+      setMessage({
+        tone: "success",
+        text: ids.length === 1 ? "附件已删除。" : `已删除 ${ids.length} 个附件。`
+      });
+      await loadData();
     } finally {
       setSaving(false);
     }
@@ -531,20 +647,6 @@ export function StudioAttachmentsPage() {
     setMessage(null);
   }
 
-  function nextPage() {
-    if (!data.next_cursor) return;
-    setCursorStack((current) => [...current, cursor]);
-    setCursor(data.next_cursor);
-  }
-
-function previousPage() {
-    setCursorStack((current) => {
-      const next = [...current];
-      setCursor(next.pop() ?? "");
-      return next;
-    });
-  }
-
   return (
     <>
       <StudioTopbar
@@ -608,18 +710,19 @@ function previousPage() {
         {selectedAttachmentIDs.length > 0 ? (
           <div className={styles.selectionBar}>
             <span>已选择 {selectedAttachmentIDs.length} 个附件</span>
-            <button className="secondary-button" type="button" onClick={() => setSelectedAttachmentIDs([])}>
-              清除选择
-            </button>
             <button className="primary-button" type="button" onClick={openBulkEdit}>
               <Pencil aria-hidden size={16} />
               编辑已选
+            </button>
+            <button className="danger-button" type="button" onClick={openBulkDelete}>
+              <Trash2 aria-hidden size={16} />
+              批量删除
             </button>
           </div>
         ) : null}
 
         <div className={styles.categoryStrip}>
-          <CategoryCard active={!categoryID} count={data.items.length} title="全部" onClick={() => {
+          <CategoryCard active={!categoryID} count={total || batchItems.length} title="全部" onClick={() => {
             setCategoryID("");
             resetPage();
           }} />
@@ -734,14 +837,9 @@ function previousPage() {
           </div>
         )}
 
-        <div className={styles.pagination}>
-          <button className="secondary-button" disabled={cursorStack.length === 0 || loading} type="button" onClick={previousPage}>
-            上一页
-          </button>
-          <button className="secondary-button" disabled={!data.next_cursor || loading} type="button" onClick={nextPage}>
-            下一页
-          </button>
-        </div>
+        {!loading ? (
+          <StudioPagePagination disabled={loading} page={page} totalPages={totalPages} onPageChange={goToPage} />
+        ) : null}
       </section>
 
       {showUpload ? (
@@ -749,17 +847,18 @@ function previousPage() {
           access={uploadAccess}
           categoryID={uploadCategoryID}
           categoryOptions={categoryOptions}
-          file={uploadFile}
+          files={uploadFiles}
           mountID={uploadMountID}
           mountOptions={mountOptions}
           purpose={uploadPurpose}
           saving={saving}
           onAccess={setUploadAccess}
+          onAddFiles={addUploadFiles}
           onCategory={setUploadCategoryID}
           onClose={() => setShowUpload(false)}
-          onFile={setUploadFile}
           onMount={setUploadMountID}
           onPurpose={setUploadPurpose}
+          onRemoveFile={removeUploadFile}
           onSubmit={onUpload}
         />
       ) : null}
@@ -862,6 +961,17 @@ function previousPage() {
         />
       ) : null}
 
+      {bulkDeleting ? (
+        <ConfirmModal
+          body={`确认删除已选择的 ${selectedAttachmentIDs.length} 个附件？若附件仍被头像等业务对象引用，后端会拒绝删除。`}
+          danger
+          saving={saving}
+          title="批量删除附件"
+          onCancel={() => setBulkDeleting(false)}
+          onConfirm={onConfirmBulkDelete}
+        />
+      ) : null}
+
       {categoryDeleting ? (
         <ConfirmModal
           body={`确认删除 ${categoryDeleting.name}？后端会软删分组，已绑定附件不会被删除。`}
@@ -933,17 +1043,18 @@ function AttachmentUploadModal(props: {
   access: string;
   categoryID: string;
   categoryOptions: { value: string; label: string }[];
-  file: File | null;
+  files: File[];
   mountID: string;
   mountOptions: { value: string; label: string }[];
   purpose: string;
   saving: boolean;
   onAccess: (value: string) => void;
+  onAddFiles: (files: File[]) => void;
   onCategory: (value: string) => void;
   onClose: () => void;
-  onFile: (file: File | null) => void;
   onMount: (value: string) => void;
   onPurpose: (value: string) => void;
+  onRemoveFile: (index: number) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -951,6 +1062,24 @@ function AttachmentUploadModal(props: {
   function openFilePicker() {
     fileInputRef.current?.click();
   }
+
+  function appendFiles(fileList: FileList | null) {
+    if (!fileList?.length) return;
+    props.onAddFiles(Array.from(fileList));
+  }
+
+  function handleFileInputChange(event: ChangeEvent<HTMLInputElement>) {
+    appendFiles(event.target.files);
+    event.target.value = "";
+  }
+
+  function handleDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    appendFiles(event.dataTransfer.files);
+  }
+
+  const uploadLabel = props.files.length > 0 ? `上传 ${props.files.length} 个附件` : "上传附件";
 
   return createPortal(
     <div className={styles.overlay} role="presentation">
@@ -981,54 +1110,81 @@ function AttachmentUploadModal(props: {
             <span>分组</span>
             <StudioSelect ariaLabel="分组" options={props.categoryOptions} value={props.categoryID} onChange={props.onCategory} />
           </label>
-          <div
-            className={styles.uploadDropzone}
-            role="button"
-            tabIndex={0}
-            onClick={openFilePicker}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                openFilePicker();
-              }
-            }}
-          >
-            <input
-              ref={fileInputRef}
-              className={styles.fileInputHidden}
-              aria-label="文件"
-              type="file"
-              onChange={(event) => props.onFile(event.target.files?.[0] ?? null)}
-            />
-            <FileUp aria-hidden size={32} />
-            <strong>
-              拖拽文件到这里，或者
-              <button
-                className={styles.uploadBrowseButton}
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
+          <div className={styles.uploadSection}>
+            <div
+              className={styles.uploadDropzone}
+              role="button"
+              tabIndex={0}
+              onClick={openFilePicker}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={handleDrop}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
                   openFilePicker();
-                }}
-              >
-                浏览文件
-              </button>
-            </strong>
-            <span>本地上传</span>
-            {props.file ? (
-              <span className={styles.uploadFileName}>
-                已选择：{props.file.name} · {formatBytes(props.file.size)}
-              </span>
-            ) : null}
+                }
+              }}
+            >
+              <input
+                ref={fileInputRef}
+                className={styles.fileInputHidden}
+                aria-label="文件"
+                multiple
+                type="file"
+                onChange={handleFileInputChange}
+              />
+              <FileUp aria-hidden size={32} />
+              <strong>
+                拖拽文件到这里，或者
+                <button
+                  className={styles.uploadBrowseButton}
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    openFilePicker();
+                  }}
+                >
+                  浏览文件
+                </button>
+              </strong>
+              <span>本地上传，可多选</span>
+            </div>
+            <div className={styles.uploadFileList} aria-label="待上传文件列表">
+              {props.files.length === 0 ? (
+                <p className={styles.uploadFileListEmpty}>尚未添加文件</p>
+              ) : (
+                props.files.map((file, index) => (
+                  <div key={`${file.name}-${file.size}-${file.lastModified}-${index}`} className={styles.uploadFileRow}>
+                    <div className={styles.uploadFileRowMeta}>
+                      <strong>{file.name}</strong>
+                      <span>{formatBytes(file.size)}</span>
+                    </div>
+                    <button
+                      aria-label={`移除 ${file.name}`}
+                      className="icon-button"
+                      type="button"
+                      onClick={() => props.onRemoveFile(index)}
+                    >
+                      <Trash2 aria-hidden size={16} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </form>
         <div className={styles.modalActions}>
           <button className="secondary-button" type="button" onClick={props.onClose}>
             取消
           </button>
-          <button className="primary-button" disabled={props.saving} form="attachment-upload-form" type="submit">
+          <button
+            className="primary-button"
+            disabled={props.saving || props.files.length === 0}
+            form="attachment-upload-form"
+            type="submit"
+          >
             {props.saving ? <Loader2 aria-hidden className="spin" size={18} /> : <Save aria-hidden size={18} />}
-            上传附件
+            {uploadLabel}
           </button>
         </div>
       </div>
@@ -1377,6 +1533,10 @@ function displayName(attachment: AttachmentResponse) {
 function mountLabel(id: number, mounts: StorageMountResponse[]) {
   const mount = mounts.find((item) => item.id === id);
   return mount ? mount.name : `#${id}`;
+}
+
+function uploadFileKey(file: File) {
+  return `${file.name}:${file.size}:${file.lastModified}`;
 }
 
 function formatBytes(value: number) {

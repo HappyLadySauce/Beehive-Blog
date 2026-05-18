@@ -111,6 +111,8 @@ type ListInput struct {
 	ReferenceStatus string
 	CursorID        int64
 	Limit           int
+	Page            int
+	PageSize        int
 }
 
 // ContentResult describes how a client should receive attachment content.
