@@ -4,9 +4,8 @@
 .trae/
 .codex/
 
+.gocache
 .tmp
 logs/
 data/
 configs/
-
-Restrict Studio Access/

@@ -10,6 +10,7 @@ import (
 type AttachmentResponse struct {
 	ID              int64           `json:"id"`
 	OwnerUserID     *int64          `json:"owner_user_id,omitempty"`
+	OwnerUsername   *string         `json:"owner_username,omitempty"`
 	Purpose         string          `json:"purpose"`
 	Filename        string          `json:"filename"`
 	OriginalName    *string         `json:"original_name,omitempty"`

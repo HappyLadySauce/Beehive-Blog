@@ -12,9 +12,14 @@ import (
 )
 
 func toAttachmentResponse(row model.Attachment, categoryIDs []int64) v1.AttachmentResponse {
+	return toAttachmentResponseWithOwner(row, categoryIDs, nil)
+}
+
+func toAttachmentResponseWithOwner(row model.Attachment, categoryIDs []int64, ownerUsername *string) v1.AttachmentResponse {
 	resp := v1.AttachmentResponse{
 		ID:              row.ID,
 		OwnerUserID:     row.OwnerUserID,
+		OwnerUsername:   ownerUsername,
 		Purpose:         row.Purpose,
 		Filename:        row.Filename,
 		OriginalName:    row.OriginalName,

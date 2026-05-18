@@ -246,6 +246,7 @@ export type DeleteStorageMountResponse = Record<string, never>;
 export type AttachmentResponse = {
   id: number;
   owner_user_id?: number | null;
+  owner_username?: string | null;
   purpose: string;
   filename: string;
   original_name?: string | null;

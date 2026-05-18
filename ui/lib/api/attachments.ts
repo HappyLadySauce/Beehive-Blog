@@ -76,8 +76,11 @@ export function updateAttachment(id: number, payload: AttachmentPatchRequest) {
   });
 }
 
-export function deleteAttachment(id: number) {
-  return apiFetch<DeleteAttachmentResponse>(`/bff/attachments/${id}`, { method: "DELETE" });
+export function deleteAttachment(id: number, options: { force?: boolean } = {}) {
+  const search = new URLSearchParams();
+  if (options.force) search.set("force", "true");
+  const query = search.toString();
+  return apiFetch<DeleteAttachmentResponse>(`/bff/attachments/${id}${query ? `?${query}` : ""}`, { method: "DELETE" });
 }
 
 export function listAttachmentReferences(attachmentId?: number) {

@@ -30,10 +30,14 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 }
 
-export async function DELETE(_request: Request, context: RouteContext) {
+export async function DELETE(request: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
-    const result = await forwardAuthedGoRequest<DeleteAttachmentResponse>(`/attachments/${id}`, { method: "DELETE" });
+    const url = new URL(request.url);
+    const force = url.searchParams.get("force") === "true";
+    const result = await forwardAuthedGoRequest<DeleteAttachmentResponse>(`/attachments/${id}${force ? "?force=true" : ""}`, {
+      method: "DELETE"
+    });
     return bffJsonResponse(result);
   } catch (error) {
     return jsonError(error);

@@ -9,6 +9,7 @@ const listAttachmentCategories = vi.hoisted(() => vi.fn());
 const listAttachmentReferences = vi.hoisted(() => vi.fn());
 const getAttachmentReferences = vi.hoisted(() => vi.fn());
 const uploadLocalAttachment = vi.hoisted(() => vi.fn());
+const uploadLocalAttachmentsBatch = vi.hoisted(() => vi.fn());
 const updateAttachment = vi.hoisted(() => vi.fn());
 const deleteAttachment = vi.hoisted(() => vi.fn());
 const completeAttachment = vi.hoisted(() => vi.fn());
@@ -23,7 +24,7 @@ vi.mock("@/components/auth/AuthProvider", () => ({
 }));
 
 vi.mock("next/image", () => ({
-  default: (props: { alt: string; src: string }) => <img alt={props.alt} src={props.src} />
+  default: (props: { alt: string; src: string }) => <svg aria-label={props.alt} data-src={props.src} role="img" />
 }));
 
 vi.mock("@/lib/api/storage", () => ({
@@ -42,7 +43,8 @@ vi.mock("@/lib/api/attachments", () => ({
   listAttachments,
   updateAttachment,
   updateAttachmentCategory,
-  uploadLocalAttachment
+  uploadLocalAttachment,
+  uploadLocalAttachmentsBatch
 }));
 
 const mounts = {
@@ -72,6 +74,7 @@ const attachments = {
     {
       id: 99,
       owner_user_id: 1,
+      owner_username: "admin",
       purpose: "content",
       filename: "note.md",
       original_name: "Note.md",
@@ -130,6 +133,7 @@ describe("StudioAttachmentsPage", () => {
     listAttachmentReferences.mockReset();
     getAttachmentReferences.mockReset();
     uploadLocalAttachment.mockReset();
+    uploadLocalAttachmentsBatch.mockReset();
     updateAttachment.mockReset();
     deleteAttachment.mockReset();
     completeAttachment.mockReset();
@@ -143,6 +147,23 @@ describe("StudioAttachmentsPage", () => {
     listAttachmentReferences.mockResolvedValue(references);
     getAttachmentReferences.mockResolvedValue(references);
     uploadLocalAttachment.mockResolvedValue(attachments.items[0]);
+    uploadLocalAttachmentsBatch.mockImplementation(async (formData: FormData) => {
+      const files = formData.getAll("files") as File[];
+      for (const file of files) {
+        const itemFormData = new FormData();
+        itemFormData.set("file", file);
+        for (const key of ["owner_user_id", "purpose", "access_scope", "storage_mount_id", "category_ids"]) {
+          const value = formData.get(key);
+          if (value) itemFormData.set(key, value);
+        }
+        uploadLocalAttachment(itemFormData);
+      }
+      return {
+        failed: 0,
+        items: files.map((file, index) => ({ attachment: attachments.items[0], filename: file.name, index })),
+        uploaded: files.length
+      };
+    });
     updateAttachment.mockResolvedValue(attachments.items[0]);
     deleteAttachment.mockResolvedValue({});
     completeAttachment.mockResolvedValue(attachments.items[0]);
@@ -160,6 +181,7 @@ describe("StudioAttachmentsPage", () => {
     expect(screen.getByText("文章素材")).toBeInTheDocument();
     expect(screen.getByText("名称 / 类型 / 路径")).toBeInTheDocument();
     expect(screen.getByText("存储实例")).toBeInTheDocument();
+    expect(screen.getByText("admin")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "1 引用" })).toBeInTheDocument();
   });
 
@@ -210,7 +232,7 @@ describe("StudioAttachmentsPage", () => {
 
     fireEvent.click(screen.getByText("Note.md"));
     const preview = screen.getByRole("img", { name: "Note.md" });
-    expect(preview).toHaveAttribute("src", "/api/bff/attachments/99/content");
+    expect(preview).toHaveAttribute("data-src", "/api/bff/attachments/99/content");
   });
 
   it("opens a zoomed preview when clicking the edit dialog image", async () => {
@@ -404,9 +426,10 @@ describe("StudioAttachmentsPage", () => {
 
     fireEvent.click(screen.getByLabelText("选择附件 Note.md"));
     fireEvent.click(screen.getByRole("button", { name: "批量删除" }));
+    expect(screen.getByText("确认删除已选择的 1 个附件？其中 1 个附件仍被业务对象引用；确认后会删除附件，并将用户头像等引用切换为默认头像。")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "确认" }));
 
-    await waitFor(() => expect(deleteAttachment).toHaveBeenCalledWith(99));
+    await waitFor(() => expect(deleteAttachment).toHaveBeenCalledWith(99, { force: true }));
     await waitFor(() => expect(screen.getByText("附件已删除。")).toBeInTheDocument());
     expect(screen.queryByRole("button", { name: "批量删除" })).not.toBeInTheDocument();
   });

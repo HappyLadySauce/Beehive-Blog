@@ -358,6 +358,40 @@ func TestDeleteRejectsReferencedAttachment(t *testing.T) {
 	}
 }
 
+func TestDeleteForceClearsUserAvatarReferences(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h, mock := mustNewAttachmentsControllerWithMock(t)
+	now := time.Now()
+	mock.ExpectQuery(`SELECT .* FROM "attachment"."attachments"`).
+		WithArgs(int64(99), 1).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id", "purpose", "filename", "mime_type", "size", "storage_mount_id", "object_key", "storage_metadata", "access_scope", "upload_status", "status", "created_at", "updated_at", "deleted_at",
+		}).AddRow(int64(99), "content", "note.md", "text/markdown", int64(128), int64(10), "content/note.md", []byte(`{}`), "private", "ready", "active", now, now, nil))
+	mock.ExpectQuery(`SELECT count\(\*\) FROM "identity"."users"`).
+		WithArgs(int64(99)).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(int64(1)))
+	mock.ExpectBegin()
+	mock.ExpectExec(`UPDATE "identity"\."users" SET .*"avatar_attachment_id"=\$1.*"updated_at"=\$2.*WHERE avatar_attachment_id = \$3 AND "users"\."deleted_at" IS NULL`).
+		WithArgs(nil, sqlmock.AnyArg(), int64(99)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec(`UPDATE "attachment"\."attachments" SET "deleted_at"=\$1 WHERE id = \$2 AND "attachments"\."deleted_at" IS NULL`).
+		WithArgs(sqlmock.AnyArg(), int64(99)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectCommit()
+
+	rec := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(rec)
+	ctx.Request = httptest.NewRequest(http.MethodDelete, "/api/v1/attachments/99?force=true", nil)
+	ctx.Params = gin.Params{{Key: "id", Value: "99"}}
+	ctx.Set(jwt.ClaimsKey, &jwt.Claims{UID: 1, Role: pkgattachment.RoleAdmin})
+	h.Delete(ctx)
+
+	assertEnvelopeCode(t, rec, http.StatusOK)
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("sql expectations: %v", err)
+	}
+}
+
 func mustNewAttachmentsController(t *testing.T) *routeattachments.AttachmentsController {
 	t.Helper()
 	h, err := routeattachments.NewAttachmentsController(&svc.ServiceContext{

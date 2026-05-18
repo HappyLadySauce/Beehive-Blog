@@ -49,7 +49,8 @@ func (h *AttachmentsController) Delete(ctx *gin.Context) {
 	if !ok {
 		return
 	}
-	if err := h.delete(ctx.Request.Context(), actorFromClaims(ctx), id); err != nil {
+	force := strings.EqualFold(strings.TrimSpace(ctx.Query("force")), "true")
+	if err := h.delete(ctx.Request.Context(), actorFromClaims(ctx), id, force); err != nil {
 		writeAttachmentError(ctx, err)
 		return
 	}
@@ -121,9 +122,9 @@ func (h *AttachmentsController) patch(ctx context.Context, actor pkgattachment.A
 	return out, nil
 }
 
-// delete soft-deletes an attachment and removes the storage object.
-// delete 软删附件并删除存储对象。
-func (h *AttachmentsController) delete(ctx context.Context, actor pkgattachment.Actor, id int64) error {
+// delete soft-deletes an attachment and removes the storage object; forced deletion clears known references first.
+// delete 软删附件并删除存储对象；强制删除会先清理已知引用。
+func (h *AttachmentsController) delete(ctx context.Context, actor pkgattachment.Actor, id int64, force bool) error {
 	if err := pkgattachment.RequireAdmin(actor); err != nil {
 		return err
 	}
@@ -137,7 +138,28 @@ func (h *AttachmentsController) delete(ctx context.Context, actor pkgattachment.
 		return err
 	}
 	if hasReferences {
-		return fmt.Errorf("%w: attachment is still referenced", pkgattachment.ErrConflict)
+		if !force {
+			return fmt.Errorf("%w: attachment is still referenced", pkgattachment.ErrConflict)
+		}
+		if err := h.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+			if err := clearAttachmentReferencesTx(tx, id); err != nil {
+				return err
+			}
+			res := tx.Delete(&model.Attachment{}, "id = ?", id)
+			if res.Error != nil {
+				return pkgattachment.MapDBError(res.Error)
+			}
+			if res.RowsAffected == 0 {
+				return pkgattachment.ErrNotFound
+			}
+			return nil
+		}); err != nil {
+			return err
+		}
+		if err := h.deleteStorageObject(ctx, attachment); err != nil {
+			klog.V(2).ErrorS(err, "failed to delete storage object", "attachment_id", id)
+		}
+		return nil
 	}
 
 	res := h.db.WithContext(ctx).Delete(&model.Attachment{}, "id = ?", id)
@@ -152,6 +174,19 @@ func (h *AttachmentsController) delete(ctx context.Context, actor pkgattachment.
 		klog.V(2).ErrorS(err, "failed to delete storage object", "attachment_id", id)
 	}
 
+	return nil
+}
+
+func clearAttachmentReferencesTx(tx *gorm.DB, attachmentID int64) error {
+	updates := map[string]interface{}{
+		"avatar_attachment_id": nil,
+		"updated_at":           time.Now(),
+	}
+	if err := tx.Model(&model.User{}).
+		Where("avatar_attachment_id = ?", attachmentID).
+		Updates(updates).Error; err != nil {
+		return pkgattachment.MapDBError(err)
+	}
 	return nil
 }
 

@@ -59,9 +59,10 @@ func (h *AttachmentsController) List(ctx *gin.Context) {
 			writeAttachmentError(ctx, err)
 			return
 		}
-		items := make([]v1.AttachmentResponse, 0, len(rows))
-		for _, row := range rows {
-			items = append(items, toAttachmentResponse(row, nil))
+		items, err := h.toAttachmentListResponses(ctx.Request.Context(), rows)
+		if err != nil {
+			writeAttachmentError(ctx, err)
+			return
 		}
 		common.Success(ctx, v1.AttachmentListResponse{
 			Items:    items,
@@ -89,9 +90,10 @@ func (h *AttachmentsController) List(ctx *gin.Context) {
 		writeAttachmentError(ctx, err)
 		return
 	}
-	items := make([]v1.AttachmentResponse, 0, len(rows))
-	for _, row := range rows {
-		items = append(items, toAttachmentResponse(row, nil))
+	items, err := h.toAttachmentListResponses(ctx.Request.Context(), rows)
+	if err != nil {
+		writeAttachmentError(ctx, err)
+		return
 	}
 	common.Success(ctx, v1.AttachmentListResponse{Items: items, NextCursor: next})
 }
@@ -122,7 +124,12 @@ func (h *AttachmentsController) GetAttachment(ctx *gin.Context) {
 		writeAttachmentError(ctx, err)
 		return
 	}
-	common.Success(ctx, toAttachmentResponse(row, categoryIDs))
+	ownerNames, err := h.ownerUsernames(ctx.Request.Context(), []model.Attachment{row})
+	if err != nil {
+		writeAttachmentError(ctx, err)
+		return
+	}
+	common.Success(ctx, toAttachmentResponseWithOwner(row, categoryIDs, ownerNameFor(row, ownerNames)))
 }
 
 // GetAttachmentContent handles GET /api/v1/attachments/:id/content.
@@ -198,6 +205,56 @@ func (h *AttachmentsController) buildListQuery(ctx context.Context, in pkgattach
 		}
 	}
 	return q, nil
+}
+
+func (h *AttachmentsController) toAttachmentListResponses(ctx context.Context, rows []model.Attachment) ([]v1.AttachmentResponse, error) {
+	ownerNames, err := h.ownerUsernames(ctx, rows)
+	if err != nil {
+		return nil, err
+	}
+	items := make([]v1.AttachmentResponse, 0, len(rows))
+	for _, row := range rows {
+		items = append(items, toAttachmentResponseWithOwner(row, nil, ownerNameFor(row, ownerNames)))
+	}
+	return items, nil
+}
+
+func (h *AttachmentsController) ownerUsernames(ctx context.Context, rows []model.Attachment) (map[int64]string, error) {
+	ids := make([]int64, 0)
+	seen := make(map[int64]struct{})
+	for _, row := range rows {
+		if row.OwnerUserID == nil {
+			continue
+		}
+		if _, ok := seen[*row.OwnerUserID]; ok {
+			continue
+		}
+		seen[*row.OwnerUserID] = struct{}{}
+		ids = append(ids, *row.OwnerUserID)
+	}
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	var users []model.User
+	if err := h.db.WithContext(ctx).Select("id", "username").Where("id IN ?", ids).Find(&users).Error; err != nil {
+		return nil, pkgattachment.MapDBError(err)
+	}
+	names := make(map[int64]string, len(users))
+	for _, user := range users {
+		names[user.ID] = user.Username
+	}
+	return names, nil
+}
+
+func ownerNameFor(row model.Attachment, names map[int64]string) *string {
+	if row.OwnerUserID == nil || names == nil {
+		return nil
+	}
+	name, ok := names[*row.OwnerUserID]
+	if !ok {
+		return nil
+	}
+	return &name
 }
 
 func (h *AttachmentsController) listCursor(ctx context.Context, actor pkgattachment.Actor, in pkgattachment.ListInput) ([]model.Attachment, string, error) {

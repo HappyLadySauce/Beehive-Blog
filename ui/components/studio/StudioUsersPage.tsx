@@ -404,73 +404,85 @@ export function StudioUsersPage() {
                 </button>
               </div>
             ) : null}
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>
-                    <label className={styles.selectCell} aria-label="选择当前页用户">
-                      <input checked={allVisibleUsersSelected} type="checkbox" onChange={(event) => toggleVisibleUsers(event.target.checked)} />
-                    </label>
-                  </th>
-                  <th>ID</th>
-                  <th>用户名</th>
-                  <th>邮箱</th>
-                  <th>角色</th>
-                  <th>状态</th>
-                  <th>创建时间</th>
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.items.map((user) => (
-                  <tr key={user.id}>
-                    <td>
-                      <label className={styles.selectCell} aria-label={`选择用户 ${user.username}`}>
-                        <input
-                          checked={selectedUserIDs.includes(user.id)}
-                          type="checkbox"
-                          onChange={(event) => toggleUserSelection(user.id, event.target.checked)}
-                        />
+            <div className={styles.tableScroll}>
+              <table className={`${styles.table} ${styles.userTable}`}>
+                <colgroup>
+                  <col className={styles.userSelectColumn} />
+                  <col className={styles.userIdColumn} />
+                  <col className={styles.userNameColumn} />
+                  <col className={styles.userEmailColumn} />
+                  <col className={styles.userRoleColumn} />
+                  <col className={styles.userStatusColumn} />
+                  <col className={styles.userCreatedColumn} />
+                  <col className={styles.userActionsColumn} />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>
+                      <label className={styles.selectCell} aria-label="选择当前页用户">
+                        <input checked={allVisibleUsersSelected} type="checkbox" onChange={(event) => toggleVisibleUsers(event.target.checked)} />
                       </label>
-                    </td>
-                    <td>{user.id}</td>
-                    <td>{user.username}</td>
-                    <td>{user.email ?? "—"}</td>
-                    <td>
-                      <span className={`${styles.statusPill} ${user.role === "admin" ? styles.statusReady : styles.statusPending}`}>
-                        {user.role === "admin" ? "管理员" : "成员"}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`${styles.statusPill} ${statusPillTone(user.status)}`}>
-                        {statusLabel(user.status)}
-                      </span>
-                    </td>
-                    <td>{formatDate(user.created_at)}</td>
-                    <td>
-                      <div className={styles.tableActions}>
-                        <button
-                          aria-label={`编辑 ${user.username}`}
-                          className="secondary-button"
-                          type="button"
-                          onClick={() => openEdit(user)}
-                        >
-                          <Pencil aria-hidden size={16} />
-                        </button>
-                        <button
-                          aria-label={`删除 ${user.username}`}
-                          className="secondary-button"
-                          type="button"
-                          onClick={() => setShowDelete(user)}
-                        >
-                          <Trash2 aria-hidden size={16} />
-                        </button>
-                      </div>
-                    </td>
+                    </th>
+                    <th>ID</th>
+                    <th>用户名</th>
+                    <th>邮箱</th>
+                    <th>角色</th>
+                    <th>状态</th>
+                    <th>创建时间</th>
+                    <th>操作</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {data.items.map((user) => (
+                    <tr key={user.id}>
+                      <td>
+                        <label className={styles.selectCell} aria-label={`选择用户 ${user.username}`}>
+                          <input
+                            checked={selectedUserIDs.includes(user.id)}
+                            type="checkbox"
+                            onChange={(event) => toggleUserSelection(user.id, event.target.checked)}
+                          />
+                        </label>
+                      </td>
+                      <td>{user.id}</td>
+                      <td>{user.username}</td>
+                      <td>{user.email ?? "—"}</td>
+                      <td>
+                        <span className={`${styles.statusPill} ${user.role === "admin" ? styles.statusReady : styles.statusPending}`}>
+                          {user.role === "admin" ? "管理员" : "成员"}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`${styles.statusPill} ${statusPillTone(user.status)}`}>
+                          {statusLabel(user.status)}
+                        </span>
+                      </td>
+                      <td>{formatDate(user.created_at)}</td>
+                      <td>
+                        <div className={styles.tableActions}>
+                          <button
+                            aria-label={`编辑 ${user.username}`}
+                            className="secondary-button"
+                            type="button"
+                            onClick={() => openEdit(user)}
+                          >
+                            <Pencil aria-hidden size={16} />
+                          </button>
+                          <button
+                            aria-label={`删除 ${user.username}`}
+                            className="secondary-button"
+                            type="button"
+                            onClick={() => setShowDelete(user)}
+                          >
+                            <Trash2 aria-hidden size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             {/* Pagination */}
             <div className={styles.pagination}>

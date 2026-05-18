@@ -34,14 +34,12 @@ import {
   listAttachments,
   updateAttachment,
   updateAttachmentCategory,
-  uploadLocalAttachment,
   uploadLocalAttachmentsBatch
 } from "@/lib/api/attachments";
 import { humanizeApiError } from "@/lib/api/client";
 import { listStorageMounts } from "@/lib/api/storage";
 import type {
   AttachmentCategoryResponse,
-  AttachmentListResponse,
   AttachmentReferenceResponse,
   AttachmentResponse,
   StorageMountResponse
@@ -109,7 +107,6 @@ const categoryStatusOptions = [
 
 export function StudioAttachmentsPage() {
   const { claims } = useAuth();
-  const [data, setData] = useState<AttachmentListResponse>({ items: [] });
   const [categories, setCategories] = useState<AttachmentCategoryResponse[]>([]);
   const [mounts, setMounts] = useState<StorageMountResponse[]>([]);
   const [references, setReferences] = useState<AttachmentReferenceResponse[]>([]);
@@ -212,6 +209,10 @@ export function StudioAttachmentsPage() {
     () => batchItems.filter((attachment) => selectedAttachmentIDs.includes(attachment.id)),
     [batchItems, selectedAttachmentIDs]
   );
+  const selectedReferencedCount = useMemo(
+    () => selectedAttachments.filter((attachment) => hasAttachmentReferences(attachment.id, referencesByAttachment)).length,
+    [referencesByAttachment, selectedAttachments]
+  );
   const visibleAttachmentIDs = useMemo(() => visibleItems.map((attachment) => attachment.id), [visibleItems]);
   const allVisibleSelected = visibleAttachmentIDs.length > 0 && visibleAttachmentIDs.every((id) => selectedAttachmentIDs.includes(id));
   const unassignedCount = batchItems.filter((attachment) => (attachment.category_ids ?? []).length === 0).length;
@@ -241,7 +242,6 @@ export function StudioAttachmentsPage() {
         listStorageMounts(),
         listAttachmentReferences()
       ]);
-      setData(attachments);
       setBatchItems(attachments.items);
       setTotal(attachments.total ?? attachments.items.length);
       setCategories(categoryPayload.items);
@@ -256,7 +256,6 @@ export function StudioAttachmentsPage() {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
     Promise.all([
       listAttachments({
         ...listFilters,
@@ -269,7 +268,6 @@ export function StudioAttachmentsPage() {
     ])
       .then(([attachments, categoryPayload, mountPayload, referencePayload]) => {
         if (!active) return;
-        setData(attachments);
         setBatchItems(attachments.items);
         setTotal(attachments.total ?? attachments.items.length);
         setCategories(categoryPayload.items);
@@ -523,10 +521,11 @@ export function StudioAttachmentsPage() {
 
   async function onConfirmDelete() {
     if (!deleting) return;
+    const force = hasAttachmentReferences(deleting.id, referencesByAttachment);
     setSaving(true);
     setMessage(null);
     try {
-      await deleteAttachment(deleting.id);
+      await deleteAttachment(deleting.id, { force });
       setMessage({ tone: "success", text: `${displayName(deleting)} 已删除。` });
       setDeleting(null);
       await loadData();
@@ -539,6 +538,7 @@ export function StudioAttachmentsPage() {
 
   async function onConfirmBulkDelete() {
     if (selectedAttachmentIDs.length === 0) return;
+    const force = selectedReferencedCount > 0;
     setSaving(true);
     setMessage(null);
     const ids = [...selectedAttachmentIDs];
@@ -546,7 +546,7 @@ export function StudioAttachmentsPage() {
     try {
       for (const id of ids) {
         try {
-          await deleteAttachment(id);
+          await deleteAttachment(id, { force });
           deleted += 1;
         } catch (error) {
           const detail = humanizeApiError(error);
@@ -856,8 +856,8 @@ export function StudioAttachmentsPage() {
                     <strong>{displayName(attachment)}</strong>
                     <span>{attachment.mime_type} · {formatBytes(attachment.size)} · {attachment.object_key}</span>
                   </div>
-                  <span>{mountLabel(attachment.storage_mount_id, mounts)}</span>
-                  <span>{attachment.owner_user_id ? `#${attachment.owner_user_id}` : "-"}</span>
+                  <span className={styles.compactCell}>{mountLabel(attachment.storage_mount_id, mounts)}</span>
+                  <span className={styles.compactCell}>{ownerLabel(attachment)}</span>
                   <button
                     className={refs.length > 0 ? styles.statusReady : styles.statusPending}
                     type="button"
@@ -1013,7 +1013,7 @@ export function StudioAttachmentsPage() {
 
       {deleting ? (
         <ConfirmModal
-          body={`确认删除 ${displayName(deleting)}？如果附件仍被头像等业务对象引用，后端会拒绝删除。`}
+          body={deleteConfirmBody(deleting, referencesByAttachment)}
           danger
           saving={saving}
           title="删除附件"
@@ -1024,7 +1024,7 @@ export function StudioAttachmentsPage() {
 
       {bulkDeleting ? (
         <ConfirmModal
-          body={`确认删除已选择的 ${selectedAttachmentIDs.length} 个附件？若附件仍被头像等业务对象引用，后端会拒绝删除。`}
+          body={bulkDeleteConfirmBody(selectedAttachmentIDs.length, selectedReferencedCount)}
           danger
           saving={saving}
           title="批量删除附件"
@@ -1667,6 +1667,29 @@ function displayName(attachment: AttachmentResponse) {
 function mountLabel(id: number, mounts: StorageMountResponse[]) {
   const mount = mounts.find((item) => item.id === id);
   return mount ? mount.name : `#${id}`;
+}
+
+function ownerLabel(attachment: AttachmentResponse) {
+  return attachment.owner_username ?? (attachment.owner_user_id ? `#${attachment.owner_user_id}` : "-");
+}
+
+function hasAttachmentReferences(id: number, referencesByAttachment: Map<number, AttachmentReferenceResponse[]>) {
+  return (referencesByAttachment.get(id)?.length ?? 0) > 0;
+}
+
+function deleteConfirmBody(attachment: AttachmentResponse, referencesByAttachment: Map<number, AttachmentReferenceResponse[]>) {
+  const references = referencesByAttachment.get(attachment.id) ?? [];
+  if (references.length === 0) {
+    return `确认删除 ${displayName(attachment)}？没有业务引用的附件会直接删除。`;
+  }
+  return `确认删除 ${displayName(attachment)}？当前附件被 ${references.length} 处业务对象引用；确认后会删除附件，并将用户头像等引用切换为默认头像。`;
+}
+
+function bulkDeleteConfirmBody(total: number, referencedCount: number) {
+  if (referencedCount === 0) {
+    return `确认删除已选择的 ${total} 个附件？没有业务引用的附件会直接删除。`;
+  }
+  return `确认删除已选择的 ${total} 个附件？其中 ${referencedCount} 个附件仍被业务对象引用；确认后会删除附件，并将用户头像等引用切换为默认头像。`;
 }
 
 function uploadFileKey(file: File) {
