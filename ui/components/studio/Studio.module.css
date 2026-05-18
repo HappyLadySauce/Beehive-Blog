@@ -969,6 +969,7 @@
   align-items: center;
   border: 1px dashed var(--line);
   border-radius: var(--radius);
+  cursor: pointer;
   display: grid;
   gap: 8px;
   grid-column: 1 / -1;
@@ -977,8 +978,28 @@
   text-align: center;
 }
 
-.uploadDropzone input {
-  max-width: 280px;
+.uploadBrowseButton {
+  background: transparent;
+  border: 0;
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 900;
+  padding: 0 0 0 4px;
+}
+
+.uploadBrowseButton:hover,
+.uploadBrowseButton:focus-visible {
+  color: var(--accent-dark);
+  text-decoration: underline;
+}
+
+.fileInputHidden {
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+  position: absolute;
+  width: 1px;
 }
 
 .referenceList {

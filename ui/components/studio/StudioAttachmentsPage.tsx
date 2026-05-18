@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   CheckCircle2,
@@ -114,7 +114,7 @@ export function StudioAttachmentsPage() {
 
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadPurpose, setUploadPurpose] = useState("content");
-  const [uploadAccess, setUploadAccess] = useState("private");
+  const [uploadAccess, setUploadAccess] = useState("public");
   const [uploadMountID, setUploadMountID] = useState("");
   const [uploadCategoryID, setUploadCategoryID] = useState("");
   const [editOriginalName, setEditOriginalName] = useState("");
@@ -247,7 +247,7 @@ export function StudioAttachmentsPage() {
   function resetUploadForm() {
     setUploadFile(null);
     setUploadPurpose("content");
-    setUploadAccess("private");
+    setUploadAccess("public");
     setUploadMountID("");
     setUploadCategoryID(categoryID);
   }
@@ -818,6 +818,12 @@ function AttachmentUploadModal(props: {
   onPurpose: (value: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function openFilePicker() {
+    fileInputRef.current?.click();
+  }
+
   return createPortal(
     <div className={styles.overlay} role="presentation">
       <div aria-modal="true" className={styles.modalTall} role="dialog">
@@ -847,12 +853,41 @@ function AttachmentUploadModal(props: {
             <span>分组</span>
             <StudioSelect ariaLabel="分组" options={props.categoryOptions} value={props.categoryID} onChange={props.onCategory} />
           </label>
-          <label className={styles.uploadDropzone}>
-            <input aria-label="文件" type="file" onChange={(event) => props.onFile(event.target.files?.[0] ?? null)} />
+          <div
+            className={styles.uploadDropzone}
+            role="button"
+            tabIndex={0}
+            onClick={openFilePicker}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openFilePicker();
+              }
+            }}
+          >
+            <input
+              ref={fileInputRef}
+              className={styles.fileInputHidden}
+              aria-label="文件"
+              type="file"
+              onChange={(event) => props.onFile(event.target.files?.[0] ?? null)}
+            />
             <FileUp aria-hidden size={32} />
-            <strong>拖拽文件到这里，或者浏览文件</strong>
+            <strong>
+              拖拽文件到这里，或者
+              <button
+                className={styles.uploadBrowseButton}
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  openFilePicker();
+                }}
+              >
+                浏览文件
+              </button>
+            </strong>
             <span>本地上传</span>
-          </label>
+          </div>
         </form>
         <div className={styles.modalActions}>
           <button className="secondary-button" type="button" onClick={props.onClose}>

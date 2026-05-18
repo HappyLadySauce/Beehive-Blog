@@ -179,7 +179,7 @@ describe("StudioAttachmentsPage", () => {
     await waitFor(() => expect(uploadLocalAttachment).toHaveBeenCalled());
     const formData = uploadLocalAttachment.mock.calls[0][0] as FormData;
     expect(formData.get("purpose")).toBe("content");
-    expect(formData.get("access_scope")).toBe("private");
+    expect(formData.get("access_scope")).toBe("public");
     expect(formData.get("owner_user_id")).toBe("1");
   });
 
