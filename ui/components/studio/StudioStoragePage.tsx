@@ -29,7 +29,6 @@ import {
 } from "@/lib/api/storage";
 import type { DriverResponse, JsonObject, StorageMountResponse } from "@/lib/api/types";
 import styles from "./Studio.module.css";
-import { StudioFileManager } from "./StudioFileManager";
 import { StudioPanel } from "./StudioPanel";
 import { StudioSelect } from "./StudioSelect";
 import { StudioTopbar } from "./StudioTopbar";
@@ -61,7 +60,7 @@ function loadStorageData() {
 }
 
 export function StudioStoragePage() {
-  const [activeSection, setActiveSection] = useState<"files" | "mounts" | "drivers">("files");
+  const [activeSection, setActiveSection] = useState<"mounts" | "drivers">("mounts");
   const [data, setData] = useState<StorageData>(emptyData);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -278,19 +277,12 @@ export function StudioStoragePage() {
             添加存储
           </button>
         ) : null}
-        description="管理文件、存储实例与驱动模板；上传未指定存储时使用默认启用实例。"
-        eyebrow="File storage"
-        title="存储"
+        description="管理存储实例与驱动模板；附件上传未指定存储时使用默认启用实例。"
+        eyebrow="Storage management"
+        title="存储管理"
       />
 
       <div className={styles.segmentedTabs} role="tablist" aria-label="存储页面分段">
-        <button
-          className={activeSection === "files" ? styles.segmentedTabActive : styles.segmentedTab}
-          type="button"
-          onClick={() => setActiveSection("files")}
-        >
-          文件
-        </button>
         <button
           className={activeSection === "mounts" ? styles.segmentedTabActive : styles.segmentedTab}
           type="button"
@@ -312,8 +304,6 @@ export function StudioStoragePage() {
           {message.text}
         </p>
       ) : null}
-
-      {activeSection === "files" ? <StudioFileManager mounts={data.mounts} /> : null}
 
       {activeSection === "mounts" ? (
         <StudioPanel action={<Database aria-hidden size={22} />} title="存储实例">

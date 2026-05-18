@@ -1,12 +1,13 @@
-import { BookOpen, Database, FileText, Search, Settings, ShieldCheck, Sparkles, Tags, Users } from "lucide-react";
+import { BookOpen, Database, FileArchive, FileText, Search, Settings, ShieldCheck, Sparkles, Tags, Users } from "lucide-react";
 
 export const studioNavItems = [
   { href: "/studio", label: "总览", icon: BookOpen },
   { href: "/studio/content", label: "内容", icon: FileText },
   { href: "/studio/search", label: "搜索", icon: Search },
   { href: "/studio/tags", label: "标签", icon: Tags },
+  { href: "/studio/attachments", label: "附件", icon: FileArchive },
   { href: "/studio/users", label: "用户", icon: Users },
-  { href: "/studio/storage", label: "存储", icon: Database },
+  { href: "/studio/storage", label: "存储管理", icon: Database },
   { href: "/studio/permissions", label: "权限", icon: ShieldCheck },
   { href: "/studio/settings", label: "设置", icon: Settings }
 ];

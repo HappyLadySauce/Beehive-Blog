@@ -41,12 +41,14 @@ func (h *AttachmentsController) List(ctx *gin.Context) {
 		return
 	}
 	rows, next, err := h.list(ctx.Request.Context(), actorFromClaims(ctx), pkgattachment.ListInput{
-		OwnerUserID: ownerUserID,
-		Purpose:     strings.TrimSpace(ctx.Query("purpose")),
-		Status:      strings.TrimSpace(ctx.Query("status")),
-		CategoryID:  categoryID,
-		CursorID:    cursorID,
-		Limit:       limit,
+		OwnerUserID:     ownerUserID,
+		Purpose:         strings.TrimSpace(ctx.Query("purpose")),
+		Status:          strings.TrimSpace(ctx.Query("status")),
+		CategoryID:      categoryID,
+		Search:          strings.TrimSpace(ctx.Query("search")),
+		ReferenceStatus: strings.TrimSpace(ctx.Query("reference_status")),
+		CursorID:        cursorID,
+		Limit:           limit,
 	})
 	if err != nil {
 		writeAttachmentError(ctx, err)
@@ -136,6 +138,26 @@ func (h *AttachmentsController) list(ctx context.Context, actor pkgattachment.Ac
 			return nil, "", fmt.Errorf("%w: invalid status", pkgattachment.ErrInvalid)
 		}
 		q = q.Where("status = ?", in.Status)
+	}
+	if in.Search != "" {
+		like := "%" + strings.ToLower(in.Search) + "%"
+		q = q.Where(
+			"LOWER(filename) LIKE ? OR LOWER(COALESCE(original_name, '')) LIKE ? OR LOWER(object_key) LIKE ? OR LOWER(mime_type) LIKE ?",
+			like,
+			like,
+			like,
+			like,
+		)
+	}
+	if in.ReferenceStatus != "" {
+		switch in.ReferenceStatus {
+		case "referenced":
+			q = q.Where("EXISTS (SELECT 1 FROM identity.users u WHERE u.avatar_attachment_id = attachment.attachments.id AND u.deleted_at IS NULL)")
+		case "orphan":
+			q = q.Where("NOT EXISTS (SELECT 1 FROM identity.users u WHERE u.avatar_attachment_id = attachment.attachments.id AND u.deleted_at IS NULL)")
+		default:
+			return nil, "", fmt.Errorf("%w: invalid reference_status", pkgattachment.ErrInvalid)
+		}
 	}
 	if in.CursorID > 0 {
 		q = q.Where("id < ?", in.CursorID)

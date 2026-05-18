@@ -269,6 +269,8 @@ export type AttachmentResponse = {
 export type AttachmentListRequest = {
   purpose?: string;
   status?: string;
+  search?: string;
+  reference_status?: "referenced" | "orphan" | string;
   category_id?: number;
   owner_user_id?: number;
   cursor?: string;
@@ -278,6 +280,20 @@ export type AttachmentListRequest = {
 export type AttachmentListResponse = {
   items: AttachmentResponse[];
   next_cursor?: string;
+};
+
+export type AttachmentReferenceResponse = {
+  attachment_id: number;
+  source_type: string;
+  source_id: number;
+  source_title: string;
+  relation: string;
+  status: string;
+  updated_at: string;
+};
+
+export type AttachmentReferenceListResponse = {
+  items: AttachmentReferenceResponse[];
 };
 
 export type AttachmentPresignRequest = {

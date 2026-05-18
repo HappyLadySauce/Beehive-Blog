@@ -60,6 +60,21 @@ func TestNewAttachmentsControllerSuccess(t *testing.T) {
 	}
 }
 
+func TestInitRegistersReferenceRoutes(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			t.Fatalf("Init panicked while registering routes: %v", recovered)
+		}
+	}()
+	if err := routeattachments.Init(&svc.ServiceContext{
+		DB:     newGormTestDB(t),
+		Config: &config.Config{},
+	}); err != nil {
+		t.Fatalf("Init: %v", err)
+	}
+}
+
 func TestListRequiresAdmin(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := mustNewAttachmentsController(t)
@@ -208,6 +223,71 @@ func TestUploadLocalInvalidOwnerUserID(t *testing.T) {
 	assertEnvelopeCode(t, rec, http.StatusBadRequest)
 }
 
+func TestGetReferencesReturnsUserAvatarReference(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h, mock := mustNewAttachmentsControllerWithMock(t)
+	now := time.Now()
+	mock.ExpectQuery(`SELECT .* FROM "identity"."users"`).
+		WithArgs(int64(99)).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id", "username", "nickname", "avatar_attachment_id", "role", "status", "created_at", "updated_at", "deleted_at",
+		}).AddRow(int64(1), "admin", "Admin", int64(99), "admin", "active", now, now, nil))
+
+	rec := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(rec)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/api/v1/attachments/99/references", nil)
+	ctx.Params = gin.Params{{Key: "id", Value: "99"}}
+	ctx.Set(jwt.ClaimsKey, &jwt.Claims{UID: 1, Role: pkgattachment.RoleAdmin})
+	h.GetReferences(ctx)
+
+	body := rec.Body.String()
+	assertEnvelopeCode(t, rec, http.StatusOK)
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("sql expectations: %v", err)
+	}
+	if !strings.Contains(body, `"source_type":"user"`) || !strings.Contains(body, `"relation":"avatar"`) {
+		t.Fatalf("reference response missing user avatar reference: %s", body)
+	}
+}
+
+func TestGetReferencesRequiresAdmin(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := mustNewAttachmentsController(t)
+	rec := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(rec)
+	ctx.Request = httptest.NewRequest(http.MethodGet, "/api/v1/attachments/99/references", nil)
+	ctx.Params = gin.Params{{Key: "id", Value: "99"}}
+	ctx.Set(jwt.ClaimsKey, &jwt.Claims{UID: 1, Role: "member"})
+	h.GetReferences(ctx)
+	assertEnvelopeCode(t, rec, http.StatusForbidden)
+}
+
+func TestDeleteRejectsReferencedAttachment(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h, mock := mustNewAttachmentsControllerWithMock(t)
+	now := time.Now()
+	mock.ExpectQuery(`SELECT .* FROM "attachment"."attachments"`).
+		WithArgs(int64(99), 1).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id", "purpose", "filename", "mime_type", "size", "storage_mount_id", "object_key", "storage_metadata", "access_scope", "upload_status", "status", "created_at", "updated_at", "deleted_at",
+		}).AddRow(int64(99), "content", "note.md", "text/markdown", int64(128), int64(10), "content/note.md", []byte(`{}`), "private", "ready", "active", now, now, nil))
+	mock.ExpectQuery(`SELECT count\(\*\) FROM "identity"."users"`).
+		WithArgs(int64(99)).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(int64(1)))
+
+	rec := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(rec)
+	ctx.Request = httptest.NewRequest(http.MethodDelete, "/api/v1/attachments/99", nil)
+	ctx.Params = gin.Params{{Key: "id", Value: "99"}}
+	ctx.Set(jwt.ClaimsKey, &jwt.Claims{UID: 1, Role: pkgattachment.RoleAdmin})
+	h.Delete(ctx)
+
+	assertEnvelopeCode(t, rec, http.StatusConflict)
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("sql expectations: %v", err)
+	}
+}
+
 func mustNewAttachmentsController(t *testing.T) *routeattachments.AttachmentsController {
 	t.Helper()
 	h, err := routeattachments.NewAttachmentsController(&svc.ServiceContext{
@@ -218,6 +298,27 @@ func mustNewAttachmentsController(t *testing.T) *routeattachments.AttachmentsCon
 		t.Fatalf("NewAttachmentsController: %v", err)
 	}
 	return h
+}
+
+func mustNewAttachmentsControllerWithMock(t *testing.T) (*routeattachments.AttachmentsController, sqlmock.Sqlmock) {
+	t.Helper()
+	sqlDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	t.Cleanup(func() { _ = sqlDB.Close() })
+	db, err := gorm.Open(postgres.New(postgres.Config{Conn: sqlDB}), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("gorm.Open: %v", err)
+	}
+	h, err := routeattachments.NewAttachmentsController(&svc.ServiceContext{
+		DB:     db,
+		Config: &config.Config{},
+	})
+	if err != nil {
+		t.Fatalf("NewAttachmentsController: %v", err)
+	}
+	return h, mock
 }
 
 func newGormTestDB(t *testing.T) *gorm.DB {

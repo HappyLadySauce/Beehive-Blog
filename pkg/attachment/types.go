@@ -102,12 +102,14 @@ type PatchInput struct {
 // ListInput describes admin attachment listing filters.
 // ListInput 描述管理员附件列表过滤条件。
 type ListInput struct {
-	OwnerUserID *int64
-	Purpose     string
-	Status      string
-	CategoryID  *int64
-	CursorID    int64
-	Limit       int
+	OwnerUserID     *int64
+	Purpose         string
+	Status          string
+	CategoryID      *int64
+	Search          string
+	ReferenceStatus string
+	CursorID        int64
+	Limit           int
 }
 
 // ContentResult describes how a client should receive attachment content.

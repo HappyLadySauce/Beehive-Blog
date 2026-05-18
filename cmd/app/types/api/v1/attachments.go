@@ -37,6 +37,24 @@ type AttachmentListResponse struct {
 	NextCursor string               `json:"next_cursor,omitempty"`
 }
 
+// AttachmentReferenceResponse describes one business object referencing an attachment.
+// AttachmentReferenceResponse 描述一个引用附件的业务对象。
+type AttachmentReferenceResponse struct {
+	AttachmentID int64     `json:"attachment_id"`
+	SourceType   string    `json:"source_type"`
+	SourceID     int64     `json:"source_id"`
+	SourceTitle  string    `json:"source_title"`
+	Relation     string    `json:"relation"`
+	Status       string    `json:"status"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+// AttachmentReferenceListResponse returns attachment references.
+// AttachmentReferenceListResponse 返回附件引用列表。
+type AttachmentReferenceListResponse struct {
+	Items []AttachmentReferenceResponse `json:"items"`
+}
+
 // AttachmentPresignRequest creates a pending remote attachment.
 // AttachmentPresignRequest 创建 pending 状态远端附件。
 type AttachmentPresignRequest struct {

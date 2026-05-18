@@ -1,0 +1,1158 @@
+"use client";
+
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import {
+  CheckCircle2,
+  Download,
+  FileImage,
+  FileUp,
+  Grid3X3,
+  Layers,
+  List,
+  Loader2,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Save,
+  Search,
+  Trash2,
+  X
+} from "lucide-react";
+
+import { useAuth } from "@/components/auth/AuthProvider";
+import {
+  attachmentContentUrl,
+  completeAttachment,
+  createAttachmentCategory,
+  deleteAttachment,
+  deleteAttachmentCategory,
+  getAttachmentReferences,
+  listAttachmentCategories,
+  listAttachmentReferences,
+  listAttachments,
+  updateAttachment,
+  updateAttachmentCategory,
+  uploadLocalAttachment
+} from "@/lib/api/attachments";
+import { humanizeApiError } from "@/lib/api/client";
+import { listStorageMounts } from "@/lib/api/storage";
+import type {
+  AttachmentCategoryResponse,
+  AttachmentListResponse,
+  AttachmentReferenceResponse,
+  AttachmentResponse,
+  StorageMountResponse
+} from "@/lib/api/types";
+import styles from "./Studio.module.css";
+import { StudioSelect } from "./StudioSelect";
+import { StudioTopbar } from "./StudioTopbar";
+
+type Message = { tone: "success" | "error"; text: string } | null;
+type ViewMode = "list" | "grid";
+
+const attachmentLimit = 20;
+const purposeOptions = [
+  { value: "", label: "类型：全部" },
+  { value: "content", label: "内容" },
+  { value: "avatar", label: "头像" },
+  { value: "system", label: "系统" },
+  { value: "other", label: "其他" }
+];
+const referenceOptions = [
+  { value: "", label: "引用：全部" },
+  { value: "referenced", label: "有引用" },
+  { value: "orphan", label: "孤儿附件" }
+];
+const statusOptions = [
+  { value: "", label: "状态：全部" },
+  { value: "active", label: "活跃" },
+  { value: "archived", label: "已归档" }
+];
+const accessOptions = [
+  { value: "private", label: "私有" },
+  { value: "public", label: "公开" }
+];
+const sortOptions = [
+  { value: "default", label: "排序：默认" },
+  { value: "name", label: "名称" },
+  { value: "size", label: "大小" }
+];
+const categoryStatusOptions = [
+  { value: "active", label: "启用" },
+  { value: "disabled", label: "停用" }
+];
+
+export function StudioAttachmentsPage() {
+  const { claims } = useAuth();
+  const [data, setData] = useState<AttachmentListResponse>({ items: [] });
+  const [categories, setCategories] = useState<AttachmentCategoryResponse[]>([]);
+  const [mounts, setMounts] = useState<StorageMountResponse[]>([]);
+  const [references, setReferences] = useState<AttachmentReferenceResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<Message>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [search, setSearch] = useState("");
+  const [purpose, setPurpose] = useState("");
+  const [status, setStatus] = useState("");
+  const [referenceStatus, setReferenceStatus] = useState("");
+  const [ownerUserID, setOwnerUserID] = useState("");
+  const [categoryID, setCategoryID] = useState("");
+  const [sort, setSort] = useState("default");
+  const [cursor, setCursor] = useState("");
+  const [cursorStack, setCursorStack] = useState<string[]>([]);
+  const [showUpload, setShowUpload] = useState(false);
+  const [showCategories, setShowCategories] = useState(false);
+  const [editing, setEditing] = useState<AttachmentResponse | null>(null);
+  const [deleting, setDeleting] = useState<AttachmentResponse | null>(null);
+  const [completing, setCompleting] = useState<AttachmentResponse | null>(null);
+  const [referenceTarget, setReferenceTarget] = useState<AttachmentResponse | null>(null);
+  const [referenceDetail, setReferenceDetail] = useState<AttachmentReferenceResponse[]>([]);
+  const [categoryEditing, setCategoryEditing] = useState<AttachmentCategoryResponse | null>(null);
+  const [categoryDeleting, setCategoryDeleting] = useState<AttachmentCategoryResponse | null>(null);
+
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadPurpose, setUploadPurpose] = useState("content");
+  const [uploadAccess, setUploadAccess] = useState("private");
+  const [uploadMountID, setUploadMountID] = useState("");
+  const [uploadCategoryID, setUploadCategoryID] = useState("");
+  const [editOriginalName, setEditOriginalName] = useState("");
+  const [editAccess, setEditAccess] = useState("private");
+  const [editStatus, setEditStatus] = useState("active");
+  const [editCategoryIDs, setEditCategoryIDs] = useState<number[]>([]);
+  const [completeETag, setCompleteETag] = useState("");
+  const [completeChecksum, setCompleteChecksum] = useState("");
+  const [completeSize, setCompleteSize] = useState("");
+  const [categoryName, setCategoryName] = useState("");
+  const [categorySlug, setCategorySlug] = useState("");
+  const [categoryParentID, setCategoryParentID] = useState("");
+  const [categoryDescription, setCategoryDescription] = useState("");
+  const [categoryIcon, setCategoryIcon] = useState("");
+  const [categorySortOrder, setCategorySortOrder] = useState("0");
+  const [categoryStatus, setCategoryStatus] = useState("active");
+
+  const categoryOptions = useMemo(
+    () => [
+      { value: "", label: "全部分组" },
+      ...categories.map((category) => ({ value: String(category.id), label: category.name }))
+    ],
+    [categories]
+  );
+  const mountOptions = useMemo(
+    () => [
+      { value: "", label: "默认存储" },
+      ...mounts
+        .filter((mount) => !mount.disabled)
+        .map((mount) => ({ value: String(mount.id), label: `${mount.name} (${mount.mount_path})` }))
+    ],
+    [mounts]
+  );
+  const categoryParentOptions = useMemo(
+    () => [
+      { value: "", label: "根分类" },
+      ...categories
+        .filter((category) => category.id !== categoryEditing?.id)
+        .map((category) => ({ value: String(category.id), label: `${"— ".repeat(category.depth)}${category.name}` }))
+    ],
+    [categories, categoryEditing]
+  );
+  const referencesByAttachment = useMemo(() => {
+    const map = new Map<number, AttachmentReferenceResponse[]>();
+    for (const item of references) {
+      const current = map.get(item.attachment_id) ?? [];
+      current.push(item);
+      map.set(item.attachment_id, current);
+    }
+    return map;
+  }, [references]);
+  const visibleItems = useMemo(() => {
+    const items = [...data.items];
+    if (sort === "name") items.sort((a, b) => displayName(a).localeCompare(displayName(b), "zh-CN"));
+    if (sort === "size") items.sort((a, b) => b.size - a.size);
+    return items;
+  }, [data.items, sort]);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const ownerID = ownerUserID.trim() ? Number.parseInt(ownerUserID.trim(), 10) : undefined;
+      const [attachments, categoryPayload, mountPayload, referencePayload] = await Promise.all([
+        listAttachments({
+          category_id: categoryID ? Number(categoryID) : undefined,
+          cursor: cursor || undefined,
+          limit: attachmentLimit,
+          owner_user_id: Number.isFinite(ownerID) ? ownerID : undefined,
+          purpose: purpose || undefined,
+          reference_status: referenceStatus || undefined,
+          search: search.trim() || undefined,
+          status: status || undefined
+        }),
+        listAttachmentCategories(),
+        listStorageMounts(),
+        listAttachmentReferences()
+      ]);
+      setData(attachments);
+      setCategories(categoryPayload.items);
+      setMounts(mountPayload.items);
+      setReferences(referencePayload.items);
+    } catch (error) {
+      setMessage({ tone: "error", text: humanizeApiError(error) });
+    } finally {
+      setLoading(false);
+    }
+  }, [categoryID, cursor, ownerUserID, purpose, referenceStatus, search, status]);
+
+  useEffect(() => {
+    let active = true;
+    const ownerID = ownerUserID.trim() ? Number.parseInt(ownerUserID.trim(), 10) : undefined;
+    Promise.all([
+      listAttachments({
+        category_id: categoryID ? Number(categoryID) : undefined,
+        cursor: cursor || undefined,
+        limit: attachmentLimit,
+        owner_user_id: Number.isFinite(ownerID) ? ownerID : undefined,
+        purpose: purpose || undefined,
+        reference_status: referenceStatus || undefined,
+        search: search.trim() || undefined,
+        status: status || undefined
+      }),
+      listAttachmentCategories(),
+      listStorageMounts(),
+      listAttachmentReferences()
+    ])
+      .then(([attachments, categoryPayload, mountPayload, referencePayload]) => {
+        if (!active) return;
+        setData(attachments);
+        setCategories(categoryPayload.items);
+        setMounts(mountPayload.items);
+        setReferences(referencePayload.items);
+      })
+      .catch((error: unknown) => {
+        if (active) setMessage({ tone: "error", text: humanizeApiError(error) });
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [categoryID, cursor, ownerUserID, purpose, referenceStatus, search, status]);
+
+  function resetPage() {
+    setCursor("");
+    setCursorStack([]);
+  }
+
+  function resetUploadForm() {
+    setUploadFile(null);
+    setUploadPurpose("content");
+    setUploadAccess("private");
+    setUploadMountID("");
+    setUploadCategoryID(categoryID);
+  }
+
+  function resetCategoryForm() {
+    setCategoryEditing(null);
+    setCategoryName("");
+    setCategorySlug("");
+    setCategoryParentID("");
+    setCategoryDescription("");
+    setCategoryIcon("");
+    setCategorySortOrder("0");
+    setCategoryStatus("active");
+  }
+
+  function openUpload() {
+    resetUploadForm();
+    setMessage(null);
+    setShowUpload(true);
+  }
+
+  function openCategoryCreate() {
+    resetCategoryForm();
+    setMessage(null);
+    setShowCategories(true);
+  }
+
+  function openCategoryEdit(category: AttachmentCategoryResponse) {
+    setCategoryEditing(category);
+    setCategoryName(category.name);
+    setCategorySlug(category.slug);
+    setCategoryParentID(category.parent_id ? String(category.parent_id) : "");
+    setCategoryDescription(category.description ?? "");
+    setCategoryIcon(category.icon ?? "");
+    setCategorySortOrder(String(category.sort_order));
+    setCategoryStatus(category.status);
+    setMessage(null);
+    setShowCategories(true);
+  }
+
+  function openEdit(attachment: AttachmentResponse) {
+    setEditing(attachment);
+    setEditOriginalName(attachment.original_name ?? "");
+    setEditAccess(attachment.access_scope);
+    setEditStatus(attachment.status);
+    setEditCategoryIDs(attachment.category_ids ?? []);
+    setMessage(null);
+  }
+
+  function openComplete(attachment: AttachmentResponse) {
+    setCompleting(attachment);
+    setCompleteETag(attachment.etag ?? "");
+    setCompleteChecksum(attachment.checksum ?? "");
+    setCompleteSize(String(attachment.size));
+    setMessage(null);
+  }
+
+  async function openReferences(attachment: AttachmentResponse) {
+    setReferenceTarget(attachment);
+    setReferenceDetail([]);
+    setMessage(null);
+    try {
+      const result = await getAttachmentReferences(attachment.id);
+      setReferenceDetail(result.items);
+    } catch (error) {
+      setMessage({ tone: "error", text: humanizeApiError(error) });
+    }
+  }
+
+  async function onUpload(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSaving(true);
+    setMessage(null);
+    try {
+      if (!uploadFile) {
+        setMessage({ tone: "error", text: "请选择要上传的附件。" });
+        return;
+      }
+      if (!claims?.uid) {
+        setMessage({ tone: "error", text: "当前会话缺少用户 ID，请重新登录后再上传。" });
+        return;
+      }
+      const formData = new FormData();
+      formData.set("file", uploadFile);
+      formData.set("owner_user_id", String(claims.uid));
+      formData.set("purpose", uploadPurpose);
+      formData.set("access_scope", uploadAccess);
+      if (uploadMountID) formData.set("storage_mount_id", uploadMountID);
+      if (uploadCategoryID) formData.set("category_ids", uploadCategoryID);
+      await uploadLocalAttachment(formData);
+      setShowUpload(false);
+      setMessage({ tone: "success", text: "附件已上传。" });
+      await loadData();
+    } catch (error) {
+      setMessage({ tone: "error", text: humanizeApiError(error) });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function onSaveEdit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editing) return;
+    setSaving(true);
+    setMessage(null);
+    try {
+      await updateAttachment(editing.id, {
+        access_scope: editAccess,
+        category_ids: editCategoryIDs,
+        original_name: editOriginalName.trim() || null,
+        status: editStatus
+      });
+      setEditing(null);
+      setMessage({ tone: "success", text: "附件信息已更新。" });
+      await loadData();
+    } catch (error) {
+      setMessage({ tone: "error", text: humanizeApiError(error) });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function onConfirmDelete() {
+    if (!deleting) return;
+    setSaving(true);
+    setMessage(null);
+    try {
+      await deleteAttachment(deleting.id);
+      setMessage({ tone: "success", text: `${displayName(deleting)} 已删除。` });
+      setDeleting(null);
+      await loadData();
+    } catch (error) {
+      setMessage({ tone: "error", text: humanizeApiError(error) });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function onComplete(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!completing) return;
+    setSaving(true);
+    setMessage(null);
+    try {
+      await completeAttachment(completing.id, {
+        checksum: completeChecksum.trim() || undefined,
+        etag: completeETag.trim() || undefined,
+        size: completeSize.trim() ? Number.parseInt(completeSize, 10) : undefined
+      });
+      setCompleting(null);
+      setMessage({ tone: "success", text: "远端附件已标记完成。" });
+      await loadData();
+    } catch (error) {
+      setMessage({ tone: "error", text: humanizeApiError(error) });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function onSaveCategory(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const sortOrder = Number.parseInt(categorySortOrder, 10);
+    if (!categoryName.trim() || !categorySlug.trim()) {
+      setMessage({ tone: "error", text: "分类名称和 slug 必填。" });
+      return;
+    }
+    if (!Number.isFinite(sortOrder)) {
+      setMessage({ tone: "error", text: "排序必须是有效数字。" });
+      return;
+    }
+    setSaving(true);
+    setMessage(null);
+    try {
+      const payload = {
+        description: categoryDescription.trim() || null,
+        icon: categoryIcon.trim() || null,
+        name: categoryName.trim(),
+        parent_id: categoryParentID ? Number(categoryParentID) : null,
+        slug: categorySlug.trim(),
+        sort_order: sortOrder,
+        status: categoryStatus
+      };
+      if (categoryEditing) {
+        await updateAttachmentCategory(categoryEditing.id, payload);
+        setMessage({ tone: "success", text: "分组已更新。" });
+      } else {
+        await createAttachmentCategory(payload);
+        setMessage({ tone: "success", text: "分组已创建。" });
+      }
+      resetCategoryForm();
+      await loadData();
+    } catch (error) {
+      setMessage({ tone: "error", text: humanizeApiError(error) });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function onConfirmDeleteCategory() {
+    if (!categoryDeleting) return;
+    setSaving(true);
+    setMessage(null);
+    try {
+      await deleteAttachmentCategory(categoryDeleting.id);
+      setCategoryDeleting(null);
+      setMessage({ tone: "success", text: `${categoryDeleting.name} 已删除。` });
+      await loadData();
+    } catch (error) {
+      setMessage({ tone: "error", text: humanizeApiError(error) });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function resetFilters() {
+    setSearch("");
+    setPurpose("");
+    setStatus("");
+    setReferenceStatus("");
+    setOwnerUserID("");
+    setCategoryID("");
+    resetPage();
+    setMessage(null);
+  }
+
+  function nextPage() {
+    if (!data.next_cursor) return;
+    setCursorStack((current) => [...current, cursor]);
+    setCursor(data.next_cursor);
+  }
+
+  function previousPage() {
+    setCursorStack((current) => {
+      const next = [...current];
+      setCursor(next.pop() ?? "");
+      return next;
+    });
+  }
+
+  return (
+    <>
+      <StudioTopbar
+        actions={
+          <>
+            <button className="secondary-button" type="button" onClick={() => setViewMode((value) => (value === "list" ? "grid" : "list"))}>
+              {viewMode === "list" ? <Grid3X3 aria-hidden size={18} /> : <List aria-hidden size={18} />}
+              缩略图
+            </button>
+            <button className="secondary-button" type="button" onClick={() => setReferenceStatus((value) => (value === "orphan" ? "" : "orphan"))}>
+              <Layers aria-hidden size={18} />
+              存储策略
+            </button>
+            <button className="primary-button" type="button" onClick={openUpload}>
+              <FileUp aria-hidden size={18} />
+              上传
+            </button>
+          </>
+        }
+        description="管理附件、分组、引用关系和上传入口；存储实例与驱动配置保留在存储管理页。"
+        eyebrow="Attachment library"
+        title="附件库"
+      />
+
+      {message ? (
+        <p className={`${styles.message} ${message.tone === "success" ? styles.messageSuccess : styles.messageError}`} role="alert">
+          {message.text}
+        </p>
+      ) : null}
+
+      <section className={styles.attachmentShell}>
+        <div className={styles.attachmentToolbar}>
+          <label className={styles.searchInput}>
+            <Search aria-hidden size={18} />
+            <input
+              aria-label="搜索附件"
+              placeholder="输入关键词搜索"
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                resetPage();
+              }}
+            />
+          </label>
+          <StudioSelect ariaLabel="按类型筛选" className={styles.filterSelect} options={purposeOptions} value={purpose} onChange={(value) => {
+            setPurpose(value);
+            resetPage();
+          }} />
+          <StudioSelect ariaLabel="按引用筛选" className={styles.filterSelect} options={referenceOptions} value={referenceStatus} onChange={(value) => {
+            setReferenceStatus(value);
+            resetPage();
+          }} />
+          <StudioSelect ariaLabel="按状态筛选" className={styles.filterSelect} options={statusOptions} value={status} onChange={(value) => {
+            setStatus(value);
+            resetPage();
+          }} />
+          <input
+            aria-label="上传者 ID"
+            className={styles.compactInput}
+            inputMode="numeric"
+            placeholder="上传者 ID"
+            value={ownerUserID}
+            onChange={(event) => {
+              setOwnerUserID(event.target.value);
+              resetPage();
+            }}
+          />
+          <StudioSelect ariaLabel="排序" className={styles.filterSelect} options={sortOptions} value={sort} onChange={setSort} />
+          <button className="secondary-button" type="button" onClick={resetFilters}>
+            重置
+          </button>
+          <button className="icon-button" type="button" aria-label="刷新附件" onClick={() => void loadData()}>
+            <RefreshCw aria-hidden size={18} />
+          </button>
+        </div>
+
+        <div className={styles.categoryStrip}>
+          <CategoryCard active={!categoryID} count={data.items.length} title="全部" onClick={() => {
+            setCategoryID("");
+            resetPage();
+          }} />
+          <CategoryCard active={categoryID === "unassigned"} count={0} title="未分组" disabled />
+          {categories.map((category) => (
+            <CategoryCard
+              active={categoryID === String(category.id)}
+              key={category.id}
+              title={category.name}
+              onEdit={() => openCategoryEdit(category)}
+              onClick={() => {
+                setCategoryID(String(category.id));
+                resetPage();
+              }}
+            />
+          ))}
+          <button className={styles.categoryCard} type="button" onClick={openCategoryCreate}>
+            <span>新建</span>
+            <Plus aria-hidden size={18} />
+          </button>
+        </div>
+
+        {loading ? (
+          <div className={styles.emptyState} role="status">
+            <Loader2 aria-hidden className="spin" size={24} />
+            正在加载附件...
+          </div>
+        ) : visibleItems.length === 0 ? (
+          <div className={styles.emptyState}>暂无附件。上传内容附件后会显示在这里。</div>
+        ) : viewMode === "grid" ? (
+          <div className={styles.attachmentGrid}>
+            {visibleItems.map((attachment) => (
+              <article className={styles.attachmentTile} key={attachment.id}>
+                <div className={styles.attachmentThumb}>
+                  <FileImage aria-hidden size={34} />
+                </div>
+                <div>
+                  <strong>{displayName(attachment)}</strong>
+                  <span>{attachment.mime_type} · {formatBytes(attachment.size)}</span>
+                </div>
+                <div className={styles.tileActions}>
+                  <button className="icon-button" type="button" aria-label={`查看引用 ${displayName(attachment)}`} onClick={() => void openReferences(attachment)}>
+                    <MoreHorizontal aria-hidden size={16} />
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <div className={styles.attachmentList}>
+            {visibleItems.map((attachment) => {
+              const refs = referencesByAttachment.get(attachment.id) ?? [];
+              return (
+                <article className={styles.attachmentRow} key={attachment.id}>
+                  <div className={styles.rowCheck} aria-hidden />
+                  <div className={styles.attachmentThumbSmall}>
+                    <FileImage aria-hidden size={22} />
+                  </div>
+                  <div className={styles.attachmentMain}>
+                    <strong>{displayName(attachment)}</strong>
+                    <span>{attachment.mime_type} · {formatBytes(attachment.size)} · {attachment.object_key}</span>
+                  </div>
+                  <span>{mountLabel(attachment.storage_mount_id, mounts)}</span>
+                  <span>{attachment.owner_user_id ? `#${attachment.owner_user_id}` : "-"}</span>
+                  <button className={refs.length > 0 ? styles.statusReady : styles.statusPending} type="button" onClick={() => void openReferences(attachment)}>
+                    {refs.length > 0 ? `${refs.length} 引用` : "孤儿"}
+                  </button>
+                  <span>{formatDate(attachment.updated_at)}</span>
+                  <div className={styles.tableActions}>
+                    <a className="icon-button" href={attachmentContentUrl(attachment.id)} target="_blank" rel="noreferrer" aria-label="下载附件">
+                      <Download aria-hidden size={16} />
+                    </a>
+                    {attachment.upload_status === "pending" ? (
+                      <button className="icon-button" type="button" aria-label="标记完成" onClick={() => openComplete(attachment)}>
+                        <CheckCircle2 aria-hidden size={16} />
+                      </button>
+                    ) : null}
+                    <button className="icon-button" type="button" aria-label="编辑附件" onClick={() => openEdit(attachment)}>
+                      <Pencil aria-hidden size={16} />
+                    </button>
+                    <button className="icon-button" type="button" aria-label="删除附件" onClick={() => setDeleting(attachment)}>
+                      <Trash2 aria-hidden size={16} />
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+
+        <div className={styles.pagination}>
+          <button className="secondary-button" disabled={cursorStack.length === 0 || loading} type="button" onClick={previousPage}>
+            上一页
+          </button>
+          <button className="secondary-button" disabled={!data.next_cursor || loading} type="button" onClick={nextPage}>
+            下一页
+          </button>
+        </div>
+      </section>
+
+      {showUpload ? (
+        <AttachmentUploadModal
+          access={uploadAccess}
+          categoryID={uploadCategoryID}
+          categoryOptions={categoryOptions}
+          mountID={uploadMountID}
+          mountOptions={mountOptions}
+          purpose={uploadPurpose}
+          saving={saving}
+          onAccess={setUploadAccess}
+          onCategory={setUploadCategoryID}
+          onClose={() => setShowUpload(false)}
+          onFile={setUploadFile}
+          onMount={setUploadMountID}
+          onPurpose={setUploadPurpose}
+          onSubmit={onUpload}
+        />
+      ) : null}
+
+      {showCategories ? (
+        <CategoryModal
+          categoryDescription={categoryDescription}
+          categoryEditing={categoryEditing}
+          categoryIcon={categoryIcon}
+          categoryName={categoryName}
+          categoryParentID={categoryParentID}
+          categoryParentOptions={categoryParentOptions}
+          categorySlug={categorySlug}
+          categorySortOrder={categorySortOrder}
+          categoryStatus={categoryStatus}
+          saving={saving}
+          onClose={() => {
+            setShowCategories(false);
+            resetCategoryForm();
+          }}
+          onDescription={setCategoryDescription}
+          onIcon={setCategoryIcon}
+          onName={setCategoryName}
+          onParent={setCategoryParentID}
+          onReset={resetCategoryForm}
+          onSlug={setCategorySlug}
+          onSortOrder={setCategorySortOrder}
+          onStatus={setCategoryStatus}
+          onSubmit={onSaveCategory}
+        />
+      ) : null}
+
+      {editing ? (
+        <EditAttachmentModal
+          access={editAccess}
+          attachment={editing}
+          categoryIDs={editCategoryIDs}
+          categories={categories}
+          name={editOriginalName}
+          saving={saving}
+          status={editStatus}
+          onAccess={setEditAccess}
+          onCategoryIDs={setEditCategoryIDs}
+          onClose={() => setEditing(null)}
+          onName={setEditOriginalName}
+          onStatus={setEditStatus}
+          onSubmit={onSaveEdit}
+        />
+      ) : null}
+
+      {completing ? (
+        <CompleteModal
+          checksum={completeChecksum}
+          etag={completeETag}
+          saving={saving}
+          size={completeSize}
+          onChecksum={setCompleteChecksum}
+          onClose={() => setCompleting(null)}
+          onETag={setCompleteETag}
+          onSize={setCompleteSize}
+          onSubmit={onComplete}
+        />
+      ) : null}
+
+      {referenceTarget ? (
+        <ReferencesModal attachment={referenceTarget} references={referenceDetail} onClose={() => setReferenceTarget(null)} />
+      ) : null}
+
+      {deleting ? (
+        <ConfirmModal
+          body={`确认删除 ${displayName(deleting)}？如果附件仍被头像等业务对象引用，后端会拒绝删除。`}
+          danger
+          saving={saving}
+          title="删除附件"
+          onCancel={() => setDeleting(null)}
+          onConfirm={onConfirmDelete}
+        />
+      ) : null}
+
+      {categoryDeleting ? (
+        <ConfirmModal
+          body={`确认删除 ${categoryDeleting.name}？后端会软删分组，已绑定附件不会被删除。`}
+          danger
+          saving={saving}
+          title="删除分组"
+          onCancel={() => setCategoryDeleting(null)}
+          onConfirm={onConfirmDeleteCategory}
+        />
+      ) : null}
+    </>
+  );
+}
+
+function CategoryCard({
+  active,
+  count,
+  disabled,
+  title,
+  onClick,
+  onEdit
+}: {
+  active?: boolean;
+  count?: number;
+  disabled?: boolean;
+  title: string;
+  onClick?: () => void;
+  onEdit?: () => void;
+}) {
+  return (
+    <button className={`${styles.categoryCard} ${active ? styles.categoryCardActive : ""}`} disabled={disabled} type="button" onClick={onClick}>
+      <span>{title}</span>
+      {typeof count === "number" ? <small>{count}</small> : null}
+      {onEdit ? (
+        <MoreHorizontal
+          aria-hidden
+          size={16}
+          onClick={(event) => {
+            event.stopPropagation();
+            onEdit();
+          }}
+        />
+      ) : null}
+    </button>
+  );
+}
+
+function AttachmentUploadModal(props: {
+  access: string;
+  categoryID: string;
+  categoryOptions: { value: string; label: string }[];
+  mountID: string;
+  mountOptions: { value: string; label: string }[];
+  purpose: string;
+  saving: boolean;
+  onAccess: (value: string) => void;
+  onCategory: (value: string) => void;
+  onClose: () => void;
+  onFile: (file: File | null) => void;
+  onMount: (value: string) => void;
+  onPurpose: (value: string) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+}) {
+  return createPortal(
+    <div className={styles.overlay} role="presentation">
+      <div aria-modal="true" className={styles.modalTall} role="dialog">
+        <div className={styles.modalHeader}>
+          <div>
+            <h3>上传附件</h3>
+            <p>未选择存储实例时，后端会使用默认启用存储。</p>
+          </div>
+          <button aria-label="关闭" className="icon-button" type="button" onClick={props.onClose}>
+            <X aria-hidden size={18} />
+          </button>
+        </div>
+        <form className={styles.formGrid} id="attachment-upload-form" onSubmit={props.onSubmit}>
+          <label className={styles.field}>
+            <span>类型</span>
+            <StudioSelect ariaLabel="用途" options={purposeOptions.filter((option) => option.value)} value={props.purpose} onChange={props.onPurpose} />
+          </label>
+          <label className={styles.field}>
+            <span>访问范围</span>
+            <StudioSelect ariaLabel="访问范围" options={accessOptions} value={props.access} onChange={props.onAccess} />
+          </label>
+          <label className={styles.field}>
+            <span>存储实例</span>
+            <StudioSelect ariaLabel="存储实例" options={props.mountOptions} value={props.mountID} onChange={props.onMount} />
+          </label>
+          <label className={styles.field}>
+            <span>分组</span>
+            <StudioSelect ariaLabel="分组" options={props.categoryOptions} value={props.categoryID} onChange={props.onCategory} />
+          </label>
+          <label className={styles.uploadDropzone}>
+            <input aria-label="文件" type="file" onChange={(event) => props.onFile(event.target.files?.[0] ?? null)} />
+            <FileUp aria-hidden size={32} />
+            <strong>拖拽文件到这里，或者浏览文件</strong>
+            <span>本地上传</span>
+          </label>
+        </form>
+        <div className={styles.modalActions}>
+          <button className="secondary-button" type="button" onClick={props.onClose}>
+            取消
+          </button>
+          <button className="primary-button" disabled={props.saving} form="attachment-upload-form" type="submit">
+            {props.saving ? <Loader2 aria-hidden className="spin" size={18} /> : <Save aria-hidden size={18} />}
+            上传附件
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+function CategoryModal(props: {
+  categoryDescription: string;
+  categoryEditing: AttachmentCategoryResponse | null;
+  categoryIcon: string;
+  categoryName: string;
+  categoryParentID: string;
+  categoryParentOptions: { value: string; label: string }[];
+  categorySlug: string;
+  categorySortOrder: string;
+  categoryStatus: string;
+  saving: boolean;
+  onClose: () => void;
+  onDescription: (value: string) => void;
+  onIcon: (value: string) => void;
+  onName: (value: string) => void;
+  onParent: (value: string) => void;
+  onReset: () => void;
+  onSlug: (value: string) => void;
+  onSortOrder: (value: string) => void;
+  onStatus: (value: string) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+}) {
+  return createPortal(
+    <div className={styles.overlay} role="presentation">
+      <div aria-modal="true" className={styles.modalWide} role="dialog">
+        <div className={styles.modalHeader}>
+          <div>
+            <h3>管理附件分组</h3>
+            <p>分组用于筛选和绑定附件；停用分组不会删除已有关联。</p>
+          </div>
+          <button aria-label="关闭" className="icon-button" type="button" onClick={props.onClose}>
+            <X aria-hidden size={18} />
+          </button>
+        </div>
+        <form className={styles.formGrid} id="attachment-category-form" onSubmit={props.onSubmit}>
+          <label className={styles.field}>
+            <span>名称</span>
+            <input aria-label="分类名称" value={props.categoryName} onChange={(event) => props.onName(event.target.value)} />
+          </label>
+          <label className={styles.field}>
+            <span>Slug</span>
+            <input aria-label="分类 slug" value={props.categorySlug} onChange={(event) => props.onSlug(event.target.value)} />
+          </label>
+          <label className={styles.field}>
+            <span>父分组</span>
+            <StudioSelect ariaLabel="父分类" options={props.categoryParentOptions} value={props.categoryParentID} onChange={props.onParent} />
+          </label>
+          <label className={styles.field}>
+            <span>状态</span>
+            <StudioSelect ariaLabel="分类状态" options={categoryStatusOptions} value={props.categoryStatus} onChange={props.onStatus} />
+          </label>
+          <label className={styles.field}>
+            <span>图标</span>
+            <input aria-label="分类图标" value={props.categoryIcon} onChange={(event) => props.onIcon(event.target.value)} />
+          </label>
+          <label className={styles.field}>
+            <span>排序</span>
+            <input aria-label="分类排序" type="number" value={props.categorySortOrder} onChange={(event) => props.onSortOrder(event.target.value)} />
+          </label>
+          <label className={styles.fieldFull}>
+            <span>描述</span>
+            <textarea aria-label="分类描述" className={styles.textarea} value={props.categoryDescription} onChange={(event) => props.onDescription(event.target.value)} />
+          </label>
+        </form>
+        <div className={styles.modalActions}>
+          <button className="secondary-button" type="button" onClick={props.onReset}>
+            新建分组
+          </button>
+          <button className="primary-button" disabled={props.saving} form="attachment-category-form" type="submit">
+            {props.saving ? <Loader2 aria-hidden className="spin" size={18} /> : <Save aria-hidden size={18} />}
+            {props.categoryEditing ? "保存分组" : "创建分组"}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+function EditAttachmentModal(props: {
+  access: string;
+  attachment: AttachmentResponse;
+  categoryIDs: number[];
+  categories: AttachmentCategoryResponse[];
+  name: string;
+  saving: boolean;
+  status: string;
+  onAccess: (value: string) => void;
+  onCategoryIDs: (value: number[]) => void;
+  onClose: () => void;
+  onName: (value: string) => void;
+  onStatus: (value: string) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+}) {
+  return createPortal(
+    <div className={styles.overlay} role="presentation">
+      <div aria-modal="true" className={styles.modalWide} role="dialog">
+        <div className={styles.modalHeader}>
+          <div>
+            <h3>编辑附件</h3>
+            <p>{displayName(props.attachment)}</p>
+          </div>
+          <button aria-label="关闭" className="icon-button" type="button" onClick={props.onClose}>
+            <X aria-hidden size={18} />
+          </button>
+        </div>
+        <form className={styles.formGrid} id="attachment-edit-form" onSubmit={props.onSubmit}>
+          <label className={styles.fieldFull}>
+            <span>展示名称</span>
+            <input aria-label="展示名称" value={props.name} onChange={(event) => props.onName(event.target.value)} />
+          </label>
+          <label className={styles.field}>
+            <span>访问范围</span>
+            <StudioSelect ariaLabel="编辑访问范围" options={accessOptions} value={props.access} onChange={props.onAccess} />
+          </label>
+          <label className={styles.field}>
+            <span>状态</span>
+            <StudioSelect ariaLabel="编辑状态" options={statusOptions.filter((option) => option.value)} value={props.status} onChange={props.onStatus} />
+          </label>
+          <div className={styles.fieldFull}>
+            <span className={styles.subsectionTitle}>分组</span>
+            <div className={styles.checkboxGrid}>
+              {props.categories.length === 0 ? (
+                <span className={styles.muted}>暂无分组。</span>
+              ) : (
+                props.categories.map((category) => (
+                  <label className={styles.inlineCheck} key={category.id}>
+                    <input
+                      checked={props.categoryIDs.includes(category.id)}
+                      type="checkbox"
+                      onChange={(event) => {
+                        props.onCategoryIDs(
+                          event.target.checked ? [...props.categoryIDs, category.id] : props.categoryIDs.filter((id) => id !== category.id)
+                        );
+                      }}
+                    />
+                    {category.name}
+                  </label>
+                ))
+              )}
+            </div>
+          </div>
+        </form>
+        <div className={styles.modalActions}>
+          <button className="secondary-button" type="button" onClick={props.onClose}>
+            取消
+          </button>
+          <button className="primary-button" disabled={props.saving} form="attachment-edit-form" type="submit">
+            保存
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+function CompleteModal(props: {
+  checksum: string;
+  etag: string;
+  saving: boolean;
+  size: string;
+  onChecksum: (value: string) => void;
+  onClose: () => void;
+  onETag: (value: string) => void;
+  onSize: (value: string) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+}) {
+  return createPortal(
+    <div className={styles.overlay} role="presentation">
+      <div aria-modal="true" className={styles.modal} role="dialog">
+        <h3>标记远端附件完成</h3>
+        <form className={styles.formGrid} id="attachment-complete-form" onSubmit={props.onSubmit}>
+          <label className={styles.fieldFull}>
+            <span>ETag</span>
+            <input aria-label="ETag" value={props.etag} onChange={(event) => props.onETag(event.target.value)} />
+          </label>
+          <label className={styles.fieldFull}>
+            <span>Checksum</span>
+            <input aria-label="Checksum" value={props.checksum} onChange={(event) => props.onChecksum(event.target.value)} />
+          </label>
+          <label className={styles.fieldFull}>
+            <span>大小（字节）</span>
+            <input aria-label="完成大小" type="number" value={props.size} onChange={(event) => props.onSize(event.target.value)} />
+          </label>
+        </form>
+        <div className={styles.modalActions}>
+          <button className="secondary-button" type="button" onClick={props.onClose}>
+            取消
+          </button>
+          <button className="primary-button" disabled={props.saving} form="attachment-complete-form" type="submit">
+            完成
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+function ReferencesModal(props: { attachment: AttachmentResponse; references: AttachmentReferenceResponse[]; onClose: () => void }) {
+  return createPortal(
+    <div className={styles.overlay} role="presentation">
+      <div aria-modal="true" className={styles.modal} role="dialog">
+        <div className={styles.modalHeader}>
+          <div>
+            <h3>附件引用</h3>
+            <p>{displayName(props.attachment)}</p>
+          </div>
+          <button aria-label="关闭" className="icon-button" type="button" onClick={props.onClose}>
+            <X aria-hidden size={18} />
+          </button>
+        </div>
+        {props.references.length === 0 ? (
+          <div className={styles.emptyState}>暂无引用。</div>
+        ) : (
+          <div className={styles.referenceList}>
+            {props.references.map((item) => (
+              <div className={styles.referenceItem} key={`${item.source_type}-${item.source_id}-${item.relation}`}>
+                <strong>{item.source_title}</strong>
+                <span>{item.source_type} · {item.relation} · {item.status}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+function ConfirmModal(props: {
+  body: string;
+  danger?: boolean;
+  saving: boolean;
+  title: string;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return createPortal(
+    <div className={styles.overlay} role="presentation">
+      <div aria-modal="true" className={styles.modal} role="dialog">
+        <h3>{props.title}</h3>
+        <p>{props.body}</p>
+        <div className={styles.modalActions}>
+          <button className="secondary-button" type="button" onClick={props.onCancel}>
+            取消
+          </button>
+          <button className={props.danger ? "danger-button" : "primary-button"} disabled={props.saving} type="button" onClick={props.onConfirm}>
+            确认
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+function displayName(attachment: AttachmentResponse) {
+  return attachment.original_name || attachment.filename;
+}
+
+function mountLabel(id: number, mounts: StorageMountResponse[]) {
+  const mount = mounts.find((item) => item.id === id);
+  return mount ? mount.name : `#${id}`;
+}
+
+function formatBytes(value: number) {
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  if (value < 1024 * 1024 * 1024) return `${(value / 1024 / 1024).toFixed(1)} MB`;
+  return `${(value / 1024 / 1024 / 1024).toFixed(1)} GB`;
+}
+
+function formatDate(value: string) {
+  return new Intl.DateTimeFormat("zh-CN", {
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    month: "2-digit"
+  }).format(new Date(value));
+}

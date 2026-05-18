@@ -11,6 +11,7 @@ import type {
   AttachmentPatchRequest,
   AttachmentPresignRequest,
   AttachmentPresignResponse,
+  AttachmentReferenceListResponse,
   AttachmentResponse,
   DeleteAttachmentCategoryResponse,
   DeleteAttachmentResponse
@@ -20,6 +21,8 @@ export function listAttachments(params: AttachmentListRequest = {}) {
   const search = new URLSearchParams();
   if (params.purpose) search.set("purpose", params.purpose);
   if (params.status) search.set("status", params.status);
+  if (params.search) search.set("search", params.search);
+  if (params.reference_status) search.set("reference_status", params.reference_status);
   if (params.category_id) search.set("category_id", String(params.category_id));
   if (params.owner_user_id) search.set("owner_user_id", String(params.owner_user_id));
   if (params.cursor) search.set("cursor", params.cursor);
@@ -63,6 +66,17 @@ export function updateAttachment(id: number, payload: AttachmentPatchRequest) {
 
 export function deleteAttachment(id: number) {
   return apiFetch<DeleteAttachmentResponse>(`/bff/attachments/${id}`, { method: "DELETE" });
+}
+
+export function listAttachmentReferences(attachmentId?: number) {
+  const search = new URLSearchParams();
+  if (attachmentId) search.set("attachment_id", String(attachmentId));
+  const query = search.toString();
+  return apiFetch<AttachmentReferenceListResponse>(`/bff/attachments/references${query ? `?${query}` : ""}`, { method: "GET" });
+}
+
+export function getAttachmentReferences(id: number) {
+  return apiFetch<AttachmentReferenceListResponse>(`/bff/attachments/${id}/references`, { method: "GET" });
 }
 
 export function replaceAttachmentCategories(id: number, payload: AttachmentCategoryReplaceRequest) {

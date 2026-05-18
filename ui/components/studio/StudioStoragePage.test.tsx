@@ -165,19 +165,17 @@ describe("StudioStoragePage", () => {
     deleteStorageMount.mockResolvedValue({});
   });
 
-  it("loads files as the default storage workspace segment", async () => {
+  it("loads storage mounts as the default storage management segment", async () => {
     render(<StudioStoragePage />);
 
-    expect(screen.getByText("正在加载文件...")).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
-    expect(screen.getByText("content/note.md")).toBeInTheDocument();
+    expect(screen.getByText("正在加载存储实例...")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("/local")).toBeInTheDocument());
     expect(screen.getByText("Local Storage")).toBeInTheDocument();
   });
 
   it("loads drivers and storage mounts from the storage mount segment", async () => {
     render(<StudioStoragePage />);
 
-    fireEvent.click(screen.getByRole("button", { name: "存储实例" }));
     await waitFor(() => expect(screen.getByText("/local")).toBeInTheDocument());
     expect(screen.getByText("默认")).toBeInTheDocument();
   });
@@ -215,50 +213,11 @@ describe("StudioStoragePage", () => {
     await waitFor(() => expect(disableStorageMount).toHaveBeenCalledWith(10));
   });
 
-  it("uploads a local attachment from the file segment", async () => {
+  it("does not render the attachment library in storage management", async () => {
     render(<StudioStoragePage />);
-    await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("/local")).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole("button", { name: "上传文件" }));
-    const file = new File(["hello"], "hello.txt", { type: "text/plain" });
-    fireEvent.change(screen.getByLabelText("文件", { selector: "input" }), { target: { files: [file] } });
-    fireEvent.click(screen.getByRole("button", { name: "上传" }));
-
-    await waitFor(() => expect(uploadLocalAttachment).toHaveBeenCalled());
-    const formData = uploadLocalAttachment.mock.calls[0][0] as FormData;
-    expect(formData.get("purpose")).toBe("content");
-    expect(formData.get("access_scope")).toBe("private");
-    expect(formData.get("owner_user_id")).toBe("1");
-  });
-
-  it("edits attachment metadata", async () => {
-    render(<StudioStoragePage />);
-    await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
-
-    fireEvent.click(screen.getByLabelText("编辑文件"));
-    fireEvent.change(screen.getByLabelText("展示名称"), { target: { value: "Updated.md" } });
-    fireEvent.click(screen.getByRole("button", { name: "保存" }));
-
-    await waitFor(() => expect(updateAttachment).toHaveBeenCalledWith(99, expect.objectContaining({ original_name: "Updated.md" })));
-  });
-
-  it("creates, updates, and deletes attachment categories", async () => {
-    render(<StudioStoragePage />);
-    await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
-
-    fireEvent.click(screen.getByRole("button", { name: "管理分类" }));
-    fireEvent.change(screen.getByLabelText("分类名称"), { target: { value: "资料" } });
-    fireEvent.change(screen.getByLabelText("分类 slug"), { target: { value: "assets" } });
-    fireEvent.click(screen.getByRole("button", { name: "创建分类" }));
-    await waitFor(() => expect(createAttachmentCategory).toHaveBeenCalledWith(expect.objectContaining({ name: "资料", slug: "assets" })));
-
-    fireEvent.click(screen.getByLabelText("编辑分类 文章素材"));
-    fireEvent.change(screen.getByLabelText("分类名称"), { target: { value: "文章资料" } });
-    fireEvent.click(screen.getByRole("button", { name: "保存分类" }));
-    await waitFor(() => expect(updateAttachmentCategory).toHaveBeenCalledWith(7, expect.objectContaining({ name: "文章资料" })));
-
-    fireEvent.click(screen.getByLabelText("删除分类 文章素材"));
-    fireEvent.click(screen.getByRole("button", { name: "删除" }));
-    await waitFor(() => expect(deleteAttachmentCategory).toHaveBeenCalledWith(7));
+    expect(screen.queryByText("Note.md")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "上传文件" })).not.toBeInTheDocument();
   });
 });

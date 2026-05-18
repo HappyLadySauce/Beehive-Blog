@@ -132,6 +132,13 @@ func (h *AttachmentsController) delete(ctx context.Context, actor pkgattachment.
 	if err := h.db.WithContext(ctx).First(&attachment, "id = ?", id).Error; err != nil {
 		return pkgattachment.MapDBError(err)
 	}
+	hasReferences, err := h.hasReferences(ctx, id)
+	if err != nil {
+		return err
+	}
+	if hasReferences {
+		return fmt.Errorf("%w: attachment is still referenced", pkgattachment.ErrConflict)
+	}
 
 	res := h.db.WithContext(ctx).Delete(&model.Attachment{}, "id = ?", id)
 	if res.Error != nil {
