@@ -629,8 +629,20 @@
   gap: 12px;
 }
 
+.toolbarPanel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--soft-shadow);
+  padding: 14px;
+}
+
 .filterSelect {
   flex: 0 1 180px;
+}
+
+.filterAction {
+  margin-left: auto;
 }
 
 .filterBar .filterSelect,
@@ -652,6 +664,7 @@
 }
 
 .filterBar .searchInput:focus-within,
+.attachmentToolbar .searchInput:focus-within,
 .filterBar .selectTrigger:hover,
 .filterBar .selectTrigger:focus-visible {
   border-color: var(--accent);

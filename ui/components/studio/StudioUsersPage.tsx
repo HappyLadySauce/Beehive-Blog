@@ -209,19 +209,13 @@ export function StudioUsersPage() {
   return (
     <>
       <StudioTopbar
-        actions={
-          <button className="primary-button" type="button" onClick={openCreate}>
-            <Plus aria-hidden size={18} />
-            创建用户
-          </button>
-        }
         description="管理平台注册用户，支持创建、编辑、筛选和删除。"
         eyebrow="User management"
         title="用户"
       />
 
       {/* Filter bar */}
-      <div className={styles.filterBar}>
+      <div className={`${styles.filterBar} ${styles.toolbarPanel}`}>
         <div className={styles.searchInput}>
           <input
             aria-label="搜索用户名或邮箱"
@@ -260,6 +254,10 @@ export function StudioUsersPage() {
             setPage(1);
           }}
         />
+        <button className={`primary-button ${styles.filterAction}`} type="button" onClick={openCreate}>
+          <Plus aria-hidden size={18} />
+          创建用户
+        </button>
       </div>
 
       <StudioPanel title="用户列表">

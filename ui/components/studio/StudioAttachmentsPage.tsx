@@ -97,7 +97,6 @@ export function StudioAttachmentsPage() {
   const [purpose, setPurpose] = useState("");
   const [status, setStatus] = useState("");
   const [referenceStatus, setReferenceStatus] = useState("");
-  const [ownerUserID, setOwnerUserID] = useState("");
   const [categoryID, setCategoryID] = useState("");
   const [sort, setSort] = useState("default");
   const [cursor, setCursor] = useState("");
@@ -176,13 +175,11 @@ export function StudioAttachmentsPage() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const ownerID = ownerUserID.trim() ? Number.parseInt(ownerUserID.trim(), 10) : undefined;
       const [attachments, categoryPayload, mountPayload, referencePayload] = await Promise.all([
         listAttachments({
           category_id: categoryID ? Number(categoryID) : undefined,
           cursor: cursor || undefined,
           limit: attachmentLimit,
-          owner_user_id: Number.isFinite(ownerID) ? ownerID : undefined,
           purpose: purpose || undefined,
           reference_status: referenceStatus || undefined,
           search: search.trim() || undefined,
@@ -201,17 +198,15 @@ export function StudioAttachmentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [categoryID, cursor, ownerUserID, purpose, referenceStatus, search, status]);
+  }, [categoryID, cursor, purpose, referenceStatus, search, status]);
 
   useEffect(() => {
     let active = true;
-    const ownerID = ownerUserID.trim() ? Number.parseInt(ownerUserID.trim(), 10) : undefined;
     Promise.all([
       listAttachments({
         category_id: categoryID ? Number(categoryID) : undefined,
         cursor: cursor || undefined,
         limit: attachmentLimit,
-        owner_user_id: Number.isFinite(ownerID) ? ownerID : undefined,
         purpose: purpose || undefined,
         reference_status: referenceStatus || undefined,
         search: search.trim() || undefined,
@@ -237,7 +232,7 @@ export function StudioAttachmentsPage() {
     return () => {
       active = false;
     };
-  }, [categoryID, cursor, ownerUserID, purpose, referenceStatus, search, status]);
+  }, [categoryID, cursor, purpose, referenceStatus, search, status]);
 
   function resetPage() {
     setCursor("");
@@ -467,7 +462,6 @@ export function StudioAttachmentsPage() {
     setPurpose("");
     setStatus("");
     setReferenceStatus("");
-    setOwnerUserID("");
     setCategoryID("");
     resetPage();
     setMessage(null);
@@ -539,17 +533,6 @@ export function StudioAttachmentsPage() {
             setStatus(value);
             resetPage();
           }} />
-          <input
-            aria-label="上传者 ID"
-            className={styles.compactInput}
-            inputMode="numeric"
-            placeholder="上传者 ID"
-            value={ownerUserID}
-            onChange={(event) => {
-              setOwnerUserID(event.target.value);
-              resetPage();
-            }}
-          />
           <StudioSelect ariaLabel="排序" className={styles.filterSelect} options={sortOptions} value={sort} onChange={setSort} />
           <button className="secondary-button" type="button" onClick={resetFilters}>
             重置
