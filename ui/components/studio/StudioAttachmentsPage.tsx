@@ -1,7 +1,8 @@
 "use client";
 
-import { ChangeEvent, DragEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, DragEvent, FormEvent, KeyboardEvent, MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import Image from "next/image";
 import {
   CheckCircle2,
   Download,
@@ -58,6 +59,14 @@ const attachmentFetchSize = attachmentPageSize * attachmentPagesPerFetch;
 
 function batchStartPageFor(pageNumber: number) {
   return Math.floor((pageNumber - 1) / attachmentPagesPerFetch) * attachmentPagesPerFetch + 1;
+}
+
+function stopRowClick(event: MouseEvent | KeyboardEvent) {
+  event.stopPropagation();
+}
+
+function isImageMime(mimeType: string) {
+  return mimeType.startsWith("image/");
 }
 
 // listPageForBatchStart maps UI batch start to API page (offset uses page_size as fetch window).
@@ -765,8 +774,25 @@ export function StudioAttachmentsPage() {
         ) : viewMode === "grid" ? (
           <div className={styles.attachmentGrid}>
             {visibleItems.map((attachment) => (
-              <article className={styles.attachmentTile} key={attachment.id}>
-                <label className={styles.tileCheck} aria-label={`选择附件 ${displayName(attachment)}`}>
+              <article
+                aria-label={`编辑附件 ${displayName(attachment)}`}
+                className={`${styles.attachmentTile} ${styles.attachmentTileClickable}`}
+                key={attachment.id}
+                tabIndex={0}
+                onClick={() => openEdit(attachment)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    openEdit(attachment);
+                  }
+                }}
+              >
+                <label
+                  className={styles.tileCheck}
+                  aria-label={`选择附件 ${displayName(attachment)}`}
+                  onClick={stopRowClick}
+                  onKeyDown={stopRowClick}
+                >
                   <input
                     checked={selectedAttachmentIDs.includes(attachment.id)}
                     type="checkbox"
@@ -780,7 +806,7 @@ export function StudioAttachmentsPage() {
                   <strong>{displayName(attachment)}</strong>
                   <span>{attachment.mime_type} · {formatBytes(attachment.size)}</span>
                 </div>
-                <div className={styles.tileActions}>
+                <div className={styles.tileActions} onClick={stopRowClick} onKeyDown={stopRowClick}>
                   <button className="icon-button" type="button" aria-label={`查看引用 ${displayName(attachment)}`} onClick={() => void openReferences(attachment)}>
                     <MoreHorizontal aria-hidden size={16} />
                   </button>
@@ -794,8 +820,25 @@ export function StudioAttachmentsPage() {
             {visibleItems.map((attachment) => {
               const refs = referencesByAttachment.get(attachment.id) ?? [];
               return (
-                <article className={styles.attachmentRow} key={attachment.id}>
-                  <label className={styles.selectCell} aria-label={`选择附件 ${displayName(attachment)}`}>
+                <article
+                  aria-label={`编辑附件 ${displayName(attachment)}`}
+                  className={`${styles.attachmentRow} ${styles.attachmentRowClickable}`}
+                  key={attachment.id}
+                  tabIndex={0}
+                  onClick={() => openEdit(attachment)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      openEdit(attachment);
+                    }
+                  }}
+                >
+                  <label
+                    className={styles.selectCell}
+                    aria-label={`选择附件 ${displayName(attachment)}`}
+                    onClick={stopRowClick}
+                    onKeyDown={stopRowClick}
+                  >
                     <input
                       checked={selectedAttachmentIDs.includes(attachment.id)}
                       type="checkbox"
@@ -811,12 +854,26 @@ export function StudioAttachmentsPage() {
                   </div>
                   <span>{mountLabel(attachment.storage_mount_id, mounts)}</span>
                   <span>{attachment.owner_user_id ? `#${attachment.owner_user_id}` : "-"}</span>
-                  <button className={refs.length > 0 ? styles.statusReady : styles.statusPending} type="button" onClick={() => void openReferences(attachment)}>
+                  <button
+                    className={refs.length > 0 ? styles.statusReady : styles.statusPending}
+                    type="button"
+                    onClick={(event) => {
+                      stopRowClick(event);
+                      void openReferences(attachment);
+                    }}
+                  >
                     {refs.length > 0 ? `${refs.length} 引用` : "孤儿"}
                   </button>
                   <span>{formatDate(attachment.updated_at)}</span>
-                  <div className={styles.tableActions}>
-                    <a className="icon-button" href={attachmentContentUrl(attachment.id)} target="_blank" rel="noreferrer" aria-label="下载附件">
+                  <div className={styles.tableActions} onClick={stopRowClick} onKeyDown={stopRowClick}>
+                    <a
+                      className="icon-button"
+                      href={attachmentContentUrl(attachment.id)}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label="下载附件"
+                      onClick={stopRowClick}
+                    >
                       <Download aria-hidden size={16} />
                     </a>
                     {attachment.upload_status === "pending" ? (
@@ -1289,13 +1346,30 @@ function EditAttachmentModal(props: {
   onStatus: (value: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
+  const attachmentName = displayName(props.attachment);
+  const showImagePreview = isImageMime(props.attachment.mime_type);
+
   return createPortal(
     <div className={styles.overlay} role="presentation">
       <div aria-modal="true" className={styles.modalWide} role="dialog">
         <div className={styles.modalHeader}>
           <div>
             <h3>编辑附件</h3>
-            <p>{displayName(props.attachment)}</p>
+            {showImagePreview ? (
+              <div className={styles.editAttachmentPreview}>
+                <Image
+                  alt={attachmentName}
+                  className={styles.editAttachmentPreviewImage}
+                  height={240}
+                  src={attachmentContentUrl(props.attachment.id)}
+                  unoptimized
+                  width={400}
+                />
+                <p className={styles.editAttachmentPreviewCaption}>{attachmentName}</p>
+              </div>
+            ) : (
+              <p>{attachmentName}</p>
+            )}
           </div>
           <button aria-label="关闭" className="icon-button" type="button" onClick={props.onClose}>
             <X aria-hidden size={18} />

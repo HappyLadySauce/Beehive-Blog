@@ -1001,6 +1001,54 @@
   padding: 10px 0;
 }
 
+.attachmentRowClickable {
+  cursor: pointer;
+}
+
+.attachmentRowClickable:hover {
+  background: #f7fbfa;
+}
+
+.attachmentTileClickable {
+  cursor: pointer;
+}
+
+.attachmentTileClickable:hover {
+  border-color: #bfeadf;
+  box-shadow: 0 8px 20px rgba(15, 118, 110, 0.08);
+}
+
+.editAttachmentPreview {
+  align-items: center;
+  background: #f7fbfa;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 12px;
+}
+
+.editAttachmentPreviewImage {
+  display: block;
+  height: auto;
+  max-height: 240px;
+  max-width: 100%;
+  object-fit: contain;
+  width: auto;
+}
+
+.editAttachmentPreviewCaption {
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 0;
+  text-align: center;
+  word-break: break-word;
+}
+
 .selectCell {
   align-items: center;
   display: inline-flex;

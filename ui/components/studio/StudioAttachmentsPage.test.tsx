@@ -22,6 +22,10 @@ vi.mock("@/components/auth/AuthProvider", () => ({
   })
 }));
 
+vi.mock("next/image", () => ({
+  default: (props: { alt: string; src: string }) => <img alt={props.alt} src={props.src} />
+}));
+
 vi.mock("@/lib/api/storage", () => ({
   listStorageMounts
 }));
@@ -173,6 +177,37 @@ describe("StudioAttachmentsPage", () => {
     expect(screen.getByRole("navigation", { name: "分页" })).toBeInTheDocument();
     expect(screen.getByText("共 1 页")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "第 1 页" })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("opens the edit dialog when clicking an attachment row", async () => {
+    render(<StudioAttachmentsPage />);
+    await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText("Note.md"));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "编辑附件" })).toBeInTheDocument();
+  });
+
+  it("shows an image preview in the edit dialog for image attachments", async () => {
+    listAttachments.mockResolvedValue({
+      ...attachments,
+      items: [{ ...attachments.items[0], mime_type: "image/png" }]
+    });
+
+    render(<StudioAttachmentsPage />);
+    await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText("Note.md"));
+    const preview = screen.getByRole("img", { name: "Note.md" });
+    expect(preview).toHaveAttribute("src", "/api/bff/attachments/99/content");
+  });
+
+  it("does not open the edit dialog when toggling row selection", async () => {
+    render(<StudioAttachmentsPage />);
+    await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByLabelText("选择附件 Note.md"));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("passes search and reference filters to the attachment API", async () => {
