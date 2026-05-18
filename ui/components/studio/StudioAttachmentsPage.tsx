@@ -1352,24 +1352,48 @@ function EditAttachmentModal(props: {
 }) {
   const attachmentName = displayName(props.attachment);
   const showImagePreview = isImageMime(props.attachment.mime_type);
+  const imageSrc = attachmentContentUrl(props.attachment.id);
+  const [imageZoomOpen, setImageZoomOpen] = useState(false);
+
+  useEffect(() => {
+    if (!imageZoomOpen) {
+      return;
+    }
+
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setImageZoomOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [imageZoomOpen]);
 
   return createPortal(
-    <div className={styles.overlay} role="presentation">
-      <div aria-modal="true" className={styles.modalWide} role="dialog">
-        <div className={styles.modalHeader}>
-          <div>
-            <h3>编辑附件</h3>
+    <>
+      <div className={styles.overlay} role="presentation" onClick={props.onClose}>
+        <div aria-modal="true" className={styles.modalWide} role="dialog" onClick={stopRowClick}>
+          <div className={styles.modalHeader}>
+            <div>
+              <h3>编辑附件</h3>
             {showImagePreview ? (
               <div className={styles.editAttachmentPreview}>
-                <Image
-                  alt={attachmentName}
-                  className={styles.editAttachmentPreviewImage}
-                  height={240}
-                  src={attachmentContentUrl(props.attachment.id)}
-                  unoptimized
-                  width={400}
-                />
-                <p className={styles.editAttachmentPreviewCaption}>{attachmentName}</p>
+                <button
+                  aria-label={`放大查看 ${attachmentName}`}
+                  className={styles.editAttachmentPreviewButton}
+                  type="button"
+                  onClick={() => setImageZoomOpen(true)}
+                >
+                  <Image
+                    alt={attachmentName}
+                    className={styles.editAttachmentPreviewImage}
+                    height={240}
+                    src={imageSrc}
+                    unoptimized
+                    width={400}
+                  />
+                </button>
               </div>
             ) : (
               <p>{attachmentName}</p>
@@ -1424,8 +1448,40 @@ function EditAttachmentModal(props: {
             保存
           </button>
         </div>
+        </div>
       </div>
-    </div>,
+      {imageZoomOpen && showImagePreview ? (
+        <div className={styles.imageZoomOverlay} role="presentation" onClick={() => setImageZoomOpen(false)}>
+          <button
+            aria-label="关闭放大预览"
+            className={styles.imageZoomClose}
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              setImageZoomOpen(false);
+            }}
+          >
+            <X aria-hidden size={22} strokeWidth={2.5} />
+          </button>
+          <div
+            aria-label="图片放大预览"
+            aria-modal="true"
+            className={styles.imageZoomDialog}
+            role="dialog"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <Image
+              alt={attachmentName}
+              className={styles.imageZoomImage}
+              height={1080}
+              src={imageSrc}
+              unoptimized
+              width={1920}
+            />
+          </div>
+        </div>
+      ) : null}
+    </>,
     document.body
   );
 }

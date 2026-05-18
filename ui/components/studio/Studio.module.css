@@ -1019,17 +1019,25 @@
 }
 
 .editAttachmentPreview {
-  align-items: center;
-  background: #f7fbfa;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  justify-content: center;
   margin-top: 12px;
   max-width: 100%;
-  overflow: hidden;
-  padding: 12px;
+}
+
+.editAttachmentPreviewButton {
+  background: none;
+  border: none;
+  border-radius: 0;
+  cursor: zoom-in;
+  display: inline-flex;
+  line-height: 0;
+  padding: 0;
+}
+
+.editAttachmentPreviewButton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .editAttachmentPreviewImage {
@@ -1041,12 +1049,58 @@
   width: auto;
 }
 
-.editAttachmentPreviewCaption {
-  color: var(--muted);
-  line-height: 1.55;
-  margin: 0;
-  text-align: center;
-  word-break: break-word;
+.imageZoomOverlay {
+  align-items: center;
+  background: rgba(0, 0, 0, 0.88);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  position: fixed;
+  z-index: 350;
+}
+
+.imageZoomDialog {
+  max-height: 100%;
+  max-width: 100%;
+  padding: 24px;
+  position: relative;
+}
+
+.imageZoomImage {
+  display: block;
+  height: auto;
+  max-height: min(92vh, 1200px);
+  max-width: min(96vw, 1400px);
+  object-fit: contain;
+  width: auto;
+}
+
+.imageZoomClose {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+  color: #1f2937;
+  cursor: pointer;
+  display: inline-flex;
+  height: 44px;
+  justify-content: center;
+  position: fixed;
+  right: 20px;
+  top: 20px;
+  width: 44px;
+  z-index: 351;
+}
+
+.imageZoomClose:hover {
+  background: #fff;
+  color: #111827;
+}
+
+.imageZoomClose:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 
 .selectCell {

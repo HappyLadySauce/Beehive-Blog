@@ -188,6 +188,17 @@ describe("StudioAttachmentsPage", () => {
     expect(screen.getByRole("heading", { name: "编辑附件" })).toBeInTheDocument();
   });
 
+  it("closes the edit dialog when clicking the backdrop", async () => {
+    render(<StudioAttachmentsPage />);
+    await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText("Note.md"));
+    const dialog = screen.getByRole("dialog");
+    fireEvent.click(dialog.parentElement!);
+
+    expect(screen.queryByRole("heading", { name: "编辑附件" })).not.toBeInTheDocument();
+  });
+
   it("shows an image preview in the edit dialog for image attachments", async () => {
     listAttachments.mockResolvedValue({
       ...attachments,
@@ -200,6 +211,22 @@ describe("StudioAttachmentsPage", () => {
     fireEvent.click(screen.getByText("Note.md"));
     const preview = screen.getByRole("img", { name: "Note.md" });
     expect(preview).toHaveAttribute("src", "/api/bff/attachments/99/content");
+  });
+
+  it("opens a zoomed preview when clicking the edit dialog image", async () => {
+    listAttachments.mockResolvedValue({
+      ...attachments,
+      items: [{ ...attachments.items[0], mime_type: "image/png" }]
+    });
+
+    render(<StudioAttachmentsPage />);
+    await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText("Note.md"));
+    fireEvent.click(screen.getByRole("button", { name: "放大查看 Note.md" }));
+
+    expect(screen.getByRole("dialog", { name: "图片放大预览" })).toBeInTheDocument();
+    expect(screen.getAllByRole("img", { name: "Note.md" })).toHaveLength(2);
   });
 
   it("does not open the edit dialog when toggling row selection", async () => {
