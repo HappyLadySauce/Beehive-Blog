@@ -3,6 +3,7 @@ package attachments
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -294,6 +295,33 @@ func TestUploadLocalInvalidOwnerUserID(t *testing.T) {
 	ctx.Request = req
 	ctx.Set(jwt.ClaimsKey, &jwt.Claims{UID: 1, Role: pkgattachment.RoleAdmin})
 	h.UploadLocal(ctx)
+	assertEnvelopeCode(t, rec, http.StatusBadRequest)
+}
+
+func TestUploadBatchRejectsTooManyFiles(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h := mustNewAttachmentsController(t)
+	var buf bytes.Buffer
+	w := multipart.NewWriter(&buf)
+	for i := 0; i < pkgattachment.MaxBatchUploadFiles+1; i++ {
+		part, err := w.CreateFormFile("files", fmt.Sprintf("file%d.txt", i))
+		if err != nil {
+			t.Fatalf("CreateFormFile: %v", err)
+		}
+		if _, err := part.Write([]byte("x")); err != nil {
+			t.Fatalf("write: %v", err)
+		}
+	}
+	if err := w.Close(); err != nil {
+		t.Fatalf("close writer: %v", err)
+	}
+	rec := httptest.NewRecorder()
+	ctx, _ := gin.CreateTestContext(rec)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/attachments/batch", &buf)
+	req.Header.Set("Content-Type", w.FormDataContentType())
+	ctx.Request = req
+	ctx.Set(jwt.ClaimsKey, &jwt.Claims{UID: 1, Role: pkgattachment.RoleAdmin})
+	h.UploadBatch(ctx)
 	assertEnvelopeCode(t, rec, http.StatusBadRequest)
 }
 

@@ -18,6 +18,16 @@ import (
 
 var mountPathPattern = regexp.MustCompile(`^/[A-Za-z0-9][A-Za-z0-9._/-]*$`)
 
+const mountHealthCheckTimeout = 5 * time.Second
+
+// healthCheckWithTimeout runs backend health check with a bounded deadline.
+// healthCheckWithTimeout 在有限时间内执行后端健康检查。
+func healthCheckWithTimeout(ctx context.Context, backend interface{ HealthCheck(context.Context) error }) error {
+	checkCtx, cancel := context.WithTimeout(ctx, mountHealthCheckTimeout)
+	defer cancel()
+	return backend.HealthCheck(checkCtx)
+}
+
 // ListMounts returns all storage mounts.
 // ListMounts 返回所有存储挂载项。
 //
@@ -115,7 +125,7 @@ func (h *FileDriversController) CreateMount(ctx *gin.Context) {
 	}
 	if err := h.db.WithContext(ctx.Request.Context()).Transaction(func(tx *gorm.DB) error {
 		if mount.IsDefault {
-			if err := tx.Model(&model.StorageMount{}).Where("deleted_at IS NULL").Update("is_default", false).Error; err != nil {
+			if err := tx.Model(&model.StorageMount{}).Where("deleted_at IS NULL AND is_default = ?", true).Update("is_default", false).Error; err != nil {
 				return err
 			}
 		}
@@ -197,7 +207,7 @@ func (h *FileDriversController) PatchMount(ctx *gin.Context) {
 
 	if err := h.db.WithContext(ctx.Request.Context()).Transaction(func(tx *gorm.DB) error {
 		if req.IsDefault != nil && *req.IsDefault {
-			if err := tx.Model(&model.StorageMount{}).Where("deleted_at IS NULL AND id <> ?", id).Update("is_default", false).Error; err != nil {
+			if err := tx.Model(&model.StorageMount{}).Where("deleted_at IS NULL AND is_default = ? AND id <> ?", true, id).Update("is_default", false).Error; err != nil {
 				return err
 			}
 		}
@@ -328,7 +338,7 @@ func (h *FileDriversController) CheckMount(ctx *gin.Context) {
 		return
 	}
 
-	if hcErr := backend.HealthCheck(ctx.Request.Context()); hcErr != nil {
+	if hcErr := healthCheckWithTimeout(ctx.Request.Context(), backend); hcErr != nil {
 		errMsg := hcErr.Error()
 		updates["status"] = "error"
 		updates["last_error"] = errMsg
@@ -378,7 +388,7 @@ func (h *FileDriversController) validateMountConfig(ctx context.Context, driverN
 	if err != nil {
 		return fmt.Errorf("driver config is invalid: %w", err)
 	}
-	if err := backend.HealthCheck(ctx); err != nil {
+	if err := healthCheckWithTimeout(ctx, backend); err != nil {
 		return fmt.Errorf("driver config is invalid: %w", err)
 	}
 	return nil

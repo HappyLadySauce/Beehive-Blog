@@ -88,3 +88,31 @@ func TestOptionalAuthMiddlewareMalformedHeader(t *testing.T) {
 		t.Fatalf("HTTP = %d, want 401", rec.Code)
 	}
 }
+
+func TestOptionalAuthMiddlewareBearerWhitespaceOnly(t *testing.T) {
+	rec := serveOptionalAuthProbe(t, testOptionalAuthIssuer(t), "Bearer    ")
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("HTTP = %d, want 401", rec.Code)
+	}
+}
+
+func TestOptionalAuthMiddlewareExpiredToken(t *testing.T) {
+	issuer, err := jwt.NewIssuer(&options.JWTOptions{
+		Issuer:     "beehive-blog-optional-auth-expired",
+		Secret:     "0123456789abcdef0123456789abcdef",
+		AccessTTL:  time.Millisecond,
+		RefreshTTL: time.Hour,
+	})
+	if err != nil {
+		t.Fatalf("NewIssuer: %v", err)
+	}
+	pair, err := issuer.IssuePair(1, "admin")
+	if err != nil {
+		t.Fatalf("IssuePair: %v", err)
+	}
+	time.Sleep(10 * time.Millisecond)
+	rec := serveOptionalAuthProbe(t, issuer, "Bearer "+pair.Access.Token)
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("HTTP = %d, want 401", rec.Code)
+	}
+}

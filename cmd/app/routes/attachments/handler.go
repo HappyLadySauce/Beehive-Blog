@@ -8,6 +8,7 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/router"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
+	pkgattachment "github.com/HappyLadySauce/Beehive-Blog/pkg/attachment"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/attachment/driver"
 )
 
@@ -18,6 +19,7 @@ type AttachmentsController struct {
 	db             *gorm.DB
 	driverStore    *driver.Store
 	driverRegistry *driver.DriverRegistry
+	categorySvc    *pkgattachment.CategoryService
 }
 
 // NewAttachmentsController builds an AttachmentsController bound to the given service context.
@@ -37,6 +39,7 @@ func NewAttachmentsController(svcCtx *svc.ServiceContext) (*AttachmentsControlle
 		db:             svcCtx.DB,
 		driverStore:    svcCtx.DriverStore,
 		driverRegistry: svcCtx.DriverRegistry,
+		categorySvc:    pkgattachment.NewCategoryService(svcCtx.DB),
 	}, nil
 }
 

@@ -6,8 +6,9 @@ import (
 )
 
 const (
-	MaxUploadBytes    = 2 * 1024 * 1024 * 1024
-	PresignTTLSeconds = 15 * 60
+	MaxUploadBytes      = 2 * 1024 * 1024 * 1024
+	MaxBatchUploadFiles = 20
+	PresignTTLSeconds   = 15 * 60
 )
 
 // ValidateCommon checks shared attachment metadata constraints.

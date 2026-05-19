@@ -327,6 +327,13 @@ func (h *AttachmentsController) UploadBatch(ctx *gin.Context) {
 		common.Fail(ctx, common.NewBadRequest("files field is required with at least one file", nil))
 		return
 	}
+	if len(files) > pkgattachment.MaxBatchUploadFiles {
+		common.Fail(ctx, common.NewBadRequest(
+			fmt.Sprintf("too many files: maximum %d allowed", pkgattachment.MaxBatchUploadFiles),
+			nil,
+		))
+		return
+	}
 
 	ownerUserID, err := optionalInt64Form(ctx, "owner_user_id")
 	if err != nil {
