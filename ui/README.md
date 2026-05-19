@@ -8,9 +8,36 @@ Next.js App Router frontend for Beehive-Blog.
 pnpm install
 pnpm dev
 pnpm test
+pnpm test:e2e
 pnpm lint
 pnpm build
 ```
+
+## E2E (Playwright)
+
+Prerequisites:
+
+1. Start Postgres and Redis: `docker compose -f docker/Infrastructure/docker-compose.yaml up -d` (from repo root).
+2. Install Chromium once: `pnpm exec playwright install chromium`.
+
+Run the full stack E2E suite (DB migrate, Go API, Next dev, then tests):
+
+```bash
+pnpm test:e2e
+```
+
+Debug interactively:
+
+```bash
+pnpm test:e2e:ui
+```
+
+Optional env overrides:
+
+- `E2E_DATABASE_DSN` — Postgres DSN for migrations (default matches docker-compose).
+- `E2E_ADMIN_USER` / `E2E_ADMIN_PASSWORD` — Studio login (default `admin` / `Admin@123` from SQL seed).
+- `PLAYWRIGHT_BASE_URL` — Next base URL (default `http://127.0.0.1:3000`).
+- `E2E_GO_API_URL` — Go API URL for rewrites and webServer health (default `http://127.0.0.1:8080`).
 
 ## Environment
 

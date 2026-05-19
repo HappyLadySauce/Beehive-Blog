@@ -17,7 +17,7 @@
   /* 与顶栏、公开页、Studio 横向内边距对齐。 */
   --shell-pad-x: clamp(20px, 3vw, 48px);
   --page-max-width: min(100%, 1680px);
-  --site-header-height: 64px;
+  --site-header-height: 65px;
 }
 
 * {
@@ -57,6 +57,7 @@ input {
   border-bottom: 1px solid var(--line);
   display: flex;
   gap: 24px;
+  height: var(--site-header-height);
   justify-content: space-between;
   min-height: var(--site-header-height);
   padding: 12px var(--shell-pad-x);
@@ -557,10 +558,6 @@ input {
   .post-grid,
   .metric-grid {
     grid-template-columns: 1fr;
-  }
-
-  .studio-sidebar {
-    min-height: auto;
   }
 }
 

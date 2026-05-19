@@ -1,0 +1,40 @@
+# E2E-only Beehive-Blog API config. Do not use in production.
+# 仅用于 E2E 的 Beehive-Blog API 配置，禁止用于生产环境。
+#
+# Aligns with docker/Infrastructure/docker-compose.yaml defaults.
+# 与 docker/Infrastructure/docker-compose.yaml 默认凭据一致。
+
+insecure:
+  bind-address: "0.0.0.0"
+  bind-port: 8080
+  trusted-proxies: []
+
+database:
+  host: "127.0.0.1"
+  port: 5432
+  user: "Beehive-Blog"
+  password: "Beehive-Blog"
+  db: "Beehive-Blog"
+  ssl-mode: "disable"
+  max-idle-conns: 5
+  max-open-conns: 10
+  conn-max-lifetime: "30m"
+  conn-max-idle-time: "5m"
+
+cache:
+  host: "127.0.0.1"
+  port: 6379
+  password: ""
+  db: 0
+
+jwt:
+  issuer: "beehive-blog-e2e"
+  secret: "e2e-only-jwt-secret-32bytes-min!!"
+  access-ttl: "15m"
+  refresh-ttl: "168h"
+
+github-oauth2:
+  enabled: false
+
+email:
+  enabled: false

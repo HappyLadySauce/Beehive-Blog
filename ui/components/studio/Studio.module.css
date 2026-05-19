@@ -3,6 +3,7 @@
   /* Studio 专用左右内边距；略大于顶栏，两侧留白更舒展。 */
   --studio-pad-x: clamp(28px, 5vw, 72px);
   --studio-gap: 16px;
+  --studio-sticky-gap: 12px;
   --studio-pad-y-top: 20px;
   --studio-pad-y-bottom: 40px;
   --studio-sidebar-w: 220px;
@@ -18,15 +19,18 @@
 
 .sidebar {
   align-self: start;
+  /* Grid/flex children default min-height:auto can break position:sticky. */
+  /* 网格子项默认 min-height:auto 会导致 position:sticky 失效。 */
+  min-height: 0;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--soft-shadow);
-  max-height: calc(100vh - var(--site-header-height) - 32px);
+  max-height: calc(100vh - var(--site-header-height) - var(--studio-sticky-gap) - 20px);
   overflow-y: auto;
   padding: 12px;
   position: sticky;
-  top: calc(var(--site-header-height) + 16px);
+  top: calc(var(--site-header-height) + var(--studio-sticky-gap));
 }
 
 .brand {

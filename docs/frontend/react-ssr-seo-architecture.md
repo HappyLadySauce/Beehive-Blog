@@ -192,7 +192,7 @@ flowchart TB
 - `lib/auth/`：Cookie 名、session 读取等与 BFF 配套逻辑。
 - `components/`：按 Public / Studio 分域组织，避免 Studio 专用组件被误用于可索引页核心结构。
 
-**CI 建议**：`pnpm lint` → `pnpm test` → `pnpm build`；可选 OpenAPI 与 `api/swagger` diff。`NEXT_PUBLIC_*` 仅非秘密配置。
+**CI 建议**：`pnpm lint` → `pnpm test` → `pnpm build`；可选 `pnpm test:e2e`（需 Postgres/Redis 与 Go API，见 `ui/README.md`）；可选 OpenAPI 与 `api/swagger` diff。`NEXT_PUBLIC_*` 仅非秘密配置。
 
 ---
 
