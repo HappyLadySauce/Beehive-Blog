@@ -1,4 +1,4 @@
-package users_test
+package users
 
 import (
 	"bytes"
@@ -12,7 +12,6 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	routeusers "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/users"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
@@ -24,7 +23,7 @@ type crudEnvelope struct {
 	Data json.RawMessage `json:"data"`
 }
 
-func newCrudTestController(t *testing.T) (*routeusers.UsersController, sqlmock.Sqlmock) {
+func newCrudTestController(t *testing.T) (*UsersController, sqlmock.Sqlmock) {
 	t.Helper()
 	sqlDB, mock, err := sqlmock.New()
 	if err != nil {
@@ -46,7 +45,7 @@ func newCrudTestController(t *testing.T) (*routeusers.UsersController, sqlmock.S
 	if err != nil {
 		t.Fatalf("jwt.NewIssuer: %v", err)
 	}
-	return routeusers.NewUsersController(&svc.ServiceContext{
+	return NewUsersController(&svc.ServiceContext{
 		DB:    gdb,
 		Token: issuer,
 	}), mock

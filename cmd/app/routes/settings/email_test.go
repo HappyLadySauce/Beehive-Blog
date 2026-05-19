@@ -1,4 +1,4 @@
-package settings_test
+package settings
 
 import (
 	"context"
@@ -15,7 +15,6 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	routesettings "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/settings"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
@@ -44,11 +43,11 @@ func TestToResponsePasswordSet(t *testing.T) {
 }
 
 func TestNewSettingsControllerRejectsMissingDependencies(t *testing.T) {
-	if _, err := routesettings.NewSettingsController(context.Background(), nil); err == nil || !strings.Contains(err.Error(), "service context is nil") {
+	if _, err := NewSettingsController(context.Background(), nil); err == nil || !strings.Contains(err.Error(), "service context is nil") {
 		t.Fatalf("NewSettingsController(nil) error = %v, want service context error", err)
 	}
 
-	_, err := routesettings.NewSettingsController(context.Background(), &svc.ServiceContext{Config: &config.Config{Email: options.NewEmailSMTPOptions(), GithubOAuth2: options.NewGithubOAuth2Options()}})
+	_, err := NewSettingsController(context.Background(), &svc.ServiceContext{Config: &config.Config{Email: options.NewEmailSMTPOptions(), GithubOAuth2: options.NewGithubOAuth2Options()}})
 	if err == nil || !strings.Contains(err.Error(), "database handle is nil") {
 		t.Fatalf("NewSettingsController without DB error = %v, want database handle error", err)
 	}
@@ -60,7 +59,7 @@ type settingsEnvelope struct {
 	Data v1.SettingsResponse `json:"data"`
 }
 
-func newSettingsTestController(t *testing.T, s settingtypes.ApplicationSettings, revision int64) (*routesettings.SettingsController, sqlmock.Sqlmock) {
+func newSettingsTestController(t *testing.T, s settingtypes.ApplicationSettings, revision int64) (*SettingsController, sqlmock.Sqlmock) {
 	t.Helper()
 	sqlDB, mock, err := sqlmock.New()
 	if err != nil {
@@ -86,7 +85,7 @@ func newSettingsTestController(t *testing.T, s settingtypes.ApplicationSettings,
 		WillReturnRows(sqlmock.NewRows([]string{"id", "revision", "payload", "created_at", "updated_at", "deleted_at"}).
 			AddRow(1, revision, payload, now, now, nil))
 
-	controller, err := routesettings.NewSettingsController(context.Background(), &svc.ServiceContext{
+	controller, err := NewSettingsController(context.Background(), &svc.ServiceContext{
 		Config: &config.Config{Email: options.NewEmailSMTPOptions(), GithubOAuth2: options.NewGithubOAuth2Options()},
 		DB:     db,
 		Token:  &jwt.Issuer{},
@@ -97,7 +96,7 @@ func newSettingsTestController(t *testing.T, s settingtypes.ApplicationSettings,
 	return controller, mock
 }
 
-func performGetEmailSettings(t *testing.T, c *routesettings.SettingsController) (*httptest.ResponseRecorder, settingsEnvelope) {
+func performGetEmailSettings(t *testing.T, c *SettingsController) (*httptest.ResponseRecorder, settingsEnvelope) {
 	t.Helper()
 	rec := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(rec)

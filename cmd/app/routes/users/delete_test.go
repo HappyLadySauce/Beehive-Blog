@@ -1,4 +1,4 @@
-package users_test
+package users
 
 import (
 	"net/http"

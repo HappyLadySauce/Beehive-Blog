@@ -1,4 +1,4 @@
-package middleware_test
+package middleware
 
 import (
 	"net/http"
@@ -6,13 +6,11 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 )
 
 func TestAuthPublicRateLimiterRejectsWhenBudgetExceeded(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	limiter := middleware.NewAuthPublicRateLimiter(0.1, 1)
+	limiter := NewAuthPublicRateLimiter(0.1, 1)
 	router := gin.New()
 	router.GET("/", limiter.GinMiddleware(), func(c *gin.Context) {
 		c.Status(http.StatusNoContent)
@@ -37,7 +35,7 @@ func TestAuthPublicRateLimiterRejectsWhenBudgetExceeded(t *testing.T) {
 
 func TestAuthPublicRateLimiterTracksClientBuckets(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	limiter := middleware.NewAuthPublicRateLimiter(10, 10)
+	limiter := NewAuthPublicRateLimiter(10, 10)
 	router := gin.New()
 	router.GET("/", limiter.GinMiddleware(), func(c *gin.Context) {
 		c.Status(http.StatusNoContent)

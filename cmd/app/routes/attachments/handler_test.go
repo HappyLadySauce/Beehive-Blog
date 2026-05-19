@@ -1,4 +1,4 @@
-package attachments_test
+package attachments
 
 import (
 	"bytes"
@@ -15,7 +15,6 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	routeattachments "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/attachments"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	pkgattachment "github.com/HappyLadySauce/Beehive-Blog/pkg/attachment"
@@ -26,19 +25,19 @@ import (
 
 func TestNewAttachmentsControllerValidation(t *testing.T) {
 	t.Run("nil service context", func(t *testing.T) {
-		_, err := routeattachments.NewAttachmentsController(nil)
+		_, err := NewAttachmentsController(nil)
 		if err == nil || !strings.Contains(err.Error(), "service context is nil") {
 			t.Fatalf("NewAttachmentsController: %v", err)
 		}
 	})
 	t.Run("nil config", func(t *testing.T) {
-		_, err := routeattachments.NewAttachmentsController(&svc.ServiceContext{DB: newGormTestDB(t)})
+		_, err := NewAttachmentsController(&svc.ServiceContext{DB: newGormTestDB(t)})
 		if err == nil || !strings.Contains(err.Error(), "config is nil") {
 			t.Fatalf("NewAttachmentsController: %v", err)
 		}
 	})
 	t.Run("nil database", func(t *testing.T) {
-		_, err := routeattachments.NewAttachmentsController(&svc.ServiceContext{
+		_, err := NewAttachmentsController(&svc.ServiceContext{
 			Config: &config.Config{},
 		})
 		if err == nil || !strings.Contains(err.Error(), "database handle is nil") {
@@ -48,7 +47,7 @@ func TestNewAttachmentsControllerValidation(t *testing.T) {
 }
 
 func TestNewAttachmentsControllerSuccess(t *testing.T) {
-	h, err := routeattachments.NewAttachmentsController(&svc.ServiceContext{
+	h, err := NewAttachmentsController(&svc.ServiceContext{
 		DB:     newGormTestDB(t),
 		Config: &config.Config{},
 	})
@@ -67,7 +66,7 @@ func TestInitRegistersReferenceRoutes(t *testing.T) {
 			t.Fatalf("Init panicked while registering routes: %v", recovered)
 		}
 	}()
-	if err := routeattachments.Init(&svc.ServiceContext{
+	if err := Init(&svc.ServiceContext{
 		DB:     newGormTestDB(t),
 		Config: &config.Config{},
 	}); err != nil {
@@ -250,7 +249,7 @@ func TestGetAttachmentInvalidID(t *testing.T) {
 func TestGetAttachmentInvalidBearer(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	issuer := testAttachmentJWT(t)
-	h, err := routeattachments.NewAttachmentsController(&svc.ServiceContext{
+	h, err := NewAttachmentsController(&svc.ServiceContext{
 		DB:     newGormTestDB(t),
 		Config: &config.Config{},
 		Token:  issuer,
@@ -407,9 +406,9 @@ func TestDeleteForceClearsUserAvatarReferences(t *testing.T) {
 	}
 }
 
-func mustNewAttachmentsController(t *testing.T) *routeattachments.AttachmentsController {
+func mustNewAttachmentsController(t *testing.T) *AttachmentsController {
 	t.Helper()
-	h, err := routeattachments.NewAttachmentsController(&svc.ServiceContext{
+	h, err := NewAttachmentsController(&svc.ServiceContext{
 		DB:     newGormTestDB(t),
 		Config: &config.Config{},
 	})
@@ -419,7 +418,7 @@ func mustNewAttachmentsController(t *testing.T) *routeattachments.AttachmentsCon
 	return h
 }
 
-func mustNewAttachmentsControllerWithMock(t *testing.T) (*routeattachments.AttachmentsController, sqlmock.Sqlmock) {
+func mustNewAttachmentsControllerWithMock(t *testing.T) (*AttachmentsController, sqlmock.Sqlmock) {
 	t.Helper()
 	sqlDB, mock, err := sqlmock.New()
 	if err != nil {
@@ -430,7 +429,7 @@ func mustNewAttachmentsControllerWithMock(t *testing.T) (*routeattachments.Attac
 	if err != nil {
 		t.Fatalf("gorm.Open: %v", err)
 	}
-	h, err := routeattachments.NewAttachmentsController(&svc.ServiceContext{
+	h, err := NewAttachmentsController(&svc.ServiceContext{
 		DB:     db,
 		Config: &config.Config{},
 	})

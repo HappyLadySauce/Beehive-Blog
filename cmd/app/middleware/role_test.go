@@ -1,4 +1,4 @@
-package middleware_test
+package middleware
 
 import (
 	"net/http"
@@ -7,7 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
 )
 
@@ -16,7 +15,7 @@ func TestRequireRoleAllowsAdmin(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(rec)
 	c.Set(jwt.ClaimsKey, &jwt.Claims{Role: "admin"})
-	middleware.RequireRole("admin")(c)
+	RequireRole("admin")(c)
 	if c.IsAborted() {
 		t.Fatal("expected not aborted for admin")
 	}
@@ -30,9 +29,22 @@ func TestRequireRoleRejectsMember(t *testing.T) {
 	rec := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(rec)
 	c.Set(jwt.ClaimsKey, &jwt.Claims{Role: "member"})
-	middleware.RequireRole("admin")(c)
+	RequireRole("admin")(c)
 	if !c.IsAborted() {
 		t.Fatal("expected aborted")
+	}
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("code = %d, want 403", rec.Code)
+	}
+}
+
+func TestRequireRoleRejectsMissingClaims(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	rec := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rec)
+	RequireRole("admin")(c)
+	if !c.IsAborted() {
+		t.Fatal("expected aborted when claims missing")
 	}
 	if rec.Code != http.StatusForbidden {
 		t.Fatalf("code = %d, want 403", rec.Code)

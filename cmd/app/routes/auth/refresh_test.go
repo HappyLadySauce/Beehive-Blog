@@ -1,4 +1,4 @@
-package auth_test
+package auth
 
 import (
 	"bytes"
@@ -13,7 +13,6 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	routeauth "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/auth"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
@@ -199,7 +198,7 @@ type userRow struct {
 	status   string
 }
 
-func newRefreshTestController(t *testing.T) (*routeauth.AuthController, sqlmock.Sqlmock, *jwt.Issuer) {
+func newRefreshTestController(t *testing.T) (*AuthController, sqlmock.Sqlmock, *jwt.Issuer) {
 	t.Helper()
 	gin.SetMode(gin.TestMode)
 	sqlDB, mock, err := sqlmock.New()
@@ -223,7 +222,7 @@ func newRefreshTestController(t *testing.T) (*routeauth.AuthController, sqlmock.
 	if err != nil {
 		t.Fatalf("NewIssuer() error = %v", err)
 	}
-	return routeauth.NewAuthController(
+	return NewAuthController(
 		&svc.ServiceContext{
 			DB:    db,
 			Token: issuer,
@@ -231,7 +230,7 @@ func newRefreshTestController(t *testing.T) (*routeauth.AuthController, sqlmock.
 	), mock, issuer
 }
 
-func performRefresh(t *testing.T, controller *routeauth.AuthController, refreshToken string) (*httptest.ResponseRecorder, refreshEnvelope) {
+func performRefresh(t *testing.T, controller *AuthController, refreshToken string) (*httptest.ResponseRecorder, refreshEnvelope) {
 	t.Helper()
 	body, err := json.Marshal(v1.RefreshRequest{RefreshToken: refreshToken})
 	if err != nil {

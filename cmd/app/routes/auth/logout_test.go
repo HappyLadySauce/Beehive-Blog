@@ -1,4 +1,4 @@
-package auth_test
+package auth
 
 import (
 	"net/http"
@@ -10,7 +10,6 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	routeauth "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/auth"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
 )
@@ -34,7 +33,7 @@ func TestLogoutRevokesCurrentSession(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
 
-	controller := routeauth.NewAuthController(&svc.ServiceContext{DB: db})
+	controller := NewAuthController(&svc.ServiceContext{DB: db})
 	rec := httptest.NewRecorder()
 	ctx, _ := gin.CreateTestContext(rec)
 	ctx.Request = httptest.NewRequest(http.MethodPost, "/api/v1/auth/logout", nil)
@@ -57,7 +56,7 @@ func TestLogoutRejectsMissingSessionClaim(t *testing.T) {
 	ctx.Request = httptest.NewRequest(http.MethodPost, "/api/v1/auth/logout", nil)
 	ctx.Set(jwt.ClaimsKey, &jwt.Claims{UID: 42})
 
-	controller := routeauth.NewAuthController(&svc.ServiceContext{})
+	controller := NewAuthController(&svc.ServiceContext{})
 	controller.Logout(ctx)
 
 	if rec.Code != http.StatusUnauthorized {
