@@ -23,7 +23,7 @@ func TestListTagsPublicFiltersArchived(t *testing.T) {
 
 	now := time.Now()
 	mock.ExpectQuery(`SELECT \* FROM "content"."tags" WHERE`).
-		WithArgs("active", 20).
+		WithArgs("active", 10).
 		WillReturnRows(sqlmock.NewRows(tagColumns()).
 			AddRow(1, "Go", "go", nil, nil, "active", now, now, nil))
 
@@ -67,7 +67,7 @@ func TestListTagsAdminViaBearerCanFilterArchived(t *testing.T) {
 		WithArgs("archived").
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
 	mock.ExpectQuery(`SELECT \* FROM "content"."tags" WHERE`).
-		WithArgs("archived", 20).
+		WithArgs("archived", 10).
 		WillReturnRows(sqlmock.NewRows(tagColumns()))
 
 	ctx, rec := testCrudContext(http.MethodGet, "/api/v1/tags?status=archived", nil)
@@ -90,7 +90,7 @@ func TestListTagsAdminCanFilterByStatus(t *testing.T) {
 
 	now := time.Now()
 	mock.ExpectQuery(`SELECT \* FROM "content"."tags" WHERE`).
-		WithArgs("archived", 20).
+		WithArgs("archived", 10).
 		WillReturnRows(sqlmock.NewRows(tagColumns()).
 			AddRow(2, "OldTag", "old-tag", nil, nil, "archived", now, now, nil))
 

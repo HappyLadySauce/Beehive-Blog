@@ -16,7 +16,7 @@ func TestListContentsBatchLoadAuthorFailure(t *testing.T) {
 		WithArgs("published", "public").
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
 	mock.ExpectQuery(`SELECT \* FROM "content"."contents" WHERE`).
-		WithArgs("published", "public", 20).
+		WithArgs("published", "public", 10).
 		WillReturnRows(sqlmock.NewRows(contentColumns()).
 			AddRow(1, "article", "T", "s", nil, nil, nil, 10, "published", "public", "allowed", &now, 0, 0, []byte("{}"), int64(0), now, now, nil))
 	mock.ExpectQuery(`SELECT id, username FROM "identity"."users" WHERE`).

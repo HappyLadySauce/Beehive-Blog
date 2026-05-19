@@ -16,7 +16,7 @@ func TestListUsersEmpty(t *testing.T) {
 	mock.ExpectQuery(`SELECT count\(\*\) FROM "identity"\."users"`).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
 	mock.ExpectQuery(`SELECT .* FROM "identity"\."users".*ORDER BY id DESC LIMIT \$1`).
-		WithArgs(20).
+		WithArgs(10).
 		WillReturnRows(sqlmock.NewRows(userColumns()))
 
 	ctx, rec := testCrudContext(http.MethodGet, "/api/v1/users", nil)
@@ -46,7 +46,7 @@ func TestListUsersWithResults(t *testing.T) {
 	mock.ExpectQuery(`SELECT count\(\*\) FROM "identity"\."users"`).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(2))
 	mock.ExpectQuery(`SELECT .* FROM "identity"\."users".*ORDER BY id DESC LIMIT \$1`).
-		WithArgs(20).
+		WithArgs(10).
 		WillReturnRows(sqlmock.NewRows(userColumns()).
 			AddRow(2, "bob", "bob@test.com", nil, nil, nil, "member", "active", nil, time.Now(), time.Now(), nil).
 			AddRow(1, "alice", nil, nil, nil, nil, "admin", "active", nil, time.Now(), time.Now(), nil))

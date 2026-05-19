@@ -17,6 +17,7 @@ import (
 	pkgattachment "github.com/HappyLadySauce/Beehive-Blog/pkg/attachment"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/attachment/driver"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/pagination"
 )
 
 // List handles GET /api/v1/attachments (admin).
@@ -329,14 +330,7 @@ func (h *AttachmentsController) listOffset(ctx context.Context, actor pkgattachm
 	if err := pkgattachment.RequireAdmin(actor); err != nil {
 		return nil, 0, 0, 0, err
 	}
-	page := in.Page
-	if page < 1 {
-		page = 1
-	}
-	pageSize := in.PageSize
-	if pageSize <= 0 || pageSize > 200 {
-		pageSize = 20
-	}
+	page, pageSize := pagination.NormalizeOffset(in.Page, in.PageSize)
 	q, err := h.buildListQuery(ctx, in)
 	if err != nil {
 		return nil, 0, 0, 0, err

@@ -10,18 +10,13 @@ import (
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/pagination"
 )
 
 // list queries contents with pagination and optional filters.
 // list 查询内容列表（分页+可选筛选）。
 func (c *ContentsController) list(ctx context.Context, req *v1.ListContentsRequest, admin bool) (interface{}, error) {
-	page, pageSize := req.Page, req.PageSize
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 {
-		pageSize = 20
-	}
+	page, pageSize := pagination.NormalizeOffset(req.Page, req.PageSize)
 
 	query := c.svc.DB.WithContext(ctx).Model(&model.Content{})
 

@@ -6,6 +6,7 @@ import (
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	pkgattachment "github.com/HappyLadySauce/Beehive-Blog/pkg/attachment"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/pagination"
 )
 
 // CreateCategory handles POST /api/v1/attachment/categories (admin).
@@ -69,13 +70,7 @@ func (h *AttachmentsController) ListCategories(ctx *gin.Context) {
 		common.Fail(ctx, common.NewBadRequest("invalid query parameters", err))
 		return
 	}
-	page, pageSize := req.Page, req.PageSize
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 {
-		pageSize = 10
-	}
+	page, pageSize := pagination.NormalizeOffset(req.Page, req.PageSize)
 	rows, total, err := h.categorySvc.List(ctx.Request.Context(), actorFromClaims(ctx),
 		page, pageSize, req.Status, req.Search)
 	if err != nil {

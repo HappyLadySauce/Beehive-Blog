@@ -10,18 +10,13 @@ import (
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/pagination"
 )
 
 // list queries users with pagination and optional filters.
 // list 查询用户列表（分页+可选筛选）。
 func (u *UsersController) list(ctx context.Context, req *v1.ListUsersRequest) (*v1.ListUsersResponse, error) {
-	page, pageSize := req.Page, req.PageSize
-	if page < 1 {
-		page = 1
-	}
-	if pageSize < 1 {
-		pageSize = 20
-	}
+	page, pageSize := pagination.NormalizeOffset(req.Page, req.PageSize)
 
 	query := u.svc.DB.WithContext(ctx).Model(&model.User{})
 	if req.Status != "" {
