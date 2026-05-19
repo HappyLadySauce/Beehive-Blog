@@ -1,4 +1,4 @@
-package oauth_test
+package oauth
 
 import (
 	"testing"
@@ -7,8 +7,6 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/oauth"
 )
 
 func TestFindOrCreateUserUsesExistingProviderIdentity(t *testing.T) {
@@ -16,7 +14,7 @@ func TestFindOrCreateUserUsesExistingProviderIdentity(t *testing.T) {
 	expectIdentityQuery(mock, "github", "123", 42)
 	expectUserByIDQuery(mock, 42, "alice", "changed@example.com")
 
-	user, isNew, err := oauth.FindOrCreateUser(db, &oauth.GitHubUser{ID: 123, Login: "alice"}, "new@example.com")
+	user, isNew, err := FindOrCreateUser(db, &GitHubUser{ID: 123, Login: "alice"}, "new@example.com")
 	if err != nil {
 		t.Fatalf("FindOrCreateUser() error = %v", err)
 	}
@@ -39,7 +37,7 @@ func TestFindOrCreateUserBindsExistingEmailUser(t *testing.T) {
 	expectIdentityInsert(mock, 42, "github", "123", "alice@example.com")
 	mock.ExpectCommit()
 
-	user, isNew, err := oauth.FindOrCreateUser(db, &oauth.GitHubUser{ID: 123, Login: "alice"}, "alice@example.com")
+	user, isNew, err := FindOrCreateUser(db, &GitHubUser{ID: 123, Login: "alice"}, "alice@example.com")
 	if err != nil {
 		t.Fatalf("FindOrCreateUser() error = %v", err)
 	}
@@ -63,7 +61,7 @@ func TestFindOrCreateUserCreatesUserAndIdentity(t *testing.T) {
 	expectIdentityInsert(mock, 42, "github", "123", "alice@example.com")
 	mock.ExpectCommit()
 
-	user, isNew, err := oauth.FindOrCreateUser(db, &oauth.GitHubUser{ID: 123, Login: "alice", Name: "Alice"}, "alice@example.com")
+	user, isNew, err := FindOrCreateUser(db, &GitHubUser{ID: 123, Login: "alice", Name: "Alice"}, "alice@example.com")
 	if err != nil {
 		t.Fatalf("FindOrCreateUser() error = %v", err)
 	}

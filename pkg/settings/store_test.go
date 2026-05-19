@@ -1,4 +1,4 @@
-package settings_test
+package settings
 
 import (
 	"context"
@@ -14,7 +14,6 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
-	pkgsettings "github.com/HappyLadySauce/Beehive-Blog/pkg/settings"
 	settingtypes "github.com/HappyLadySauce/Beehive-Blog/pkg/settings/types"
 )
 
@@ -31,7 +30,7 @@ func TestEnsureSingletonInsertsWhenMissing(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(int16(1)))
 	mock.ExpectCommit()
 
-	store := pkgsettings.NewStore(db)
+	store := NewStore(db)
 	seed := settingtypes.DefaultApplicationSettings()
 	if err := store.EnsureSingleton(context.Background(), seed); err != nil {
 		t.Fatalf("EnsureSingleton: %v", err)
@@ -47,7 +46,7 @@ func TestEnsureSingletonNoInsertWhenRowExists(t *testing.T) {
 		WithArgs(1).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(int64(1)))
 
-	store := pkgsettings.NewStore(db)
+	store := NewStore(db)
 	if err := store.EnsureSingleton(context.Background(), settingtypes.DefaultApplicationSettings()); err != nil {
 		t.Fatalf("EnsureSingleton: %v", err)
 	}
@@ -91,7 +90,7 @@ func TestEnsureSingletonBackfillsEmptyExistingPayloadFromInitial(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
 
-	store := pkgsettings.NewStore(db)
+	store := NewStore(db)
 	if err := store.EnsureSingleton(context.Background(), initial); err != nil {
 		t.Fatalf("EnsureSingleton: %v", err)
 	}
@@ -111,7 +110,7 @@ func TestEnsureSingletonTreatsUniqueViolationAsSuccess(t *testing.T) {
 		WillReturnError(&pgconn.PgError{Code: "23505"})
 	mock.ExpectRollback()
 
-	store := pkgsettings.NewStore(db)
+	store := NewStore(db)
 	if err := store.EnsureSingleton(context.Background(), settingtypes.DefaultApplicationSettings()); err != nil {
 		t.Fatalf("EnsureSingleton: %v", err)
 	}
@@ -122,7 +121,7 @@ func TestEnsureSingletonInvalidPayloadRejected(t *testing.T) {
 	db, mock, cleanup := newMockSettingsDB(t)
 	defer cleanup()
 
-	store := pkgsettings.NewStore(db)
+	store := NewStore(db)
 	bad := settingtypes.DefaultApplicationSettings()
 	bad.Email.TLS = "bad"
 	if err := store.EnsureSingleton(context.Background(), bad); err == nil {
@@ -155,7 +154,7 @@ func TestPatchMergesAgainstLockedLatestPayload(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
 
-	store := pkgsettings.NewStore(db)
+	store := NewStore(db)
 	next, rev, err := store.Patch(context.Background(), patch)
 	if err != nil {
 		t.Fatalf("Patch: %v", err)
@@ -187,7 +186,7 @@ func TestPatchNoOpSkipsUpdate(t *testing.T) {
 			AddRow(1, 2, payload, now, now, nil))
 	mock.ExpectCommit()
 
-	store := pkgsettings.NewStore(db)
+	store := NewStore(db)
 	next, rev, err := store.Patch(context.Background(), patch)
 	if err != nil {
 		t.Fatalf("Patch: %v", err)

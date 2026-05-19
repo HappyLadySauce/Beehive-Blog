@@ -1,11 +1,10 @@
-package options_test
+package options
 
 import (
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
 	"github.com/spf13/pflag"
 )
 
@@ -14,21 +13,21 @@ import (
 func TestPostgreOptionsValidate(t *testing.T) {
 	tests := []struct {
 		name       string
-		opts       options.PostgreOptions
+		opts       PostgreOptions
 		wantNil    bool
 		wantSubstr []string
 		wantNoSub  []string
 	}{
 		{
 			name: "valid_minimal",
-			opts: options.PostgreOptions{
+			opts: PostgreOptions{
 				Host: "127.0.0.1", Port: 5432, User: "u", DB: "d", SSLMode: "disable",
 			},
 			wantNil: true,
 		},
 		{
 			name: "valid_with_pool",
-			opts: options.PostgreOptions{
+			opts: PostgreOptions{
 				Host: "h", Port: 1, User: "u", DB: "d", SSLMode: "require",
 				MaxIdleConns: 5, MaxOpenConns: 10,
 				ConnMaxLifetime: time.Hour, ConnMaxIdleTime: 30 * time.Minute,
@@ -37,7 +36,7 @@ func TestPostgreOptionsValidate(t *testing.T) {
 		},
 		{
 			name:    "missing_all",
-			opts:    options.PostgreOptions{},
+			opts:    PostgreOptions{},
 			wantNil: false,
 			wantSubstr: []string{
 				"host is required",
@@ -49,61 +48,61 @@ func TestPostgreOptionsValidate(t *testing.T) {
 		},
 		{
 			name:       "port_zero",
-			opts:       options.PostgreOptions{Host: "h", Port: 0, User: "u", DB: "d", SSLMode: "disable"},
+			opts:       PostgreOptions{Host: "h", Port: 0, User: "u", DB: "d", SSLMode: "disable"},
 			wantNil:    false,
 			wantSubstr: []string{"port is required"},
 			wantNoSub:  []string{"port must be between"},
 		},
 		{
 			name:       "port_below_min",
-			opts:       options.PostgreOptions{Host: "h", Port: -1, User: "u", DB: "d", SSLMode: "disable"},
+			opts:       PostgreOptions{Host: "h", Port: -1, User: "u", DB: "d", SSLMode: "disable"},
 			wantNil:    false,
 			wantSubstr: []string{"port must be between 1 and 65535 inclusive, got -1"},
 		},
 		{
 			name:       "port_above_max",
-			opts:       options.PostgreOptions{Host: "h", Port: 65536, User: "u", DB: "d", SSLMode: "disable"},
+			opts:       PostgreOptions{Host: "h", Port: 65536, User: "u", DB: "d", SSLMode: "disable"},
 			wantNil:    false,
 			wantSubstr: []string{"port must be between 1 and 65535 inclusive, got 65536"},
 		},
 		{
 			name:       "unknown_ssl_mode",
-			opts:       options.PostgreOptions{Host: "h", Port: 5432, User: "u", DB: "d", SSLMode: "bogus"},
+			opts:       PostgreOptions{Host: "h", Port: 5432, User: "u", DB: "d", SSLMode: "bogus"},
 			wantNil:    false,
 			wantSubstr: []string{`ssl-mode must be one of disable, allow, prefer, require, verify-ca, verify-full, got "bogus"`},
 		},
 		{
 			name:       "negative_idle_conns",
-			opts:       options.PostgreOptions{Host: "h", Port: 5432, User: "u", DB: "d", SSLMode: "disable", MaxIdleConns: -1},
+			opts:       PostgreOptions{Host: "h", Port: 5432, User: "u", DB: "d", SSLMode: "disable", MaxIdleConns: -1},
 			wantNil:    false,
 			wantSubstr: []string{"max-idle-conns must be >= 0, got -1"},
 		},
 		{
 			name:       "negative_open_conns",
-			opts:       options.PostgreOptions{Host: "h", Port: 5432, User: "u", DB: "d", SSLMode: "disable", MaxOpenConns: -1},
+			opts:       PostgreOptions{Host: "h", Port: 5432, User: "u", DB: "d", SSLMode: "disable", MaxOpenConns: -1},
 			wantNil:    false,
 			wantSubstr: []string{"max-open-conns must be >= 0, got -1"},
 		},
 		{
 			name:       "idle_gt_open",
-			opts:       options.PostgreOptions{Host: "h", Port: 5432, User: "u", DB: "d", SSLMode: "disable", MaxIdleConns: 20, MaxOpenConns: 10},
+			opts:       PostgreOptions{Host: "h", Port: 5432, User: "u", DB: "d", SSLMode: "disable", MaxIdleConns: 20, MaxOpenConns: 10},
 			wantNil:    false,
 			wantSubstr: []string{"max-idle-conns must be <= max-open-conns when max-open-conns > 0, got 20 and 10"},
 		},
 		{
 			name:    "open_zero_allows_any_idle",
-			opts:    options.PostgreOptions{Host: "h", Port: 5432, User: "u", DB: "d", SSLMode: "disable", MaxOpenConns: 0, MaxIdleConns: 50},
+			opts:    PostgreOptions{Host: "h", Port: 5432, User: "u", DB: "d", SSLMode: "disable", MaxOpenConns: 0, MaxIdleConns: 50},
 			wantNil: true,
 		},
 		{
 			name:       "negative_lifetime",
-			opts:       options.PostgreOptions{Host: "h", Port: 5432, User: "u", DB: "d", SSLMode: "disable", ConnMaxLifetime: -1 * time.Second},
+			opts:       PostgreOptions{Host: "h", Port: 5432, User: "u", DB: "d", SSLMode: "disable", ConnMaxLifetime: -1 * time.Second},
 			wantNil:    false,
 			wantSubstr: []string{"conn-max-lifetime must be >= 0"},
 		},
 		{
 			name:       "negative_idletime",
-			opts:       options.PostgreOptions{Host: "h", Port: 5432, User: "u", DB: "d", SSLMode: "disable", ConnMaxIdleTime: -1 * time.Second},
+			opts:       PostgreOptions{Host: "h", Port: 5432, User: "u", DB: "d", SSLMode: "disable", ConnMaxIdleTime: -1 * time.Second},
 			wantNil:    false,
 			wantSubstr: []string{"conn-max-idle-time must be >= 0"},
 		},
@@ -141,7 +140,7 @@ func TestPostgreOptionsValidate(t *testing.T) {
 // TestPostgreOptionsAddFlagsDefaults 校验 Parse(nil) 后的默认标志值。
 func TestPostgreOptionsAddFlagsDefaults(t *testing.T) {
 	fs := pflag.NewFlagSet("postgre", pflag.ContinueOnError)
-	opts := options.NewPostgreOptions()
+	opts := NewPostgreOptions()
 	opts.AddFlags(fs)
 	if err := fs.Parse(nil); err != nil {
 		t.Fatalf("Parse(nil) = %v, want nil", err)
@@ -180,7 +179,7 @@ func TestPostgreOptionsAddFlagsDefaults(t *testing.T) {
 // TestPostgreOptionsValidatePortBoundaries 校验端口上下界合法。
 func TestPostgreOptionsValidatePortBoundaries(t *testing.T) {
 	for _, port := range []int{1, 65535} {
-		p := options.PostgreOptions{Host: "h", Port: port, User: "u", DB: "d", SSLMode: "disable"}
+		p := PostgreOptions{Host: "h", Port: port, User: "u", DB: "d", SSLMode: "disable"}
 		if err := p.Validate(); err != nil {
 			t.Errorf("Validate(port=%d) = %v, want nil", port, err)
 		}
@@ -190,7 +189,7 @@ func TestPostgreOptionsValidatePortBoundaries(t *testing.T) {
 // TestPostgreOptionsValidateJoinedErrors ensures all required-field messages appear on an empty struct.
 // TestPostgreOptionsValidateJoinedErrors 确保空结构体校验结果包含全部必填项提示。
 func TestPostgreOptionsValidateJoinedErrors(t *testing.T) {
-	var p options.PostgreOptions
+	var p PostgreOptions
 	err := p.Validate()
 	if err == nil {
 		t.Errorf("Validate() = nil, want non-nil joined error")

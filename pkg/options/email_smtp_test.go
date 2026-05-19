@@ -1,21 +1,20 @@
-package options_test
+package options
 
 import (
 	"testing"
 
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
 	settingtypes "github.com/HappyLadySauce/Beehive-Blog/pkg/settings/types"
 )
 
 func TestEmailSMTPOptionsValidateDisabledAllowsEmptyHost(t *testing.T) {
-	e := options.NewEmailSMTPOptions()
+	e := NewEmailSMTPOptions()
 	if err := e.Validate(); err != nil {
 		t.Fatalf("Validate: %v", err)
 	}
 }
 
 func TestEmailSMTPOptionsValidateEnabledCompleteConfigRequiresValidFrom(t *testing.T) {
-	e := options.NewEmailSMTPOptions()
+	e := NewEmailSMTPOptions()
 	e.Enabled = true
 	e.Host = "smtp.example.com"
 	e.From = "not-an-email"
@@ -25,7 +24,7 @@ func TestEmailSMTPOptionsValidateEnabledCompleteConfigRequiresValidFrom(t *testi
 }
 
 func TestEmailSMTPOptionsValidateEnabledPlaceholderAllowsMissingHostAndFrom(t *testing.T) {
-	e := options.NewEmailSMTPOptions()
+	e := NewEmailSMTPOptions()
 	e.Enabled = true
 
 	got, err := e.ToApplicationSettings()
@@ -51,7 +50,7 @@ func TestEmailSMTPOptionsValidateEnabledPlaceholderAllowsPartiallyMissingHostOrF
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			e := options.NewEmailSMTPOptions()
+			e := NewEmailSMTPOptions()
 			e.Enabled = true
 			e.Host = tt.host
 			e.From = tt.from
@@ -71,7 +70,7 @@ func TestEmailSMTPOptionsValidateEnabledPlaceholderAllowsPartiallyMissingHostOrF
 }
 
 func TestEmailSMTPOptionsValidateEnabledWithHostAndFromStaysEnabled(t *testing.T) {
-	e := options.NewEmailSMTPOptions()
+	e := NewEmailSMTPOptions()
 	e.Enabled = true
 	e.Host = "smtp.example.com"
 	e.From = "robot@example.com"
@@ -86,7 +85,7 @@ func TestEmailSMTPOptionsValidateEnabledWithHostAndFromStaysEnabled(t *testing.T
 }
 
 func TestEmailSMTPOptionsValidateInvalidTLS(t *testing.T) {
-	e := options.NewEmailSMTPOptions()
+	e := NewEmailSMTPOptions()
 	e.TLS = "nope"
 	if err := e.Validate(); err == nil {
 		t.Fatal("expected error for invalid tls")
@@ -94,7 +93,7 @@ func TestEmailSMTPOptionsValidateInvalidTLS(t *testing.T) {
 }
 
 func TestEmailSMTPOptionsToApplicationSettings(t *testing.T) {
-	e := options.NewEmailSMTPOptions()
+	e := NewEmailSMTPOptions()
 	e.Host = "smtp.example.com"
 	e.From = "noreply@example.com"
 	got, err := e.ToApplicationSettings()

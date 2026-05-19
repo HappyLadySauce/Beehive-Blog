@@ -1,14 +1,13 @@
-package settings_test
+package settings
 
 import (
 	"testing"
 
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/settings"
 	settingtypes "github.com/HappyLadySauce/Beehive-Blog/pkg/settings/types"
 )
 
 func TestProviderDefaultsToEmptySnapshot(t *testing.T) {
-	p := settings.NewProvider()
+	p := NewProvider()
 	if p.CachedRevision() != 0 {
 		t.Fatalf("revision = %d, want 0", p.CachedRevision())
 	}
@@ -19,7 +18,7 @@ func TestProviderDefaultsToEmptySnapshot(t *testing.T) {
 }
 
 func TestProviderReplaceUpdatesSnapshot(t *testing.T) {
-	p := settings.NewProvider()
+	p := NewProvider()
 	next := settingtypes.DefaultApplicationSettings()
 	next.Email.Host = "smtp.example.com"
 

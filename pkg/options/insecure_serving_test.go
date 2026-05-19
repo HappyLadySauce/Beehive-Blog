@@ -1,15 +1,14 @@
-package options_test
+package options
 
 import (
 	"strings"
 	"testing"
 
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
 	"github.com/spf13/pflag"
 )
 
 func TestInsecureServingValidateJoinsAllMissingFields(t *testing.T) {
-	opts := &options.InsecureServingOptions{}
+	opts := &InsecureServingOptions{}
 	err := opts.Validate()
 	if err == nil {
 		t.Errorf("Validate() = nil, want non-nil validation error")
@@ -33,7 +32,7 @@ func TestInsecureServingValidateJoinsAllMissingFields(t *testing.T) {
 }
 
 func TestInsecureServingValidateReturnsSingleErrorWhenOneFieldMissing(t *testing.T) {
-	opts := &options.InsecureServingOptions{BindAddress: "127.0.0.1"}
+	opts := &InsecureServingOptions{BindAddress: "127.0.0.1"}
 	err := opts.Validate()
 	if err == nil {
 		t.Errorf("Validate() = nil, want non-nil validation error")
@@ -48,7 +47,7 @@ func TestInsecureServingValidateReturnsSingleErrorWhenOneFieldMissing(t *testing
 // TestInsecureServingAddFlagsDefaults 校验 Parse(nil) 后的默认值与短标志字母。
 func TestInsecureServingAddFlagsDefaults(t *testing.T) {
 	fs := pflag.NewFlagSet("insecure", pflag.ContinueOnError)
-	opts := options.NewInsecureServingOptions()
+	opts := NewInsecureServingOptions()
 	opts.AddFlags(fs)
 	if err := fs.Parse(nil); err != nil {
 		t.Fatalf("Parse(nil) = %v, want nil", err)

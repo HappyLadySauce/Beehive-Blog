@@ -1,16 +1,15 @@
-package jwt_test
+package jwt
 
 import (
 	"testing"
 	"time"
 
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
 )
 
-func newTestIssuer(t *testing.T) *jwt.Issuer {
+func newTestIssuer(t *testing.T) *Issuer {
 	t.Helper()
-	issuer, err := jwt.NewIssuer(&options.JWTOptions{
+	issuer, err := NewIssuer(&options.JWTOptions{
 		Issuer:     "beehive-blog-test",
 		Secret:     "0123456789abcdef0123456789abcdef",
 		AccessTTL:  time.Minute,

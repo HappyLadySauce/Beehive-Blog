@@ -1,11 +1,10 @@
-package options_test
+package options
 
 import (
 	"math"
 	"strings"
 	"testing"
 
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
 	"github.com/spf13/pflag"
 )
 
@@ -14,23 +13,23 @@ import (
 func TestRedisOptionsValidate(t *testing.T) {
 	tests := []struct {
 		name       string
-		opts       options.RedisOptions
+		opts       RedisOptions
 		wantNil    bool
 		wantSubstr []string
 	}{
 		{
 			name:    "valid_minimal",
-			opts:    options.RedisOptions{Host: "127.0.0.1", Port: 6379, DB: 0},
+			opts:    RedisOptions{Host: "127.0.0.1", Port: 6379, DB: 0},
 			wantNil: true,
 		},
 		{
 			name:    "db_zero_ok",
-			opts:    options.RedisOptions{Host: "x", Port: 6379, DB: 0},
+			opts:    RedisOptions{Host: "x", Port: 6379, DB: 0},
 			wantNil: true,
 		},
 		{
 			name:    "missing_host_and_port",
-			opts:    options.RedisOptions{},
+			opts:    RedisOptions{},
 			wantNil: false,
 			wantSubstr: []string{
 				"host is required",
@@ -39,25 +38,25 @@ func TestRedisOptionsValidate(t *testing.T) {
 		},
 		{
 			name:       "port_below_min",
-			opts:       options.RedisOptions{Host: "h", Port: -1, DB: 0},
+			opts:       RedisOptions{Host: "h", Port: -1, DB: 0},
 			wantNil:    false,
 			wantSubstr: []string{"port must be between 1 and 65535 inclusive, got -1"},
 		},
 		{
 			name:       "port_above_max",
-			opts:       options.RedisOptions{Host: "h", Port: 65536, DB: 0},
+			opts:       RedisOptions{Host: "h", Port: 65536, DB: 0},
 			wantNil:    false,
 			wantSubstr: []string{"port must be between 1 and 65535 inclusive, got 65536"},
 		},
 		{
 			name:       "negative_db",
-			opts:       options.RedisOptions{Host: "h", Port: 6379, DB: -1},
+			opts:       RedisOptions{Host: "h", Port: 6379, DB: -1},
 			wantNil:    false,
 			wantSubstr: []string{"db must be between 0 and 2147483647 inclusive, got -1"},
 		},
 		{
 			name:    "db_max_int32_ok",
-			opts:    options.RedisOptions{Host: "h", Port: 6379, DB: math.MaxInt32},
+			opts:    RedisOptions{Host: "h", Port: 6379, DB: math.MaxInt32},
 			wantNil: true,
 		},
 	}
@@ -89,7 +88,7 @@ func TestRedisOptionsValidate(t *testing.T) {
 // TestRedisOptionsAddFlagsDefaults 校验 Parse(nil) 后的默认标志值。
 func TestRedisOptionsAddFlagsDefaults(t *testing.T) {
 	fs := pflag.NewFlagSet("redis", pflag.ContinueOnError)
-	opts := options.NewRedisOptions()
+	opts := NewRedisOptions()
 	opts.AddFlags(fs)
 	if err := fs.Parse(nil); err != nil {
 		t.Fatalf("Parse(nil) = %v, want nil", err)

@@ -1,13 +1,11 @@
-package options_test
+package options
 
 import (
 	"testing"
-
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
 )
 
-func validGitHubOAuth2Options() *options.GithubOAuth2Options {
-	return &options.GithubOAuth2Options{
+func validGitHubOAuth2Options() *GithubOAuth2Options {
+	return &GithubOAuth2Options{
 		Enabled:      true,
 		ClientID:     "client-id",
 		ClientSecret: "client-secret",
@@ -19,7 +17,7 @@ func validGitHubOAuth2Options() *options.GithubOAuth2Options {
 }
 
 func TestGithubOAuth2ValidateSkipsWhenDisabled(t *testing.T) {
-	opts := &options.GithubOAuth2Options{Enabled: false}
+	opts := &GithubOAuth2Options{Enabled: false}
 	if err := opts.Validate(); err != nil {
 		t.Fatalf("Validate() error = %v, want nil when disabled", err)
 	}

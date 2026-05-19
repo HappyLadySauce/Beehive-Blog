@@ -1,12 +1,10 @@
-package homedir_test
+package homedir
 
 import (
 	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
-
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/utils/homedir"
 )
 
 // TestHomeDirNonWindowsReturnsHomeEnv checks non-Windows builds return $HOME verbatim.
@@ -16,7 +14,7 @@ func TestHomeDirNonWindowsReturnsHomeEnv(t *testing.T) {
 		t.Skip("non-Windows only")
 	}
 	t.Setenv("HOME", "/tmp/x")
-	if got, want := homedir.HomeDir(), "/tmp/x"; got != want {
+	if got, want := HomeDir(), "/tmp/x"; got != want {
 		t.Errorf("HomeDir() = %q, want %q", got, want)
 	}
 }
@@ -28,7 +26,7 @@ func TestHomeDirNonWindowsEmptyHomeReturnsEmpty(t *testing.T) {
 		t.Skip("non-Windows only")
 	}
 	t.Setenv("HOME", "")
-	if got := homedir.HomeDir(); got != "" {
+	if got := HomeDir(); got != "" {
 		t.Errorf("HomeDir() = %q, want empty string", got)
 	}
 }
@@ -57,7 +55,7 @@ func TestHomeDirWindowsApimachineryConfigPriority(t *testing.T) {
 	t.Setenv("HOMEPATH", rest)
 	t.Setenv("USERPROFILE", homeC)
 
-	if got, want := homedir.HomeDir(), homeB; got != want {
+	if got, want := HomeDir(), homeB; got != want {
 		t.Errorf("HomeDir() = %q, want %q", got, want)
 	}
 }
@@ -76,7 +74,7 @@ func TestHomeDirWindowsPrefersUserProfileOverHomeDriveHomePath(t *testing.T) {
 	t.Setenv("HOMEDRIVE", v2)
 	t.Setenv("HOMEPATH", tmp2[len(v2):])
 
-	if got, want := homedir.HomeDir(), tmp1; got != want {
+	if got, want := HomeDir(), tmp1; got != want {
 		t.Errorf("HomeDir() = %q, want %q", got, want)
 	}
 }
@@ -93,7 +91,7 @@ func TestHomeDirWindowsFallsBackToFirstSetWhenNoneExists(t *testing.T) {
 	t.Setenv("HOMEDRIVE", "")
 	t.Setenv("HOMEPATH", "")
 
-	if got, want := homedir.HomeDir(), nonexistent; got != want {
+	if got, want := HomeDir(), nonexistent; got != want {
 		t.Errorf("HomeDir() = %q, want %q", got, want)
 	}
 }
@@ -109,7 +107,7 @@ func TestHomeDirWindowsReturnsEmptyWhenAllUnset(t *testing.T) {
 	t.Setenv("HOMEDRIVE", "")
 	t.Setenv("HOMEPATH", "")
 
-	if got := homedir.HomeDir(); got != "" {
+	if got := HomeDir(); got != "" {
 		t.Errorf("HomeDir() = %q, want empty string", got)
 	}
 }
