@@ -54,17 +54,32 @@ func (s *CategoryService) Create(ctx context.Context, actor Actor, in CategoryCr
 	return row, nil
 }
 
-// List returns live categories ordered for tree rendering.
-// List 返回按树展示排序的未软删分类。
-func (s *CategoryService) List(ctx context.Context, actor Actor) ([]model.AttachmentCategory, error) {
+// List returns paginated categories with optional filters.
+// List 返回分页的分类列表（含筛选）。
+func (s *CategoryService) List(ctx context.Context, actor Actor, page, pageSize int, status, search string) ([]model.AttachmentCategory, int64, error) {
 	if err := RequireAdmin(actor); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
+
+	query := s.db.WithContext(ctx).Model(&model.AttachmentCategory{})
+	if status != "" {
+		query = query.Where("status = ?", status)
+	}
+	if search != "" {
+		pattern := "%" + search + "%"
+		query = query.Where("name ILIKE ? OR slug ILIKE ?", pattern, pattern)
+	}
+
+	var total int64
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, MapDBError(err)
+	}
+
 	var rows []model.AttachmentCategory
-	if err := s.db.WithContext(ctx).Order("path ASC").Find(&rows).Error; err != nil {
-		return nil, MapDBError(err)
+	if err := query.Offset((page - 1) * pageSize).Limit(pageSize).Order("path ASC").Find(&rows).Error; err != nil {
+		return nil, 0, MapDBError(err)
 	}
-	return rows, nil
+	return rows, total, nil
 }
 
 // Get returns one category by ID.

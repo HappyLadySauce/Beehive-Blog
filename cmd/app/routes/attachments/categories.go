@@ -50,16 +50,34 @@ func (h *AttachmentsController) CreateCategory(ctx *gin.Context) {
 // ListCategories 处理 GET /api/v1/attachment/categories（管理员）。
 //
 //	@Summary		List attachment categories
-//	@Description	Returns the attachment category tree. Admin only. 中文：返回附件分类树（仅管理员）。
+//	@Description	Paginated list of attachment categories with optional filters. Admin only. 中文：分页列出附件分类，支持筛选（仅管理员）。
 //	@Tags			attachments
 //	@Security		BearerAuth
 //	@Produce		json
-//	@Success		200	{object}	common.BaseResponse{data=v1.AttachmentCategoryListResponse}
-//	@Failure		401	{object}	common.BaseResponse
-//	@Failure		403	{object}	common.BaseResponse
+//	@Param			page		query		int		false	"Page number (default 1)"
+//	@Param			page_size	query		int		false	"Items per page (default 20, max 100)"
+//	@Param			status		query		string	false	"Filter by status"	Enums(active, disabled)
+//	@Param			search		query		string	false	"Search name or slug"
+//	@Success		200			{object}	common.BaseResponse{data=v1.AttachmentCategoryListResponse}
+//	@Failure		400			{object}	common.BaseResponse
+//	@Failure		401			{object}	common.BaseResponse
+//	@Failure		403			{object}	common.BaseResponse
 //	@Router			/api/v1/attachment/categories [get]
 func (h *AttachmentsController) ListCategories(ctx *gin.Context) {
-	rows, err := h.categorySvc.List(ctx.Request.Context(), actorFromClaims(ctx))
+	var req v1.ListAttachmentCategoriesRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		common.Fail(ctx, common.NewBadRequest("invalid query parameters", err))
+		return
+	}
+	page, pageSize := req.Page, req.PageSize
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 20
+	}
+	rows, total, err := h.categorySvc.List(ctx.Request.Context(), actorFromClaims(ctx),
+		page, pageSize, req.Status, req.Search)
 	if err != nil {
 		writeAttachmentError(ctx, err)
 		return
@@ -68,7 +86,12 @@ func (h *AttachmentsController) ListCategories(ctx *gin.Context) {
 	for _, row := range rows {
 		items = append(items, toCategoryResponse(row))
 	}
-	common.Success(ctx, v1.AttachmentCategoryListResponse{Items: items})
+	common.Success(ctx, v1.AttachmentCategoryListResponse{
+		Items:    items,
+		Total:    total,
+		Page:     page,
+		PageSize: pageSize,
+	})
 }
 
 // GetCategory handles GET /api/v1/attachment/categories/:id (admin).

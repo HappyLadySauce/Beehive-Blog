@@ -128,7 +128,19 @@ type AttachmentCategoryResponse struct {
 // AttachmentCategoryListResponse returns attachment categories.
 // AttachmentCategoryListResponse 返回附件分类列表。
 type AttachmentCategoryListResponse struct {
-	Items []AttachmentCategoryResponse `json:"items"`
+	Items    []AttachmentCategoryResponse `json:"items"`
+	Total    int64                        `json:"total"`
+	Page     int                          `json:"page"`
+	PageSize int                          `json:"page_size"`
+}
+
+// ListAttachmentCategoriesRequest carries pagination and filter query params.
+// ListAttachmentCategoriesRequest 承载附件分类列表的分页与筛选查询参数。
+type ListAttachmentCategoriesRequest struct {
+	Page     int    `form:"page" binding:"omitempty,min=1"`
+	PageSize int    `form:"page_size" binding:"omitempty,min=1,max=100"`
+	Status   string `form:"status" binding:"omitempty,oneof=active disabled"`
+	Search   string `form:"search" binding:"omitempty,max=64"`
 }
 
 // AttachmentCategoryCreateRequest creates a category.
