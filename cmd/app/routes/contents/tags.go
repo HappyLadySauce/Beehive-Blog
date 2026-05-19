@@ -36,6 +36,16 @@ func (c *ContentsController) getContentTags(ctx context.Context, contentID int64
 
 // GetContentTags handles GET /api/v1/contents/:id/tags.
 // GetContentTags 处理 GET /api/v1/contents/:id/tags。
+//
+//	@Summary		List content tags
+//	@Description	Returns tags attached to a content item. Without token only for public published content; admin Bearer for any content. 中文：返回内容关联的标签；无 token 仅公开已发布内容，管理员 Bearer 可访问任意内容。
+//	@Tags			contents
+//	@Produce		json
+//	@Param			id	path		int	true	"Content ID"
+//	@Success		200	{object}	common.BaseResponse
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		404	{object}	common.BaseResponse
+//	@Router			/api/v1/contents/{id}/tags [get]
 func (c *ContentsController) GetContentTags(ctx *gin.Context) {
 	id, ok := parseContentID(ctx)
 	if !ok {
@@ -103,6 +113,21 @@ func (c *ContentsController) setContentTags(ctx context.Context, contentID int64
 
 // SetTags handles PUT /api/v1/contents/:id/tags (admin).
 // SetTags 处理 PUT /api/v1/contents/:id/tags（管理员）。
+//
+//	@Summary		Set content tags
+//	@Description	Replaces all tags on a content item atomically. Admin only. 中文：原子性替换内容的全部标签（仅管理员）。
+//	@Tags			contents
+//	@Security		BearerAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		int							true	"Content ID"
+//	@Param			body	body		v1.SetContentTagsRequest	true	"Tag ID list"
+//	@Success		200		{object}	common.BaseResponse
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		403		{object}	common.BaseResponse
+//	@Failure		404		{object}	common.BaseResponse
+//	@Router			/api/v1/contents/{id}/tags [put]
 func (c *ContentsController) SetTags(ctx *gin.Context) {
 	id, ok := parseContentID(ctx)
 	if !ok {

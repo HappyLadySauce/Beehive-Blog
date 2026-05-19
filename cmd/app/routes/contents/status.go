@@ -54,6 +54,21 @@ func (c *ContentsController) transitionStatus(ctx context.Context, id int64, req
 
 // TransitionStatus handles PATCH /api/v1/contents/:id/status (admin).
 // TransitionStatus 处理 PATCH /api/v1/contents/:id/status（管理员）。
+//
+//	@Summary		Transition content status
+//	@Description	Transitions a content item's status (e.g., draft → review → published). Admin only. 中文：流转内容状态（如草稿→审核→发布），仅管理员。
+//	@Tags			contents
+//	@Security		BearerAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		int							true	"Content ID"
+//	@Param			body	body		v1.TransitionStatusRequest	true	"New status (draft, review, published, archived)"
+//	@Success		200		{object}	common.BaseResponse{data=v1.ContentDetailResponse}
+//	@Failure		400		{object}	common.BaseResponse	"Invalid status transition"
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		403		{object}	common.BaseResponse
+//	@Failure		404		{object}	common.BaseResponse
+//	@Router			/api/v1/contents/{id}/status [patch]
 func (c *ContentsController) TransitionStatus(ctx *gin.Context) {
 	id, ok := parseContentID(ctx)
 	if !ok {

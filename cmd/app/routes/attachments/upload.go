@@ -20,6 +20,25 @@ import (
 
 // UploadLocal handles POST /api/v1/attachments multipart uploads (admin).
 // UploadLocal 处理 POST /api/v1/attachments multipart 上传（管理员）。
+//
+//	@Summary		Upload attachment (local)
+//	@Description	Uploads a file via multipart form to local/default storage. Admin only. 中文：通过 multipart 表单上传文件到本地/默认存储（仅管理员）。
+//	@Tags			attachments
+//	@Security		BearerAuth
+//	@Accept			multipart/form-data
+//	@Produce		json
+//	@Param			file				formData	file	true	"File to upload"
+//	@Param			purpose				formData	string	false	"Attachment purpose"
+//	@Param			access_scope		formData	string	false	"Access scope"	Enums(private, public)
+//	@Param			owner_user_id		formData	int		false	"Owner user ID"
+//	@Param			category_ids		formData	string	false	"Category IDs: comma-separated in one field, or repeat category_ids per value"
+//	@Param			storage_mount_id	formData	int		false	"Storage mount ID"
+//	@Param			original_name		formData	string	false	"Original display name"
+//	@Success		200					{object}	common.BaseResponse{data=v1.AttachmentResponse}
+//	@Failure		400					{object}	common.BaseResponse
+//	@Failure		401					{object}	common.BaseResponse
+//	@Failure		403					{object}	common.BaseResponse
+//	@Router			/api/v1/attachments [post]
 func (h *AttachmentsController) UploadLocal(ctx *gin.Context) {
 	ctx.Request.Body = http.MaxBytesReader(ctx.Writer, ctx.Request.Body, pkgattachment.MaxUploadBytes+1<<20)
 	file, header, err := ctx.Request.FormFile("file")
@@ -74,6 +93,19 @@ func (h *AttachmentsController) UploadLocal(ctx *gin.Context) {
 
 // PresignRemote handles POST /api/v1/attachments/upload-url (admin).
 // PresignRemote 处理 POST /api/v1/attachments/upload-url（管理员）。
+//
+//	@Summary		Presign remote attachment upload
+//	@Description	Creates a pending attachment and returns direct-upload URL for S3/OSS. Admin only. 中文：创建 pending 附件并返回 S3/OSS 直传 URL（仅管理员）。
+//	@Tags			attachments
+//	@Security		BearerAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		v1.AttachmentPresignRequest	true	"Presign request"
+//	@Success		200		{object}	common.BaseResponse{data=v1.AttachmentPresignResponse}
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		403		{object}	common.BaseResponse
+//	@Router			/api/v1/attachments/upload-url [post]
 func (h *AttachmentsController) PresignRemote(ctx *gin.Context) {
 	var req v1.AttachmentPresignRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -107,6 +139,21 @@ func (h *AttachmentsController) PresignRemote(ctx *gin.Context) {
 
 // CompleteRemote handles POST /api/v1/attachments/:id/complete (admin).
 // CompleteRemote 处理 POST /api/v1/attachments/:id/complete（管理员）。
+//
+//	@Summary		Complete remote attachment upload
+//	@Description	Marks a presigned remote attachment as ready after client upload. Admin only. 中文：客户端直传完成后将远端附件标记为 ready（仅管理员）。
+//	@Tags			attachments
+//	@Security		BearerAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		int								true	"Attachment ID"
+//	@Param			body	body		v1.AttachmentCompleteRequest	true	"Completion metadata"
+//	@Success		200		{object}	common.BaseResponse{data=v1.AttachmentResponse}
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		403		{object}	common.BaseResponse
+//	@Failure		404		{object}	common.BaseResponse
+//	@Router			/api/v1/attachments/{id}/complete [post]
 func (h *AttachmentsController) CompleteRemote(ctx *gin.Context) {
 	id, ok := parseIDParam(ctx)
 	if !ok {
@@ -246,6 +293,24 @@ func (h *AttachmentsController) presignRemote(ctx context.Context, actor pkgatta
 
 // UploadBatch handles POST /api/v1/attachments/batch multipart uploads (admin).
 // UploadBatch 处理 POST /api/v1/attachments/batch 批量 multipart 上传（管理员）。
+//
+//	@Summary		Batch upload attachments (local)
+//	@Description	Uploads multiple files in one multipart request. Admin only. 中文：单次 multipart 请求批量上传文件（仅管理员）。
+//	@Tags			attachments
+//	@Security		BearerAuth
+//	@Accept			multipart/form-data
+//	@Produce		json
+//	@Param			files				formData	file	true	"Files to upload (field name: files)"
+//	@Param			purpose				formData	string	false	"Attachment purpose"
+//	@Param			access_scope		formData	string	false	"Access scope"	Enums(private, public)
+//	@Param			owner_user_id		formData	int		false	"Owner user ID"
+//	@Param			category_ids		formData	string	false	"Category IDs: comma-separated in one field, or repeat category_ids per value"
+//	@Param			storage_mount_id	formData	int		false	"Storage mount ID"
+//	@Success		200					{object}	common.BaseResponse{data=v1.AttachmentBatchUploadResponse}
+//	@Failure		400					{object}	common.BaseResponse
+//	@Failure		401					{object}	common.BaseResponse
+//	@Failure		403					{object}	common.BaseResponse
+//	@Router			/api/v1/attachments/batch [post]
 func (h *AttachmentsController) UploadBatch(ctx *gin.Context) {
 	ctx.Request.Body = http.MaxBytesReader(ctx.Writer, ctx.Request.Body, pkgattachment.MaxUploadBytes+1<<20)
 	form, err := ctx.MultipartForm()

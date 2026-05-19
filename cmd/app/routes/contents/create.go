@@ -94,6 +94,20 @@ func (c *ContentsController) create(ctx context.Context, authorID int64, req *v1
 
 // Create handles POST /api/v1/contents (admin).
 // Create 处理 POST /api/v1/contents（管理员）。
+//
+//	@Summary		Create content
+//	@Description	Creates a new content item. Admin only. 中文：创建新内容（仅管理员）。
+//	@Tags			contents
+//	@Security		BearerAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		v1.CreateContentRequest	true	"Content creation request"
+//	@Success		200		{object}	common.BaseResponse{data=v1.CreateContentResponse}
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		403		{object}	common.BaseResponse
+//	@Failure		409		{object}	common.BaseResponse	"Slug conflict"
+//	@Router			/api/v1/contents [post]
 func (c *ContentsController) Create(ctx *gin.Context) {
 	var req v1.CreateContentRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {

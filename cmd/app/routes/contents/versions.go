@@ -42,6 +42,19 @@ func (c *ContentsController) listVersions(ctx context.Context, contentID int64) 
 
 // ListVersions handles GET /api/v1/contents/:id/versions (admin).
 // ListVersions 处理 GET /api/v1/contents/:id/versions（管理员）。
+//
+//	@Summary		List content versions
+//	@Description	Lists all version snapshots for a content item. Admin only. 中文：列出内容的全部版本快照（仅管理员）。
+//	@Tags			contents
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Param			id	path		int	true	"Content ID"
+//	@Success		200	{object}	common.BaseResponse{data=v1.ListVersionsResponse}
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		403	{object}	common.BaseResponse
+//	@Failure		404	{object}	common.BaseResponse
+//	@Router			/api/v1/contents/{id}/versions [get]
 func (c *ContentsController) ListVersions(ctx *gin.Context) {
 	id, ok := parseContentID(ctx)
 	if !ok {
@@ -102,6 +115,21 @@ func (c *ContentsController) createVersion(ctx context.Context, contentID int64,
 
 // CreateVersion handles POST /api/v1/contents/:id/versions (admin).
 // CreateVersion 处理 POST /api/v1/contents/:id/versions（管理员）。
+//
+//	@Summary		Create content version
+//	@Description	Creates a version snapshot from current content state. Admin only. 中文：从当前内容状态创建版本快照（仅管理员）。
+//	@Tags			contents
+//	@Security		BearerAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		int						true	"Content ID"
+//	@Param			body	body		v1.CreateVersionRequest	true	"Version creation request (optional change_summary)"
+//	@Success		200		{object}	common.BaseResponse{data=v1.CreateVersionResponse}
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		403		{object}	common.BaseResponse
+//	@Failure		404		{object}	common.BaseResponse
+//	@Router			/api/v1/contents/{id}/versions [post]
 func (c *ContentsController) CreateVersion(ctx *gin.Context) {
 	id, ok := parseContentID(ctx)
 	if !ok {

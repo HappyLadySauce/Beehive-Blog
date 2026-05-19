@@ -12,8 +12,8 @@ type DriverResponse struct {
 	Name         string          `json:"name"`
 	DisplayName  string          `json:"display_name"`
 	Description  *string         `json:"description,omitempty"`
-	ConfigSchema json.RawMessage `json:"config_schema"`
-	Capabilities json.RawMessage `json:"capabilities"`
+	ConfigSchema json.RawMessage `json:"config_schema" swaggertype:"object"`
+	Capabilities json.RawMessage `json:"capabilities" swaggertype:"object"`
 	Status       string          `json:"status"`
 	CreatedAt    time.Time       `json:"created_at"`
 	UpdatedAt    time.Time       `json:"updated_at"`
@@ -33,7 +33,7 @@ type StorageMountResponse struct {
 	MountPath     string          `json:"mount_path"`
 	Name          string          `json:"name"`
 	Remark        *string         `json:"remark,omitempty"`
-	Config        json.RawMessage `json:"config"`
+	Config        json.RawMessage `json:"config" swaggertype:"object"`
 	OrderIndex    int             `json:"order_index"`
 	IsDefault     bool            `json:"is_default"`
 	Disabled      bool            `json:"disabled"`
@@ -58,7 +58,7 @@ type StorageMountCreateRequest struct {
 	MountPath  string          `json:"mount_path" binding:"required,max=512"`
 	Name       string          `json:"name" binding:"required,max=128"`
 	Remark     *string         `json:"remark,omitempty"`
-	Config     json.RawMessage `json:"config" binding:"required"`
+	Config     json.RawMessage `json:"config" binding:"required" swaggertype:"object"`
 	OrderIndex int             `json:"order_index"`
 	IsDefault  bool            `json:"is_default"`
 }
@@ -68,7 +68,7 @@ type StorageMountCreateRequest struct {
 type StorageMountPatchRequest struct {
 	Name       *string          `json:"name,omitempty"`
 	Remark     *string          `json:"remark,omitempty"`
-	Config     *json.RawMessage `json:"config,omitempty"`
+	Config     *json.RawMessage `json:"config,omitempty" swaggertype:"object"`
 	OrderIndex *int             `json:"order_index,omitempty"`
 	IsDefault  *bool            `json:"is_default,omitempty"`
 }

@@ -20,6 +20,16 @@ var mountPathPattern = regexp.MustCompile(`^/[A-Za-z0-9][A-Za-z0-9._/-]*$`)
 
 // ListMounts returns all storage mounts.
 // ListMounts 返回所有存储挂载项。
+//
+//	@Summary		List storage mounts
+//	@Description	Returns all storage mount configurations. Admin only. 中文：返回所有存储挂载配置（仅管理员）。
+//	@Tags			storage-mounts
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Success		200	{object}	common.BaseResponse{data=v1.StorageMountListResponse}
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		403	{object}	common.BaseResponse
+//	@Router			/api/v1/storage-mounts [get]
 func (h *FileDriversController) ListMounts(ctx *gin.Context) {
 	rows, err := h.driverStore.ListMounts(ctx.Request.Context())
 	if err != nil {
@@ -35,6 +45,19 @@ func (h *FileDriversController) ListMounts(ctx *gin.Context) {
 
 // GetMount returns a single storage mount.
 // GetMount 返回单个存储挂载项。
+//
+//	@Summary		Get storage mount
+//	@Description	Returns one storage mount by ID. Admin only. 中文：按 ID 返回单个存储挂载项（仅管理员）。
+//	@Tags			storage-mounts
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Param			id	path		int	true	"Mount ID"
+//	@Success		200	{object}	common.BaseResponse{data=v1.StorageMountResponse}
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		403	{object}	common.BaseResponse
+//	@Failure		404	{object}	common.BaseResponse
+//	@Router			/api/v1/storage-mounts/{id} [get]
 func (h *FileDriversController) GetMount(ctx *gin.Context) {
 	id, err := parseIDParam(ctx.Param("id"))
 	if err != nil {
@@ -51,6 +74,19 @@ func (h *FileDriversController) GetMount(ctx *gin.Context) {
 
 // CreateMount creates a new storage mount.
 // CreateMount 创建新的存储挂载项。
+//
+//	@Summary		Create storage mount
+//	@Description	Creates a new storage mount. Admin only. 中文：创建新的存储挂载项（仅管理员）。
+//	@Tags			storage-mounts
+//	@Security		BearerAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		v1.StorageMountCreateRequest	true	"Mount creation request"
+//	@Success		200		{object}	common.BaseResponse{data=v1.StorageMountResponse}
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		403		{object}	common.BaseResponse
+//	@Router			/api/v1/storage-mounts [post]
 func (h *FileDriversController) CreateMount(ctx *gin.Context) {
 	var req v1.StorageMountCreateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -93,6 +129,21 @@ func (h *FileDriversController) CreateMount(ctx *gin.Context) {
 
 // PatchMount updates fields on an existing storage mount.
 // PatchMount 更新已有存储挂载项的字段。
+//
+//	@Summary		Patch storage mount
+//	@Description	Updates mutable fields on a storage mount. Admin only. 中文：更新存储挂载项可变字段（仅管理员）。
+//	@Tags			storage-mounts
+//	@Security		BearerAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		int							true	"Mount ID"
+//	@Param			body	body		v1.StorageMountPatchRequest	true	"Mount patch request"
+//	@Success		200		{object}	common.BaseResponse{data=v1.StorageMountResponse}
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		403		{object}	common.BaseResponse
+//	@Failure		404		{object}	common.BaseResponse
+//	@Router			/api/v1/storage-mounts/{id} [patch]
 func (h *FileDriversController) PatchMount(ctx *gin.Context) {
 	id, err := parseIDParam(ctx.Param("id"))
 	if err != nil {
@@ -172,12 +223,38 @@ func (h *FileDriversController) PatchMount(ctx *gin.Context) {
 
 // EnableMount enables a disabled mount.
 // EnableMount 启用已被禁用的挂载项。
+//
+//	@Summary		Enable storage mount
+//	@Description	Enables a disabled storage mount. Admin only. 中文：启用已禁用的存储挂载项（仅管理员）。
+//	@Tags			storage-mounts
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Param			id	path		int	true	"Mount ID"
+//	@Success		200	{object}	common.BaseResponse{data=v1.StorageMountResponse}
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		403	{object}	common.BaseResponse
+//	@Failure		404	{object}	common.BaseResponse
+//	@Router			/api/v1/storage-mounts/{id}/enable [post]
 func (h *FileDriversController) EnableMount(ctx *gin.Context) {
 	h.setMountDisabled(ctx, false)
 }
 
 // DisableMount disables a mount.
 // DisableMount 禁用挂载项。
+//
+//	@Summary		Disable storage mount
+//	@Description	Disables a storage mount. Admin only. 中文：禁用存储挂载项（仅管理员）。
+//	@Tags			storage-mounts
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Param			id	path		int	true	"Mount ID"
+//	@Success		200	{object}	common.BaseResponse{data=v1.StorageMountResponse}
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		403	{object}	common.BaseResponse
+//	@Failure		404	{object}	common.BaseResponse
+//	@Router			/api/v1/storage-mounts/{id}/disable [post]
 func (h *FileDriversController) DisableMount(ctx *gin.Context) {
 	h.setMountDisabled(ctx, true)
 }
@@ -203,6 +280,19 @@ func (h *FileDriversController) setMountDisabled(ctx *gin.Context, disabled bool
 
 // CheckMount runs a health check on the mount's driver.
 // CheckMount 对挂载项对应的驱动执行健康检查。
+//
+//	@Summary		Check storage mount health
+//	@Description	Runs a connectivity check against the mount driver and updates status. Admin only. 中文：对挂载驱动执行连通性检查并更新状态（仅管理员）。
+//	@Tags			storage-mounts
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Param			id	path		int	true	"Mount ID"
+//	@Success		200	{object}	common.BaseResponse{data=v1.StorageMountCheckResponse}
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		403	{object}	common.BaseResponse
+//	@Failure		404	{object}	common.BaseResponse
+//	@Router			/api/v1/storage-mounts/{id}/check [post]
 func (h *FileDriversController) CheckMount(ctx *gin.Context) {
 	id, err := parseIDParam(ctx.Param("id"))
 	if err != nil {
@@ -296,6 +386,19 @@ func (h *FileDriversController) validateMountConfig(ctx context.Context, driverN
 
 // DeleteMount soft-deletes a storage mount.
 // DeleteMount 软删除存储挂载项。
+//
+//	@Summary		Delete storage mount
+//	@Description	Soft-deletes a storage mount. Admin only. 中文：软删除存储挂载项（仅管理员）。
+//	@Tags			storage-mounts
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Param			id	path		int	true	"Mount ID"
+//	@Success		200	{object}	common.BaseResponse
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		403	{object}	common.BaseResponse
+//	@Failure		404	{object}	common.BaseResponse
+//	@Router			/api/v1/storage-mounts/{id} [delete]
 func (h *FileDriversController) DeleteMount(ctx *gin.Context) {
 	id, err := parseIDParam(ctx.Param("id"))
 	if err != nil {

@@ -110,6 +110,21 @@ func (c *ContentsController) list(ctx context.Context, req *v1.ListContentsReque
 
 // List handles GET /api/v1/contents.
 // List 处理 GET /api/v1/contents。
+//
+//	@Summary		List contents
+//	@Description	Paginated list of contents with optional filters. Without token: data is v1.PublicListContentsResponse (published public only). With admin Bearer: data is v1.ListContentsResponse (all statuses). 中文：无 token 时 data 为 PublicListContentsResponse（仅公开已发布）；管理员 Bearer 时 data 为 ListContentsResponse（含草稿等全部状态）。
+//	@Tags			contents
+//	@Produce		json
+//	@Param			page		query		int		false	"Page number (default 1)"						default(1)
+//	@Param			page_size	query		int		false	"Items per page (default 20, max 100)"			default(20)
+//	@Param			type		query		string	false	"Filter by content type"						Enums(article, note, project, experience, reflection, portfolio)
+//	@Param			status		query		string	false	"Filter by status (admin only)"				Enums(draft, review, published, archived)
+//	@Param			visibility	query		string	false	"Filter by visibility (admin only)"			Enums(public, member, private)
+//	@Param			tag_id		query		int		false	"Filter by tag ID"
+//	@Param			search		query		string	false	"Search title or excerpt"
+//	@Success		200			{object}	common.BaseResponse{data=v1.ListContentsResponse}	"Admin view; anonymous uses PublicListContentsResponse shape"
+//	@Failure		400			{object}	common.BaseResponse
+//	@Router			/api/v1/contents [get]
 func (c *ContentsController) List(ctx *gin.Context) {
 	var req v1.ListContentsRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {

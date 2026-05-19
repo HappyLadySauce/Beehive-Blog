@@ -24,6 +24,19 @@ func (c *ContentsController) del(ctx context.Context, id int64) error {
 
 // Delete handles DELETE /api/v1/contents/:id (admin).
 // Delete 处理 DELETE /api/v1/contents/:id（管理员）。
+//
+//	@Summary		Delete content
+//	@Description	Soft-deletes a content item. Admin only. 中文：软删除内容（仅管理员）。
+//	@Tags			contents
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Param			id	path		int	true	"Content ID"
+//	@Success		200	{object}	common.BaseResponse
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		403	{object}	common.BaseResponse
+//	@Failure		404	{object}	common.BaseResponse
+//	@Router			/api/v1/contents/{id} [delete]
 func (c *ContentsController) Delete(ctx *gin.Context) {
 	id, ok := parseContentID(ctx)
 	if !ok {

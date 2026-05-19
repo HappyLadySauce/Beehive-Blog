@@ -17,6 +17,20 @@ import (
 
 // CreateCategory handles POST /api/v1/attachment/categories (admin).
 // CreateCategory 处理 POST /api/v1/attachment/categories（管理员）。
+//
+//	@Summary		Create attachment category
+//	@Description	Creates an attachment category node. Admin only. 中文：创建附件分类节点（仅管理员）。
+//	@Tags			attachments
+//	@Security		BearerAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		v1.AttachmentCategoryCreateRequest	true	"Category creation request"
+//	@Success		200		{object}	common.BaseResponse{data=v1.AttachmentCategoryResponse}
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		403		{object}	common.BaseResponse
+//	@Failure		409		{object}	common.BaseResponse
+//	@Router			/api/v1/attachment/categories [post]
 func (h *AttachmentsController) CreateCategory(ctx *gin.Context) {
 	var req v1.AttachmentCategoryCreateRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -41,6 +55,16 @@ func (h *AttachmentsController) CreateCategory(ctx *gin.Context) {
 
 // ListCategories handles GET /api/v1/attachment/categories (admin).
 // ListCategories 处理 GET /api/v1/attachment/categories（管理员）。
+//
+//	@Summary		List attachment categories
+//	@Description	Returns the attachment category tree. Admin only. 中文：返回附件分类树（仅管理员）。
+//	@Tags			attachments
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Success		200	{object}	common.BaseResponse{data=v1.AttachmentCategoryListResponse}
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		403	{object}	common.BaseResponse
+//	@Router			/api/v1/attachment/categories [get]
 func (h *AttachmentsController) ListCategories(ctx *gin.Context) {
 	rows, err := h.listCategories(ctx.Request.Context(), actorFromClaims(ctx))
 	if err != nil {
@@ -56,6 +80,19 @@ func (h *AttachmentsController) ListCategories(ctx *gin.Context) {
 
 // GetCategory handles GET /api/v1/attachment/categories/:id (admin).
 // GetCategory 处理 GET /api/v1/attachment/categories/:id（管理员）。
+//
+//	@Summary		Get attachment category
+//	@Description	Returns one attachment category by ID. Admin only. 中文：按 ID 返回附件分类（仅管理员）。
+//	@Tags			attachments
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Param			id	path		int	true	"Category ID"
+//	@Success		200	{object}	common.BaseResponse{data=v1.AttachmentCategoryResponse}
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		403	{object}	common.BaseResponse
+//	@Failure		404	{object}	common.BaseResponse
+//	@Router			/api/v1/attachment/categories/{id} [get]
 func (h *AttachmentsController) GetCategory(ctx *gin.Context) {
 	id, ok := parseIDParam(ctx)
 	if !ok {
@@ -71,6 +108,22 @@ func (h *AttachmentsController) GetCategory(ctx *gin.Context) {
 
 // PatchCategory handles PATCH /api/v1/attachment/categories/:id (admin).
 // PatchCategory 处理 PATCH /api/v1/attachment/categories/:id（管理员）。
+//
+//	@Summary		Patch attachment category
+//	@Description	Updates an attachment category. Admin only. 中文：更新附件分类（仅管理员）。
+//	@Tags			attachments
+//	@Security		BearerAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		int									true	"Category ID"
+//	@Param			body	body		v1.AttachmentCategoryPatchRequest	true	"Category patch request"
+//	@Success		200		{object}	common.BaseResponse{data=v1.AttachmentCategoryResponse}
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		403		{object}	common.BaseResponse
+//	@Failure		404		{object}	common.BaseResponse
+//	@Failure		409		{object}	common.BaseResponse
+//	@Router			/api/v1/attachment/categories/{id} [patch]
 func (h *AttachmentsController) PatchCategory(ctx *gin.Context) {
 	id, ok := parseIDParam(ctx)
 	if !ok {
@@ -99,6 +152,20 @@ func (h *AttachmentsController) PatchCategory(ctx *gin.Context) {
 
 // DeleteCategory handles DELETE /api/v1/attachment/categories/:id (admin).
 // DeleteCategory 处理 DELETE /api/v1/attachment/categories/:id（管理员）。
+//
+//	@Summary		Delete attachment category
+//	@Description	Soft-deletes an attachment category. Admin only. 中文：软删除附件分类（仅管理员）。
+//	@Tags			attachments
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Param			id	path		int	true	"Category ID"
+//	@Success		200	{object}	common.BaseResponse
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		403	{object}	common.BaseResponse
+//	@Failure		404	{object}	common.BaseResponse
+//	@Failure		409	{object}	common.BaseResponse
+//	@Router			/api/v1/attachment/categories/{id} [delete]
 func (h *AttachmentsController) DeleteCategory(ctx *gin.Context) {
 	id, ok := parseIDParam(ctx)
 	if !ok {

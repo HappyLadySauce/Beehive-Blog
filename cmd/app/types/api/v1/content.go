@@ -31,7 +31,7 @@ type CreateContentRequest struct {
 	AIAccess           *string         `json:"ai_access,omitempty" binding:"omitempty,oneof=allowed denied"`
 	WordCount          *int            `json:"word_count,omitempty"`
 	ReadingTimeMinutes *int            `json:"reading_time_minutes,omitempty"`
-	Metadata           json.RawMessage `json:"metadata,omitempty"`
+	Metadata           json.RawMessage `json:"metadata,omitempty" swaggertype:"object"`
 }
 
 // UpdateContentRequest is the PATCH payload for admin content updates.
@@ -48,7 +48,7 @@ type UpdateContentRequest struct {
 	AIAccess           *string          `json:"ai_access,omitempty" binding:"omitempty,oneof=allowed denied"`
 	WordCount          *int             `json:"word_count,omitempty"`
 	ReadingTimeMinutes *int             `json:"reading_time_minutes,omitempty"`
-	Metadata           *json.RawMessage `json:"metadata,omitempty"`
+	Metadata           *json.RawMessage `json:"metadata,omitempty" swaggertype:"object"`
 }
 
 // TransitionStatusRequest is the payload for changing content status.
@@ -95,7 +95,7 @@ type ContentItem struct {
 	PublishedAt        *time.Time      `json:"published_at,omitempty"`
 	WordCount          int             `json:"word_count"`
 	ReadingTimeMinutes int             `json:"reading_time_minutes"`
-	Metadata           json.RawMessage `json:"metadata,omitempty"`
+	Metadata           json.RawMessage `json:"metadata,omitempty" swaggertype:"object"`
 	ViewCount          int64           `json:"view_count"`
 	Tags               []TagItem       `json:"tags,omitempty"`
 	CreatedAt          time.Time       `json:"created_at"`
@@ -105,20 +105,20 @@ type ContentItem struct {
 // PublicContentItem is the public-safe subset for reader-facing listings.
 // PublicContentItem 为面向读者的公开字段子集。
 type PublicContentItem struct {
-	ID                 int64           `json:"id"`
-	Type               string          `json:"type"`
-	Title              string          `json:"title"`
-	Slug               string          `json:"slug"`
-	Excerpt            *string         `json:"excerpt,omitempty"`
-	CoverAttachmentID  *int64          `json:"cover_attachment_id,omitempty"`
-	AuthorID           int64           `json:"author_id"`
-	AuthorUsername     string          `json:"author_username,omitempty"`
-	PublishedAt        *time.Time      `json:"published_at,omitempty"`
-	WordCount          int       `json:"word_count"`
-	ReadingTimeMinutes int       `json:"reading_time_minutes"`
-	Tags               []TagItem `json:"tags,omitempty"`
-	CreatedAt          time.Time       `json:"created_at"`
-	UpdatedAt          time.Time       `json:"updated_at"`
+	ID                 int64      `json:"id"`
+	Type               string     `json:"type"`
+	Title              string     `json:"title"`
+	Slug               string     `json:"slug"`
+	Excerpt            *string    `json:"excerpt,omitempty"`
+	CoverAttachmentID  *int64     `json:"cover_attachment_id,omitempty"`
+	AuthorID           int64      `json:"author_id"`
+	AuthorUsername     string     `json:"author_username,omitempty"`
+	PublishedAt        *time.Time `json:"published_at,omitempty"`
+	WordCount          int        `json:"word_count"`
+	ReadingTimeMinutes int        `json:"reading_time_minutes"`
+	Tags               []TagItem  `json:"tags,omitempty"`
+	CreatedAt          time.Time  `json:"created_at"`
+	UpdatedAt          time.Time  `json:"updated_at"`
 }
 
 // ListContentsResponse wraps the paginated admin content result set.

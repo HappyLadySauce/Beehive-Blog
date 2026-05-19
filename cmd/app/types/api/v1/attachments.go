@@ -19,7 +19,7 @@ type AttachmentResponse struct {
 	StorageMountID  int64           `json:"storage_mount_id"`
 	FileNodeID      *int64          `json:"file_node_id,omitempty"`
 	ObjectKey       string          `json:"object_key"`
-	StorageMetadata json.RawMessage `json:"storage_metadata,omitempty"`
+	StorageMetadata json.RawMessage `json:"storage_metadata,omitempty" swaggertype:"object"`
 	ETag            *string         `json:"etag,omitempty"`
 	Checksum        *string         `json:"checksum,omitempty"`
 	AccessScope     string          `json:"access_scope"`

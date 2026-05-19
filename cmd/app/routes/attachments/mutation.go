@@ -19,6 +19,21 @@ import (
 
 // Patch handles PATCH /api/v1/attachments/:id (admin).
 // Patch 处理 PATCH /api/v1/attachments/:id（管理员）。
+//
+//	@Summary		Patch attachment
+//	@Description	Updates mutable attachment metadata. Admin only. 中文：更新附件可变元数据（仅管理员）。
+//	@Tags			attachments
+//	@Security		BearerAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		int							true	"Attachment ID"
+//	@Param			body	body		v1.AttachmentPatchRequest	true	"Patch request"
+//	@Success		200		{object}	common.BaseResponse{data=v1.AttachmentResponse}
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		403		{object}	common.BaseResponse
+//	@Failure		404		{object}	common.BaseResponse
+//	@Router			/api/v1/attachments/{id} [patch]
 func (h *AttachmentsController) Patch(ctx *gin.Context) {
 	id, ok := parseIDParam(ctx)
 	if !ok {
@@ -44,6 +59,21 @@ func (h *AttachmentsController) Patch(ctx *gin.Context) {
 
 // Delete handles DELETE /api/v1/attachments/:id (admin).
 // Delete 处理 DELETE /api/v1/attachments/:id（管理员）。
+//
+//	@Summary		Delete attachment
+//	@Description	Soft-deletes an attachment. Use query force=true to delete when referenced. Admin only. 中文：软删除附件；force=true 可强制删除仍被引用的附件（仅管理员）。
+//	@Tags			attachments
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Param			id		path		int		true	"Attachment ID"
+//	@Param			force	query		bool	false	"Force delete even when referenced"
+//	@Success		200		{object}	common.BaseResponse
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		403		{object}	common.BaseResponse
+//	@Failure		404		{object}	common.BaseResponse
+//	@Failure		409		{object}	common.BaseResponse
+//	@Router			/api/v1/attachments/{id} [delete]
 func (h *AttachmentsController) Delete(ctx *gin.Context) {
 	id, ok := parseIDParam(ctx)
 	if !ok {
@@ -59,6 +89,21 @@ func (h *AttachmentsController) Delete(ctx *gin.Context) {
 
 // ReplaceCategories handles PUT /api/v1/attachments/:id/categories (admin).
 // ReplaceCategories 处理 PUT /api/v1/attachments/:id/categories（管理员）。
+//
+//	@Summary		Replace attachment categories
+//	@Description	Replaces all category bindings for an attachment. Admin only. 中文：替换附件的全部分类绑定（仅管理员）。
+//	@Tags			attachments
+//	@Security		BearerAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		int										true	"Attachment ID"
+//	@Param			body	body		v1.AttachmentCategoryReplaceRequest	true	"Category ID list"
+//	@Success		200		{object}	common.BaseResponse
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		403		{object}	common.BaseResponse
+//	@Failure		404		{object}	common.BaseResponse
+//	@Router			/api/v1/attachments/{id}/categories [put]
 func (h *AttachmentsController) ReplaceCategories(ctx *gin.Context) {
 	id, ok := parseIDParam(ctx)
 	if !ok {

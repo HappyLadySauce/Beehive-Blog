@@ -8,6 +8,317 @@ definitions:
       message:
         type: string
     type: object
+  v1.AddRelationRequest:
+    properties:
+      label:
+        maxLength: 128
+        type: string
+      relation_type:
+        enum:
+        - references
+        - part_of
+        - derived_from
+        - follows
+        type: string
+      sort_order:
+        type: integer
+      target_content_id:
+        minimum: 1
+        type: integer
+    required:
+    - relation_type
+    - target_content_id
+    type: object
+  v1.AddRelationResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      label:
+        type: string
+      relation_type:
+        type: string
+      sort_order:
+        type: integer
+      source_content_id:
+        type: integer
+      target_content_id:
+        type: integer
+      target_slug:
+        type: string
+      target_title:
+        type: string
+      target_type:
+        type: string
+    type: object
+  v1.AttachmentBatchResponse:
+    properties:
+      attachment:
+        $ref: '#/definitions/v1.AttachmentResponse'
+      error:
+        type: string
+      filename:
+        type: string
+      index:
+        type: integer
+    type: object
+  v1.AttachmentBatchUploadResponse:
+    properties:
+      failed:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/v1.AttachmentBatchResponse'
+        type: array
+      uploaded:
+        type: integer
+    type: object
+  v1.AttachmentCategoryCreateRequest:
+    properties:
+      description:
+        type: string
+      icon:
+        type: string
+      name:
+        maxLength: 64
+        type: string
+      parent_id:
+        type: integer
+      slug:
+        maxLength: 64
+        type: string
+      sort_order:
+        type: integer
+      status:
+        enum:
+        - active
+        - disabled
+        type: string
+    required:
+    - name
+    - slug
+    type: object
+  v1.AttachmentCategoryListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/v1.AttachmentCategoryResponse'
+        type: array
+    type: object
+  v1.AttachmentCategoryPatchRequest:
+    properties:
+      description:
+        type: string
+      icon:
+        type: string
+      name:
+        type: string
+      parent_id:
+        type: integer
+      slug:
+        type: string
+      sort_order:
+        type: integer
+      status:
+        type: string
+    type: object
+  v1.AttachmentCategoryReplaceRequest:
+    properties:
+      category_ids:
+        items:
+          type: integer
+        type: array
+    type: object
+  v1.AttachmentCategoryResponse:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      depth:
+        type: integer
+      description:
+        type: string
+      icon:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      parent_id:
+        type: integer
+      path:
+        type: string
+      slug:
+        type: string
+      sort_order:
+        type: integer
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  v1.AttachmentCompleteRequest:
+    properties:
+      checksum:
+        type: string
+      etag:
+        type: string
+      size:
+        type: integer
+    type: object
+  v1.AttachmentListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/v1.AttachmentResponse'
+        type: array
+      next_cursor:
+        type: string
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total:
+        type: integer
+    type: object
+  v1.AttachmentPatchRequest:
+    properties:
+      access_scope:
+        type: string
+      category_ids:
+        items:
+          type: integer
+        type: array
+      original_name:
+        type: string
+      status:
+        type: string
+    type: object
+  v1.AttachmentPresignRequest:
+    properties:
+      access_scope:
+        enum:
+        - private
+        - public
+        type: string
+      category_ids:
+        items:
+          type: integer
+        type: array
+      checksum:
+        type: string
+      filename:
+        maxLength: 255
+        type: string
+      mime_type:
+        maxLength: 127
+        type: string
+      original_name:
+        type: string
+      owner_user_id:
+        type: integer
+      purpose:
+        type: string
+      size:
+        minimum: 1
+        type: integer
+      storage_mount_id:
+        type: integer
+    required:
+    - access_scope
+    - filename
+    - mime_type
+    - purpose
+    - size
+    type: object
+  v1.AttachmentPresignResponse:
+    properties:
+      attachment:
+        $ref: '#/definitions/v1.AttachmentResponse'
+      expires_at:
+        type: string
+      headers:
+        additionalProperties:
+          type: string
+        type: object
+      method:
+        type: string
+      upload_url:
+        type: string
+    type: object
+  v1.AttachmentReferenceListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/v1.AttachmentReferenceResponse'
+        type: array
+    type: object
+  v1.AttachmentReferenceResponse:
+    properties:
+      attachment_id:
+        type: integer
+      relation:
+        type: string
+      source_id:
+        type: integer
+      source_title:
+        type: string
+      source_type:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  v1.AttachmentResponse:
+    properties:
+      access_scope:
+        type: string
+      category_ids:
+        items:
+          type: integer
+        type: array
+      checksum:
+        type: string
+      created_at:
+        type: string
+      deleted_at:
+        type: string
+      etag:
+        type: string
+      file_node_id:
+        type: integer
+      filename:
+        type: string
+      id:
+        type: integer
+      mime_type:
+        type: string
+      object_key:
+        type: string
+      original_name:
+        type: string
+      owner_user_id:
+        type: integer
+      owner_username:
+        type: string
+      purpose:
+        type: string
+      size:
+        type: integer
+      status:
+        type: string
+      storage_metadata:
+        type: object
+      storage_mount_id:
+        type: integer
+      updated_at:
+        type: string
+      upload_status:
+        type: string
+    type: object
   v1.AuthSessionResponse:
     properties:
       exp:
@@ -54,6 +365,193 @@ definitions:
           TokenType 为凭证类型；OAuth2 客户端固定为 "Bearer"。
         type: string
     type: object
+  v1.ContentDetailResponse:
+    properties:
+      ai_access:
+        type: string
+      author_id:
+        type: integer
+      author_username:
+        type: string
+      body:
+        type: string
+      cover_attachment_id:
+        type: integer
+      created_at:
+        type: string
+      excerpt:
+        type: string
+      id:
+        type: integer
+      metadata:
+        type: object
+      published_at:
+        type: string
+      reading_time_minutes:
+        type: integer
+      slug:
+        type: string
+      status:
+        type: string
+      tags:
+        items:
+          $ref: '#/definitions/v1.TagItem'
+        type: array
+      title:
+        type: string
+      type:
+        type: string
+      updated_at:
+        type: string
+      view_count:
+        type: integer
+      visibility:
+        type: string
+      word_count:
+        type: integer
+    type: object
+  v1.ContentItem:
+    properties:
+      ai_access:
+        type: string
+      author_id:
+        type: integer
+      author_username:
+        type: string
+      cover_attachment_id:
+        type: integer
+      created_at:
+        type: string
+      excerpt:
+        type: string
+      id:
+        type: integer
+      metadata:
+        type: object
+      published_at:
+        type: string
+      reading_time_minutes:
+        type: integer
+      slug:
+        type: string
+      status:
+        type: string
+      tags:
+        items:
+          $ref: '#/definitions/v1.TagItem'
+        type: array
+      title:
+        type: string
+      type:
+        type: string
+      updated_at:
+        type: string
+      view_count:
+        type: integer
+      visibility:
+        type: string
+      word_count:
+        type: integer
+    type: object
+  v1.ContentRelationItem:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      label:
+        type: string
+      relation_type:
+        type: string
+      sort_order:
+        type: integer
+      source_content_id:
+        type: integer
+      target_content_id:
+        type: integer
+      target_slug:
+        type: string
+      target_title:
+        type: string
+      target_type:
+        type: string
+    type: object
+  v1.CreateContentRequest:
+    properties:
+      ai_access:
+        enum:
+        - allowed
+        - denied
+        type: string
+      body:
+        type: string
+      cover_attachment_id:
+        type: integer
+      excerpt:
+        type: string
+      metadata:
+        type: object
+      reading_time_minutes:
+        type: integer
+      slug:
+        maxLength: 512
+        type: string
+      status:
+        enum:
+        - draft
+        - review
+        type: string
+      title:
+        maxLength: 512
+        type: string
+      type:
+        enum:
+        - article
+        - note
+        - project
+        - experience
+        - reflection
+        - portfolio
+        type: string
+      visibility:
+        enum:
+        - public
+        - member
+        - private
+        type: string
+      word_count:
+        type: integer
+    required:
+    - slug
+    - title
+    - type
+    type: object
+  v1.CreateContentResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  v1.CreateTagRequest:
+    properties:
+      color:
+        type: string
+      description:
+        type: string
+      name:
+        maxLength: 64
+        type: string
+      slug:
+        maxLength: 64
+        type: string
+    required:
+    - name
+    - slug
+    type: object
+  v1.CreateTagResponse:
+    properties:
+      id:
+        type: integer
+    type: object
   v1.CreateUserRequest:
     properties:
       email:
@@ -91,6 +589,61 @@ definitions:
     properties:
       id:
         type: integer
+    type: object
+  v1.CreateVersionRequest:
+    properties:
+      change_summary:
+        maxLength: 512
+        type: string
+    type: object
+  v1.CreateVersionResponse:
+    properties:
+      body:
+        type: string
+      change_summary:
+        type: string
+      content_id:
+        type: integer
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      excerpt:
+        type: string
+      id:
+        type: integer
+      title:
+        type: string
+      version_number:
+        type: integer
+    type: object
+  v1.DriverListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/v1.DriverResponse'
+        type: array
+    type: object
+  v1.DriverResponse:
+    properties:
+      capabilities:
+        type: object
+      config_schema:
+        type: object
+      created_at:
+        type: string
+      description:
+        type: string
+      display_name:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
     type: object
   v1.EmailSMTPPatchJSON:
     properties:
@@ -181,6 +734,39 @@ definitions:
           State 必须在 POST /auth/login（github_oauth2）回传，并与 Redis 中一次性条目匹配。
         type: string
     type: object
+  v1.ListContentRelationsResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/v1.ContentRelationItem'
+        type: array
+    type: object
+  v1.ListContentsResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/v1.ContentItem'
+        type: array
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total:
+        type: integer
+    type: object
+  v1.ListTagsResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/v1.TagItem'
+        type: array
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total:
+        type: integer
+    type: object
   v1.ListUsersResponse:
     properties:
       items:
@@ -193,6 +779,13 @@ definitions:
         type: integer
       total:
         type: integer
+    type: object
+  v1.ListVersionsResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/v1.VersionItem'
+        type: array
     type: object
   v1.LoginRequest:
     properties:
@@ -293,6 +886,15 @@ definitions:
           Token is the auth credential bundle granted on successful registration (auto-login).
           Token 为注册成功后自动签发的鉴权凭证集合（自动登录）。
     type: object
+  v1.SetContentTagsRequest:
+    properties:
+      tag_ids:
+        items:
+          type: integer
+        type: array
+    required:
+    - tag_ids
+    type: object
   v1.SettingsEmailTestRequest:
     properties:
       recipient:
@@ -322,8 +924,210 @@ definitions:
       revision:
         type: integer
     type: object
+  v1.StorageMountCheckResponse:
+    properties:
+      checked:
+        type: string
+      error:
+        type: string
+      status:
+        type: string
+    type: object
+  v1.StorageMountCreateRequest:
+    properties:
+      config:
+        type: object
+      driver_name:
+        type: string
+      is_default:
+        type: boolean
+      mount_path:
+        maxLength: 512
+        type: string
+      name:
+        maxLength: 128
+        type: string
+      order_index:
+        type: integer
+      remark:
+        type: string
+    required:
+    - config
+    - driver_name
+    - mount_path
+    - name
+    type: object
+  v1.StorageMountListResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/v1.StorageMountResponse'
+        type: array
+    type: object
+  v1.StorageMountPatchRequest:
+    properties:
+      config:
+        type: object
+      is_default:
+        type: boolean
+      name:
+        type: string
+      order_index:
+        type: integer
+      remark:
+        type: string
+    type: object
+  v1.StorageMountResponse:
+    properties:
+      config:
+        type: object
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      disabled:
+        type: boolean
+      driver_name:
+        type: string
+      id:
+        type: integer
+      is_default:
+        type: boolean
+      last_checked_at:
+        type: string
+      last_error:
+        type: string
+      mount_path:
+        type: string
+      name:
+        type: string
+      order_index:
+        type: integer
+      remark:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  v1.TagDetailResponse:
+    properties:
+      color:
+        type: string
+      content_count:
+        type: integer
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      slug:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  v1.TagItem:
+    properties:
+      color:
+        type: string
+      content_count:
+        type: integer
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      slug:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  v1.TransitionStatusRequest:
+    properties:
+      status:
+        enum:
+        - draft
+        - review
+        - published
+        - archived
+        type: string
+    required:
+    - status
+    type: object
+  v1.UpdateContentRequest:
+    properties:
+      ai_access:
+        enum:
+        - allowed
+        - denied
+        type: string
+      body:
+        type: string
+      cover_attachment_id:
+        type: integer
+      excerpt:
+        type: string
+      metadata:
+        type: object
+      reading_time_minutes:
+        type: integer
+      slug:
+        maxLength: 512
+        type: string
+      title:
+        maxLength: 512
+        type: string
+      type:
+        enum:
+        - article
+        - note
+        - project
+        - experience
+        - reflection
+        - portfolio
+        type: string
+      visibility:
+        enum:
+        - public
+        - member
+        - private
+        type: string
+      word_count:
+        type: integer
+    type: object
+  v1.UpdateTagRequest:
+    properties:
+      color:
+        type: string
+      description:
+        type: string
+      name:
+        maxLength: 64
+        type: string
+      slug:
+        maxLength: 64
+        type: string
+      status:
+        enum:
+        - active
+        - archived
+        type: string
+    type: object
   v1.UpdateUserRequest:
     properties:
+      avatar_attachment_id:
+        minimum: 0
+        type: integer
       email:
         maxLength: 320
         type: string
@@ -405,6 +1209,8 @@ definitions:
     type: object
   v1.UserItem:
     properties:
+      avatar_attachment_id:
+        type: integer
       created_at:
         type: string
       email:
@@ -426,6 +1232,27 @@ definitions:
       username:
         type: string
     type: object
+  v1.VersionItem:
+    properties:
+      body:
+        type: string
+      change_summary:
+        type: string
+      content_id:
+        type: integer
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      excerpt:
+        type: string
+      id:
+        type: integer
+      title:
+        type: string
+      version_number:
+        type: integer
+    type: object
 info:
   contact: {}
   description: 'REST API for Beehive Blog (v1). JSON envelope: code (HTTP-style),
@@ -433,6 +1260,823 @@ info:
   title: Beehive Blog HTTP API
   version: "1.0"
 paths:
+  /api/v1/attachment/categories:
+    get:
+      description: Returns the attachment category tree. Admin only. 中文：返回附件分类树（仅管理员）。
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.AttachmentCategoryListResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: List attachment categories
+      tags:
+      - attachments
+    post:
+      consumes:
+      - application/json
+      description: Creates an attachment category node. Admin only. 中文：创建附件分类节点（仅管理员）。
+      parameters:
+      - description: Category creation request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.AttachmentCategoryCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.AttachmentCategoryResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Create attachment category
+      tags:
+      - attachments
+  /api/v1/attachment/categories/{id}:
+    delete:
+      description: Soft-deletes an attachment category. Admin only. 中文：软删除附件分类（仅管理员）。
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete attachment category
+      tags:
+      - attachments
+    get:
+      description: Returns one attachment category by ID. Admin only. 中文：按 ID 返回附件分类（仅管理员）。
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.AttachmentCategoryResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Get attachment category
+      tags:
+      - attachments
+    patch:
+      consumes:
+      - application/json
+      description: Updates an attachment category. Admin only. 中文：更新附件分类（仅管理员）。
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Category patch request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.AttachmentCategoryPatchRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.AttachmentCategoryResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Patch attachment category
+      tags:
+      - attachments
+  /api/v1/attachments:
+    get:
+      description: Lists attachments with filters. Use page/page_size for offset pagination
+        or cursor/limit for cursor mode. Admin only. 中文：筛选列出附件；page/page_size 为偏移分页，cursor/limit
+        为游标模式（仅管理员）。
+      parameters:
+      - description: Filter by owner user ID
+        in: query
+        name: owner_user_id
+        type: integer
+      - description: Filter by purpose
+        enum:
+        - avatar
+        - content
+        - system
+        - other
+        in: query
+        name: purpose
+        type: string
+      - description: Filter by status
+        enum:
+        - active
+        - hidden
+        - archived
+        in: query
+        name: status
+        type: string
+      - description: Filter by category ID
+        in: query
+        name: category_id
+        type: integer
+      - description: Category filter when category_id omitted
+        enum:
+        - unassigned
+        in: query
+        name: category_mode
+        type: string
+      - description: Search filename
+        in: query
+        name: search
+        type: string
+      - description: Avatar reference filter
+        enum:
+        - referenced
+        - orphan
+        in: query
+        name: reference_status
+        type: string
+      - description: Page number (offset mode)
+        in: query
+        name: page
+        type: integer
+      - description: Page size (offset mode)
+        in: query
+        name: page_size
+        type: integer
+      - description: Cursor ID (cursor mode)
+        in: query
+        name: cursor
+        type: string
+      - description: Limit (cursor mode)
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.AttachmentListResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: List attachments
+      tags:
+      - attachments
+    post:
+      consumes:
+      - multipart/form-data
+      description: Uploads a file via multipart form to local/default storage. Admin
+        only. 中文：通过 multipart 表单上传文件到本地/默认存储（仅管理员）。
+      parameters:
+      - description: File to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: Attachment purpose
+        in: formData
+        name: purpose
+        type: string
+      - description: Access scope
+        enum:
+        - private
+        - public
+        in: formData
+        name: access_scope
+        type: string
+      - description: Owner user ID
+        in: formData
+        name: owner_user_id
+        type: integer
+      - description: 'Category IDs: comma-separated in one field, or repeat category_ids
+          per value'
+        in: formData
+        name: category_ids
+        type: string
+      - description: Storage mount ID
+        in: formData
+        name: storage_mount_id
+        type: integer
+      - description: Original display name
+        in: formData
+        name: original_name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.AttachmentResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Upload attachment (local)
+      tags:
+      - attachments
+  /api/v1/attachments/{id}:
+    delete:
+      description: Soft-deletes an attachment. Use query force=true to delete when
+        referenced. Admin only. 中文：软删除附件；force=true 可强制删除仍被引用的附件（仅管理员）。
+      parameters:
+      - description: Attachment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Force delete even when referenced
+        in: query
+        name: force
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete attachment
+      tags:
+      - attachments
+    get:
+      description: Returns attachment metadata. Public scope without token; admin
+        Bearer returns full metadata including private attachments. 中文：返回附件元数据；公开
+        scope 无需 token，管理员 Bearer 可访问私有附件完整元数据。
+      parameters:
+      - description: Attachment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.AttachmentResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: Get attachment metadata
+      tags:
+      - attachments
+    patch:
+      consumes:
+      - application/json
+      description: Updates mutable attachment metadata. Admin only. 中文：更新附件可变元数据（仅管理员）。
+      parameters:
+      - description: Attachment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Patch request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.AttachmentPatchRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.AttachmentResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Patch attachment
+      tags:
+      - attachments
+  /api/v1/attachments/{id}/categories:
+    put:
+      consumes:
+      - application/json
+      description: Replaces all category bindings for an attachment. Admin only. 中文：替换附件的全部分类绑定（仅管理员）。
+      parameters:
+      - description: Attachment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Category ID list
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.AttachmentCategoryReplaceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Replace attachment categories
+      tags:
+      - attachments
+  /api/v1/attachments/{id}/complete:
+    post:
+      consumes:
+      - application/json
+      description: Marks a presigned remote attachment as ready after client upload.
+        Admin only. 中文：客户端直传完成后将远端附件标记为 ready（仅管理员）。
+      parameters:
+      - description: Attachment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Completion metadata
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.AttachmentCompleteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.AttachmentResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Complete remote attachment upload
+      tags:
+      - attachments
+  /api/v1/attachments/{id}/content:
+    get:
+      description: Streams file bytes or redirects to remote URL. Not JSON envelope.
+        Public attachments accessible without token. 中文：流式返回文件或重定向到远端 URL，非 JSON 包装；公开附件可无
+        token 访问。
+      parameters:
+      - description: Attachment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: File body
+          schema:
+            type: file
+        "302":
+          description: Redirect to remote URL
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: Download attachment content
+      tags:
+      - attachments
+  /api/v1/attachments/{id}/references:
+    get:
+      description: Lists business objects referencing the attachment. Admin only.
+        中文：列出引用该附件的业务对象（仅管理员）。
+      parameters:
+      - description: Attachment ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.AttachmentReferenceListResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: List attachment references
+      tags:
+      - attachments
+  /api/v1/attachments/batch:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Uploads multiple files in one multipart request. Admin only. 中文：单次
+        multipart 请求批量上传文件（仅管理员）。
+      parameters:
+      - description: 'Files to upload (field name: files)'
+        in: formData
+        name: files
+        required: true
+        type: file
+      - description: Attachment purpose
+        in: formData
+        name: purpose
+        type: string
+      - description: Access scope
+        enum:
+        - private
+        - public
+        in: formData
+        name: access_scope
+        type: string
+      - description: Owner user ID
+        in: formData
+        name: owner_user_id
+        type: integer
+      - description: 'Category IDs: comma-separated in one field, or repeat category_ids
+          per value'
+        in: formData
+        name: category_ids
+        type: string
+      - description: Storage mount ID
+        in: formData
+        name: storage_mount_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.AttachmentBatchUploadResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Batch upload attachments (local)
+      tags:
+      - attachments
+  /api/v1/attachments/references:
+    get:
+      description: Lists attachment references, optionally filtered by attachment_id.
+        Admin only. 中文：列出附件引用，可按 attachment_id 筛选（仅管理员）。
+      parameters:
+      - description: Filter by attachment ID
+        in: query
+        name: attachment_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.AttachmentReferenceListResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: List all attachment references
+      tags:
+      - attachments
+  /api/v1/attachments/upload-url:
+    post:
+      consumes:
+      - application/json
+      description: Creates a pending attachment and returns direct-upload URL for
+        S3/OSS. Admin only. 中文：创建 pending 附件并返回 S3/OSS 直传 URL（仅管理员）。
+      parameters:
+      - description: Presign request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.AttachmentPresignRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.AttachmentPresignResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Presign remote attachment upload
+      tags:
+      - attachments
   /api/v1/auth/github/authorize:
     get:
       description: |-
@@ -594,6 +2238,657 @@ paths:
       summary: Get current auth session
       tags:
       - auth
+  /api/v1/contents:
+    get:
+      description: 'Paginated list of contents with optional filters. Without token:
+        data is v1.PublicListContentsResponse (published public only). With admin
+        Bearer: data is v1.ListContentsResponse (all statuses). 中文：无 token 时 data
+        为 PublicListContentsResponse（仅公开已发布）；管理员 Bearer 时 data 为 ListContentsResponse（含草稿等全部状态）。'
+      parameters:
+      - default: 1
+        description: Page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page (default 20, max 100)
+        in: query
+        name: page_size
+        type: integer
+      - description: Filter by content type
+        enum:
+        - article
+        - note
+        - project
+        - experience
+        - reflection
+        - portfolio
+        in: query
+        name: type
+        type: string
+      - description: Filter by status (admin only)
+        enum:
+        - draft
+        - review
+        - published
+        - archived
+        in: query
+        name: status
+        type: string
+      - description: Filter by visibility (admin only)
+        enum:
+        - public
+        - member
+        - private
+        in: query
+        name: visibility
+        type: string
+      - description: Filter by tag ID
+        in: query
+        name: tag_id
+        type: integer
+      - description: Search title or excerpt
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Admin view; anonymous uses PublicListContentsResponse shape
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.ListContentsResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: List contents
+      tags:
+      - contents
+    post:
+      consumes:
+      - application/json
+      description: Creates a new content item. Admin only. 中文：创建新内容（仅管理员）。
+      parameters:
+      - description: Content creation request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.CreateContentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.CreateContentResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Slug conflict
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Create content
+      tags:
+      - contents
+  /api/v1/contents/{id}:
+    delete:
+      description: Soft-deletes a content item. Admin only. 中文：软删除内容（仅管理员）。
+      parameters:
+      - description: Content ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete content
+      tags:
+      - contents
+    get:
+      description: 'Returns a single content by ID. Without token: data is v1.PublicContentDetailResponse.
+        With admin Bearer: data is v1.ContentDetailResponse. 中文：无 token 时 data 为 PublicContentDetailResponse；管理员
+        Bearer 时 data 为 ContentDetailResponse（含草稿等）。'
+      parameters:
+      - description: Content ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Admin view; anonymous uses PublicContentDetailResponse shape
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.ContentDetailResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: Get content detail
+      tags:
+      - contents
+    patch:
+      consumes:
+      - application/json
+      description: Updates a content item's fields. Admin only. 中文：更新内容字段（仅管理员）。
+      parameters:
+      - description: Content ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Content update request (all fields optional)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.UpdateContentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.ContentDetailResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Slug conflict
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Update content
+      tags:
+      - contents
+  /api/v1/contents/{id}/relations:
+    get:
+      description: Lists outgoing relations for a content item. Without token returns
+        only relations to public published contents; with admin Bearer returns all
+        relations. 中文：列出内容的出向关系，无 token 仅返回关联的公开已发布内容，管理员 Bearer 返回全部关系。
+      parameters:
+      - description: Content ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.ListContentRelationsResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: Get content relations
+      tags:
+      - contents
+    post:
+      consumes:
+      - application/json
+      description: Adds a directed relation from source content to target content.
+        Admin only. 中文：添加从源内容到目标内容的有向关系（仅管理员）。
+      parameters:
+      - description: Source content ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Relation creation request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.AddRelationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.AddRelationResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Add content relation
+      tags:
+      - contents
+  /api/v1/contents/{id}/relations/{relationId}:
+    delete:
+      description: Deletes a content relation. Admin only. 中文：删除内容关系（仅管理员）。
+      parameters:
+      - description: Source content ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Relation ID
+        in: path
+        name: relationId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Remove content relation
+      tags:
+      - contents
+  /api/v1/contents/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Transitions a content item's status (e.g., draft → review → published).
+        Admin only. 中文：流转内容状态（如草稿→审核→发布），仅管理员。
+      parameters:
+      - description: Content ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: New status (draft, review, published, archived)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.TransitionStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.ContentDetailResponse'
+              type: object
+        "400":
+          description: Invalid status transition
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Transition content status
+      tags:
+      - contents
+  /api/v1/contents/{id}/tags:
+    get:
+      description: Returns tags attached to a content item. Without token only for
+        public published content; admin Bearer for any content. 中文：返回内容关联的标签；无 token
+        仅公开已发布内容，管理员 Bearer 可访问任意内容。
+      parameters:
+      - description: Content ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: List content tags
+      tags:
+      - contents
+    put:
+      consumes:
+      - application/json
+      description: Replaces all tags on a content item atomically. Admin only. 中文：原子性替换内容的全部标签（仅管理员）。
+      parameters:
+      - description: Content ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Tag ID list
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.SetContentTagsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Set content tags
+      tags:
+      - contents
+  /api/v1/contents/{id}/versions:
+    get:
+      description: Lists all version snapshots for a content item. Admin only. 中文：列出内容的全部版本快照（仅管理员）。
+      parameters:
+      - description: Content ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.ListVersionsResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: List content versions
+      tags:
+      - contents
+    post:
+      consumes:
+      - application/json
+      description: Creates a version snapshot from current content state. Admin only.
+        中文：从当前内容状态创建版本快照（仅管理员）。
+      parameters:
+      - description: Content ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Version creation request (optional change_summary)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.CreateVersionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.CreateVersionResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Create content version
+      tags:
+      - contents
+  /api/v1/file-drivers:
+    get:
+      description: Returns all registered storage driver templates. Admin only. 中文：返回所有已注册的存储驱动模板（仅管理员）。
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.DriverListResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: List storage drivers
+      tags:
+      - file-drivers
+  /api/v1/file-drivers/{name}:
+    get:
+      description: Returns one storage driver template by name. Admin only. 中文：按名称返回单个存储驱动模板（仅管理员）。
+      parameters:
+      - description: Driver name (e.g. local, s3, oss)
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.DriverResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Get storage driver
+      tags:
+      - file-drivers
   /api/v1/settings/email:
     get:
       description: Returns sanitized settings including email SMTP flags without secrets.
@@ -787,6 +3082,547 @@ paths:
       summary: Patch GitHub OAuth2 settings (admin)
       tags:
       - settings
+  /api/v1/storage-mounts:
+    get:
+      description: Returns all storage mount configurations. Admin only. 中文：返回所有存储挂载配置（仅管理员）。
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.StorageMountListResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: List storage mounts
+      tags:
+      - storage-mounts
+    post:
+      consumes:
+      - application/json
+      description: Creates a new storage mount. Admin only. 中文：创建新的存储挂载项（仅管理员）。
+      parameters:
+      - description: Mount creation request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.StorageMountCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.StorageMountResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Create storage mount
+      tags:
+      - storage-mounts
+  /api/v1/storage-mounts/{id}:
+    delete:
+      description: Soft-deletes a storage mount. Admin only. 中文：软删除存储挂载项（仅管理员）。
+      parameters:
+      - description: Mount ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete storage mount
+      tags:
+      - storage-mounts
+    get:
+      description: Returns one storage mount by ID. Admin only. 中文：按 ID 返回单个存储挂载项（仅管理员）。
+      parameters:
+      - description: Mount ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.StorageMountResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Get storage mount
+      tags:
+      - storage-mounts
+    patch:
+      consumes:
+      - application/json
+      description: Updates mutable fields on a storage mount. Admin only. 中文：更新存储挂载项可变字段（仅管理员）。
+      parameters:
+      - description: Mount ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Mount patch request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.StorageMountPatchRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.StorageMountResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Patch storage mount
+      tags:
+      - storage-mounts
+  /api/v1/storage-mounts/{id}/check:
+    post:
+      description: Runs a connectivity check against the mount driver and updates
+        status. Admin only. 中文：对挂载驱动执行连通性检查并更新状态（仅管理员）。
+      parameters:
+      - description: Mount ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.StorageMountCheckResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Check storage mount health
+      tags:
+      - storage-mounts
+  /api/v1/storage-mounts/{id}/disable:
+    post:
+      description: Disables a storage mount. Admin only. 中文：禁用存储挂载项（仅管理员）。
+      parameters:
+      - description: Mount ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.StorageMountResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Disable storage mount
+      tags:
+      - storage-mounts
+  /api/v1/storage-mounts/{id}/enable:
+    post:
+      description: Enables a disabled storage mount. Admin only. 中文：启用已禁用的存储挂载项（仅管理员）。
+      parameters:
+      - description: Mount ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.StorageMountResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Enable storage mount
+      tags:
+      - storage-mounts
+  /api/v1/tags:
+    get:
+      description: 'Paginated list of tags. Without token: active tags only and each
+        TagItem omits status. With admin Bearer: all tags including archived, with
+        status field. 中文：无 token 仅 active 标签且 TagItem 不含 status；管理员 Bearer 含已归档且带
+        status。'
+      parameters:
+      - default: 1
+        description: Page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page (default 20, max 100)
+        in: query
+        name: page_size
+        type: integer
+      - description: Filter by status (admin only)
+        enum:
+        - active
+        - archived
+        in: query
+        name: status
+        type: string
+      - description: Search name or slug
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Public items omit status in TagItem
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.ListTagsResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: List tags
+      tags:
+      - tags
+    post:
+      consumes:
+      - application/json
+      description: Creates a new tag. Admin only. 中文：创建新标签（仅管理员）。
+      parameters:
+      - description: Tag creation request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.CreateTagRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.CreateTagResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Name or slug conflict
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Create tag
+      tags:
+      - tags
+  /api/v1/tags/{id}:
+    delete:
+      description: Soft-deletes a tag when not referenced by content. Admin only.
+        中文：在无内容引用时软删除标签（仅管理员）。
+      parameters:
+      - description: Tag ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Tag still referenced
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete tag
+      tags:
+      - tags
+    get:
+      description: 'Returns a tag by ID. Without token: active tag only, TagItem omits
+        status. With admin Bearer: full TagDetailResponse including status. 中文：无 token
+        仅 active 且 TagItem 不含 status；管理员 Bearer 返回完整 TagDetailResponse（含 status）。'
+      parameters:
+      - description: Tag ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.TagDetailResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: Get tag detail
+      tags:
+      - tags
+    patch:
+      consumes:
+      - application/json
+      description: Updates a tag. Admin only. 中文：更新标签（仅管理员）。
+      parameters:
+      - description: Tag ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Tag update request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.UpdateTagRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.TagDetailResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Update tag
+      tags:
+      - tags
   /api/v1/users:
     get:
       description: Paginated list with optional status, role and search filters. 中文：分页用户列表，支持状态、角色和搜索筛选。

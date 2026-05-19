@@ -88,6 +88,18 @@ func (t *TagsController) list(ctx context.Context, req *v1.ListTagsRequest, admi
 
 // List handles GET /api/v1/tags.
 // List 处理 GET /api/v1/tags。
+//
+//	@Summary		List tags
+//	@Description	Paginated list of tags. Without token: active tags only and each TagItem omits status. With admin Bearer: all tags including archived, with status field. 中文：无 token 仅 active 标签且 TagItem 不含 status；管理员 Bearer 含已归档且带 status。
+//	@Tags			tags
+//	@Produce		json
+//	@Param			page		query		int		false	"Page number (default 1)"				default(1)
+//	@Param			page_size	query		int		false	"Items per page (default 20, max 100)"	default(20)
+//	@Param			status		query		string	false	"Filter by status (admin only)"			Enums(active, archived)
+//	@Param			search		query		string	false	"Search name or slug"
+//	@Success		200			{object}	common.BaseResponse{data=v1.ListTagsResponse}	"Public items omit status in TagItem"
+//	@Failure		400			{object}	common.BaseResponse
+//	@Router			/api/v1/tags [get]
 func (t *TagsController) List(ctx *gin.Context) {
 	var req v1.ListTagsRequest
 	if err := ctx.ShouldBindQuery(&req); err != nil {
@@ -121,6 +133,20 @@ func (t *TagsController) create(ctx context.Context, req *v1.CreateTagRequest) (
 
 // Create handles POST /api/v1/tags (admin).
 // Create 处理 POST /api/v1/tags（管理员）。
+//
+//	@Summary		Create tag
+//	@Description	Creates a new tag. Admin only. 中文：创建新标签（仅管理员）。
+//	@Tags			tags
+//	@Security		BearerAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			body	body		v1.CreateTagRequest	true	"Tag creation request"
+//	@Success		200		{object}	common.BaseResponse{data=v1.CreateTagResponse}
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		403		{object}	common.BaseResponse
+//	@Failure		409		{object}	common.BaseResponse	"Name or slug conflict"
+//	@Router			/api/v1/tags [post]
 func (t *TagsController) Create(ctx *gin.Context) {
 	var req v1.CreateTagRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -165,6 +191,16 @@ func (t *TagsController) get(ctx context.Context, id int64, admin bool) (*v1.Tag
 
 // Get handles GET /api/v1/tags/:id.
 // Get 处理 GET /api/v1/tags/:id。
+//
+//	@Summary		Get tag detail
+//	@Description	Returns a tag by ID. Without token: active tag only, TagItem omits status. With admin Bearer: full TagDetailResponse including status. 中文：无 token 仅 active 且 TagItem 不含 status；管理员 Bearer 返回完整 TagDetailResponse（含 status）。
+//	@Tags			tags
+//	@Produce		json
+//	@Param			id	path		int	true	"Tag ID"
+//	@Success		200	{object}	common.BaseResponse{data=v1.TagDetailResponse}
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		404	{object}	common.BaseResponse
+//	@Router			/api/v1/tags/{id} [get]
 func (t *TagsController) Get(ctx *gin.Context) {
 	id, ok := parseTagID(ctx)
 	if !ok {
@@ -224,6 +260,22 @@ func (t *TagsController) update(ctx context.Context, id int64, req *v1.UpdateTag
 
 // Update handles PATCH /api/v1/tags/:id (admin).
 // Update 处理 PATCH /api/v1/tags/:id（管理员）。
+//
+//	@Summary		Update tag
+//	@Description	Updates a tag. Admin only. 中文：更新标签（仅管理员）。
+//	@Tags			tags
+//	@Security		BearerAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		int					true	"Tag ID"
+//	@Param			body	body		v1.UpdateTagRequest	true	"Tag update request"
+//	@Success		200		{object}	common.BaseResponse{data=v1.TagDetailResponse}
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		403		{object}	common.BaseResponse
+//	@Failure		404		{object}	common.BaseResponse
+//	@Failure		409		{object}	common.BaseResponse
+//	@Router			/api/v1/tags/{id} [patch]
 func (t *TagsController) Update(ctx *gin.Context) {
 	id, ok := parseTagID(ctx)
 	if !ok {
@@ -269,6 +321,20 @@ func (t *TagsController) del(ctx context.Context, id int64) error {
 
 // Delete handles DELETE /api/v1/tags/:id (admin).
 // Delete 处理 DELETE /api/v1/tags/:id（管理员）。
+//
+//	@Summary		Delete tag
+//	@Description	Soft-deletes a tag when not referenced by content. Admin only. 中文：在无内容引用时软删除标签（仅管理员）。
+//	@Tags			tags
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Param			id	path		int	true	"Tag ID"
+//	@Success		200	{object}	common.BaseResponse
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		403	{object}	common.BaseResponse
+//	@Failure		404	{object}	common.BaseResponse
+//	@Failure		409	{object}	common.BaseResponse	"Tag still referenced"
+//	@Router			/api/v1/tags/{id} [delete]
 func (t *TagsController) Delete(ctx *gin.Context) {
 	id, ok := parseTagID(ctx)
 	if !ok {

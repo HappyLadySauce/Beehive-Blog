@@ -20,6 +20,28 @@ import (
 
 // List handles GET /api/v1/attachments (admin).
 // List 处理 GET /api/v1/attachments（管理员）。
+//
+//	@Summary		List attachments
+//	@Description	Lists attachments with filters. Use page/page_size for offset pagination or cursor/limit for cursor mode. Admin only. 中文：筛选列出附件；page/page_size 为偏移分页，cursor/limit 为游标模式（仅管理员）。
+//	@Tags			attachments
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Param			owner_user_id		query		int		false	"Filter by owner user ID"
+//	@Param			purpose				query		string	false	"Filter by purpose"			Enums(avatar, content, system, other)
+//	@Param			status				query		string	false	"Filter by status"			Enums(active, hidden, archived)
+//	@Param			category_id			query		int		false	"Filter by category ID"
+//	@Param			category_mode		query		string	false	"Category filter when category_id omitted"	Enums(unassigned)
+//	@Param			search				query		string	false	"Search filename"
+//	@Param			reference_status	query		string	false	"Avatar reference filter"		Enums(referenced, orphan)
+//	@Param			page				query		int		false	"Page number (offset mode)"
+//	@Param			page_size			query		int		false	"Page size (offset mode)"
+//	@Param			cursor				query		string	false	"Cursor ID (cursor mode)"
+//	@Param			limit				query		int		false	"Limit (cursor mode)"
+//	@Success		200					{object}	common.BaseResponse{data=v1.AttachmentListResponse}
+//	@Failure		400					{object}	common.BaseResponse
+//	@Failure		401					{object}	common.BaseResponse
+//	@Failure		403					{object}	common.BaseResponse
+//	@Router			/api/v1/attachments [get]
 func (h *AttachmentsController) List(ctx *gin.Context) {
 	ownerUserID, err := optionalInt64Query(ctx, "owner_user_id")
 	if err != nil {
@@ -100,6 +122,17 @@ func (h *AttachmentsController) List(ctx *gin.Context) {
 
 // GetAttachment handles GET /api/v1/attachments/:id.
 // GetAttachment 处理 GET /api/v1/attachments/:id。
+//
+//	@Summary		Get attachment metadata
+//	@Description	Returns attachment metadata. Public scope without token; admin Bearer returns full metadata including private attachments. 中文：返回附件元数据；公开 scope 无需 token，管理员 Bearer 可访问私有附件完整元数据。
+//	@Tags			attachments
+//	@Produce		json
+//	@Param			id	path		int	true	"Attachment ID"
+//	@Success		200	{object}	common.BaseResponse{data=v1.AttachmentResponse}
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		404	{object}	common.BaseResponse
+//	@Router			/api/v1/attachments/{id} [get]
 func (h *AttachmentsController) GetAttachment(ctx *gin.Context) {
 	id, ok := parseIDParam(ctx)
 	if !ok {
@@ -134,6 +167,18 @@ func (h *AttachmentsController) GetAttachment(ctx *gin.Context) {
 
 // GetAttachmentContent handles GET /api/v1/attachments/:id/content.
 // GetAttachmentContent 处理 GET /api/v1/attachments/:id/content。
+//
+//	@Summary		Download attachment content
+//	@Description	Streams file bytes or redirects to remote URL. Not JSON envelope. Public attachments accessible without token. 中文：流式返回文件或重定向到远端 URL，非 JSON 包装；公开附件可无 token 访问。
+//	@Tags			attachments
+//	@Produce		application/octet-stream
+//	@Param			id	path	int	true	"Attachment ID"
+//	@Success		200	{file}	file	"File body"
+//	@Success		302	{string}	string	"Redirect to remote URL"
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		404	{object}	common.BaseResponse
+//	@Router			/api/v1/attachments/{id}/content [get]
 func (h *AttachmentsController) GetAttachmentContent(ctx *gin.Context) {
 	id, ok := parseIDParam(ctx)
 	if !ok {

@@ -14,6 +14,16 @@ import (
 
 // ListDrivers returns all available storage driver templates.
 // ListDrivers 返回所有可用的存储驱动模板。
+//
+//	@Summary		List storage drivers
+//	@Description	Returns all registered storage driver templates. Admin only. 中文：返回所有已注册的存储驱动模板（仅管理员）。
+//	@Tags			file-drivers
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Success		200	{object}	common.BaseResponse{data=v1.DriverListResponse}
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		403	{object}	common.BaseResponse
+//	@Router			/api/v1/file-drivers [get]
 func (h *FileDriversController) ListDrivers(ctx *gin.Context) {
 	rows, err := h.driverStore.ListDrivers(ctx.Request.Context())
 	if err != nil {
@@ -29,6 +39,19 @@ func (h *FileDriversController) ListDrivers(ctx *gin.Context) {
 
 // GetDriver returns a single storage driver template by name.
 // GetDriver 按名称返回单个存储驱动模板。
+//
+//	@Summary		Get storage driver
+//	@Description	Returns one storage driver template by name. Admin only. 中文：按名称返回单个存储驱动模板（仅管理员）。
+//	@Tags			file-drivers
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Param			name	path		string	true	"Driver name (e.g. local, s3, oss)"
+//	@Success		200		{object}	common.BaseResponse{data=v1.DriverResponse}
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		403		{object}	common.BaseResponse
+//	@Failure		404		{object}	common.BaseResponse
+//	@Router			/api/v1/file-drivers/{name} [get]
 func (h *FileDriversController) GetDriver(ctx *gin.Context) {
 	name := ctx.Param("name")
 	row, err := h.driverStore.GetDriver(ctx.Request.Context(), name)

@@ -13,6 +13,18 @@ import (
 
 // GetReferences handles GET /api/v1/attachments/:id/references (admin).
 // GetReferences 处理 GET /api/v1/attachments/:id/references（管理员）。
+//
+//	@Summary		List attachment references
+//	@Description	Lists business objects referencing the attachment. Admin only. 中文：列出引用该附件的业务对象（仅管理员）。
+//	@Tags			attachments
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Param			id	path		int	true	"Attachment ID"
+//	@Success		200	{object}	common.BaseResponse{data=v1.AttachmentReferenceListResponse}
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		401	{object}	common.BaseResponse
+//	@Failure		403	{object}	common.BaseResponse
+//	@Router			/api/v1/attachments/{id}/references [get]
 func (h *AttachmentsController) GetReferences(ctx *gin.Context) {
 	id, ok := parseIDParam(ctx)
 	if !ok {
@@ -28,6 +40,18 @@ func (h *AttachmentsController) GetReferences(ctx *gin.Context) {
 
 // ListReferences handles GET /api/v1/attachments/references (admin).
 // ListReferences 处理 GET /api/v1/attachments/references（管理员）。
+//
+//	@Summary		List all attachment references
+//	@Description	Lists attachment references, optionally filtered by attachment_id. Admin only. 中文：列出附件引用，可按 attachment_id 筛选（仅管理员）。
+//	@Tags			attachments
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Param			attachment_id	query		int	false	"Filter by attachment ID"
+//	@Success		200				{object}	common.BaseResponse{data=v1.AttachmentReferenceListResponse}
+//	@Failure		400				{object}	common.BaseResponse
+//	@Failure		401				{object}	common.BaseResponse
+//	@Failure		403				{object}	common.BaseResponse
+//	@Router			/api/v1/attachments/references [get]
 func (h *AttachmentsController) ListReferences(ctx *gin.Context) {
 	attachmentID, err := optionalInt64Query(ctx, "attachment_id")
 	if err != nil {

@@ -55,6 +55,16 @@ func (c *ContentsController) get(ctx context.Context, id int64, admin bool) (int
 
 // Get handles GET /api/v1/contents/:id.
 // Get 处理 GET /api/v1/contents/:id。
+//
+//	@Summary		Get content detail
+//	@Description	Returns a single content by ID. Without token: data is v1.PublicContentDetailResponse. With admin Bearer: data is v1.ContentDetailResponse. 中文：无 token 时 data 为 PublicContentDetailResponse；管理员 Bearer 时 data 为 ContentDetailResponse（含草稿等）。
+//	@Tags			contents
+//	@Produce		json
+//	@Param			id	path		int	true	"Content ID"
+//	@Success		200	{object}	common.BaseResponse{data=v1.ContentDetailResponse}	"Admin view; anonymous uses PublicContentDetailResponse shape"
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		404	{object}	common.BaseResponse
+//	@Router			/api/v1/contents/{id} [get]
 func (c *ContentsController) Get(ctx *gin.Context) {
 	id, ok := parseContentID(ctx)
 	if !ok {
@@ -144,6 +154,22 @@ func (c *ContentsController) update(ctx context.Context, id int64, req *v1.Updat
 
 // Update handles PATCH /api/v1/contents/:id (admin).
 // Update 处理 PATCH /api/v1/contents/:id（管理员）。
+//
+//	@Summary		Update content
+//	@Description	Updates a content item's fields. Admin only. 中文：更新内容字段（仅管理员）。
+//	@Tags			contents
+//	@Security		BearerAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		int						true	"Content ID"
+//	@Param			body	body		v1.UpdateContentRequest	true	"Content update request (all fields optional)"
+//	@Success		200		{object}	common.BaseResponse{data=v1.ContentDetailResponse}
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		403		{object}	common.BaseResponse
+//	@Failure		404		{object}	common.BaseResponse
+//	@Failure		409		{object}	common.BaseResponse	"Slug conflict"
+//	@Router			/api/v1/contents/{id} [patch]
 func (c *ContentsController) Update(ctx *gin.Context) {
 	id, ok := parseContentID(ctx)
 	if !ok {

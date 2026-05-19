@@ -66,6 +66,16 @@ func (c *ContentsController) getRelations(ctx context.Context, contentID int64, 
 
 // GetRelations handles GET /api/v1/contents/:id/relations.
 // GetRelations 处理 GET /api/v1/contents/:id/relations。
+//
+//	@Summary		Get content relations
+//	@Description	Lists outgoing relations for a content item. Without token returns only relations to public published contents; with admin Bearer returns all relations. 中文：列出内容的出向关系，无 token 仅返回关联的公开已发布内容，管理员 Bearer 返回全部关系。
+//	@Tags			contents
+//	@Produce		json
+//	@Param			id	path		int	true	"Content ID"
+//	@Success		200	{object}	common.BaseResponse{data=v1.ListContentRelationsResponse}
+//	@Failure		400	{object}	common.BaseResponse
+//	@Failure		404	{object}	common.BaseResponse
+//	@Router			/api/v1/contents/{id}/relations [get]
 func (c *ContentsController) GetRelations(ctx *gin.Context) {
 	id, ok := parseContentID(ctx)
 	if !ok {
@@ -136,6 +146,21 @@ func (c *ContentsController) addRelation(ctx context.Context, contentID int64, r
 
 // AddRelation handles POST /api/v1/contents/:id/relations (admin).
 // AddRelation 处理 POST /api/v1/contents/:id/relations（管理员）。
+//
+//	@Summary		Add content relation
+//	@Description	Adds a directed relation from source content to target content. Admin only. 中文：添加从源内容到目标内容的有向关系（仅管理员）。
+//	@Tags			contents
+//	@Security		BearerAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		int					true	"Source content ID"
+//	@Param			body	body		v1.AddRelationRequest	true	"Relation creation request"
+//	@Success		200		{object}	common.BaseResponse{data=v1.AddRelationResponse}
+//	@Failure		400		{object}	common.BaseResponse
+//	@Failure		401		{object}	common.BaseResponse
+//	@Failure		403		{object}	common.BaseResponse
+//	@Failure		404		{object}	common.BaseResponse
+//	@Router			/api/v1/contents/{id}/relations [post]
 func (c *ContentsController) AddRelation(ctx *gin.Context) {
 	id, ok := parseContentID(ctx)
 	if !ok {
@@ -169,6 +194,20 @@ func (c *ContentsController) removeRelation(ctx context.Context, contentID int64
 
 // RemoveRelation handles DELETE /api/v1/contents/:id/relations/:relationId (admin).
 // RemoveRelation 处理 DELETE /api/v1/contents/:id/relations/:relationId（管理员）。
+//
+//	@Summary		Remove content relation
+//	@Description	Deletes a content relation. Admin only. 中文：删除内容关系（仅管理员）。
+//	@Tags			contents
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Param			id			path		int	true	"Source content ID"
+//	@Param			relationId	path		int	true	"Relation ID"
+//	@Success		200			{object}	common.BaseResponse
+//	@Failure		400			{object}	common.BaseResponse
+//	@Failure		401			{object}	common.BaseResponse
+//	@Failure		403			{object}	common.BaseResponse
+//	@Failure		404			{object}	common.BaseResponse
+//	@Router			/api/v1/contents/{id}/relations/{relationId} [delete]
 func (c *ContentsController) RemoveRelation(ctx *gin.Context) {
 	contentID, ok := parseContentID(ctx)
 	if !ok {
