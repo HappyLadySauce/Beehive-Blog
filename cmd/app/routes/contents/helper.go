@@ -1,15 +1,16 @@
 package contents
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgconn"
 
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/errcode"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
 )
 
@@ -143,7 +144,8 @@ func validStatusTransition(from, to string) bool {
 // mapContentCrudUniqueViolation maps a PostgreSQL unique-constraint violation to a public error.
 // mapContentCrudUniqueViolation 将 PostgreSQL 唯一约束冲突映射为对外错误。
 func mapContentCrudUniqueViolation(err error) error {
-	if errcode.IsUniqueViolation(err) {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 		return common.NewConflict("content slug is already taken for this type", err)
 	}
 	return common.NewInternal("failed to create content", err)

@@ -1,15 +1,16 @@
 package tags
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgconn"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/errcode"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
 )
 
@@ -57,7 +58,8 @@ func toPublicTagItem(t model.Tag) v1.TagItem {
 // mapTagCrudUniqueViolation maps a PostgreSQL unique-constraint violation to a public error.
 // mapTagCrudUniqueViolation 将 PostgreSQL 唯一约束冲突映射为对外错误。
 func mapTagCrudUniqueViolation(err error, resource string) error {
-	if errcode.IsUniqueViolation(err) {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 		msg := "tag slug is already taken"
 		if resource != "" {
 			msg = resource + " slug is already taken"
