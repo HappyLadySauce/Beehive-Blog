@@ -41,9 +41,8 @@ type TagItem struct {
 	Color        *string    `json:"color,omitempty"`
 	Status       string     `json:"status"`
 	ContentCount int64      `json:"content_count,omitempty"`
-	CreatedAt    time.Time  `json:"created_at"`
-	UpdatedAt    time.Time  `json:"updated_at"`
-	DeletedAt    *time.Time `json:"deleted_at,omitempty"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 // ListTagsResponse wraps the paginated tag result set.

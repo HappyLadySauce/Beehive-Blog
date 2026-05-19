@@ -14,7 +14,7 @@ import (
 
 // get returns a single content by ID.
 // get 根据 ID 返回单个内容。
-func (c *ContentsController) get(ctx context.Context, id int64, admin bool) (*v1.ContentDetailResponse, error) {
+func (c *ContentsController) get(ctx context.Context, id int64, admin bool) (interface{}, error) {
 	query := c.svc.DB.WithContext(ctx).Model(&model.Content{}).Where("id = ?", id)
 	if !admin {
 		query = query.Where("status = ? AND visibility = ?", "published", "public")
@@ -25,16 +25,28 @@ func (c *ContentsController) get(ctx context.Context, id int64, admin bool) (*v1
 		return nil, common.NewNotFound("content not found", err)
 	}
 
-	item := toContentItem(content)
 	var user model.User
 	if err := c.svc.DB.WithContext(ctx).Select("username").First(&user, content.AuthorID).Error; err == nil {
-		item.AuthorUsername = user.Username
+		// authorUsername used below in both branches.
 	}
-	item.Tags = loadContentTags(ctx, c, content.ID)
 
 	if !admin {
-		c.svc.DB.WithContext(ctx).Model(&content).UpdateColumn("view_count", content.ViewCount+1)
+		c.svc.DB.WithContext(ctx).
+			Exec("UPDATE content.contents SET view_count = view_count + 1 WHERE id = ?", id)
+
+		item := toPublicContentItem(content)
+		item.AuthorUsername = user.Username
+		item.Tags = loadContentTags(ctx, c, content.ID)
+
+		return &v1.PublicContentDetailResponse{
+			PublicContentItem: item,
+			Body:              content.Body,
+		}, nil
 	}
+
+	item := toContentItem(content)
+	item.AuthorUsername = user.Username
+	item.Tags = loadContentTags(ctx, c, content.ID)
 
 	return &v1.ContentDetailResponse{
 		ContentItem: item,
@@ -130,13 +142,21 @@ func (c *ContentsController) update(ctx context.Context, id int64, req *v1.Updat
 	}
 
 	if len(updates) == 0 {
-		return c.get(ctx, id, true)
+		resp, err := c.get(ctx, id, true)
+		if err != nil {
+			return nil, err
+		}
+		return resp.(*v1.ContentDetailResponse), nil
 	}
 
 	if err := c.svc.DB.WithContext(ctx).Model(&content).Updates(updates).Error; err != nil {
 		return nil, mapContentCrudUniqueViolation(err)
 	}
-	return c.get(ctx, id, true)
+	resp, err := c.get(ctx, id, true)
+	if err != nil {
+		return nil, err
+	}
+	return resp.(*v1.ContentDetailResponse), nil
 }
 
 // Update handles PATCH /api/v1/contents/:id (admin).

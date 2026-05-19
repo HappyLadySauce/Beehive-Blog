@@ -14,8 +14,8 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
 )
 
-// create creates a new content row.
-// create 创建新内容行。
+// create creates a new content row inside a transaction.
+// create 在事务中创建新内容行。
 func (c *ContentsController) create(ctx context.Context, authorID int64, req *v1.CreateContentRequest) (*v1.CreateContentResponse, error) {
 	status := "draft"
 	if req.Status != nil && *req.Status != "" {
@@ -50,6 +50,28 @@ func (c *ContentsController) create(ctx context.Context, authorID int64, req *v1
 		publishedAt = &now
 	}
 
+	tx := c.svc.DB.WithContext(ctx).Begin()
+	if tx.Error != nil {
+		return nil, common.NewInternal("failed to begin transaction", tx.Error)
+	}
+
+	// Validate slug uniqueness inside the transaction.
+	// 在事务内校验 slug 唯一性。
+	var existing int64
+	if err := tx.Model(&model.Content{}).
+		Where("type = ? AND slug = ? AND deleted_at IS NULL", req.Type, req.Slug).
+		Count(&existing).Error; err != nil {
+		tx.Rollback()
+		return nil, common.NewInternal("failed to validate slug", err)
+	}
+	if existing > 0 {
+		tx.Rollback()
+		return nil, common.NewConflict(
+			fmt.Sprintf("slug %q is already taken for type %q", req.Slug, req.Type),
+			fmt.Errorf("slug conflict: %s/%s", req.Type, req.Slug),
+		)
+	}
+
 	content := model.Content{
 		Type:               req.Type,
 		Title:              req.Title,
@@ -67,8 +89,12 @@ func (c *ContentsController) create(ctx context.Context, authorID int64, req *v1
 		Metadata:           metadata,
 	}
 
-	if err := c.svc.DB.WithContext(ctx).Create(&content).Error; err != nil {
+	if err := tx.Create(&content).Error; err != nil {
+		tx.Rollback()
 		return nil, mapContentCrudUniqueViolation(err)
+	}
+	if err := tx.Commit().Error; err != nil {
+		return nil, common.NewInternal("failed to commit content creation", err)
 	}
 	return &v1.CreateContentResponse{ID: content.ID}, nil
 }
@@ -85,19 +111,6 @@ func (c *ContentsController) Create(ctx *gin.Context) {
 	claims := middleware.GetClaims(ctx)
 	if claims == nil {
 		common.Fail(ctx, common.NewUnauthorized("authentication required", fmt.Errorf("no claims")))
-		return
-	}
-
-	// Validate slug uniqueness.
-	// 校验 slug 唯一性。
-	var existing int64
-	c.svc.DB.WithContext(ctx.Request.Context()).Model(&model.Content{}).
-		Where("type = ? AND slug = ? AND deleted_at IS NULL", req.Type, req.Slug).Count(&existing)
-	if existing > 0 {
-		common.Fail(ctx, common.NewConflict(
-			fmt.Sprintf("slug %q is already taken for type %q", req.Slug, req.Type),
-			fmt.Errorf("slug conflict: %s/%s", req.Type, req.Slug),
-		))
 		return
 	}
 

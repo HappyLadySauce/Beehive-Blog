@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
@@ -13,9 +14,13 @@ import (
 
 // getContentTags returns tags attached to a content item.
 // getContentTags 返回内容所关联的标签。
-func (c *ContentsController) getContentTags(ctx context.Context, contentID int64) ([]v1.TagItem, error) {
+func (c *ContentsController) getContentTags(ctx context.Context, contentID int64, admin bool) ([]v1.TagItem, error) {
+	existQuery := c.svc.DB.WithContext(ctx).Model(&model.Content{}).Where("id = ?", contentID)
+	if !admin {
+		existQuery = existQuery.Where("status = ? AND visibility = ?", "published", "public")
+	}
 	var count int64
-	if err := c.svc.DB.WithContext(ctx).Model(&model.Content{}).Where("id = ?", contentID).Count(&count).Error; err != nil || count == 0 {
+	if err := existQuery.Count(&count).Error; err != nil || count == 0 {
 		return nil, common.NewNotFound("content not found", fmt.Errorf("content %d not found", contentID))
 	}
 
@@ -33,7 +38,9 @@ func (c *ContentsController) GetContentTags(ctx *gin.Context) {
 	if !ok {
 		return
 	}
-	tags, err := c.getContentTags(ctx.Request.Context(), id)
+	claims := middleware.GetClaims(ctx)
+	admin := claims != nil && claims.Role == "admin"
+	tags, err := c.getContentTags(ctx.Request.Context(), id, admin)
 	if err != nil {
 		common.Fail(ctx, err)
 		return
@@ -51,7 +58,9 @@ func (c *ContentsController) setContentTags(ctx context.Context, contentID int64
 
 	if len(req.TagIDs) > 0 {
 		var tagCount int64
-		c.svc.DB.WithContext(ctx).Model(&model.Tag{}).Where("id IN ?", req.TagIDs).Count(&tagCount)
+		if err := c.svc.DB.WithContext(ctx).Model(&model.Tag{}).Where("id IN ?", req.TagIDs).Count(&tagCount).Error; err != nil {
+			return common.NewInternal("failed to validate tag IDs", err)
+		}
 		if tagCount != int64(len(req.TagIDs)) {
 			return common.NewBadRequest("one or more tag IDs do not exist", fmt.Errorf("tag validation failed"))
 		}

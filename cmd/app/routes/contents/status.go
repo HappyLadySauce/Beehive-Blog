@@ -21,7 +21,11 @@ func (c *ContentsController) transitionStatus(ctx context.Context, id int64, req
 	}
 
 	if content.Status == req.Status {
-		return c.get(ctx, id, true)
+		resp, err := c.get(ctx, id, true)
+		if err != nil {
+			return nil, err
+		}
+		return resp.(*v1.ContentDetailResponse), nil
 	}
 
 	if !validStatusTransition(content.Status, req.Status) {
@@ -41,7 +45,11 @@ func (c *ContentsController) transitionStatus(ctx context.Context, id int64, req
 	if err := c.svc.DB.WithContext(ctx).Model(&content).Updates(updates).Error; err != nil {
 		return nil, common.NewInternal("failed to update content status", err)
 	}
-	return c.get(ctx, id, true)
+	resp, err := c.get(ctx, id, true)
+	if err != nil {
+		return nil, err
+	}
+	return resp.(*v1.ContentDetailResponse), nil
 }
 
 // TransitionStatus handles PATCH /api/v1/contents/:id/status (admin).

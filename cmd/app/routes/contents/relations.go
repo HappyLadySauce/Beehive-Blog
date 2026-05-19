@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
@@ -13,9 +14,13 @@ import (
 
 // getRelations lists outgoing relations for a content item.
 // getRelations 列出某个内容的出向关系。
-func (c *ContentsController) getRelations(ctx context.Context, contentID int64) (*v1.ListContentRelationsResponse, error) {
+func (c *ContentsController) getRelations(ctx context.Context, contentID int64, admin bool) (*v1.ListContentRelationsResponse, error) {
+	existQuery := c.svc.DB.WithContext(ctx).Model(&model.Content{}).Where("id = ?", contentID)
+	if !admin {
+		existQuery = existQuery.Where("status = ? AND visibility = ?", "published", "public")
+	}
 	var count int64
-	if err := c.svc.DB.WithContext(ctx).Model(&model.Content{}).Where("id = ?", contentID).Count(&count).Error; err != nil || count == 0 {
+	if err := existQuery.Count(&count).Error; err != nil || count == 0 {
 		return nil, common.NewNotFound("content not found", fmt.Errorf("content %d not found", contentID))
 	}
 
@@ -26,6 +31,13 @@ func (c *ContentsController) getRelations(ctx context.Context, contentID int64) 
 		Find(&relations).Error; err != nil {
 		return nil, common.NewInternal("failed to list relations", err)
 	}
+
+	// Batch-load target content summaries. / 批量加载目标内容摘要。
+	targetIDs := make([]int64, len(relations))
+	for i, rel := range relations {
+		targetIDs[i] = rel.TargetContentID
+	}
+	targetMap := batchLoadTargets(ctx, c, uniqueInt64(targetIDs), admin)
 
 	items := make([]v1.ContentRelationItem, len(relations))
 	for i, rel := range relations {
@@ -38,11 +50,10 @@ func (c *ContentsController) getRelations(ctx context.Context, contentID int64) 
 			SortOrder:       rel.SortOrder,
 			CreatedAt:       rel.CreatedAt,
 		}
-		var target model.Content
-		if err := c.svc.DB.WithContext(ctx).Select("title, type, slug").First(&target, rel.TargetContentID).Error; err == nil {
-			item.TargetTitle = target.Title
-			item.TargetType = target.Type
-			item.TargetSlug = target.Slug
+		if tgt, ok := targetMap[rel.TargetContentID]; ok {
+			item.TargetTitle = tgt.Title
+			item.TargetType = tgt.Type
+			item.TargetSlug = tgt.Slug
 		}
 		items[i] = item
 	}
@@ -57,7 +68,9 @@ func (c *ContentsController) GetRelations(ctx *gin.Context) {
 	if !ok {
 		return
 	}
-	resp, err := c.getRelations(ctx.Request.Context(), id)
+	claims := middleware.GetClaims(ctx)
+	admin := claims != nil && claims.Role == "admin"
+	resp, err := c.getRelations(ctx.Request.Context(), id, admin)
 	if err != nil {
 		common.Fail(ctx, err)
 		return
@@ -161,4 +174,43 @@ func (c *ContentsController) RemoveRelation(ctx *gin.Context) {
 		return
 	}
 	common.Success(ctx, nil)
+}
+
+// batchLoadTargets loads title/type/slug for target content IDs in one query.
+// batchLoadTargets 一次查询批量加载目标内容的标题/类型/slug。
+func batchLoadTargets(ctx context.Context, ctrl *ContentsController, ids []int64, admin bool) map[int64]struct {
+	Title string
+	Type  string
+	Slug  string
+} {
+	if len(ids) == 0 {
+		return nil
+	}
+	query := ctrl.svc.DB.WithContext(ctx).Model(&model.Content{}).Where("id IN ?", ids)
+	if !admin {
+		query = query.Where("status = ? AND visibility = ?", "published", "public")
+	}
+	type row struct {
+		ID    int64
+		Title string
+		Type  string
+		Slug  string
+	}
+	var rows []row
+	if err := query.Select("id, title, type, slug").Find(&rows).Error; err != nil {
+		return nil
+	}
+	m := make(map[int64]struct {
+		Title string
+		Type  string
+		Slug  string
+	}, len(rows))
+	for _, r := range rows {
+		m[r.ID] = struct {
+			Title string
+			Type  string
+			Slug  string
+		}{Title: r.Title, Type: r.Type, Slug: r.Slug}
+	}
+	return m
 }

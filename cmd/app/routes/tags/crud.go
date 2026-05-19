@@ -7,7 +7,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
@@ -15,7 +14,7 @@ import (
 
 // list queries tags with pagination and optional filters.
 // list 查询标签列表（分页+可选筛选）。
-func (t *TagsController) list(ctx context.Context, req *v1.ListTagsRequest, admin bool) (*v1.ListTagsResponse, error) {
+func (t *TagsController) list(ctx context.Context, req *v1.ListTagsRequest, admin bool) (interface{}, error) {
 	page, pageSize := req.Page, req.PageSize
 	if page < 1 {
 		page = 1
@@ -29,12 +28,13 @@ func (t *TagsController) list(ctx context.Context, req *v1.ListTagsRequest, admi
 		pattern := "%" + strings.ToLower(req.Search) + "%"
 		query = query.Where("LOWER(name) LIKE ? OR LOWER(slug) LIKE ?", pattern, pattern)
 	}
-	if !admin || req.Status != "" {
-		status := req.Status
-		if !admin && status == "" {
-			status = "active"
-		}
-		query = query.Where("status = ?", status)
+
+	// Non-admin always sees active tags only; admin can filter by status.
+	// 非管理员仅看到 active 标签；管理员可按状态筛选。
+	if !admin {
+		query = query.Where("status = ?", "active")
+	} else if req.Status != "" {
+		query = query.Where("status = ?", req.Status)
 	}
 
 	var total int64
@@ -43,16 +43,36 @@ func (t *TagsController) list(ctx context.Context, req *v1.ListTagsRequest, admi
 	}
 
 	var tags []model.Tag
-	if err := query.Offset((page-1)*pageSize).Limit(pageSize).Order("id DESC").Find(&tags).Error; err != nil {
+	if err := query.Offset((page - 1) * pageSize).Limit(pageSize).Order("id DESC").Find(&tags).Error; err != nil {
 		return nil, common.NewInternal("failed to list tags", fmt.Errorf("find: %w", err))
+	}
+
+	// Batch-load content counts. / 批量加载内容数量。
+	tagIDs := make([]int64, len(tags))
+	for i, tag := range tags {
+		tagIDs[i] = tag.ID
+	}
+	countMap := batchTagContentCounts(ctx, t, tagIDs)
+
+	if !admin {
+		items := make([]v1.TagItem, len(tags))
+		for i, tag := range tags {
+			item := toPublicTagItem(tag)
+			item.ContentCount = countMap[tag.ID]
+			items[i] = item
+		}
+		return &v1.ListTagsResponse{
+			Items:    items,
+			Total:    total,
+			Page:     page,
+			PageSize: pageSize,
+		}, nil
 	}
 
 	items := make([]v1.TagItem, len(tags))
 	for i, tag := range tags {
 		item := toTagItem(tag)
-		var count int64
-		t.svc.DB.WithContext(ctx).Model(&model.ContentTag{}).Where("tag_id = ?", tag.ID).Count(&count)
-		item.ContentCount = count
+		item.ContentCount = countMap[tag.ID]
 		items[i] = item
 	}
 
@@ -115,18 +135,25 @@ func (t *TagsController) Create(ctx *gin.Context) {
 
 // get returns a single tag by ID.
 // get 根据 ID 返回单个标签。
-func (t *TagsController) get(ctx context.Context, id int64) (*v1.TagDetailResponse, error) {
+func (t *TagsController) get(ctx context.Context, id int64, admin bool) (*v1.TagDetailResponse, error) {
 	var tag model.Tag
 	if err := t.svc.DB.WithContext(ctx).First(&tag, id).Error; err != nil {
 		return nil, common.NewNotFound("tag not found", err)
 	}
 
 	var contentCount int64
-	t.svc.DB.WithContext(ctx).Model(&model.ContentTag{}).Where("tag_id = ?", tag.ID).Count(&contentCount)
+	if err := t.svc.DB.WithContext(ctx).Model(&model.ContentTag{}).Where("tag_id = ?", tag.ID).Count(&contentCount).Error; err != nil {
+		return nil, common.NewInternal("failed to count tag content", err)
+	}
+
+	if !admin {
+		item := toPublicTagItem(tag)
+		item.ContentCount = contentCount
+		return &v1.TagDetailResponse{TagItem: item}, nil
+	}
 
 	item := toTagItem(tag)
 	item.ContentCount = contentCount
-
 	return &v1.TagDetailResponse{TagItem: item}, nil
 }
 
@@ -137,7 +164,8 @@ func (t *TagsController) Get(ctx *gin.Context) {
 	if !ok {
 		return
 	}
-	resp, err := t.get(ctx.Request.Context(), id)
+	actor := actorFromContext(ctx)
+	resp, err := t.get(ctx.Request.Context(), id, actor.isAdmin())
 	if err != nil {
 		common.Fail(ctx, err)
 		return
@@ -157,7 +185,9 @@ func (t *TagsController) update(ctx context.Context, id int64, req *v1.UpdateTag
 	if req.Name != nil {
 		updates["name"] = *req.Name
 	}
+	newSlug := tag.Slug
 	if req.Slug != nil {
+		newSlug = *req.Slug
 		updates["slug"] = *req.Slug
 	}
 	if req.Description != nil {
@@ -179,13 +209,13 @@ func (t *TagsController) update(ctx context.Context, id int64, req *v1.UpdateTag
 	}
 
 	if len(updates) == 0 {
-		return t.get(ctx, id)
+		return t.get(ctx, id, true)
 	}
 
 	if err := t.svc.DB.WithContext(ctx).Model(&tag).Updates(updates).Error; err != nil {
-		return nil, mapTagCrudUniqueViolation(err, tag.Slug)
+		return nil, mapTagCrudUniqueViolation(err, newSlug)
 	}
-	return t.get(ctx, id)
+	return t.get(ctx, id, true)
 }
 
 // Update handles PATCH /api/v1/tags/:id (admin).
@@ -247,24 +277,27 @@ func (t *TagsController) Delete(ctx *gin.Context) {
 	common.Success(ctx, nil)
 }
 
-// actor holds optional caller info for admin detection on public routes.
-// actor 保存可选调用者信息，用于在公开路由上检测管理员。
-type actor struct {
-	uid  int64
-	role string
-}
-
-func (a actor) isAdmin() bool {
-	return a.role == "admin"
-}
-
-// actorFromContext extracts optional actor info from the Gin context.
-// Returns zero-value actor if no valid claims are present (anonymous).
-// actorFromContext 从 Gin 上下文提取可选调用者信息。若无有效 claims 则返回零值（匿名）。
-func actorFromContext(ctx *gin.Context) actor {
-	claims := middleware.GetClaims(ctx)
-	if claims == nil {
-		return actor{}
+// batchTagContentCounts loads content counts for multiple tag IDs in one query.
+// batchTagContentCounts 通过一次查询批量加载多个标签的内容数量。
+func batchTagContentCounts(ctx context.Context, ctrl *TagsController, tagIDs []int64) map[int64]int64 {
+	if len(tagIDs) == 0 {
+		return nil
 	}
-	return actor{uid: claims.UID, role: claims.Role}
+	type countRow struct {
+		TagID int64
+		Count int64
+	}
+	var rows []countRow
+	if err := ctrl.svc.DB.WithContext(ctx).Model(&model.ContentTag{}).
+		Select("tag_id, COUNT(*) as count").
+		Where("tag_id IN ?", tagIDs).
+		Group("tag_id").
+		Find(&rows).Error; err != nil {
+		return nil
+	}
+	m := make(map[int64]int64, len(rows))
+	for _, r := range rows {
+		m[r.TagID] = r.Count
+	}
+	return m
 }
