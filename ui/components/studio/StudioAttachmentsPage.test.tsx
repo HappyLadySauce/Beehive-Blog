@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ToastProvider } from "@/components/toast/ToastProvider";
-import { StudioAttachmentsPage } from "./StudioAttachmentsPage";
+import { resetAttachmentsPageModuleStateForTests, StudioAttachmentsPage } from "./StudioAttachmentsPage";
 
 const listStorageMounts = vi.hoisted(() => vi.fn());
 const listAttachments = vi.hoisted(() => vi.fn());
@@ -136,6 +136,7 @@ function renderAttachmentsPage() {
 
 describe("StudioAttachmentsPage", () => {
   beforeEach(() => {
+    resetAttachmentsPageModuleStateForTests();
     listStorageMounts.mockReset();
     listAttachments.mockReset();
     listAttachmentCategories.mockReset();
@@ -271,8 +272,16 @@ describe("StudioAttachmentsPage", () => {
   it("passes search and reference filters to the attachment API", async () => {
     renderAttachmentsPage();
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
+    const categoriesCallsAfterMount = listAttachmentCategories.mock.calls.length;
 
     fireEvent.change(screen.getByLabelText("搜索附件"), { target: { value: "note" } });
+    await waitFor(
+      () =>
+        expect(listAttachments).toHaveBeenLastCalledWith(
+          expect.objectContaining({ search: "note", page: 1, page_size: 100 })
+        ),
+      { timeout: 2000 }
+    );
     fireEvent.click(screen.getByRole("combobox", { name: "按引用筛选" }));
     fireEvent.click(screen.getByRole("option", { name: "孤儿附件" }));
 
@@ -281,6 +290,26 @@ describe("StudioAttachmentsPage", () => {
         expect.objectContaining({ reference_status: "orphan", search: "note", page: 1, page_size: 100 })
       )
     );
+    expect(listAttachmentCategories).toHaveBeenCalledTimes(categoriesCallsAfterMount);
+  });
+
+  it("refetches only the attachment list when changing purpose filter", async () => {
+    renderAttachmentsPage();
+    await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
+    const categoriesCallsAfterMount = listAttachmentCategories.mock.calls.length;
+    const attachmentsCallsAfterMount = listAttachments.mock.calls.length;
+
+    fireEvent.click(screen.getByRole("combobox", { name: "按类型筛选" }));
+    fireEvent.click(screen.getByRole("option", { name: "内容" }));
+
+    await waitFor(() =>
+      expect(listAttachments).toHaveBeenLastCalledWith(
+        expect.objectContaining({ purpose: "content", page: 1, page_size: 100 })
+      )
+    );
+    expect(listAttachments.mock.calls.length).toBeGreaterThan(attachmentsCallsAfterMount);
+    expect(listAttachmentCategories).toHaveBeenCalledTimes(categoriesCallsAfterMount);
+    expect(listStorageMounts).toHaveBeenCalledTimes(1);
   });
 
   it("switches pages within the current batch without refetching", async () => {
@@ -347,10 +376,14 @@ describe("StudioAttachmentsPage", () => {
   it("passes the unassigned category filter to the attachment API", async () => {
     renderAttachmentsPage();
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
+    const categoriesCallsAfterMount = listAttachmentCategories.mock.calls.length;
 
     fireEvent.click(screen.getByRole("button", { name: "未分组 0" }));
 
-    await waitFor(() => expect(listAttachments).toHaveBeenLastCalledWith(expect.objectContaining({ category_mode: "unassigned" })));
+    await waitFor(() =>
+      expect(listAttachments).toHaveBeenLastCalledWith(expect.objectContaining({ category_mode: "unassigned" }))
+    );
+    expect(listAttachmentCategories).toHaveBeenCalledTimes(categoriesCallsAfterMount);
   });
 
   it("uploads a local attachment", async () => {
@@ -441,6 +474,8 @@ describe("StudioAttachmentsPage", () => {
     await waitFor(() => expect(deleteAttachment).toHaveBeenCalledWith(99, { force: true }));
     await waitFor(() => expect(screen.getByText("附件已删除。")).toBeInTheDocument());
     expect(screen.queryByRole("button", { name: "批量删除" })).not.toBeInTheDocument();
+    expect(listAttachments.mock.calls.length).toBeGreaterThan(1);
+    expect(listStorageMounts).toHaveBeenCalledTimes(1);
   });
 
   it("keeps force deletion for referenced selections after loading another attachment batch", async () => {

@@ -79,51 +79,93 @@ function listPageForBatchStart(batchStartPage: number) {
   const offset = (batchStartPage - 1) * attachmentPageSize;
   return Math.floor(offset / attachmentFetchSize) + 1;
 }
-type AttachmentsDataPayload = {
-  attachments: AttachmentListResponse;
+type AttachmentMetadataPayload = {
   categoryPayload: AttachmentCategoryListResponse;
   mountPayload: StorageMountListResponse;
   referencePayload: AttachmentReferenceListResponse;
 };
 
-// Dedupe identical in-flight list requests (e.g. React Strict Mode remount in dev).
-// 对相同查询参数的进行中列表请求去重（例如开发环境 React Strict Mode 重复挂载）。
-let attachmentsDataInflight: { key: string; promise: Promise<AttachmentsDataPayload> } | null = null;
+type AttachmentSidebarMetadataPayload = Pick<AttachmentMetadataPayload, "categoryPayload" | "referencePayload">;
 
-function attachmentsDataKey(batchStartPage: number, listFilters: Record<string, unknown>) {
+const SEARCH_DEBOUNCE_MS = 400;
+
+let metadataInflight: Promise<AttachmentMetadataPayload> | null = null;
+let attachmentsListInflight: { key: string; promise: Promise<AttachmentListResponse> } | null = null;
+
+function attachmentsListKey(batchStartPage: number, listFilters: Record<string, unknown>) {
   return `${batchStartPage}\x1e${JSON.stringify(listFilters)}`;
+}
+
+function requestAttachmentsList(batchStartPage: number, listFilters: Record<string, unknown>) {
+  return listAttachments({
+    ...listFilters,
+    page: listPageForBatchStart(batchStartPage),
+    page_size: attachmentFetchSize
+  });
+}
+
+// loadAttachmentsList dedupes identical in-flight list requests (e.g. React Strict Mode remount in dev).
+// loadAttachmentsList 对相同查询参数的进行中列表请求去重（例如开发环境 React Strict Mode 重复挂载）。
+function loadAttachmentsList(batchStartPage: number, listFilters: Record<string, unknown>) {
+  const key = attachmentsListKey(batchStartPage, listFilters);
+  if (attachmentsListInflight?.key === key) {
+    return attachmentsListInflight.promise;
+  }
+  const promise = requestAttachmentsList(batchStartPage, listFilters).finally(() => {
+    if (attachmentsListInflight?.promise === promise) {
+      attachmentsListInflight = null;
+    }
+  });
+  attachmentsListInflight = { key, promise };
+  return promise;
+}
+
+function requestAttachmentMetadata(): Promise<AttachmentMetadataPayload> {
+  return Promise.all([listAttachmentCategories(), listStorageMounts(), listAttachmentReferences()]).then(
+    ([categoryPayload, mountPayload, referencePayload]) => ({
+      categoryPayload,
+      mountPayload,
+      referencePayload
+    })
+  );
+}
+
+// requestAttachmentSidebarMetadata loads categories and references without storage mounts.
+// requestAttachmentSidebarMetadata 拉取分类与引用，不包含存储挂载。
+function requestAttachmentSidebarMetadata(): Promise<AttachmentSidebarMetadataPayload> {
+  return Promise.all([listAttachmentCategories(), listAttachmentReferences()]).then(
+    ([categoryPayload, referencePayload]) => ({ categoryPayload, referencePayload })
+  );
+}
+
+// loadAttachmentMetadata dedupes in-flight metadata requests on initial mount.
+// loadAttachmentMetadata 在首屏挂载时对进行中的元数据请求去重。
+function loadAttachmentMetadata() {
+  if (metadataInflight) {
+    return metadataInflight;
+  }
+  const promise = requestAttachmentMetadata().finally(() => {
+    metadataInflight = null;
+  });
+  metadataInflight = promise;
+  return promise;
 }
 
 function requestAttachmentsData(batchStartPage: number, listFilters: Record<string, unknown>) {
   return Promise.all([
-    listAttachments({
-      ...listFilters,
-      page: listPageForBatchStart(batchStartPage),
-      page_size: attachmentFetchSize
-    }),
-    listAttachmentCategories(),
-    listStorageMounts(),
-    listAttachmentReferences()
-  ]).then(([attachments, categoryPayload, mountPayload, referencePayload]) => ({
+    requestAttachmentsList(batchStartPage, listFilters),
+    requestAttachmentMetadata()
+  ]).then(([attachments, metadata]) => ({
     attachments,
-    categoryPayload,
-    mountPayload,
-    referencePayload
+    ...metadata
   }));
 }
 
-function loadAttachmentsData(batchStartPage: number, listFilters: Record<string, unknown>) {
-  const key = attachmentsDataKey(batchStartPage, listFilters);
-  if (attachmentsDataInflight?.key === key) {
-    return attachmentsDataInflight.promise;
-  }
-  const promise = requestAttachmentsData(batchStartPage, listFilters).finally(() => {
-    if (attachmentsDataInflight?.promise === promise) {
-      attachmentsDataInflight = null;
-    }
-  });
-  attachmentsDataInflight = { key, promise };
-  return promise;
+// resetAttachmentsPageModuleStateForTests clears module caches between unit tests.
+// resetAttachmentsPageModuleStateForTests 在单元测试之间清空模块级缓存。
+export function resetAttachmentsPageModuleStateForTests() {
+  metadataInflight = null;
+  attachmentsListInflight = null;
 }
 
 const purposeOptions = [
@@ -167,6 +209,7 @@ export function StudioAttachmentsPage() {
   const [message, setMessage] = useState<Message>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [purpose, setPurpose] = useState("");
   const [status, setStatus] = useState("");
   const [referenceStatus, setReferenceStatus] = useState("");
@@ -269,60 +312,86 @@ export function StudioAttachmentsPage() {
   const allVisibleSelected = visibleAttachmentIDs.length > 0 && visibleAttachmentIDs.every((id) => selectedAttachmentIDs.includes(id));
   const unassignedCount = batchItems.filter((attachment) => (attachment.category_ids ?? []).length === 0).length;
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearch(search), SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [search]);
+
   const listFilters = useMemo(
     () => ({
       category_id: categoryID && categoryID !== "unassigned" ? Number(categoryID) : undefined,
       category_mode: categoryID === "unassigned" ? ("unassigned" as const) : undefined,
       purpose: purpose || undefined,
       reference_status: referenceStatus || undefined,
-      search: search.trim() || undefined,
+      search: debouncedSearch.trim() || undefined,
       status: status || undefined
     }),
-    [categoryID, purpose, referenceStatus, search, status]
+    [categoryID, debouncedSearch, purpose, referenceStatus, status]
   );
 
-  const requestData = useCallback(async () => {
-    const [attachments, categoryPayload, mountPayload, referencePayload] = await Promise.all([
-      listAttachments({
-        ...listFilters,
-        page: listPageForBatchStart(batchStartPage),
-        page_size: attachmentFetchSize
-      }),
-      listAttachmentCategories(),
-      listStorageMounts(),
-      listAttachmentReferences()
-    ]);
-    return { attachments, categoryPayload, mountPayload, referencePayload };
-  }, [batchStartPage, listFilters]);
+  const applyMetadata = useCallback((metadata: AttachmentMetadataPayload) => {
+    setCategories(metadata.categoryPayload.items);
+    setMounts(metadata.mountPayload.items);
+    setReferences(metadata.referencePayload.items);
+  }, []);
 
-  // loadData always fetches fresh data; used after mutations.
-  // loadData 始终拉取最新数据；用于创建/更新/删除后刷新。
-  const loadData = useCallback(async () => {
+  const applySidebarMetadata = useCallback((metadata: AttachmentSidebarMetadataPayload) => {
+    setCategories(metadata.categoryPayload.items);
+    setReferences(metadata.referencePayload.items);
+  }, []);
+
+  const applyList = useCallback((attachments: AttachmentListResponse) => {
+    setBatchItems(attachments.items);
+    setTotal(attachments.total ?? attachments.items.length);
+  }, []);
+
+  const refreshAfterAttachmentChange = useCallback(async () => {
+    const [attachments, sidebar] = await Promise.all([
+      requestAttachmentsList(batchStartPage, listFilters),
+      requestAttachmentSidebarMetadata()
+    ]);
+    applyList(attachments);
+    applySidebarMetadata(sidebar);
+  }, [applyList, applySidebarMetadata, batchStartPage, listFilters]);
+
+  const refreshAfterCategoryChange = refreshAfterAttachmentChange;
+
+  const refreshAll = useCallback(async () => {
     setLoading(true);
     try {
-      const { attachments, categoryPayload, mountPayload, referencePayload } = await requestData();
-      setBatchItems(attachments.items);
-      setTotal(attachments.total ?? attachments.items.length);
-      setCategories(categoryPayload.items);
-      setMounts(mountPayload.items);
-      setReferences(referencePayload.items);
+      const { attachments, categoryPayload, mountPayload, referencePayload } = await requestAttachmentsData(
+        batchStartPage,
+        listFilters
+      );
+      applyList(attachments);
+      applyMetadata({ categoryPayload, mountPayload, referencePayload });
     } catch (error) {
       setMessage({ tone: "error", text: humanizeApiError(error) });
     } finally {
       setLoading(false);
     }
-  }, [requestData]);
+  }, [applyList, applyMetadata, batchStartPage, listFilters]);
 
   useEffect(() => {
     let active = true;
-    loadAttachmentsData(batchStartPage, listFilters)
-      .then(({ attachments, categoryPayload, mountPayload, referencePayload }) => {
-        if (!active) return;
-        setBatchItems(attachments.items);
-        setTotal(attachments.total ?? attachments.items.length);
-        setCategories(categoryPayload.items);
-        setMounts(mountPayload.items);
-        setReferences(referencePayload.items);
+    loadAttachmentMetadata()
+      .then((metadata) => {
+        if (active) applyMetadata(metadata);
+      })
+      .catch((error: unknown) => {
+        if (active) setMessage({ tone: "error", text: humanizeApiError(error) });
+      });
+    return () => {
+      active = false;
+    };
+  }, [applyMetadata]);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    loadAttachmentsList(batchStartPage, listFilters)
+      .then((attachments) => {
+        if (active) applyList(attachments);
       })
       .catch((error: unknown) => {
         if (active) setMessage({ tone: "error", text: humanizeApiError(error) });
@@ -333,7 +402,7 @@ export function StudioAttachmentsPage() {
     return () => {
       active = false;
     };
-  }, [batchStartPage, listFilters]);
+  }, [applyList, batchStartPage, listFilters]);
 
   function resetPage() {
     setPage(1);
@@ -506,7 +575,7 @@ export function StudioAttachmentsPage() {
         } else {
           setMessage({ tone: "error", text: errors });
         }
-        if (result.uploaded > 0) await loadData();
+        if (result.uploaded > 0) await refreshAfterAttachmentChange();
         return;
       }
 
@@ -515,7 +584,7 @@ export function StudioAttachmentsPage() {
         tone: "success",
         text: uploadFiles.length === 1 ? "附件已上传。" : `已上传 ${uploadFiles.length} 个附件。`
       });
-      await loadData();
+      await refreshAfterAttachmentChange();
     } finally {
       setSaving(false);
     }
@@ -535,7 +604,7 @@ export function StudioAttachmentsPage() {
       });
       setEditing(null);
       setMessage({ tone: "success", text: "附件信息已更新。" });
-      await loadData();
+      await refreshAfterAttachmentChange();
     } catch (error) {
       setMessage({ tone: "error", text: humanizeApiError(error) });
     } finally {
@@ -561,7 +630,7 @@ export function StudioAttachmentsPage() {
       setBulkEditing(false);
       setSelectedAttachmentIDs([]);
       setMessage({ tone: "success", text: "已批量更新附件。" });
-      await loadData();
+      await refreshAfterAttachmentChange();
     } catch (error) {
       setMessage({ tone: "error", text: humanizeApiError(error) });
     } finally {
@@ -578,7 +647,7 @@ export function StudioAttachmentsPage() {
       await deleteAttachment(deleting.id, { force });
       setMessage({ tone: "success", text: `${displayName(deleting)} 已删除。` });
       setDeleting(null);
-      await loadData();
+      await refreshAfterAttachmentChange();
     } catch (error) {
       setMessage({ tone: "error", text: humanizeApiError(error) });
     } finally {
@@ -603,7 +672,7 @@ export function StudioAttachmentsPage() {
             setMessage({ tone: "error", text: `已删除 ${deleted} 个，第 ${deleted + 1} 个失败：${detail}` });
             setBulkDeleting(false);
             setSelectedAttachmentIDs(ids.slice(deleted));
-            await loadData();
+            await refreshAfterAttachmentChange();
           } else {
             setMessage({ tone: "error", text: detail });
           }
@@ -616,7 +685,7 @@ export function StudioAttachmentsPage() {
         tone: "success",
         text: ids.length === 1 ? "附件已删除。" : `已删除 ${ids.length} 个附件。`
       });
-      await loadData();
+      await refreshAfterAttachmentChange();
     } finally {
       setSaving(false);
     }
@@ -635,7 +704,7 @@ export function StudioAttachmentsPage() {
       });
       setCompleting(null);
       setMessage({ tone: "success", text: "远端附件已标记完成。" });
-      await loadData();
+      await refreshAfterAttachmentChange();
     } catch (error) {
       setMessage({ tone: "error", text: humanizeApiError(error) });
     } finally {
@@ -675,7 +744,7 @@ export function StudioAttachmentsPage() {
       }
       setShowCategories(false);
       resetCategoryForm();
-      await loadData();
+      await refreshAfterCategoryChange();
     } catch (error) {
       setMessage({ tone: "error", text: humanizeApiError(error) });
     } finally {
@@ -691,7 +760,7 @@ export function StudioAttachmentsPage() {
       await deleteAttachmentCategory(categoryDeleting.id);
       setCategoryDeleting(null);
       setMessage({ tone: "success", text: `${categoryDeleting.name} 已删除。` });
-      await loadData();
+      await refreshAfterCategoryChange();
     } catch (error) {
       setMessage({ tone: "error", text: humanizeApiError(error) });
     } finally {
@@ -701,6 +770,7 @@ export function StudioAttachmentsPage() {
 
   function resetFilters() {
     setSearch("");
+    setDebouncedSearch("");
     setPurpose("");
     setStatus("");
     setReferenceStatus("");
@@ -761,7 +831,7 @@ export function StudioAttachmentsPage() {
           <button className="secondary-button" type="button" onClick={resetFilters}>
             重置
           </button>
-          <button className="icon-button" type="button" aria-label="刷新附件" onClick={() => void loadData()}>
+          <button className="icon-button" type="button" aria-label="刷新附件" onClick={() => void refreshAll()}>
             <RefreshCw aria-hidden size={18} />
           </button>
         </div>
