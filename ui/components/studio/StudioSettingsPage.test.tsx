@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ToastProvider } from "@/components/toast/ToastProvider";
-import { StudioSettingsPage } from "./StudioSettingsPage";
+import { resetSettingsPageModuleStateForTests, StudioSettingsPage } from "./StudioSettingsPage";
 
 const getSettings = vi.hoisted(() => vi.fn());
 const getGithubOAuth2Settings = vi.hoisted(() => vi.fn());
@@ -52,6 +52,7 @@ function renderSettingsPage() {
 
 describe("StudioSettingsPage", () => {
   beforeEach(() => {
+    resetSettingsPageModuleStateForTests();
     getSettings.mockReset();
     getGithubOAuth2Settings.mockReset();
     patchSettings.mockReset();
@@ -71,6 +72,23 @@ describe("StudioSettingsPage", () => {
     await waitFor(() => expect(screen.getByLabelText("SMTP Host")).toHaveValue("smtp.example.com"));
     expect(screen.getByText("Revision 5")).toBeInTheDocument();
     expect(screen.getByText("Password set")).toBeInTheDocument();
+  });
+
+  it("loads only general settings on mount", async () => {
+    renderSettingsPage();
+    await waitFor(() => expect(screen.getByLabelText("SMTP Host")).toHaveValue("smtp.example.com"));
+    expect(getSettings).toHaveBeenCalledTimes(1);
+    expect(getGithubOAuth2Settings).not.toHaveBeenCalled();
+  });
+
+  it("loads GitHub OAuth2 settings when opening the GitHub tab", async () => {
+    renderSettingsPage();
+    await waitFor(() => expect(screen.getByRole("button", { name: "GitHub OAuth2" })).toBeInTheDocument());
+    expect(getGithubOAuth2Settings).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "GitHub OAuth2" }));
+    await waitFor(() => expect(getGithubOAuth2Settings).toHaveBeenCalledTimes(1));
+    expect(getSettings).toHaveBeenCalledTimes(1);
   });
 
   it("loads disabled SMTP settings with empty host and from fields", async () => {
@@ -115,6 +133,7 @@ describe("StudioSettingsPage", () => {
     await waitFor(() => expect(screen.getByRole("button", { name: "GitHub OAuth2" })).toBeInTheDocument());
 
     fireEvent.click(screen.getByRole("button", { name: "GitHub OAuth2" }));
+    await waitFor(() => expect(getGithubOAuth2Settings).toHaveBeenCalledTimes(1));
 
     expect(screen.getByLabelText("启用 GitHub OAuth2 登录")).not.toBeChecked();
     expect(screen.getByLabelText("Client ID")).toHaveValue("");
@@ -126,6 +145,7 @@ describe("StudioSettingsPage", () => {
     renderSettingsPage();
     await waitFor(() => expect(screen.getByRole("button", { name: "GitHub OAuth2" })).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: "GitHub OAuth2" }));
+    await waitFor(() => expect(getGithubOAuth2Settings).toHaveBeenCalledTimes(1));
     fireEvent.click(screen.getByLabelText("启用 GitHub OAuth2 登录"));
     fireEvent.click(screen.getByRole("button", { name: "保存设置" }));
 
@@ -147,6 +167,7 @@ describe("StudioSettingsPage", () => {
     renderSettingsPage();
     await waitFor(() => expect(screen.getByRole("button", { name: "GitHub OAuth2" })).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: "GitHub OAuth2" }));
+    await waitFor(() => expect(screen.getByLabelText("Client ID")).toHaveValue("existing-client"));
 
     fireEvent.change(screen.getByLabelText("Client ID"), { target: { value: "next-client" } });
     fireEvent.click(screen.getByRole("button", { name: "保存设置" }));
@@ -170,6 +191,7 @@ describe("StudioSettingsPage", () => {
     renderSettingsPage();
     await waitFor(() => expect(screen.getByRole("button", { name: "GitHub OAuth2" })).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: "GitHub OAuth2" }));
+    await waitFor(() => expect(screen.getByLabelText("Client ID")).toHaveValue("existing-client"));
 
     fireEvent.click(screen.getByRole("button", { name: "清空 Client Secret" }));
     fireEvent.click(screen.getByRole("button", { name: "保存设置" }));
@@ -182,6 +204,7 @@ describe("StudioSettingsPage", () => {
     renderSettingsPage();
     await waitFor(() => expect(screen.getByRole("button", { name: "GitHub OAuth2" })).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: "GitHub OAuth2" }));
+    await waitFor(() => expect(getGithubOAuth2Settings).toHaveBeenCalledTimes(1));
 
     expect(screen.queryByLabelText("Auth URL")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "高级设置" }));

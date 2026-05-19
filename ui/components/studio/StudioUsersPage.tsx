@@ -15,6 +15,7 @@ import { StudioSelect } from "./StudioSelect";
 import { StudioTopbar } from "./StudioTopbar";
 
 const defaultPageSize = 20;
+const SEARCH_DEBOUNCE_MS = 400;
 
 const statusOptions = [
   { value: "", label: "全部状态" },
@@ -62,10 +63,17 @@ function loadUsersList(page: number, statusFilter: string, roleFilter: string, s
   return promise;
 }
 
+// resetUsersPageModuleStateForTests clears module caches between unit tests.
+// resetUsersPageModuleStateForTests 在单元测试之间清空模块级缓存。
+export function resetUsersPageModuleStateForTests() {
+  usersListInflight = null;
+}
+
 export function StudioUsersPage() {
   const [data, setData] = useState<ListUsersResponse | null>(null);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [loading, setLoading] = useState(true);
@@ -93,23 +101,27 @@ export function StudioUsersPage() {
   const [bulkRole, setBulkRole] = useState("member");
   const [bulkStatus, setBulkStatus] = useState("active");
 
-  const fetchUsers = useCallback(async () => {
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearch(search), SEARCH_DEBOUNCE_MS);
+    return () => window.clearTimeout(timer);
+  }, [search]);
+
+  const refreshUsers = useCallback(async () => {
     try {
       // Always hit the network after mutations; do not share the in-flight dedupe slot.
       // 创建/更新/删除后必须重新拉取列表，不走进行中去重，避免拿到陈旧 Promise。
-      const result = await requestUsersList(page, statusFilter, roleFilter, search);
+      const result = await requestUsersList(page, statusFilter, roleFilter, debouncedSearch);
       setData(result);
     } catch (error) {
       setMessage({ tone: "error", text: humanizeApiError(error) });
-    } finally {
-      setLoading(false);
     }
-  }, [page, statusFilter, roleFilter, search]);
+  }, [debouncedSearch, page, roleFilter, statusFilter]);
 
   useEffect(() => {
     let active = true;
+    setLoading(true);
 
-    loadUsersList(page, statusFilter, roleFilter, search)
+    loadUsersList(page, statusFilter, roleFilter, debouncedSearch)
       .then((result) => {
         if (active) setData(result);
       })
@@ -123,7 +135,7 @@ export function StudioUsersPage() {
     return () => {
       active = false;
     };
-  }, [page, statusFilter, roleFilter, search]);
+  }, [debouncedSearch, page, roleFilter, statusFilter]);
 
   function openCreate() {
     setEditingUser(null);
@@ -195,7 +207,7 @@ export function StudioUsersPage() {
         setMessage({ tone: "success", text: "用户已创建。" });
       }
       closeForm();
-      await fetchUsers();
+      await refreshUsers();
     } catch (error) {
       setMessage({ tone: "error", text: humanizeApiError(error) });
     } finally {
@@ -211,7 +223,7 @@ export function StudioUsersPage() {
       await deleteUser(showDelete.id);
       setShowDelete(null);
       setMessage({ tone: "success", text: `用户 ${showDelete.username} 已删除。` });
-      await fetchUsers();
+      await refreshUsers();
     } catch (error) {
       setMessage({ tone: "error", text: humanizeApiError(error) });
     } finally {
@@ -236,7 +248,7 @@ export function StudioUsersPage() {
             setMessage({ tone: "error", text: `已删除 ${deleted} 个，第 ${deleted + 1} 个失败：${detail}` });
             setShowBulkDelete(false);
             setSelectedUserIDs(ids.slice(deleted));
-            await fetchUsers();
+            await refreshUsers();
           } else {
             setMessage({ tone: "error", text: detail });
           }
@@ -249,7 +261,7 @@ export function StudioUsersPage() {
         tone: "success",
         text: ids.length === 1 ? `用户已删除。` : `已删除 ${ids.length} 个用户。`
       });
-      await fetchUsers();
+      await refreshUsers();
     } finally {
       setSaving(false);
     }
@@ -312,7 +324,7 @@ export function StudioUsersPage() {
       setSelectedUserIDs([]);
       setShowBulkEdit(false);
       setMessage({ tone: "success", text: "已批量更新用户。" });
-      await fetchUsers();
+      await refreshUsers();
     } catch (error) {
       setMessage({ tone: "error", text: humanizeApiError(error) });
     } finally {
@@ -341,7 +353,6 @@ export function StudioUsersPage() {
             type="search"
             value={search}
             onChange={(event) => {
-              setLoading(true);
               setMessage(null);
               setSearch(event.target.value);
               setPage(1);

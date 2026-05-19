@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { StudioStoragePage } from "./StudioStoragePage";
+import { resetStoragePageModuleStateForTests, StudioStoragePage } from "./StudioStoragePage";
 
 const listFileDrivers = vi.hoisted(() => vi.fn());
 const listStorageMounts = vi.hoisted(() => vi.fn());
@@ -128,6 +128,7 @@ const categories = {
 
 describe("StudioStoragePage", () => {
   beforeEach(() => {
+    resetStoragePageModuleStateForTests();
     listFileDrivers.mockReset();
     listStorageMounts.mockReset();
     createStorageMount.mockReset();
@@ -199,6 +200,25 @@ describe("StudioStoragePage", () => {
       mount_path: "/uploads",
       name: "Uploads"
     });
+  });
+
+  it("refetches only storage mounts after creating a mount", async () => {
+    listStorageMounts.mockResolvedValueOnce({ items: [] });
+    render(<StudioStoragePage />);
+    fireEvent.click(screen.getByRole("button", { name: "存储实例" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "添加存储" })).toBeInTheDocument());
+    await waitFor(() => expect(listFileDrivers).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(listStorageMounts).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByRole("button", { name: "添加存储" }));
+    fireEvent.change(screen.getByLabelText("名称"), { target: { value: "Uploads" } });
+    fireEvent.change(screen.getByLabelText("挂载路径"), { target: { value: "/uploads" } });
+    fireEvent.change(screen.getByLabelText("驱动配置 JSON"), { target: { value: '{ "root": "data/uploads" }' } });
+    fireEvent.click(screen.getByRole("button", { name: "保存" }));
+
+    await waitFor(() => expect(createStorageMount).toHaveBeenCalled());
+    await waitFor(() => expect(listStorageMounts).toHaveBeenCalledTimes(2));
+    expect(listFileDrivers).toHaveBeenCalledTimes(1);
   });
 
   it("runs health checks and disables mounts", async () => {

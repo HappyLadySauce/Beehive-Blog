@@ -46,18 +46,31 @@ const emptyData: StorageData = {
 
 let storageLoadRequest: Promise<StorageData> | null = null;
 
+function requestStorageDrivers() {
+  return listFileDrivers().then((drivers) => drivers.items);
+}
+
+function requestStorageMounts() {
+  return listStorageMounts().then((mounts) => mounts.items);
+}
+
+// loadStorageData dedupes in-flight initial loads (e.g. React Strict Mode remount in dev).
+// loadStorageData 对首屏进行中的加载去重（例如开发环境 React Strict Mode 重复挂载）。
 function loadStorageData() {
   if (!storageLoadRequest) {
-    storageLoadRequest = Promise.all([listFileDrivers(), listStorageMounts()])
-      .then(([drivers, mounts]) => ({
-        drivers: drivers.items,
-        mounts: mounts.items
-      }))
+    storageLoadRequest = Promise.all([requestStorageDrivers(), requestStorageMounts()])
+      .then(([drivers, mounts]) => ({ drivers, mounts }))
       .finally(() => {
         storageLoadRequest = null;
       });
   }
   return storageLoadRequest;
+}
+
+// resetStoragePageModuleStateForTests clears module caches between unit tests.
+// resetStoragePageModuleStateForTests 在单元测试之间清空模块级缓存。
+export function resetStoragePageModuleStateForTests() {
+  storageLoadRequest = null;
 }
 
 export function StudioStoragePage() {
@@ -84,10 +97,10 @@ export function StudioStoragePage() {
   );
   const driverMap = useMemo(() => new Map(data.drivers.map((driver) => [driver.name, driver])), [data.drivers]);
 
-  const refreshStorage = useCallback(async () => {
+  const refreshMounts = useCallback(async () => {
     try {
-      const [drivers, mounts] = await Promise.all([listFileDrivers(), listStorageMounts()]);
-      setData({ drivers: drivers.items, mounts: mounts.items });
+      const mounts = await requestStorageMounts();
+      setData((current) => ({ ...current, mounts }));
     } catch (error) {
       setMessage({ tone: "error", text: humanizeApiError(error) });
     }
@@ -195,7 +208,7 @@ export function StudioStoragePage() {
         setMessage({ tone: "success", text: "存储实例已创建。" });
       }
       closeForm();
-      await refreshStorage();
+      await refreshMounts();
     } catch (error) {
       setMessage({ tone: "error", text: humanizeApiError(error) });
     } finally {
@@ -214,7 +227,7 @@ export function StudioStoragePage() {
         await disableStorageMount(mount.id);
         setMessage({ tone: "success", text: `${mount.name} 已禁用。` });
       }
-      await refreshStorage();
+      await refreshMounts();
     } catch (error) {
       setMessage({ tone: "error", text: humanizeApiError(error) });
     } finally {
@@ -228,7 +241,7 @@ export function StudioStoragePage() {
     try {
       await updateStorageMount(mount.id, { is_default: true });
       setMessage({ tone: "success", text: `${mount.name} 已设为默认存储。` });
-      await refreshStorage();
+      await refreshMounts();
     } catch (error) {
       setMessage({ tone: "error", text: humanizeApiError(error) });
     } finally {
@@ -245,7 +258,7 @@ export function StudioStoragePage() {
         tone: result.status === "work" ? "success" : "error",
         text: result.error ? `${mount.name} 健康检查失败：${result.error}` : `${mount.name} 健康检查通过。`
       });
-      await refreshStorage();
+      await refreshMounts();
     } catch (error) {
       setMessage({ tone: "error", text: humanizeApiError(error) });
     } finally {
@@ -261,7 +274,7 @@ export function StudioStoragePage() {
       await deleteStorageMount(deleteTarget.id);
       setMessage({ tone: "success", text: `${deleteTarget.name} 已删除。` });
       setDeleteTarget(null);
-      await refreshStorage();
+      await refreshMounts();
     } catch (error) {
       setMessage({ tone: "error", text: humanizeApiError(error) });
     } finally {

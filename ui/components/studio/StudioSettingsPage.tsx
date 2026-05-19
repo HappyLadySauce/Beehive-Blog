@@ -49,25 +49,48 @@ const tlsOptions = [
   { value: "tls", label: "TLS" }
 ];
 
-let settingsLoadRequest: Promise<SettingsResponse> | null = null;
-let githubSettingsLoadRequest: Promise<SettingsResponse> | null = null;
+let settingsInflight: Promise<SettingsResponse> | null = null;
+let githubSettingsInflight: Promise<SettingsResponse> | null = null;
 
-function loadSettings() {
-  if (!settingsLoadRequest) {
-    settingsLoadRequest = getSettings().finally(() => {
-      settingsLoadRequest = null;
-    });
-  }
-  return settingsLoadRequest;
+function requestSettings() {
+  return getSettings();
 }
 
-function loadGithubOAuth2Settings() {
-  if (!githubSettingsLoadRequest) {
-    githubSettingsLoadRequest = getGithubOAuth2Settings().finally(() => {
-      githubSettingsLoadRequest = null;
-    });
+// loadSettings dedupes in-flight settings requests on initial mount.
+// loadSettings 在首屏挂载时对进行中的设置请求去重。
+function loadSettings() {
+  if (settingsInflight) {
+    return settingsInflight;
   }
-  return githubSettingsLoadRequest;
+  const promise = requestSettings().finally(() => {
+    settingsInflight = null;
+  });
+  settingsInflight = promise;
+  return promise;
+}
+
+function requestGithubOAuth2Settings() {
+  return getGithubOAuth2Settings();
+}
+
+// loadGithubOAuth2Settings dedupes in-flight GitHub settings requests when the tab opens.
+// loadGithubOAuth2Settings 在打开 GitHub 标签时对进行中的请求去重。
+function loadGithubOAuth2Settings() {
+  if (githubSettingsInflight) {
+    return githubSettingsInflight;
+  }
+  const promise = requestGithubOAuth2Settings().finally(() => {
+    githubSettingsInflight = null;
+  });
+  githubSettingsInflight = promise;
+  return promise;
+}
+
+// resetSettingsPageModuleStateForTests clears module caches between unit tests.
+// resetSettingsPageModuleStateForTests 在单元测试之间清空模块级缓存。
+export function resetSettingsPageModuleStateForTests() {
+  settingsInflight = null;
+  githubSettingsInflight = null;
 }
 
 export function StudioSettingsPage() {
@@ -82,6 +105,8 @@ export function StudioSettingsPage() {
   const [githubAdvancedOpen, setGithubAdvancedOpen] = useState(false);
   const [testRecipient, setTestRecipient] = useState("");
   const [loading, setLoading] = useState(true);
+  const [githubLoaded, setGithubLoaded] = useState(false);
+  const [loadingGithub, setLoadingGithub] = useState(false);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [message, setMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
@@ -89,14 +114,9 @@ export function StudioSettingsPage() {
   useEffect(() => {
     let active = true;
 
-    Promise.all([loadSettings(), loadGithubOAuth2Settings()])
-      .then(([emailPayload, githubPayload]) => {
+    loadSettings()
+      .then((payload) => {
         if (!active) return;
-        const payload = {
-          ...emailPayload,
-          revision: Math.max(emailPayload.revision, githubPayload.revision),
-          github_oauth2: githubPayload.github_oauth2 ?? emailPayload.github_oauth2 ?? defaultGithubOAuth2
-        };
         setSettings(payload);
         setEmail(payload.email);
         setGithubOAuth2(payload.github_oauth2 ?? defaultGithubOAuth2);
@@ -116,6 +136,42 @@ export function StudioSettingsPage() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (activeSection !== "github" || githubLoaded || !settings) {
+      return;
+    }
+
+    let active = true;
+    setLoadingGithub(true);
+
+    loadGithubOAuth2Settings()
+      .then((githubPayload) => {
+        if (!active) return;
+        const githubOAuth2Settings = githubPayload.github_oauth2 ?? settings.github_oauth2 ?? defaultGithubOAuth2;
+        setSettings((current) =>
+          current
+            ? {
+                ...current,
+                revision: Math.max(current.revision, githubPayload.revision),
+                github_oauth2: githubOAuth2Settings
+              }
+            : current
+        );
+        setGithubOAuth2(githubOAuth2Settings);
+        setGithubLoaded(true);
+      })
+      .catch((error) => {
+        if (active) setMessage({ tone: "error", text: humanizeApiError(error) });
+      })
+      .finally(() => {
+        if (active) setLoadingGithub(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [activeSection, githubLoaded, settings]);
 
   const passwordHint = useMemo(() => {
     if (passwordMode === "clear") return "保存后会清空当前 SMTP 密码。";
@@ -388,6 +444,11 @@ export function StudioSettingsPage() {
 
             <ToastMessage message={message} />
           </form>
+          ) : loadingGithub ? (
+          <div className={styles.emptyState} role="status">
+            <Loader2 aria-hidden className="spin" size={24} />
+            <strong>正在加载 GitHub OAuth2 设置...</strong>
+          </div>
           ) : (
           <form className={styles.formGrid} id="studio-settings-form" onSubmit={onSubmitGithubOAuth2}>
             <label className={styles.checkboxField}>
