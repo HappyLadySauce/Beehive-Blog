@@ -39,9 +39,13 @@ import {
 import { humanizeApiError } from "@/lib/api/client";
 import { listStorageMounts } from "@/lib/api/storage";
 import type {
+  AttachmentCategoryListResponse,
   AttachmentCategoryResponse,
+  AttachmentListResponse,
+  AttachmentReferenceListResponse,
   AttachmentReferenceResponse,
   AttachmentResponse,
+  StorageMountListResponse,
   StorageMountResponse
 } from "@/lib/api/types";
 import styles from "./Studio.module.css";
@@ -75,6 +79,53 @@ function listPageForBatchStart(batchStartPage: number) {
   const offset = (batchStartPage - 1) * attachmentPageSize;
   return Math.floor(offset / attachmentFetchSize) + 1;
 }
+type AttachmentsDataPayload = {
+  attachments: AttachmentListResponse;
+  categoryPayload: AttachmentCategoryListResponse;
+  mountPayload: StorageMountListResponse;
+  referencePayload: AttachmentReferenceListResponse;
+};
+
+// Dedupe identical in-flight list requests (e.g. React Strict Mode remount in dev).
+// 对相同查询参数的进行中列表请求去重（例如开发环境 React Strict Mode 重复挂载）。
+let attachmentsDataInflight: { key: string; promise: Promise<AttachmentsDataPayload> } | null = null;
+
+function attachmentsDataKey(batchStartPage: number, listFilters: Record<string, unknown>) {
+  return `${batchStartPage}\x1e${JSON.stringify(listFilters)}`;
+}
+
+function requestAttachmentsData(batchStartPage: number, listFilters: Record<string, unknown>) {
+  return Promise.all([
+    listAttachments({
+      ...listFilters,
+      page: listPageForBatchStart(batchStartPage),
+      page_size: attachmentFetchSize
+    }),
+    listAttachmentCategories(),
+    listStorageMounts(),
+    listAttachmentReferences()
+  ]).then(([attachments, categoryPayload, mountPayload, referencePayload]) => ({
+    attachments,
+    categoryPayload,
+    mountPayload,
+    referencePayload
+  }));
+}
+
+function loadAttachmentsData(batchStartPage: number, listFilters: Record<string, unknown>) {
+  const key = attachmentsDataKey(batchStartPage, listFilters);
+  if (attachmentsDataInflight?.key === key) {
+    return attachmentsDataInflight.promise;
+  }
+  const promise = requestAttachmentsData(batchStartPage, listFilters).finally(() => {
+    if (attachmentsDataInflight?.promise === promise) {
+      attachmentsDataInflight = null;
+    }
+  });
+  attachmentsDataInflight = { key, promise };
+  return promise;
+}
+
 const purposeOptions = [
   { value: "", label: "类型：全部" },
   { value: "content", label: "内容" },
@@ -230,19 +281,26 @@ export function StudioAttachmentsPage() {
     [categoryID, purpose, referenceStatus, search, status]
   );
 
+  const requestData = useCallback(async () => {
+    const [attachments, categoryPayload, mountPayload, referencePayload] = await Promise.all([
+      listAttachments({
+        ...listFilters,
+        page: listPageForBatchStart(batchStartPage),
+        page_size: attachmentFetchSize
+      }),
+      listAttachmentCategories(),
+      listStorageMounts(),
+      listAttachmentReferences()
+    ]);
+    return { attachments, categoryPayload, mountPayload, referencePayload };
+  }, [batchStartPage, listFilters]);
+
+  // loadData always fetches fresh data; used after mutations.
+  // loadData 始终拉取最新数据；用于创建/更新/删除后刷新。
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [attachments, categoryPayload, mountPayload, referencePayload] = await Promise.all([
-        listAttachments({
-          ...listFilters,
-          page: listPageForBatchStart(batchStartPage),
-          page_size: attachmentFetchSize
-        }),
-        listAttachmentCategories(),
-        listStorageMounts(),
-        listAttachmentReferences()
-      ]);
+      const { attachments, categoryPayload, mountPayload, referencePayload } = await requestData();
       setBatchItems(attachments.items);
       setTotal(attachments.total ?? attachments.items.length);
       setCategories(categoryPayload.items);
@@ -253,21 +311,12 @@ export function StudioAttachmentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [batchStartPage, listFilters]);
+  }, [requestData]);
 
   useEffect(() => {
     let active = true;
-    Promise.all([
-      listAttachments({
-        ...listFilters,
-        page: listPageForBatchStart(batchStartPage),
-        page_size: attachmentFetchSize
-      }),
-      listAttachmentCategories(),
-      listStorageMounts(),
-      listAttachmentReferences()
-    ])
-      .then(([attachments, categoryPayload, mountPayload, referencePayload]) => {
+    loadAttachmentsData(batchStartPage, listFilters)
+      .then(({ attachments, categoryPayload, mountPayload, referencePayload }) => {
         if (!active) return;
         setBatchItems(attachments.items);
         setTotal(attachments.total ?? attachments.items.length);
