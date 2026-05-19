@@ -47,6 +47,7 @@ import type {
 import styles from "./Studio.module.css";
 import { StudioPagePagination } from "./StudioPagePagination";
 import { StudioSelect } from "./StudioSelect";
+import { ToastMessage } from "@/components/toast/ToastProvider";
 import { StudioTopbar } from "./StudioTopbar";
 
 type Message = { tone: "success" | "error"; text: string } | null;
@@ -679,11 +680,7 @@ export function StudioAttachmentsPage() {
         title="附件库"
       />
 
-      {message ? (
-        <p className={`${styles.message} ${message.tone === "success" ? styles.messageSuccess : styles.messageError}`} role="alert">
-          {message.text}
-        </p>
-      ) : null}
+      <ToastMessage message={message} />
 
       <section className={styles.attachmentShell}>
         <div className={styles.attachmentToolbar}>

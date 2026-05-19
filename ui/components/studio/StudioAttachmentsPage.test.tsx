@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ToastProvider } from "@/components/toast/ToastProvider";
 import { StudioAttachmentsPage } from "./StudioAttachmentsPage";
 
 const listStorageMounts = vi.hoisted(() => vi.fn());
@@ -125,6 +126,14 @@ const references = {
   ]
 };
 
+function renderAttachmentsPage() {
+  return render(
+    <ToastProvider>
+      <StudioAttachmentsPage />
+    </ToastProvider>
+  );
+}
+
 describe("StudioAttachmentsPage", () => {
   beforeEach(() => {
     listStorageMounts.mockReset();
@@ -173,7 +182,7 @@ describe("StudioAttachmentsPage", () => {
   });
 
   it("loads the attachment library with categories and references", async () => {
-    render(<StudioAttachmentsPage />);
+    renderAttachmentsPage();
 
     expect(screen.getByText("正在加载附件...")).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
@@ -186,14 +195,14 @@ describe("StudioAttachmentsPage", () => {
   });
 
   it("requests attachments with batched offset pagination", async () => {
-    render(<StudioAttachmentsPage />);
+    renderAttachmentsPage();
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
 
     expect(listAttachments).toHaveBeenCalledWith(expect.objectContaining({ page: 1, page_size: 100 }));
   });
 
   it("shows pagination when all results fit on one page", async () => {
-    render(<StudioAttachmentsPage />);
+    renderAttachmentsPage();
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
 
     expect(screen.getByRole("navigation", { name: "分页" })).toBeInTheDocument();
@@ -202,7 +211,7 @@ describe("StudioAttachmentsPage", () => {
   });
 
   it("opens the edit dialog when clicking an attachment row", async () => {
-    render(<StudioAttachmentsPage />);
+    renderAttachmentsPage();
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
 
     fireEvent.click(screen.getByText("Note.md"));
@@ -211,7 +220,7 @@ describe("StudioAttachmentsPage", () => {
   });
 
   it("closes the edit dialog when clicking the backdrop", async () => {
-    render(<StudioAttachmentsPage />);
+    renderAttachmentsPage();
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
 
     fireEvent.click(screen.getByText("Note.md"));
@@ -227,7 +236,7 @@ describe("StudioAttachmentsPage", () => {
       items: [{ ...attachments.items[0], mime_type: "image/png" }]
     });
 
-    render(<StudioAttachmentsPage />);
+    renderAttachmentsPage();
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
 
     fireEvent.click(screen.getByText("Note.md"));
@@ -241,7 +250,7 @@ describe("StudioAttachmentsPage", () => {
       items: [{ ...attachments.items[0], mime_type: "image/png" }]
     });
 
-    render(<StudioAttachmentsPage />);
+    renderAttachmentsPage();
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
 
     fireEvent.click(screen.getByText("Note.md"));
@@ -252,7 +261,7 @@ describe("StudioAttachmentsPage", () => {
   });
 
   it("does not open the edit dialog when toggling row selection", async () => {
-    render(<StudioAttachmentsPage />);
+    renderAttachmentsPage();
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
 
     fireEvent.click(screen.getByLabelText("选择附件 Note.md"));
@@ -260,7 +269,7 @@ describe("StudioAttachmentsPage", () => {
   });
 
   it("passes search and reference filters to the attachment API", async () => {
-    render(<StudioAttachmentsPage />);
+    renderAttachmentsPage();
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
 
     fireEvent.change(screen.getByLabelText("搜索附件"), { target: { value: "note" } });
@@ -288,7 +297,7 @@ describe("StudioAttachmentsPage", () => {
     };
     listAttachments.mockResolvedValue(batchedAttachments);
 
-    render(<StudioAttachmentsPage />);
+    renderAttachmentsPage();
     await waitFor(() => expect(screen.getByText("File-1.md")).toBeInTheDocument());
     expect(listAttachments).toHaveBeenCalledTimes(1);
 
@@ -325,7 +334,7 @@ describe("StudioAttachmentsPage", () => {
       return Promise.resolve(firstBatch);
     });
 
-    render(<StudioAttachmentsPage />);
+    renderAttachmentsPage();
     await waitFor(() => expect(screen.getByText("File-1.md")).toBeInTheDocument());
 
     for (let step = 0; step < 10; step += 1) {
@@ -336,7 +345,7 @@ describe("StudioAttachmentsPage", () => {
   });
 
   it("passes the unassigned category filter to the attachment API", async () => {
-    render(<StudioAttachmentsPage />);
+    renderAttachmentsPage();
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
 
     fireEvent.click(screen.getByRole("button", { name: "未分组 0" }));
@@ -345,7 +354,7 @@ describe("StudioAttachmentsPage", () => {
   });
 
   it("uploads a local attachment", async () => {
-    render(<StudioAttachmentsPage />);
+    renderAttachmentsPage();
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
 
     fireEvent.click(screen.getByRole("button", { name: "上传" }));
@@ -363,7 +372,7 @@ describe("StudioAttachmentsPage", () => {
   });
 
   it("uploads multiple local attachments", async () => {
-    render(<StudioAttachmentsPage />);
+    renderAttachmentsPage();
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
 
     fireEvent.click(screen.getByRole("button", { name: "上传" }));
@@ -379,7 +388,7 @@ describe("StudioAttachmentsPage", () => {
   });
 
   it("uploads remaining files after removing one from the queue", async () => {
-    render(<StudioAttachmentsPage />);
+    renderAttachmentsPage();
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
 
     fireEvent.click(screen.getByRole("button", { name: "上传" }));
@@ -396,7 +405,7 @@ describe("StudioAttachmentsPage", () => {
   });
 
   it("bulk edits selected attachments", async () => {
-    render(<StudioAttachmentsPage />);
+    renderAttachmentsPage();
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
 
     fireEvent.click(screen.getByLabelText("选择附件 Note.md"));
@@ -412,7 +421,7 @@ describe("StudioAttachmentsPage", () => {
   });
 
   it("does not show clear selection in the selection bar", async () => {
-    render(<StudioAttachmentsPage />);
+    renderAttachmentsPage();
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
 
     fireEvent.click(screen.getByLabelText("选择附件 Note.md"));
@@ -421,7 +430,7 @@ describe("StudioAttachmentsPage", () => {
   });
 
   it("bulk deletes selected attachments", async () => {
-    render(<StudioAttachmentsPage />);
+    renderAttachmentsPage();
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
 
     fireEvent.click(screen.getByLabelText("选择附件 Note.md"));
@@ -459,7 +468,7 @@ describe("StudioAttachmentsPage", () => {
       return Promise.resolve(firstBatch);
     });
 
-    render(<StudioAttachmentsPage />);
+    renderAttachmentsPage();
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
 
     fireEvent.click(screen.getByLabelText("选择附件 Note.md"));
@@ -476,7 +485,7 @@ describe("StudioAttachmentsPage", () => {
   });
 
   it("opens the reference dialog", async () => {
-    render(<StudioAttachmentsPage />);
+    renderAttachmentsPage();
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
 
     fireEvent.click(screen.getByRole("button", { name: "1 引用" }));
@@ -485,7 +494,7 @@ describe("StudioAttachmentsPage", () => {
   });
 
   it("closes the category dialog after creating a category", async () => {
-    render(<StudioAttachmentsPage />);
+    renderAttachmentsPage();
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
 
     fireEvent.click(screen.getByRole("button", { name: "新建" }));
@@ -495,11 +504,11 @@ describe("StudioAttachmentsPage", () => {
 
     await waitFor(() => expect(createAttachmentCategory).toHaveBeenCalled());
     expect(screen.queryByRole("button", { name: "创建分组" })).not.toBeInTheDocument();
-    expect(screen.getByText("分组已创建。")).toBeInTheDocument();
+    expect(await screen.findByText("分组已创建。")).toBeInTheDocument();
   });
 
   it("deletes an existing attachment category from the edit dialog", async () => {
-    render(<StudioAttachmentsPage />);
+    renderAttachmentsPage();
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
 
     const categoryCard = screen.getByText("文章素材").closest("button");

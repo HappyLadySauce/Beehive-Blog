@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { SiteHeader } from "@/components/SiteHeader";
+import { ToastProvider } from "@/components/toast/ToastProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -23,10 +24,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="zh-CN" data-scroll-behavior="smooth">
       <body>
         <AuthProvider>
-          <div className="app-shell">
-            <SiteHeader />
-            {children}
-          </div>
+          <ToastProvider>
+            <div className="app-shell">
+              <SiteHeader />
+              {children}
+            </div>
+          </ToastProvider>
         </AuthProvider>
       </body>
     </html>

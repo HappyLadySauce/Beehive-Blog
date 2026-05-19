@@ -7,22 +7,22 @@ import { useRouter } from "next/navigation";
 
 import { register } from "@/lib/api/auth";
 import { humanizeApiError } from "@/lib/api/client";
+import { useToast } from "@/components/toast/ToastProvider";
 import { useAuth } from "./AuthProvider";
 
 export function RegisterForm() {
   const router = useRouter();
   const { setAuth } = useAuth();
+  const toast = useToast();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setPending(true);
-    setMessage(null);
     try {
       const payload = await register({
         username,
@@ -33,7 +33,7 @@ export function RegisterForm() {
       setAuth(payload);
       router.replace("/");
     } catch (error) {
-      setMessage(humanizeApiError(error));
+      toast.error(humanizeApiError(error));
     } finally {
       setPending(false);
     }
@@ -65,7 +65,6 @@ export function RegisterForm() {
           onChange={(event) => setPassword(event.target.value)}
         />
       </label>
-      {message ? <p className="form-message" role="alert">{message}</p> : null}
       <button className="primary-button" disabled={pending} type="submit">
         {pending ? <Loader2 aria-hidden className="spin" size={18} /> : <UserPlus aria-hidden size={18} />}
         注册并登录

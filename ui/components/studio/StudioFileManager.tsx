@@ -17,6 +17,7 @@ import {
   uploadLocalAttachment
 } from "@/lib/api/attachments";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { ToastMessage } from "@/components/toast/ToastProvider";
 import { humanizeApiError } from "@/lib/api/client";
 import type {
   AttachmentCategoryResponse,
@@ -402,11 +403,7 @@ export function StudioFileManager({ mounts }: { mounts: StorageMountResponse[] }
 
   return (
     <>
-      {message ? (
-        <p className={`${styles.message} ${message.tone === "success" ? styles.messageSuccess : styles.messageError}`} role="alert">
-          {message.text}
-        </p>
-      ) : null}
+      <ToastMessage message={message} />
 
       <StudioPanel
         action={

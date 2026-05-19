@@ -7,12 +7,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { login } from "@/lib/api/auth";
 import { humanizeApiError } from "@/lib/api/client";
+import { useToast } from "@/components/toast/ToastProvider";
 import { useAuth } from "./AuthProvider";
 
 export function GithubCallback() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setAuth } = useAuth();
+  const toast = useToast();
   const code = searchParams.get("code");
   const state = searchParams.get("state");
   const hasCallbackParams = Boolean(code && state);
@@ -20,6 +22,7 @@ export function GithubCallback() {
 
   useEffect(() => {
     if (!code || !state) {
+      toast.error("GitHub 回调缺少 code 或 state。");
       return;
     }
 
@@ -28,8 +31,12 @@ export function GithubCallback() {
         setAuth(payload);
         router.replace("/studio");
       })
-      .catch((error) => setMessage(humanizeApiError(error)));
-  }, [code, router, setAuth, state]);
+      .catch((error) => {
+        const text = humanizeApiError(error);
+        setMessage(text);
+        toast.error(text);
+      });
+  }, [code, router, setAuth, state, toast]);
 
   return (
     <section className="auth-panel">

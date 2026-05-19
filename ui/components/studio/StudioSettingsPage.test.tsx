@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ToastProvider } from "@/components/toast/ToastProvider";
 import { StudioSettingsPage } from "./StudioSettingsPage";
 
 const getSettings = vi.hoisted(() => vi.fn());
@@ -41,6 +42,14 @@ const baseSettings = {
   }
 };
 
+function renderSettingsPage() {
+  return render(
+    <ToastProvider>
+      <StudioSettingsPage />
+    </ToastProvider>
+  );
+}
+
 describe("StudioSettingsPage", () => {
   beforeEach(() => {
     getSettings.mockReset();
@@ -56,7 +65,7 @@ describe("StudioSettingsPage", () => {
   });
 
   it("loads and renders SMTP settings", async () => {
-    render(<StudioSettingsPage />);
+    renderSettingsPage();
 
     expect(screen.getByText("正在加载设置...")).toBeInTheDocument();
     await waitFor(() => expect(screen.getByLabelText("SMTP Host")).toHaveValue("smtp.example.com"));
@@ -79,7 +88,7 @@ describe("StudioSettingsPage", () => {
       }
     });
 
-    render(<StudioSettingsPage />);
+    renderSettingsPage();
 
     await waitFor(() => expect(screen.getByLabelText("SMTP Host")).toHaveValue(""));
     expect(screen.getByLabelText("发件人邮箱")).toHaveValue("");
@@ -89,7 +98,7 @@ describe("StudioSettingsPage", () => {
   });
 
   it("saves visible fields without sending password by default", async () => {
-    render(<StudioSettingsPage />);
+    renderSettingsPage();
     await waitFor(() => expect(screen.getByLabelText("SMTP Host")).toHaveValue("smtp.example.com"));
 
     fireEvent.change(screen.getByLabelText("发件人名称"), { target: { value: "Beehive Mailer" } });
@@ -102,7 +111,7 @@ describe("StudioSettingsPage", () => {
   });
 
   it("switches to GitHub OAuth2 settings and renders disabled empty configuration", async () => {
-    render(<StudioSettingsPage />);
+    renderSettingsPage();
     await waitFor(() => expect(screen.getByRole("button", { name: "GitHub OAuth2" })).toBeInTheDocument());
 
     fireEvent.click(screen.getByRole("button", { name: "GitHub OAuth2" }));
@@ -114,7 +123,7 @@ describe("StudioSettingsPage", () => {
   });
 
   it("validates enabled GitHub OAuth2 before saving", async () => {
-    render(<StudioSettingsPage />);
+    renderSettingsPage();
     await waitFor(() => expect(screen.getByRole("button", { name: "GitHub OAuth2" })).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: "GitHub OAuth2" }));
     fireEvent.click(screen.getByLabelText("启用 GitHub OAuth2 登录"));
@@ -135,7 +144,7 @@ describe("StudioSettingsPage", () => {
         redirect_url: "http://localhost:3000/auth/github/callback"
       }
     });
-    render(<StudioSettingsPage />);
+    renderSettingsPage();
     await waitFor(() => expect(screen.getByRole("button", { name: "GitHub OAuth2" })).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: "GitHub OAuth2" }));
 
@@ -158,7 +167,7 @@ describe("StudioSettingsPage", () => {
         redirect_url: "http://localhost:3000/auth/github/callback"
       }
     });
-    render(<StudioSettingsPage />);
+    renderSettingsPage();
     await waitFor(() => expect(screen.getByRole("button", { name: "GitHub OAuth2" })).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: "GitHub OAuth2" }));
 
@@ -170,7 +179,7 @@ describe("StudioSettingsPage", () => {
   });
 
   it("keeps GitHub advanced settings collapsed until expanded", async () => {
-    render(<StudioSettingsPage />);
+    renderSettingsPage();
     await waitFor(() => expect(screen.getByRole("button", { name: "GitHub OAuth2" })).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: "GitHub OAuth2" }));
 
@@ -181,7 +190,7 @@ describe("StudioSettingsPage", () => {
   });
 
   it("validates enabled SMTP before saving", async () => {
-    render(<StudioSettingsPage />);
+    renderSettingsPage();
     await waitFor(() => expect(screen.getByLabelText("SMTP Host")).toHaveValue("smtp.example.com"));
 
     fireEvent.change(screen.getByLabelText("SMTP Host"), { target: { value: "" } });
@@ -192,7 +201,7 @@ describe("StudioSettingsPage", () => {
   });
 
   it("sends an empty password when clearing the stored password", async () => {
-    render(<StudioSettingsPage />);
+    renderSettingsPage();
     await waitFor(() => expect(screen.getByLabelText("SMTP Host")).toHaveValue("smtp.example.com"));
 
     fireEvent.click(screen.getByRole("button", { name: "清空密码" }));
@@ -203,7 +212,7 @@ describe("StudioSettingsPage", () => {
   });
 
   it("sends a SMTP test email to the requested recipient", async () => {
-    render(<StudioSettingsPage />);
+    renderSettingsPage();
     await waitFor(() => expect(screen.getByLabelText("测试收件人")).toHaveValue("robot@example.com"));
 
     fireEvent.change(screen.getByLabelText("测试收件人"), { target: { value: "reader@example.com" } });
@@ -214,7 +223,7 @@ describe("StudioSettingsPage", () => {
   });
 
   it("validates test recipient before sending SMTP test email", async () => {
-    render(<StudioSettingsPage />);
+    renderSettingsPage();
     await waitFor(() => expect(screen.getByLabelText("测试收件人")).toHaveValue("robot@example.com"));
 
     fireEvent.change(screen.getByLabelText("测试收件人"), { target: { value: "invalid-email" } });
@@ -227,7 +236,7 @@ describe("StudioSettingsPage", () => {
   it("shows a safe error state when settings cannot be loaded", async () => {
     getSettings.mockRejectedValue(new Error("network failed"));
 
-    render(<StudioSettingsPage />);
+    renderSettingsPage();
 
     expect(await screen.findByRole("alert")).toHaveTextContent("设置加载失败");
     expect(screen.getByRole("button", { name: "保存设置" })).toBeDisabled();

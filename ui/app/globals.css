@@ -438,6 +438,68 @@ input {
   padding: 10px 12px;
 }
 
+.toastViewport {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  left: 50%;
+  pointer-events: none;
+  position: fixed;
+  top: calc(var(--site-header-height) + 14px);
+  transform: translateX(-50%);
+  width: min(520px, calc(100vw - 32px));
+  z-index: 250;
+}
+
+.toastItem {
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 12px 14px;
+  pointer-events: auto;
+  width: 100%;
+}
+
+.toastSuccess {
+  background: #edf7f5;
+  border-color: #cde8e3;
+  color: var(--accent-dark);
+}
+
+.toastError {
+  background: #fff1f0;
+  border-color: #ffd2cc;
+  color: var(--danger);
+}
+
+.toastItem span {
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.toastClose {
+  align-items: center;
+  background: color-mix(in srgb, var(--surface) 78%, white);
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 30px;
+  justify-content: center;
+  padding: 0;
+  width: 30px;
+}
+
 .auth-switch,
 .muted {
   color: var(--muted);

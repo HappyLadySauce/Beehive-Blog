@@ -27,6 +27,7 @@ import {
   listStorageMounts,
   updateStorageMount
 } from "@/lib/api/storage";
+import { ToastMessage } from "@/components/toast/ToastProvider";
 import type { DriverResponse, JsonObject, StorageMountResponse } from "@/lib/api/types";
 import styles from "./Studio.module.css";
 import { StudioPanel } from "./StudioPanel";
@@ -299,11 +300,7 @@ export function StudioStoragePage() {
         </button>
       </div>
 
-      {message ? (
-        <p className={`${styles.message} ${message.tone === "success" ? styles.messageSuccess : styles.messageError}`} role="alert">
-          {message.text}
-        </p>
-      ) : null}
+      <ToastMessage message={message} />
 
       {activeSection === "mounts" ? (
         <StudioPanel action={<Database aria-hidden size={22} />} title="存储实例">

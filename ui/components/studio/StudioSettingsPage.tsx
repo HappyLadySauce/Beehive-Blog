@@ -11,6 +11,7 @@ import {
   patchSettings,
   testEmailSettings
 } from "@/lib/api/settings";
+import { ToastMessage } from "@/components/toast/ToastProvider";
 import type { EmailSettingsPublic, GithubOAuth2SettingsPublic, SettingsResponse } from "@/lib/api/types";
 import styles from "./Studio.module.css";
 import { StudioPanel } from "./StudioPanel";
@@ -385,14 +386,7 @@ export function StudioSettingsPage() {
               <span className={styles.muted}>测试使用已保存的 SMTP 配置；未保存修改不会参与发送。</span>
             </label>
 
-            {message ? (
-              <p
-                className={`${styles.message} ${message.tone === "success" ? styles.messageSuccess : styles.messageError}`}
-                role={message.tone === "error" ? "alert" : "status"}
-              >
-                {message.text}
-              </p>
-            ) : null}
+            <ToastMessage message={message} />
           </form>
           ) : (
           <form className={styles.formGrid} id="studio-settings-form" onSubmit={onSubmitGithubOAuth2}>
@@ -487,14 +481,7 @@ export function StudioSettingsPage() {
               </>
             ) : null}
 
-            {message ? (
-              <p
-                className={`${styles.message} ${message.tone === "success" ? styles.messageSuccess : styles.messageError}`}
-                role={message.tone === "error" ? "alert" : "status"}
-              >
-                {message.text}
-              </p>
-            ) : null}
+            <ToastMessage message={message} />
           </form>
           )
         )}

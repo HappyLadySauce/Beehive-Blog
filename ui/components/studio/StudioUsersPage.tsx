@@ -6,6 +6,7 @@ import { FileUp, Loader2, Pencil, Plus, Save, Trash2, Users, X } from "lucide-re
 
 import { attachmentContentUrl, uploadLocalAttachment } from "@/lib/api/attachments";
 import { humanizeApiError } from "@/lib/api/client";
+import { ToastMessage } from "@/components/toast/ToastProvider";
 import type { ListUsersResponse, UpdateUserRequest, UserItem } from "@/lib/api/types";
 import { createUser, deleteUser, listUsers, updateUser } from "@/lib/api/users";
 import styles from "./Studio.module.css";
@@ -517,14 +518,7 @@ export function StudioUsersPage() {
           </>
         )}
 
-        {message ? (
-          <p
-            className={`${styles.message} ${message.tone === "success" ? styles.messageSuccess : styles.messageError}`}
-            role={message.tone === "error" ? "alert" : "status"}
-          >
-            {message.text}
-          </p>
-        ) : null}
+        <ToastMessage message={message} />
       </StudioPanel>
 
       {/* Create / Edit modal */}
