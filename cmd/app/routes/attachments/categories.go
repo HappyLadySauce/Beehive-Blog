@@ -74,7 +74,7 @@ func (h *AttachmentsController) ListCategories(ctx *gin.Context) {
 		page = 1
 	}
 	if pageSize < 1 {
-		pageSize = 20
+		pageSize = 10
 	}
 	rows, total, err := h.categorySvc.List(ctx.Request.Context(), actorFromClaims(ctx),
 		page, pageSize, req.Status, req.Search)
