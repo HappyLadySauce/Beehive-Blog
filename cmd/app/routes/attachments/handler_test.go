@@ -15,6 +15,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	pkgattachment "github.com/HappyLadySauce/Beehive-Blog/pkg/attachment"
@@ -249,11 +250,12 @@ func TestGetAttachmentInvalidID(t *testing.T) {
 func TestGetAttachmentInvalidBearer(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	issuer := testAttachmentJWT(t)
-	h, err := NewAttachmentsController(&svc.ServiceContext{
+	svcCtx := &svc.ServiceContext{
 		DB:     newGormTestDB(t),
 		Config: &config.Config{},
 		Token:  issuer,
-	})
+	}
+	h, err := NewAttachmentsController(svcCtx)
 	if err != nil {
 		t.Fatalf("NewAttachmentsController: %v", err)
 	}
@@ -262,7 +264,10 @@ func TestGetAttachmentInvalidBearer(t *testing.T) {
 	ctx.Request = httptest.NewRequest(http.MethodGet, "/api/v1/attachments/1", nil)
 	ctx.Request.Header.Set("Authorization", "Bearer not-a-jwt")
 	ctx.Params = gin.Params{{Key: "id", Value: "1"}}
-	h.GetAttachment(ctx)
+	middleware.OptionalAuthMiddleware(svcCtx)(ctx)
+	if !ctx.IsAborted() {
+		h.GetAttachment(ctx)
+	}
 	assertEnvelopeCode(t, rec, http.StatusUnauthorized)
 }
 

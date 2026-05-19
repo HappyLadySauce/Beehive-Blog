@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	pkgattachment "github.com/HappyLadySauce/Beehive-Blog/pkg/attachment"
@@ -138,31 +139,28 @@ func (h *AttachmentsController) GetAttachment(ctx *gin.Context) {
 	if !ok {
 		return
 	}
-	actor, hasAuth, err := h.optionalActor(ctx)
-	if err != nil {
-		common.Fail(ctx, common.NewUnauthorized("invalid or expired access token", err))
-		return
-	}
-	if !hasAuth || actor.Role != pkgattachment.RoleAdmin {
-		content, err := h.getPublicContent(ctx.Request.Context(), id, false)
+	claims := middleware.GetClaims(ctx)
+	actor := actorFromClaims(ctx)
+	if claims != nil && actor.Role == pkgattachment.RoleAdmin {
+		row, categoryIDs, err := h.getAdmin(ctx.Request.Context(), actor, id)
 		if err != nil {
 			writeAttachmentError(ctx, err)
 			return
 		}
-		common.Success(ctx, toPublicAttachmentResponse(content.Attachment))
+		ownerNames, err := h.ownerUsernames(ctx.Request.Context(), []model.Attachment{row})
+		if err != nil {
+			writeAttachmentError(ctx, err)
+			return
+		}
+		common.Success(ctx, toAttachmentResponseWithOwner(row, categoryIDs, ownerNameFor(row, ownerNames)))
 		return
 	}
-	row, categoryIDs, err := h.getAdmin(ctx.Request.Context(), actor, id)
+	content, err := h.getPublicContent(ctx.Request.Context(), id, false)
 	if err != nil {
 		writeAttachmentError(ctx, err)
 		return
 	}
-	ownerNames, err := h.ownerUsernames(ctx.Request.Context(), []model.Attachment{row})
-	if err != nil {
-		writeAttachmentError(ctx, err)
-		return
-	}
-	common.Success(ctx, toAttachmentResponseWithOwner(row, categoryIDs, ownerNameFor(row, ownerNames)))
+	common.Success(ctx, toPublicAttachmentResponse(content.Attachment))
 }
 
 // GetAttachmentContent handles GET /api/v1/attachments/:id/content.
@@ -184,12 +182,9 @@ func (h *AttachmentsController) GetAttachmentContent(ctx *gin.Context) {
 	if !ok {
 		return
 	}
-	actor, hasAuth, err := h.optionalActor(ctx)
-	if err != nil {
-		common.Fail(ctx, common.NewUnauthorized("invalid or expired access token", err))
-		return
-	}
-	admin := hasAuth && actor.Role == pkgattachment.RoleAdmin
+	claims := middleware.GetClaims(ctx)
+	actor := actorFromClaims(ctx)
+	admin := claims != nil && actor.Role == pkgattachment.RoleAdmin
 	out, err := h.getPublicContent(ctx.Request.Context(), id, admin)
 	if err != nil {
 		writeAttachmentError(ctx, err)
@@ -220,13 +215,13 @@ func (h *AttachmentsController) buildListQuery(ctx context.Context, in pkgattach
 		q = q.Where("status = ?", in.Status)
 	}
 	if in.Search != "" {
-		like := "%" + strings.ToLower(in.Search) + "%"
+		pattern := "%" + in.Search + "%"
 		q = q.Where(
-			"LOWER(filename) LIKE ? OR LOWER(COALESCE(original_name, '')) LIKE ? OR LOWER(object_key) LIKE ? OR LOWER(mime_type) LIKE ?",
-			like,
-			like,
-			like,
-			like,
+			"filename ILIKE ? OR COALESCE(original_name, '') ILIKE ? OR object_key ILIKE ? OR mime_type ILIKE ?",
+			pattern,
+			pattern,
+			pattern,
+			pattern,
 		)
 	}
 	if in.ReferenceStatus != "" {

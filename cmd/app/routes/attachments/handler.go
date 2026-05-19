@@ -67,17 +67,18 @@ func Init(svcCtx *svc.ServiceContext) error {
 		return err
 	}
 
-	attachments := router.V1().Group("/attachments")
+	publicAttachments := router.V1().Group("/attachments")
+	publicAttachments.Use(middleware.OptionalAuthMiddleware(svcCtx))
+	publicAttachments.GET("/:id", h.GetAttachment)
+	publicAttachments.GET("/:id/content", h.GetAttachmentContent)
 
-	adminAttachments := attachments.Group("")
+	adminAttachments := router.V1().Group("/attachments")
 	adminAttachments.Use(middleware.AuthMiddleware(svcCtx), middleware.RequireRole("admin"))
 	adminAttachments.POST("", h.UploadLocal)
 	adminAttachments.POST("/batch", h.UploadBatch)
 	adminAttachments.POST("/upload-url", h.PresignRemote)
 	adminAttachments.GET("", h.List)
 	adminAttachments.GET("/references", h.ListReferences)
-	attachments.GET("/:id", h.GetAttachment)
-	attachments.GET("/:id/content", h.GetAttachmentContent)
 	adminAttachments.POST("/:id/complete", h.CompleteRemote)
 	adminAttachments.GET("/:id/references", h.GetReferences)
 	adminAttachments.PATCH("/:id", h.Patch)

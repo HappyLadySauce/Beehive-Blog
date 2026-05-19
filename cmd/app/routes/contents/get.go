@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
+	"k8s.io/klog/v2"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
@@ -29,13 +30,20 @@ func (c *ContentsController) get(ctx context.Context, id int64, admin bool) (int
 		// authorUsername used below in both branches.
 	}
 
+	activeOnly := !admin
 	if !admin {
-		c.svc.DB.WithContext(ctx).
-			Exec("UPDATE content.contents SET view_count = view_count + 1 WHERE id = ?", id)
+		if result := c.svc.DB.WithContext(ctx).
+			Exec("UPDATE content.contents SET view_count = view_count + 1 WHERE id = ?", id); result.Error != nil {
+			klog.ErrorS(result.Error, "failed to increment view count", "content_id", id)
+		}
 
 		item := toPublicContentItem(content)
 		item.AuthorUsername = user.Username
-		item.Tags = loadContentTags(ctx, c, content.ID)
+		tags, err := loadContentTags(ctx, c, content.ID, activeOnly)
+		if err != nil {
+			return nil, common.NewInternal("failed to load content tags", err)
+		}
+		item.Tags = tags
 
 		return &v1.PublicContentDetailResponse{
 			PublicContentItem: item,
@@ -45,7 +53,11 @@ func (c *ContentsController) get(ctx context.Context, id int64, admin bool) (int
 
 	item := toContentItem(content)
 	item.AuthorUsername = user.Username
-	item.Tags = loadContentTags(ctx, c, content.ID)
+	tags, err := loadContentTags(ctx, c, content.ID, activeOnly)
+	if err != nil {
+		return nil, common.NewInternal("failed to load content tags", err)
+	}
+	item.Tags = tags
 
 	return &v1.ContentDetailResponse{
 		ContentItem: item,

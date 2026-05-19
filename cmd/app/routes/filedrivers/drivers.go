@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
@@ -97,9 +98,12 @@ func toMountResponse(row model.StorageMount) v1.StorageMountResponse {
 }
 
 func writeFileDriverError(ctx *gin.Context, err error) {
+	var pgErr *pgconn.PgError
 	switch {
 	case errors.Is(err, gorm.ErrRecordNotFound):
 		common.Fail(ctx, common.NewNotFound("resource not found", err))
+	case errors.As(err, &pgErr) && pgErr.Code == "23505":
+		common.Fail(ctx, common.NewConflict("resource already exists", err))
 	case errors.Is(err, driver.ErrUnsupportedDriver):
 		common.Fail(ctx, common.NewBadRequest("unsupported driver", err))
 	default:

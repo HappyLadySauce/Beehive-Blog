@@ -188,3 +188,123 @@ func TestGetContentAdminReturnsFullFields(t *testing.T) {
 		t.Fatalf("unmet expectations: %v", err)
 	}
 }
+
+func TestGetContentPublicOmitsArchivedTags(t *testing.T) {
+	c, mock := newCrudTestController(t)
+	now := time.Now()
+
+	mock.ExpectQuery(`SELECT \* FROM "content"."contents" WHERE`).
+		WithArgs(1, "published", "public", 1).
+		WillReturnRows(sqlmock.NewRows(contentColumns()).
+			AddRow(1, "article", "Test", "test-slug", nil, nil, nil, 10, "published", "public", "allowed", &now, 100, 2, json.RawMessage("{}"), int64(50), now, now, nil))
+
+	mock.ExpectQuery(`SELECT "username" FROM "identity"."users" WHERE`).
+		WithArgs(10, 1).
+		WillReturnRows(sqlmock.NewRows([]string{"username"}).AddRow("author1"))
+
+	mock.ExpectExec(`UPDATE content.contents SET view_count`).
+		WithArgs(int64(1)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	mock.ExpectQuery(`SELECT \* FROM "content"."content_tags" WHERE`).
+		WithArgs(int64(1)).
+		WillReturnRows(sqlmock.NewRows([]string{"content_id", "tag_id", "created_at"}).
+			AddRow(1, 1, now).
+			AddRow(1, 2, now))
+
+	mock.ExpectQuery(`SELECT \* FROM "content"."tags" WHERE`).
+		WithArgs(int64(1), int64(2), "active").
+		WillReturnRows(sqlmock.NewRows(tagColumns()).
+			AddRow(1, "Active", "active", nil, nil, "active", now, now, nil))
+
+	ctx, rec := testCrudContextWithID(http.MethodGet, "/api/v1/contents/1", nil, "1")
+	c.Get(ctx)
+	env := decodeCrudEnvelope(t, rec)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("HTTP = %d, want 200", rec.Code)
+	}
+	var resp v1.PublicContentDetailResponse
+	if err := json.Unmarshal(env.Data, &resp); err != nil {
+		t.Fatalf("unmarshal data: %v", err)
+	}
+	if len(resp.Tags) != 1 {
+		t.Fatalf("tags len = %d, want 1 (archived omitted)", len(resp.Tags))
+	}
+	if resp.Tags[0].Slug != "active" {
+		t.Fatalf("tag slug = %q, want active", resp.Tags[0].Slug)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
+	}
+}
+
+func TestGetContentTagLoadFailure(t *testing.T) {
+	c, mock := newCrudTestController(t)
+	now := time.Now()
+
+	mock.ExpectQuery(`SELECT \* FROM "content"."contents" WHERE`).
+		WithArgs(1, "published", "public", 1).
+		WillReturnRows(sqlmock.NewRows(contentColumns()).
+			AddRow(1, "article", "Test", "test-slug", nil, nil, nil, 10, "published", "public", "allowed", &now, 100, 2, json.RawMessage("{}"), int64(50), now, now, nil))
+
+	mock.ExpectQuery(`SELECT "username" FROM "identity"."users" WHERE`).
+		WithArgs(10, 1).
+		WillReturnRows(sqlmock.NewRows([]string{"username"}).AddRow("author1"))
+
+	mock.ExpectExec(`UPDATE content.contents SET view_count`).
+		WithArgs(int64(1)).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	mock.ExpectQuery(`SELECT \* FROM "content"."content_tags" WHERE`).
+		WithArgs(int64(1)).
+		WillReturnRows(sqlmock.NewRows([]string{"content_id", "tag_id", "created_at"}).
+			AddRow(1, 1, now))
+
+	mock.ExpectQuery(`SELECT \* FROM "content"."tags" WHERE`).
+		WillReturnError(sqlmock.ErrCancelled)
+
+	ctx, rec := testCrudContextWithID(http.MethodGet, "/api/v1/contents/1", nil, "1")
+	c.Get(ctx)
+	env := decodeCrudEnvelope(t, rec)
+	assertCrudError(t, rec, env, http.StatusInternalServerError, "failed to load content tags")
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
+	}
+}
+
+func TestGetContentViewCountFailureStillOK(t *testing.T) {
+	c, mock := newCrudTestController(t)
+	now := time.Now()
+
+	mock.ExpectQuery(`SELECT \* FROM "content"."contents" WHERE`).
+		WithArgs(1, "published", "public", 1).
+		WillReturnRows(sqlmock.NewRows(contentColumns()).
+			AddRow(1, "article", "Test", "test-slug", nil, nil, nil, 10, "published", "public", "allowed", &now, 100, 2, json.RawMessage("{}"), int64(50), now, now, nil))
+
+	mock.ExpectQuery(`SELECT "username" FROM "identity"."users" WHERE`).
+		WithArgs(10, 1).
+		WillReturnRows(sqlmock.NewRows([]string{"username"}).AddRow("author1"))
+
+	mock.ExpectExec(`UPDATE content.contents SET view_count`).
+		WithArgs(int64(1)).
+		WillReturnError(sqlmock.ErrCancelled)
+
+	mock.ExpectQuery(`SELECT \* FROM "content"."content_tags" WHERE`).
+		WithArgs(int64(1)).
+		WillReturnRows(sqlmock.NewRows([]string{"content_id", "tag_id", "created_at"}))
+
+	ctx, rec := testCrudContextWithID(http.MethodGet, "/api/v1/contents/1", nil, "1")
+	c.Get(ctx)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("HTTP = %d, want 200 when view_count update fails", rec.Code)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
+	}
+}
+
+func tagColumns() []string {
+	return []string{"id", "name", "slug", "description", "color", "status", "created_at", "updated_at", "deleted_at"}
+}
