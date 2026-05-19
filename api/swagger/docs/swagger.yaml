@@ -105,6 +105,12 @@ definitions:
         items:
           $ref: '#/definitions/v1.AttachmentCategoryResponse'
         type: array
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total:
+        type: integer
     type: object
   v1.AttachmentCategoryPatchRequest:
     properties:
@@ -1262,7 +1268,28 @@ info:
 paths:
   /api/v1/attachment/categories:
     get:
-      description: Returns the attachment category tree. Admin only. 中文：返回附件分类树（仅管理员）。
+      description: Paginated list of attachment categories with optional filters.
+        Admin only. 中文：分页列出附件分类，支持筛选（仅管理员）。
+      parameters:
+      - description: Page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - description: Items per page (default 20, max 100)
+        in: query
+        name: page_size
+        type: integer
+      - description: Filter by status
+        enum:
+        - active
+        - disabled
+        in: query
+        name: status
+        type: string
+      - description: Search name or slug
+        in: query
+        name: search
+        type: string
       produces:
       - application/json
       responses:
@@ -1275,6 +1302,10 @@ paths:
                 data:
                   $ref: '#/definitions/v1.AttachmentCategoryListResponse'
               type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
         "401":
           description: Unauthorized
           schema:

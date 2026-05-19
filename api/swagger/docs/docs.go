@@ -22,7 +22,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Returns the attachment category tree. Admin only. 中文：返回附件分类树（仅管理员）。",
+                "description": "Paginated list of attachment categories with optional filters. Admin only. 中文：分页列出附件分类，支持筛选（仅管理员）。",
                 "produces": [
                     "application/json"
                 ],
@@ -30,6 +30,36 @@ const docTemplate = `{
                     "attachments"
                 ],
                 "summary": "List attachment categories",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number (default 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Items per page (default 20, max 100)",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "active",
+                            "disabled"
+                        ],
+                        "type": "string",
+                        "description": "Filter by status",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search name or slug",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -47,6 +77,12 @@ const docTemplate = `{
                                     }
                                 }
                             ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
                         }
                     },
                     "401": {
@@ -4324,6 +4360,15 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/v1.AttachmentCategoryResponse"
                     }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "page_size": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
                 }
             }
         },
