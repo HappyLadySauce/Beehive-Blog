@@ -3,6 +3,7 @@
 .cursor/
 .trae/
 .codex/
+.plan/
 
 .gocache
 .tmp
