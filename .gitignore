@@ -10,4 +10,4 @@ logs/
 data/
 configs/
 
-cmd.exe
+*.exe

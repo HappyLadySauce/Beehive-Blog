@@ -2,7 +2,6 @@ package contents
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/gin-gonic/gin"
 
@@ -22,7 +21,7 @@ func (c *ContentsController) get(ctx context.Context, id int64, admin bool) (int
 
 	var content model.Content
 	if err := query.First(&content).Error; err != nil {
-		return nil, common.NewNotFound("content not found", err)
+		return nil, mapFirstError(err, "content not found", "failed to fetch content")
 	}
 
 	var user model.User
@@ -76,7 +75,7 @@ func (c *ContentsController) Get(ctx *gin.Context) {
 func (c *ContentsController) update(ctx context.Context, id int64, req *v1.UpdateContentRequest) (*v1.ContentDetailResponse, error) {
 	var content model.Content
 	if err := c.svc.DB.WithContext(ctx).First(&content, id).Error; err != nil {
-		return nil, common.NewNotFound("content not found", err)
+		return nil, mapFirstError(err, "content not found", "failed to fetch content")
 	}
 
 	updates := map[string]interface{}{}
@@ -87,22 +86,6 @@ func (c *ContentsController) update(ctx context.Context, id int64, req *v1.Updat
 		updates["title"] = *req.Title
 	}
 	if req.Slug != nil {
-		if *req.Slug != content.Slug {
-			checkType := content.Type
-			if req.Type != nil {
-				checkType = *req.Type
-			}
-			var existing int64
-			c.svc.DB.WithContext(ctx).Model(&model.Content{}).
-				Where("type = ? AND slug = ? AND deleted_at IS NULL AND id <> ?", checkType, *req.Slug, id).
-				Count(&existing)
-			if existing > 0 {
-				return nil, common.NewConflict(
-					fmt.Sprintf("slug %q is already taken for type %q", *req.Slug, checkType),
-					fmt.Errorf("slug conflict on update: %s/%s", checkType, *req.Slug),
-				)
-			}
-		}
 		updates["slug"] = *req.Slug
 	}
 	if req.Excerpt != nil {
@@ -150,7 +133,7 @@ func (c *ContentsController) update(ctx context.Context, id int64, req *v1.Updat
 	}
 
 	if err := c.svc.DB.WithContext(ctx).Model(&content).Updates(updates).Error; err != nil {
-		return nil, mapContentCrudUniqueViolation(err)
+		return nil, mapContentUpdateUniqueViolation(err)
 	}
 	resp, err := c.get(ctx, id, true)
 	if err != nil {

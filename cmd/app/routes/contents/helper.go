@@ -8,11 +8,21 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgconn"
+	"gorm.io/gorm"
 
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
 )
+
+// mapFirstError maps gorm.ErrRecordNotFound to 404 and other errors to 500.
+// mapFirstError 将 gorm.ErrRecordNotFound 映射为 404，其余错误映射为 500。
+func mapFirstError(err error, notFoundMsg, internalMsg string) error {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return common.NewNotFound(notFoundMsg, err)
+	}
+	return common.NewInternal(internalMsg, err)
+}
 
 // parseContentID extracts the :id path parameter as int64.
 // parseContentID 将 :id 路径参数提取为 int64。
@@ -63,7 +73,7 @@ func toContentItem(c model.Content) v1.ContentItem {
 }
 
 // toPublicContentItem converts a model.Content to its public API response item.
-// toPublicContentItem 将 model.Content 转换为公开 API 响应项。
+// toPublicContentItem 将 model.Content 转换为公开 API 响应项（不含 metadata）。
 func toPublicContentItem(c model.Content) v1.PublicContentItem {
 	return v1.PublicContentItem{
 		ID:                 c.ID,
@@ -76,7 +86,6 @@ func toPublicContentItem(c model.Content) v1.PublicContentItem {
 		PublishedAt:        c.PublishedAt,
 		WordCount:          c.WordCount,
 		ReadingTimeMinutes: c.ReadingTimeMinutes,
-		Metadata:           c.Metadata,
 		CreatedAt:          c.CreatedAt,
 		UpdatedAt:          c.UpdatedAt,
 	}
@@ -141,12 +150,32 @@ func validStatusTransition(from, to string) bool {
 	return false
 }
 
-// mapContentCrudUniqueViolation maps a PostgreSQL unique-constraint violation to a public error.
-// mapContentCrudUniqueViolation 将 PostgreSQL 唯一约束冲突映射为对外错误。
-func mapContentCrudUniqueViolation(err error) error {
+// mapContentCreateUniqueViolation maps a unique-constraint violation on content create.
+// mapContentCreateUniqueViolation 映射内容创建时的唯一约束冲突。
+func mapContentCreateUniqueViolation(err error) error {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 		return common.NewConflict("content slug is already taken for this type", err)
 	}
 	return common.NewInternal("failed to create content", err)
+}
+
+// mapContentUpdateUniqueViolation maps a unique-constraint violation on content update.
+// mapContentUpdateUniqueViolation 映射内容更新时的唯一约束冲突。
+func mapContentUpdateUniqueViolation(err error) error {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+		return common.NewConflict("content slug is already taken for this type", err)
+	}
+	return common.NewInternal("failed to update content", err)
+}
+
+// mapVersionUniqueViolation maps a unique-constraint violation on version create.
+// mapVersionUniqueViolation 映射版本创建时的唯一约束冲突。
+func mapVersionUniqueViolation(err error) error {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+		return common.NewConflict("version number conflict; retry the request", err)
+	}
+	return common.NewInternal("failed to create version", err)
 }

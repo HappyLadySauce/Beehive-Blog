@@ -26,7 +26,7 @@ type CreateContentRequest struct {
 	Excerpt            *string         `json:"excerpt,omitempty"`
 	Body               *string         `json:"body,omitempty"`
 	CoverAttachmentID  *int64          `json:"cover_attachment_id,omitempty"`
-	Status             *string         `json:"status,omitempty" binding:"omitempty,oneof=draft review published archived"`
+	Status             *string         `json:"status,omitempty" binding:"omitempty,oneof=draft review"`
 	Visibility         *string         `json:"visibility,omitempty" binding:"omitempty,oneof=public member private"`
 	AIAccess           *string         `json:"ai_access,omitempty" binding:"omitempty,oneof=allowed denied"`
 	WordCount          *int            `json:"word_count,omitempty"`
@@ -114,10 +114,9 @@ type PublicContentItem struct {
 	AuthorID           int64           `json:"author_id"`
 	AuthorUsername     string          `json:"author_username,omitempty"`
 	PublishedAt        *time.Time      `json:"published_at,omitempty"`
-	WordCount          int             `json:"word_count"`
-	ReadingTimeMinutes int             `json:"reading_time_minutes"`
-	Metadata           json.RawMessage `json:"metadata"`
-	Tags               []TagItem       `json:"tags,omitempty"`
+	WordCount          int       `json:"word_count"`
+	ReadingTimeMinutes int       `json:"reading_time_minutes"`
+	Tags               []TagItem `json:"tags,omitempty"`
 	CreatedAt          time.Time       `json:"created_at"`
 	UpdatedAt          time.Time       `json:"updated_at"`
 }

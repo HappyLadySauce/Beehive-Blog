@@ -78,6 +78,25 @@ func TestCreateContentSuccess(t *testing.T) {
 	}
 }
 
+func TestCreateContentRejectsPublishedStatus(t *testing.T) {
+	c, _ := newCrudTestController(t)
+	published := "published"
+	reqBody := v1.CreateContentRequest{
+		Type:   "article",
+		Title:  "Test",
+		Slug:   "test",
+		Status: &published,
+	}
+	body, _ := json.Marshal(reqBody)
+
+	ctx, rec := testCrudContext(http.MethodPost, "/api/v1/contents", bytes.NewReader(body))
+	ctx.Set(jwt.ClaimsKey, &jwt.Claims{UID: 10, Role: "admin"})
+
+	c.Create(ctx)
+	env := decodeCrudEnvelope(t, rec)
+	assertCrudError(t, rec, env, http.StatusBadRequest, "invalid request body")
+}
+
 func TestCreateContentUnauthorized(t *testing.T) {
 	c, _ := newCrudTestController(t)
 	reqBody := v1.CreateContentRequest{

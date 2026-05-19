@@ -20,7 +20,10 @@ func (c *ContentsController) getContentTags(ctx context.Context, contentID int64
 		existQuery = existQuery.Where("status = ? AND visibility = ?", "published", "public")
 	}
 	var count int64
-	if err := existQuery.Count(&count).Error; err != nil || count == 0 {
+	if err := existQuery.Count(&count).Error; err != nil {
+		return nil, common.NewInternal("failed to check content", err)
+	}
+	if count == 0 {
 		return nil, common.NewNotFound("content not found", fmt.Errorf("content %d not found", contentID))
 	}
 
@@ -51,17 +54,25 @@ func (c *ContentsController) GetContentTags(ctx *gin.Context) {
 // setContentTags replaces all tags on a content item atomically.
 // setContentTags 原子性地替换内容的全部标签。
 func (c *ContentsController) setContentTags(ctx context.Context, contentID int64, req *v1.SetContentTagsRequest) error {
+	tagIDs := uniqueInt64(req.TagIDs)
+	if len(tagIDs) != len(req.TagIDs) {
+		return common.NewBadRequest("duplicate tag IDs are not allowed", fmt.Errorf("duplicate tag ids"))
+	}
+
 	var count int64
-	if err := c.svc.DB.WithContext(ctx).Model(&model.Content{}).Where("id = ?", contentID).Count(&count).Error; err != nil || count == 0 {
+	if err := c.svc.DB.WithContext(ctx).Model(&model.Content{}).Where("id = ?", contentID).Count(&count).Error; err != nil {
+		return common.NewInternal("failed to check content", err)
+	}
+	if count == 0 {
 		return common.NewNotFound("content not found", fmt.Errorf("content %d not found", contentID))
 	}
 
-	if len(req.TagIDs) > 0 {
+	if len(tagIDs) > 0 {
 		var tagCount int64
-		if err := c.svc.DB.WithContext(ctx).Model(&model.Tag{}).Where("id IN ?", req.TagIDs).Count(&tagCount).Error; err != nil {
+		if err := c.svc.DB.WithContext(ctx).Model(&model.Tag{}).Where("id IN ?", tagIDs).Count(&tagCount).Error; err != nil {
 			return common.NewInternal("failed to validate tag IDs", err)
 		}
-		if tagCount != int64(len(req.TagIDs)) {
+		if tagCount != int64(len(tagIDs)) {
 			return common.NewBadRequest("one or more tag IDs do not exist", fmt.Errorf("tag validation failed"))
 		}
 	}
@@ -76,7 +87,7 @@ func (c *ContentsController) setContentTags(ctx context.Context, contentID int64
 		return common.NewInternal("failed to clear content tags", err)
 	}
 
-	for _, tagID := range req.TagIDs {
+	for _, tagID := range tagIDs {
 		ct := model.ContentTag{ContentID: contentID, TagID: tagID}
 		if err := tx.Create(&ct).Error; err != nil {
 			tx.Rollback()

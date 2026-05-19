@@ -7,12 +7,22 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgconn"
+	"gorm.io/gorm"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
 )
+
+// mapFirstError maps gorm.ErrRecordNotFound to 404 and other errors to 500.
+// mapFirstError 将 gorm.ErrRecordNotFound 映射为 404，其余错误映射为 500。
+func mapFirstError(err error, notFoundMsg, internalMsg string) error {
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return common.NewNotFound(notFoundMsg, err)
+	}
+	return common.NewInternal(internalMsg, err)
+}
 
 // parseTagID extracts the :id path parameter as int64.
 // parseTagID 将 :id 路径参数提取为 int64。
@@ -55,18 +65,24 @@ func toPublicTagItem(t model.Tag) v1.TagItem {
 	}
 }
 
-// mapTagCrudUniqueViolation maps a PostgreSQL unique-constraint violation to a public error.
-// mapTagCrudUniqueViolation 将 PostgreSQL 唯一约束冲突映射为对外错误。
-func mapTagCrudUniqueViolation(err error, resource string) error {
+// mapTagCreateUniqueViolation maps a unique-constraint violation on tag create.
+// mapTagCreateUniqueViolation 映射标签创建时的唯一约束冲突。
+func mapTagCreateUniqueViolation(err error) error {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-		msg := "tag slug is already taken"
-		if resource != "" {
-			msg = resource + " slug is already taken"
-		}
-		return common.NewConflict(msg, err)
+		return common.NewConflict("tag slug is already taken", err)
 	}
 	return common.NewInternal("failed to create tag", err)
+}
+
+// mapTagUpdateUniqueViolation maps a unique-constraint violation on tag update.
+// mapTagUpdateUniqueViolation 映射标签更新时的唯一约束冲突。
+func mapTagUpdateUniqueViolation(err error) error {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+		return common.NewConflict("tag slug is already taken", err)
+	}
+	return common.NewInternal("failed to update tag", err)
 }
 
 // actor holds optional caller info for admin detection on public routes.

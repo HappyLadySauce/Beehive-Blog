@@ -35,17 +35,18 @@ func Init(svcCtx *svc.ServiceContext) error {
 
 	c := NewContentsController(svcCtx)
 
-	// Public routes — uses optional actor to expand scope for admins.
-	// 公开路由——通过 optionalActor 为管理员扩展数据范围。
-	contents := router.V1().Group("/contents")
-	contents.GET("", c.List)
-	contents.GET("/:id", c.Get)
-	contents.GET("/:id/relations", c.GetRelations)
-	contents.GET("/:id/tags", c.GetContentTags)
+	// Public routes — OptionalAuthMiddleware injects claims for admin preview.
+	// 公开路由——OptionalAuthMiddleware 为管理员预览注入 claims。
+	publicContents := router.V1().Group("/contents")
+	publicContents.Use(middleware.OptionalAuthMiddleware(svcCtx))
+	publicContents.GET("", c.List)
+	publicContents.GET("/:id", c.Get)
+	publicContents.GET("/:id/relations", c.GetRelations)
+	publicContents.GET("/:id/tags", c.GetContentTags)
 
-	// Admin-only routes.
-	// 管理员专用路由。
-	adminContents := contents.Group("")
+	// Admin-only routes (separate group avoids stacking with OptionalAuth).
+	// 管理员专用路由（独立分组，避免与 OptionalAuth 叠加）。
+	adminContents := router.V1().Group("/contents")
 	adminContents.Use(middleware.AuthMiddleware(svcCtx), middleware.RequireRole("admin"))
 	adminContents.POST("", c.Create)
 	adminContents.PATCH("/:id", c.Update)

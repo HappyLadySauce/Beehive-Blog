@@ -14,7 +14,7 @@ import (
 func (c *ContentsController) del(ctx context.Context, id int64) error {
 	var content model.Content
 	if err := c.svc.DB.WithContext(ctx).First(&content, id).Error; err != nil {
-		return common.NewNotFound("content not found", err)
+		return mapFirstError(err, "content not found", "failed to fetch content")
 	}
 	if err := c.svc.DB.WithContext(ctx).Delete(&content).Error; err != nil {
 		return common.NewInternal("failed to delete content", err)

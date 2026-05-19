@@ -3,6 +3,7 @@ package contents
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -89,7 +90,51 @@ func TestGetContentPublicReturnsPublicFields(t *testing.T) {
 	if resp.AuthorUsername != "author1" {
 		t.Fatalf("author_username = %q, want author1", resp.AuthorUsername)
 	}
+	if strings.Contains(string(env.Data), `"metadata"`) {
+		t.Fatalf("public response must not include metadata, got %s", env.Data)
+	}
 
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
+	}
+}
+
+func TestGetContentAdminViaBearerToken(t *testing.T) {
+	c, mock, issuer := newCrudTestControllerWithToken(t)
+	now := time.Now()
+	pair, err := issuer.IssuePair(10, "admin")
+	if err != nil {
+		t.Fatalf("IssuePair: %v", err)
+	}
+
+	mock.ExpectQuery(`SELECT \* FROM "content"."contents" WHERE`).
+		WithArgs(1, 1).
+		WillReturnRows(sqlmock.NewRows(contentColumns()).
+			AddRow(1, "article", "Draft", "draft-slug", nil, nil, nil, 10, "draft", "private", "denied", nil, 0, 0, json.RawMessage(`{"secret":true}`), int64(0), now, now, nil))
+
+	mock.ExpectQuery(`SELECT "username" FROM "identity"."users" WHERE`).
+		WithArgs(10, 1).
+		WillReturnRows(sqlmock.NewRows([]string{"username"}).AddRow("author1"))
+
+	mock.ExpectQuery(`SELECT \* FROM "content"."content_tags" WHERE`).
+		WithArgs(int64(1)).
+		WillReturnRows(sqlmock.NewRows([]string{"content_id", "tag_id", "created_at"}))
+
+	ctx, rec := testCrudContextWithID(http.MethodGet, "/api/v1/contents/1", nil, "1")
+	ctx.Request.Header.Set("Authorization", "Bearer "+pair.Access.Token)
+	runOptionalAuth(t, c, ctx, c.Get)
+	env := decodeCrudEnvelope(t, rec)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("HTTP = %d, want 200", rec.Code)
+	}
+	var resp v1.ContentDetailResponse
+	if err := json.Unmarshal(env.Data, &resp); err != nil {
+		t.Fatalf("unmarshal data: %v", err)
+	}
+	if resp.Status != "draft" {
+		t.Fatalf("status = %q, want draft", resp.Status)
+	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet expectations: %v", err)
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm/clause"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
@@ -16,7 +17,10 @@ import (
 // listVersions 列出某个内容的版本快照。
 func (c *ContentsController) listVersions(ctx context.Context, contentID int64) (*v1.ListVersionsResponse, error) {
 	var count int64
-	if err := c.svc.DB.WithContext(ctx).Model(&model.Content{}).Where("id = ?", contentID).Count(&count).Error; err != nil || count == 0 {
+	if err := c.svc.DB.WithContext(ctx).Model(&model.Content{}).Where("id = ?", contentID).Count(&count).Error; err != nil {
+		return nil, common.NewInternal("failed to check content", err)
+	}
+	if count == 0 {
 		return nil, common.NewNotFound("content not found", fmt.Errorf("content %d not found", contentID))
 	}
 
@@ -51,19 +55,28 @@ func (c *ContentsController) ListVersions(ctx *gin.Context) {
 	common.Success(ctx, resp)
 }
 
-// createVersion creates a version snapshot from the current content state.
-// createVersion 根据当前内容状态创建版本快照。
+// createVersion creates a version snapshot from the current content state inside a transaction.
+// createVersion 在事务中根据当前内容状态创建版本快照。
 func (c *ContentsController) createVersion(ctx context.Context, contentID int64, createdBy int64, req *v1.CreateVersionRequest) (*v1.CreateVersionResponse, error) {
+	tx := c.svc.DB.WithContext(ctx).Begin()
+	if tx.Error != nil {
+		return nil, common.NewInternal("failed to begin transaction", tx.Error)
+	}
+
 	var content model.Content
-	if err := c.svc.DB.WithContext(ctx).First(&content, contentID).Error; err != nil {
-		return nil, common.NewNotFound("content not found", err)
+	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&content, contentID).Error; err != nil {
+		tx.Rollback()
+		return nil, mapFirstError(err, "content not found", "failed to fetch content")
 	}
 
 	var maxVersion int
-	c.svc.DB.WithContext(ctx).Model(&model.ContentVersion{}).
+	if err := tx.Model(&model.ContentVersion{}).
 		Select("COALESCE(MAX(version_number), 0)").
 		Where("content_id = ?", contentID).
-		Scan(&maxVersion)
+		Scan(&maxVersion).Error; err != nil {
+		tx.Rollback()
+		return nil, common.NewInternal("failed to read version number", err)
+	}
 
 	version := model.ContentVersion{
 		ContentID:     contentID,
@@ -75,8 +88,12 @@ func (c *ContentsController) createVersion(ctx context.Context, contentID int64,
 		CreatedBy:     createdBy,
 	}
 
-	if err := c.svc.DB.WithContext(ctx).Create(&version).Error; err != nil {
-		return nil, common.NewInternal("failed to create version", err)
+	if err := tx.Create(&version).Error; err != nil {
+		tx.Rollback()
+		return nil, mapVersionUniqueViolation(err)
+	}
+	if err := tx.Commit().Error; err != nil {
+		return nil, common.NewInternal("failed to commit version creation", err)
 	}
 
 	item := toVersionItem(version)

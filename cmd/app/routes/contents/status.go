@@ -17,7 +17,7 @@ import (
 func (c *ContentsController) transitionStatus(ctx context.Context, id int64, req *v1.TransitionStatusRequest) (*v1.ContentDetailResponse, error) {
 	var content model.Content
 	if err := c.svc.DB.WithContext(ctx).First(&content, id).Error; err != nil {
-		return nil, common.NewNotFound("content not found", err)
+		return nil, mapFirstError(err, "content not found", "failed to fetch content")
 	}
 
 	if content.Status == req.Status {

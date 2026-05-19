@@ -56,6 +56,31 @@ func TestListTagsPublicFiltersArchived(t *testing.T) {
 	}
 }
 
+func TestListTagsAdminViaBearerCanFilterArchived(t *testing.T) {
+	c, mock, issuer := newCrudTestControllerWithToken(t)
+	pair, err := issuer.IssuePair(1, "admin")
+	if err != nil {
+		t.Fatalf("IssuePair: %v", err)
+	}
+
+	mock.ExpectQuery(`SELECT count\(\*\) FROM "content"."tags" WHERE`).
+		WithArgs("archived").
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+	mock.ExpectQuery(`SELECT \* FROM "content"."tags" WHERE`).
+		WithArgs("archived", 20).
+		WillReturnRows(sqlmock.NewRows(tagColumns()))
+
+	ctx, rec := testCrudContext(http.MethodGet, "/api/v1/tags?status=archived", nil)
+	ctx.Request.Header.Set("Authorization", "Bearer "+pair.Access.Token)
+	runOptionalAuth(t, c, ctx, c.List)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("HTTP = %d, want 200", rec.Code)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
+	}
+}
+
 func TestListTagsAdminCanFilterByStatus(t *testing.T) {
 	c, mock := newCrudTestController(t)
 
@@ -99,7 +124,7 @@ func TestGetTagPublicOmitsStatus(t *testing.T) {
 	now := time.Now()
 
 	mock.ExpectQuery(`SELECT \* FROM "content"."tags" WHERE`).
-		WithArgs(int64(1), 1).
+		WithArgs(int64(1), "active", 1).
 		WillReturnRows(sqlmock.NewRows(tagColumns()).
 			AddRow(1, "Go", "go", nil, nil, "active", now, now, nil))
 
@@ -135,12 +160,9 @@ func TestGetTagPublicOmitsStatus(t *testing.T) {
 	}
 }
 
-func TestMapTagCrudUniqueViolation(t *testing.T) {
-	// Direct unit test for the error mapper since sqlmock+GORM doesn't
-	// reliably propagate pgconn.PgError through the driver layer.
-	// 直接测试错误映射函数，因为 sqlmock+GORM 无法可靠地传播 pgconn.PgError。
+func TestMapTagCreateUniqueViolation(t *testing.T) {
 	pgErr := &pgconn.PgError{Code: "23505"}
-	err := mapTagCrudUniqueViolation(pgErr, "my-slug")
+	err := mapTagCreateUniqueViolation(pgErr)
 
 	appErr, ok := err.(*common.AppError)
 	if !ok {
@@ -149,13 +171,13 @@ func TestMapTagCrudUniqueViolation(t *testing.T) {
 	if appErr.HTTPStatus != http.StatusConflict {
 		t.Fatalf("HTTP status = %d, want 409", appErr.HTTPStatus)
 	}
-	if appErr.Message != "my-slug slug is already taken" {
-		t.Fatalf("message = %q, want 'my-slug slug is already taken'", appErr.Message)
+	if appErr.Message != "tag slug is already taken" {
+		t.Fatalf("message = %q, want 'tag slug is already taken'", appErr.Message)
 	}
 }
 
-func TestMapTagCrudUniqueViolationNonPgError(t *testing.T) {
-	err := mapTagCrudUniqueViolation(sqlmock.ErrCancelled, "test")
+func TestMapTagCreateUniqueViolationNonPgError(t *testing.T) {
+	err := mapTagCreateUniqueViolation(sqlmock.ErrCancelled)
 
 	appErr, ok := err.(*common.AppError)
 	if !ok {
@@ -166,9 +188,20 @@ func TestMapTagCrudUniqueViolationNonPgError(t *testing.T) {
 	}
 }
 
-// TestUpdateTagSlugErrorVerifiedDirectly is covered by TestMapTagCrudUniqueViolation
-// and TestMapTagCrudUniqueViolationNonPgError which test the error mapper directly.
-// Full-flow mock test is skipped because sqlmock+GORM does not reliably propagate
-// pgconn.PgError through the driver layer for Exec-based operations.
+func TestGetTagArchivedHiddenFromPublic(t *testing.T) {
+	c, mock := newCrudTestController(t)
+
+	mock.ExpectQuery(`SELECT \* FROM "content"."tags" WHERE`).
+		WithArgs(int64(2), "active", 1).
+		WillReturnRows(sqlmock.NewRows(tagColumns()))
+
+	ctx, rec := testCrudContextWithID(http.MethodGet, "/api/v1/tags/2", nil, "2")
+	c.Get(ctx)
+	env := decodeCrudEnvelope(t, rec)
+	assertCrudError(t, rec, env, http.StatusNotFound, "tag not found")
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet expectations: %v", err)
+	}
+}
 
 func strPtr(s string) *string { return &s }

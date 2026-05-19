@@ -3,7 +3,6 @@ package tags
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -25,8 +24,8 @@ func (t *TagsController) list(ctx context.Context, req *v1.ListTagsRequest, admi
 
 	query := t.svc.DB.WithContext(ctx).Model(&model.Tag{})
 	if req.Search != "" {
-		pattern := "%" + strings.ToLower(req.Search) + "%"
-		query = query.Where("LOWER(name) LIKE ? OR LOWER(slug) LIKE ?", pattern, pattern)
+		pattern := "%" + req.Search + "%"
+		query = query.Where("name ILIKE ? OR slug ILIKE ?", pattern, pattern)
 	}
 
 	// Non-admin always sees active tags only; admin can filter by status.
@@ -52,7 +51,10 @@ func (t *TagsController) list(ctx context.Context, req *v1.ListTagsRequest, admi
 	for i, tag := range tags {
 		tagIDs[i] = tag.ID
 	}
-	countMap := batchTagContentCounts(ctx, t, tagIDs)
+	countMap, err := batchTagContentCounts(ctx, t, tagIDs)
+	if err != nil {
+		return nil, common.NewInternal("failed to load tag content counts", err)
+	}
 
 	if !admin {
 		items := make([]v1.TagItem, len(tags))
@@ -112,7 +114,7 @@ func (t *TagsController) create(ctx context.Context, req *v1.CreateTagRequest) (
 		Status:      "active",
 	}
 	if err := t.svc.DB.WithContext(ctx).Create(&tag).Error; err != nil {
-		return nil, mapTagCrudUniqueViolation(err, req.Slug)
+		return nil, mapTagCreateUniqueViolation(err)
 	}
 	return &v1.CreateTagResponse{ID: tag.ID}, nil
 }
@@ -136,9 +138,13 @@ func (t *TagsController) Create(ctx *gin.Context) {
 // get returns a single tag by ID.
 // get 根据 ID 返回单个标签。
 func (t *TagsController) get(ctx context.Context, id int64, admin bool) (*v1.TagDetailResponse, error) {
+	query := t.svc.DB.WithContext(ctx).Model(&model.Tag{}).Where("id = ?", id)
+	if !admin {
+		query = query.Where("status = ?", "active")
+	}
 	var tag model.Tag
-	if err := t.svc.DB.WithContext(ctx).First(&tag, id).Error; err != nil {
-		return nil, common.NewNotFound("tag not found", err)
+	if err := query.First(&tag).Error; err != nil {
+		return nil, mapFirstError(err, "tag not found", "failed to fetch tag")
 	}
 
 	var contentCount int64
@@ -178,16 +184,14 @@ func (t *TagsController) Get(ctx *gin.Context) {
 func (t *TagsController) update(ctx context.Context, id int64, req *v1.UpdateTagRequest) (*v1.TagDetailResponse, error) {
 	var tag model.Tag
 	if err := t.svc.DB.WithContext(ctx).First(&tag, id).Error; err != nil {
-		return nil, common.NewNotFound("tag not found", err)
+		return nil, mapFirstError(err, "tag not found", "failed to fetch tag")
 	}
 
 	updates := map[string]interface{}{}
 	if req.Name != nil {
 		updates["name"] = *req.Name
 	}
-	newSlug := tag.Slug
 	if req.Slug != nil {
-		newSlug = *req.Slug
 		updates["slug"] = *req.Slug
 	}
 	if req.Description != nil {
@@ -213,7 +217,7 @@ func (t *TagsController) update(ctx context.Context, id int64, req *v1.UpdateTag
 	}
 
 	if err := t.svc.DB.WithContext(ctx).Model(&tag).Updates(updates).Error; err != nil {
-		return nil, mapTagCrudUniqueViolation(err, newSlug)
+		return nil, mapTagUpdateUniqueViolation(err)
 	}
 	return t.get(ctx, id, true)
 }
@@ -243,7 +247,7 @@ func (t *TagsController) Update(ctx *gin.Context) {
 func (t *TagsController) del(ctx context.Context, id int64) error {
 	var tag model.Tag
 	if err := t.svc.DB.WithContext(ctx).First(&tag, id).Error; err != nil {
-		return common.NewNotFound("tag not found", err)
+		return mapFirstError(err, "tag not found", "failed to fetch tag")
 	}
 
 	var refCount int64
@@ -279,9 +283,9 @@ func (t *TagsController) Delete(ctx *gin.Context) {
 
 // batchTagContentCounts loads content counts for multiple tag IDs in one query.
 // batchTagContentCounts 通过一次查询批量加载多个标签的内容数量。
-func batchTagContentCounts(ctx context.Context, ctrl *TagsController, tagIDs []int64) map[int64]int64 {
+func batchTagContentCounts(ctx context.Context, ctrl *TagsController, tagIDs []int64) (map[int64]int64, error) {
 	if len(tagIDs) == 0 {
-		return nil
+		return nil, nil
 	}
 	type countRow struct {
 		TagID int64
@@ -293,11 +297,11 @@ func batchTagContentCounts(ctx context.Context, ctrl *TagsController, tagIDs []i
 		Where("tag_id IN ?", tagIDs).
 		Group("tag_id").
 		Find(&rows).Error; err != nil {
-		return nil
+		return nil, err
 	}
 	m := make(map[int64]int64, len(rows))
 	for _, r := range rows {
 		m[r.TagID] = r.Count
 	}
-	return m
+	return m, nil
 }

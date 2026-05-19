@@ -3,7 +3,6 @@ package contents
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -46,8 +45,8 @@ func (c *ContentsController) list(ctx context.Context, req *v1.ListContentsReque
 		query = query.Where("id IN (?)", subQuery)
 	}
 	if req.Search != "" {
-		pattern := "%" + strings.ToLower(req.Search) + "%"
-		query = query.Where("LOWER(title) LIKE ? OR LOWER(COALESCE(excerpt, '')) LIKE ?", pattern, pattern)
+		pattern := "%" + req.Search + "%"
+		query = query.Where("title ILIKE ? OR COALESCE(excerpt, '') ILIKE ?", pattern, pattern)
 	}
 
 	var total int64
@@ -68,8 +67,14 @@ func (c *ContentsController) list(ctx context.Context, req *v1.ListContentsReque
 		contentIDs[i] = ct.ID
 	}
 
-	authorMap := batchLoadAuthorUsernames(ctx, c, authorIDs)
-	tagMap := batchLoadContentTags(ctx, c, contentIDs)
+	authorMap, err := batchLoadAuthorUsernames(ctx, c, authorIDs)
+	if err != nil {
+		return nil, common.NewInternal("failed to load author usernames", err)
+	}
+	tagMap, err := batchLoadContentTags(ctx, c, contentIDs)
+	if err != nil {
+		return nil, common.NewInternal("failed to load content tags", err)
+	}
 
 	if !admin {
 		items := make([]v1.PublicContentItem, len(contents))
@@ -123,35 +128,35 @@ func (c *ContentsController) List(ctx *gin.Context) {
 
 // batchLoadAuthorUsernames loads usernames for a set of author IDs in one query.
 // batchLoadAuthorUsernames 一次查询批量加载作者用户名。
-func batchLoadAuthorUsernames(ctx context.Context, ctrl *ContentsController, ids []int64) map[int64]string {
+func batchLoadAuthorUsernames(ctx context.Context, ctrl *ContentsController, ids []int64) (map[int64]string, error) {
 	if len(ids) == 0 {
-		return nil
+		return nil, nil
 	}
 	uniqueIDs := uniqueInt64(ids)
 	var users []model.User
 	if err := ctrl.svc.DB.WithContext(ctx).Select("id, username").Where("id IN ?", uniqueIDs).Find(&users).Error; err != nil {
-		return nil
+		return nil, err
 	}
 	m := make(map[int64]string, len(users))
 	for _, u := range users {
 		m[u.ID] = u.Username
 	}
-	return m
+	return m, nil
 }
 
 // batchLoadContentTags loads tags for multiple content IDs in two queries.
 // batchLoadContentTags 通过两次查询批量加载多个内容的标签。
-func batchLoadContentTags(ctx context.Context, ctrl *ContentsController, contentIDs []int64) map[int64][]v1.TagItem {
+func batchLoadContentTags(ctx context.Context, ctrl *ContentsController, contentIDs []int64) (map[int64][]v1.TagItem, error) {
 	if len(contentIDs) == 0 {
-		return nil
+		return nil, nil
 	}
 	// Load all junction rows. / 加载所有联结行。
 	var cts []model.ContentTag
 	if err := ctrl.svc.DB.WithContext(ctx).Where("content_id IN ?", contentIDs).Find(&cts).Error; err != nil {
-		return nil
+		return nil, err
 	}
 	if len(cts) == 0 {
-		return nil
+		return nil, nil
 	}
 
 	// Collect unique tag IDs. / 收集唯一标签 ID。
@@ -165,7 +170,7 @@ func batchLoadContentTags(ctx context.Context, ctrl *ContentsController, content
 	// Load all tags. / 加载所有标签。
 	var tags []model.Tag
 	if err := ctrl.svc.DB.WithContext(ctx).Where("id IN ?", uniqueInt64(tagIDs)).Find(&tags).Error; err != nil {
-		return nil
+		return nil, err
 	}
 	tagItemMap := make(map[int64]v1.TagItem, len(tags))
 	for _, t := range tags {
@@ -184,7 +189,7 @@ func batchLoadContentTags(ctx context.Context, ctrl *ContentsController, content
 			result[ct.ContentID] = append(result[ct.ContentID], item)
 		}
 	}
-	return result
+	return result, nil
 }
 
 // uniqueInt64 deduplicates an int64 slice while preserving order.

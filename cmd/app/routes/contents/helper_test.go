@@ -5,13 +5,17 @@ import (
 	"encoding/json"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
 )
 
 type crudEnvelope struct {
@@ -88,4 +92,37 @@ func contentColumns() []string {
 		"cover_attachment_id", "author_id", "status", "visibility", "ai_access",
 		"published_at", "word_count", "reading_time_minutes", "metadata",
 		"view_count", "created_at", "updated_at", "deleted_at"}
+}
+
+func testContentsJWT(t *testing.T) *jwt.Issuer {
+	t.Helper()
+	issuer, err := jwt.NewIssuer(&options.JWTOptions{
+		Issuer:     "beehive-blog-contents-test",
+		Secret:     "0123456789abcdef0123456789abcdef",
+		AccessTTL:  time.Minute,
+		RefreshTTL: time.Hour,
+	})
+	if err != nil {
+		t.Fatalf("NewIssuer: %v", err)
+	}
+	return issuer
+}
+
+func newCrudTestControllerWithToken(t *testing.T) (*ContentsController, sqlmock.Sqlmock, *jwt.Issuer) {
+	t.Helper()
+	c, mock := newCrudTestController(t)
+	issuer := testContentsJWT(t)
+	c.svc.Token = issuer
+	return c, mock, issuer
+}
+
+// runOptionalAuth runs OptionalAuthMiddleware then the handler (mirrors production public routes).
+// runOptionalAuth 先执行 OptionalAuthMiddleware 再调用 handler（与生产公开路由一致）。
+func runOptionalAuth(t *testing.T, c *ContentsController, ctx *gin.Context, handler func(*gin.Context)) {
+	t.Helper()
+	middleware.OptionalAuthMiddleware(c.svc)(ctx)
+	if ctx.IsAborted() {
+		return
+	}
+	handler(ctx)
 }

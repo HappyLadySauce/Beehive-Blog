@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -19,7 +18,7 @@ import (
 func (c *ContentsController) create(ctx context.Context, authorID int64, req *v1.CreateContentRequest) (*v1.CreateContentResponse, error) {
 	status := "draft"
 	if req.Status != nil && *req.Status != "" {
-		status = *req.Status
+		status = *req.Status // binding allows draft | review only.
 	}
 	visibility := "public"
 	if req.Visibility != nil && *req.Visibility != "" {
@@ -42,12 +41,6 @@ func (c *ContentsController) create(ctx context.Context, authorID int64, req *v1
 	}
 	if req.ReadingTimeMinutes != nil {
 		rt = *req.ReadingTimeMinutes
-	}
-
-	var publishedAt *time.Time
-	if status == "published" {
-		now := time.Now()
-		publishedAt = &now
 	}
 
 	tx := c.svc.DB.WithContext(ctx).Begin()
@@ -83,7 +76,7 @@ func (c *ContentsController) create(ctx context.Context, authorID int64, req *v1
 		Status:             status,
 		Visibility:         visibility,
 		AIAccess:           aiAccess,
-		PublishedAt:        publishedAt,
+		PublishedAt:        nil,
 		WordCount:          wc,
 		ReadingTimeMinutes: rt,
 		Metadata:           metadata,
@@ -91,7 +84,7 @@ func (c *ContentsController) create(ctx context.Context, authorID int64, req *v1
 
 	if err := tx.Create(&content).Error; err != nil {
 		tx.Rollback()
-		return nil, mapContentCrudUniqueViolation(err)
+		return nil, mapContentCreateUniqueViolation(err)
 	}
 	if err := tx.Commit().Error; err != nil {
 		return nil, common.NewInternal("failed to commit content creation", err)

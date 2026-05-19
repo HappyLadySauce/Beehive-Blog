@@ -5,13 +5,17 @@ import (
 	"encoding/json"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
 )
 
 type crudEnvelope struct {
@@ -85,4 +89,35 @@ func assertCrudError(t *testing.T, rec *httptest.ResponseRecorder, env crudEnvel
 
 func tagColumns() []string {
 	return []string{"id", "name", "slug", "description", "color", "status", "created_at", "updated_at", "deleted_at"}
+}
+
+func testTagsJWT(t *testing.T) *jwt.Issuer {
+	t.Helper()
+	issuer, err := jwt.NewIssuer(&options.JWTOptions{
+		Issuer:     "beehive-blog-tags-test",
+		Secret:     "0123456789abcdef0123456789abcdef",
+		AccessTTL:  time.Minute,
+		RefreshTTL: time.Hour,
+	})
+	if err != nil {
+		t.Fatalf("NewIssuer: %v", err)
+	}
+	return issuer
+}
+
+func newCrudTestControllerWithToken(t *testing.T) (*TagsController, sqlmock.Sqlmock, *jwt.Issuer) {
+	t.Helper()
+	c, mock := newCrudTestController(t)
+	issuer := testTagsJWT(t)
+	c.svc.Token = issuer
+	return c, mock, issuer
+}
+
+func runOptionalAuth(t *testing.T, c *TagsController, ctx *gin.Context, handler func(*gin.Context)) {
+	t.Helper()
+	middleware.OptionalAuthMiddleware(c.svc)(ctx)
+	if ctx.IsAborted() {
+		return
+	}
+	handler(ctx)
 }

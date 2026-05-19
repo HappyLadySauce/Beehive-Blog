@@ -20,7 +20,10 @@ func (c *ContentsController) getRelations(ctx context.Context, contentID int64, 
 		existQuery = existQuery.Where("status = ? AND visibility = ?", "published", "public")
 	}
 	var count int64
-	if err := existQuery.Count(&count).Error; err != nil || count == 0 {
+	if err := existQuery.Count(&count).Error; err != nil {
+		return nil, common.NewInternal("failed to check content", err)
+	}
+	if count == 0 {
 		return nil, common.NewNotFound("content not found", fmt.Errorf("content %d not found", contentID))
 	}
 
@@ -82,10 +85,16 @@ func (c *ContentsController) GetRelations(ctx *gin.Context) {
 // addRelation 添加从内容到目标的有向关系。
 func (c *ContentsController) addRelation(ctx context.Context, contentID int64, req *v1.AddRelationRequest) (*v1.AddRelationResponse, error) {
 	var count int64
-	if err := c.svc.DB.WithContext(ctx).Model(&model.Content{}).Where("id = ?", contentID).Count(&count).Error; err != nil || count == 0 {
+	if err := c.svc.DB.WithContext(ctx).Model(&model.Content{}).Where("id = ?", contentID).Count(&count).Error; err != nil {
+		return nil, common.NewInternal("failed to check content", err)
+	}
+	if count == 0 {
 		return nil, common.NewNotFound("content not found", fmt.Errorf("content %d not found", contentID))
 	}
-	if err := c.svc.DB.WithContext(ctx).Model(&model.Content{}).Where("id = ?", req.TargetContentID).Count(&count).Error; err != nil || count == 0 {
+	if err := c.svc.DB.WithContext(ctx).Model(&model.Content{}).Where("id = ?", req.TargetContentID).Count(&count).Error; err != nil {
+		return nil, common.NewInternal("failed to check target content", err)
+	}
+	if count == 0 {
 		return nil, common.NewNotFound("target content not found", fmt.Errorf("target %d not found", req.TargetContentID))
 	}
 

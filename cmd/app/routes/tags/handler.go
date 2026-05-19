@@ -35,11 +35,12 @@ func Init(svcCtx *svc.ServiceContext) error {
 
 	t := NewTagsController(svcCtx)
 
-	tags := router.V1().Group("/tags")
-	tags.GET("", t.List)
-	tags.GET("/:id", t.Get)
+	publicTags := router.V1().Group("/tags")
+	publicTags.Use(middleware.OptionalAuthMiddleware(svcCtx))
+	publicTags.GET("", t.List)
+	publicTags.GET("/:id", t.Get)
 
-	adminTags := tags.Group("")
+	adminTags := router.V1().Group("/tags")
 	adminTags.Use(middleware.AuthMiddleware(svcCtx), middleware.RequireRole("admin"))
 	adminTags.POST("", t.Create)
 	adminTags.PATCH("/:id", t.Update)
