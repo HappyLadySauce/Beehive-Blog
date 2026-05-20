@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { Hexagon, LogOut, PenLine, User, Wrench } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/components/auth/AuthProvider";
+import { isStudioContentEditorPath } from "@/lib/studio/routes";
 
 export function SiteHeader() {
+  const pathname = usePathname();
   const router = useRouter();
   const { claims, clearAuth, isAdmin, isAuthenticated, loading } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -33,6 +35,10 @@ export function SiteHeader() {
     setMenuOpen(false);
     await clearAuth();
     router.replace("/");
+  }
+
+  if (isStudioContentEditorPath(pathname)) {
+    return null;
   }
 
   return (

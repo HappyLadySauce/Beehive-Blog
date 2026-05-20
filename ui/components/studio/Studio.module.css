@@ -101,6 +101,10 @@
   min-width: 0;
 }
 
+.editorFullscreenLayout {
+  min-height: 100vh;
+}
+
 .topbar {
   align-items: center;
   display: flex;
@@ -920,6 +924,190 @@
   margin-top: 20px;
 }
 
+.markdownToolActions,
+.editorStatusPill,
+.markdownNavHeader {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.editorStatusPill {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.markdownToolActions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.editorStatusPill {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  min-height: 36px;
+  padding: 7px 10px;
+}
+
+.markdownNavHeader {
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.markdownNavItemActive {
+  background: #e8ecef;
+  border: 0;
+  border-radius: 6px;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  min-height: 34px;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.contentEditorPage {
+  background: var(--bg);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.contentEditorHeader {
+  align-items: center;
+  background: color-mix(in srgb, var(--bg) 94%, white);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  min-height: 74px;
+  padding: 12px var(--shell-pad-x);
+}
+
+.contentEditorTitleGroup,
+.contentEditorHeaderActions,
+.contentEditorToolbar,
+.contentEditorToolbar > div,
+.contentEditorLoading {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.contentEditorTitleGroup h1 {
+  font-size: 1.2rem;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.contentEditorTitleGroup span,
+.contentEditorToolbar span {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.contentEditorTitleGroup .eyebrow {
+  margin-bottom: 2px;
+}
+
+.contentEditorHeaderActions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.contentEditorGrid {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 320px;
+  min-height: 0;
+}
+
+.contentEditorNavigator,
+.contentEditorInspector {
+  background: #f2f5f7;
+  border-right: 1px solid var(--line);
+  display: grid;
+  gap: 10px;
+  grid-auto-rows: max-content;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px;
+}
+
+.contentEditorInspector {
+  background: var(--surface);
+  border-left: 1px solid var(--line);
+  border-right: 0;
+}
+
+.contentEditorMain {
+  background: white;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.contentEditorToolbar {
+  border-bottom: 1px solid var(--line);
+  justify-content: space-between;
+  min-height: 58px;
+  padding: 10px 14px;
+}
+
+.contentEditorCodeMirror {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.contentEditorCodeMirror :global(.cm-editor) {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.95rem;
+  height: 100%;
+}
+
+.contentEditorCodeMirror :global(.cm-scroller) {
+  font-family: inherit;
+  line-height: 1.78;
+}
+
+.contentEditorCodeMirror :global(.cm-gutters) {
+  background: white;
+  border-right: 0;
+  color: #8ca0af;
+}
+
+.contentEditorLoading {
+  color: var(--muted);
+  font-weight: 800;
+  justify-content: center;
+  min-height: 320px;
+}
+
+.editorTagFieldset {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 12px;
+}
+
+.editorTagFieldset legend {
+  font-weight: 800;
+  padding: 0 6px;
+}
+
+.editorTagFieldset label {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
 .pagination {
   align-items: center;
   display: flex;
@@ -1452,6 +1640,19 @@
   .navCollapsed {
     display: none;
   }
+
+  .contentEditorGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .contentEditorNavigator {
+    display: none;
+  }
+
+  .contentEditorInspector {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
 }
 
 @media (max-width: 560px) {
@@ -1480,6 +1681,12 @@
 
   .formGrid {
     grid-template-columns: 1fr;
+  }
+
+  .contentEditorHeader,
+  .contentEditorToolbar {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .avatarEditor {

@@ -6,20 +6,12 @@ import { ToastProvider } from "@/components/toast/ToastProvider";
 import { resetContentPageModuleStateForTests, StudioContentPage } from "./StudioContentPage";
 
 const listContents = vi.hoisted(() => vi.fn());
-const createContent = vi.hoisted(() => vi.fn());
-const updateContent = vi.hoisted(() => vi.fn());
 const deleteContent = vi.hoisted(() => vi.fn());
-const transitionContentStatus = vi.hoisted(() => vi.fn());
-const setContentTags = vi.hoisted(() => vi.fn());
 const listTags = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api/contents", () => ({
-  createContent,
   deleteContent,
-  listContents,
-  setContentTags,
-  transitionContentStatus,
-  updateContent
+  listContents
 }));
 
 vi.mock("@/lib/api/tags", () => ({
@@ -75,18 +67,10 @@ describe("StudioContentPage", () => {
   beforeEach(() => {
     resetContentPageModuleStateForTests();
     listContents.mockReset();
-    createContent.mockReset();
-    updateContent.mockReset();
     deleteContent.mockReset();
-    transitionContentStatus.mockReset();
-    setContentTags.mockReset();
     listTags.mockReset();
     listContents.mockResolvedValue(contentList);
     listTags.mockResolvedValue(tags);
-    createContent.mockResolvedValue({ id: 10 });
-    updateContent.mockResolvedValue(contentList.items[0]);
-    transitionContentStatus.mockResolvedValue(contentList.items[0]);
-    setContentTags.mockResolvedValue({});
     deleteContent.mockResolvedValue({});
   });
 
@@ -127,34 +111,21 @@ describe("StudioContentPage", () => {
     expect(listTags).toHaveBeenCalledTimes(1);
   });
 
-  it("creates content, binds tags, and refreshes through direct network request", async () => {
+  it("links create and edit actions to standalone editor routes", async () => {
     renderContentPage();
     await waitFor(() => expect(screen.getByText("Hello World")).toBeInTheDocument());
 
-    fireEvent.click(screen.getByRole("button", { name: "新建内容" }));
-    fireEvent.change(screen.getByLabelText("标题"), { target: { value: "New Post" } });
-    fireEvent.change(screen.getByLabelText("Slug"), { target: { value: "new-post" } });
-    fireEvent.click(screen.getByLabelText("AI"));
-    fireEvent.click(screen.getByRole("button", { name: "保存" }));
-
-    await waitFor(() => expect(createContent).toHaveBeenCalledWith(expect.objectContaining({ slug: "new-post", title: "New Post" })));
-    expect(setContentTags).toHaveBeenCalledWith(10, { tag_ids: [3] });
-    expect(listContents).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole("link", { name: /新建内容/ })).toHaveAttribute("href", "/studio/content/new");
+    expect(screen.getByRole("link", { name: "编辑 Hello World" })).toHaveAttribute("href", "/studio/content/9/edit");
   });
 
-  it("updates status and deletes content", async () => {
+  it("deletes content and refreshes through direct network request", async () => {
     renderContentPage();
     await waitFor(() => expect(screen.getByText("Hello World")).toBeInTheDocument());
-
-    fireEvent.click(screen.getByRole("button", { name: "编辑 Hello World" }));
-    fireEvent.click(screen.getByRole("combobox", { name: "内容状态" }));
-    fireEvent.click(screen.getByRole("option", { name: "已发布" }));
-    fireEvent.click(screen.getByRole("button", { name: "保存" }));
-
-    await waitFor(() => expect(transitionContentStatus).toHaveBeenCalledWith(9, { status: "published" }));
 
     fireEvent.click(screen.getByRole("button", { name: "删除 Hello World" }));
     fireEvent.click(screen.getByRole("button", { name: "删除" }));
     await waitFor(() => expect(deleteContent).toHaveBeenCalledWith(9));
+    expect(listContents).toHaveBeenCalledTimes(2);
   });
 });

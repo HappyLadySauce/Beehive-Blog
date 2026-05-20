@@ -1,18 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { FileText, Loader2, Pencil, Plus, RefreshCw, Save, Search, Trash2, X } from "lucide-react";
+import { FileText, Loader2, Pencil, Plus, RefreshCw, Search, Trash2, X } from "lucide-react";
 
 import { humanizeApiError } from "@/lib/api/client";
-import {
-  createContent,
-  deleteContent,
-  listContents,
-  setContentTags,
-  transitionContentStatus,
-  updateContent
-} from "@/lib/api/contents";
+import { deleteContent, listContents } from "@/lib/api/contents";
 import { listTags } from "@/lib/api/tags";
 import type { ContentItem, ListContentsResponse, ListTagsResponse, TagItem } from "@/lib/api/types";
 import { ToastMessage } from "@/components/toast/ToastProvider";
@@ -25,20 +19,6 @@ const pageSize = 20;
 const searchDebounceMs = 400;
 
 type Message = { tone: "success" | "error"; text: string } | null;
-type ContentFormMode = "create" | "edit";
-
-type ContentFormState = {
-  type: string;
-  title: string;
-  slug: string;
-  excerpt: string;
-  body: string;
-  coverAttachmentID: string;
-  status: string;
-  visibility: string;
-  aiAccess: string;
-  tagIDs: number[];
-};
 
 type ContentListFilters = {
   page: number;
@@ -114,7 +94,7 @@ const typeOptions = [
   { value: "portfolio", label: "作品集" }
 ] as const;
 
-const contentTypeFormOptions = typeOptions.filter((option) => option.value !== "");
+const contentTypeOptions = typeOptions.filter((option) => option.value !== "");
 
 const statusOptions = [
   { value: "", label: "状态：全部" },
@@ -124,7 +104,7 @@ const statusOptions = [
   { value: "archived", label: "已归档" }
 ] as const;
 
-const contentStatusFormOptions = statusOptions.filter((option) => option.value !== "");
+const contentStatusOptions = statusOptions.filter((option) => option.value !== "");
 
 const visibilityOptions = [
   { value: "", label: "可见性：全部" },
@@ -133,25 +113,7 @@ const visibilityOptions = [
   { value: "private", label: "私有" }
 ] as const;
 
-const visibilityFormOptions = visibilityOptions.filter((option) => option.value !== "");
-
-const aiAccessOptions = [
-  { value: "allowed", label: "AI 可访问" },
-  { value: "denied", label: "AI 禁止" }
-] as const;
-
-const emptyForm: ContentFormState = {
-  aiAccess: "allowed",
-  body: "",
-  coverAttachmentID: "",
-  excerpt: "",
-  slug: "",
-  status: "draft",
-  tagIDs: [],
-  title: "",
-  type: "article",
-  visibility: "public"
-};
+const visibilityLabelOptions = visibilityOptions.filter((option) => option.value !== "");
 
 export function StudioContentPage() {
   const [data, setData] = useState<ListContentsResponse | null>(null);
@@ -166,10 +128,6 @@ export function StudioContentPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<Message>(null);
-  const [formMode, setFormMode] = useState<ContentFormMode>("create");
-  const [formOpen, setFormOpen] = useState(false);
-  const [formTarget, setFormTarget] = useState<ContentItem | null>(null);
-  const [form, setForm] = useState<ContentFormState>(emptyForm);
   const [deleteTarget, setDeleteTarget] = useState<ContentItem | null>(null);
 
   useEffect(() => {
@@ -240,111 +198,8 @@ export function StudioContentPage() {
     setPage(1);
   }
 
-  function openCreate() {
-    setFormMode("create");
-    setFormTarget(null);
-    setForm(emptyForm);
-    setMessage(null);
-    setFormOpen(true);
-  }
-
-  function openEdit(item: ContentItem) {
-    setFormMode("edit");
-    setFormTarget(item);
-    setForm({
-      aiAccess: item.ai_access,
-      body: item.body ?? "",
-      coverAttachmentID: item.cover_attachment_id ? String(item.cover_attachment_id) : "",
-      excerpt: item.excerpt ?? "",
-      slug: item.slug,
-      status: item.status,
-      tagIDs: item.tags?.map((tag) => tag.id) ?? [],
-      title: item.title,
-      type: item.type,
-      visibility: item.visibility
-    });
-    setMessage(null);
-    setFormOpen(true);
-  }
-
-  function closeForm() {
-    setFormOpen(false);
-    setFormTarget(null);
-  }
-
-  function setFormField<K extends keyof ContentFormState>(key: K, value: ContentFormState[K]) {
-    setForm((current) => ({ ...current, [key]: value }));
-  }
-
-  function toggleFormTag(id: number, checked: boolean) {
-    setForm((current) => ({
-      ...current,
-      tagIDs: checked ? Array.from(new Set([...current.tagIDs, id])) : current.tagIDs.filter((tagID) => tagID !== id)
-    }));
-  }
-
-  async function onSubmitForm(event: FormEvent<HTMLFormElement>) {
+  async function onDeleteConfirm(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const title = form.title.trim();
-    const slug = form.slug.trim();
-    if (!title || !slug || !form.type) {
-      setMessage({ tone: "error", text: "类型、标题和 Slug 不能为空。" });
-      return;
-    }
-
-    setSaving(true);
-    setMessage(null);
-    try {
-      const coverAttachmentID = form.coverAttachmentID ? Number(form.coverAttachmentID) : null;
-      if (coverAttachmentID !== null && (!Number.isInteger(coverAttachmentID) || coverAttachmentID <= 0)) {
-        setMessage({ tone: "error", text: "封面附件 ID 必须是正整数。" });
-        return;
-      }
-
-      if (formMode === "create") {
-        const created = await createContent({
-          ai_access: form.aiAccess,
-          body: form.body || null,
-          cover_attachment_id: coverAttachmentID,
-          excerpt: form.excerpt || null,
-          slug,
-          status: form.status === "published" || form.status === "archived" ? "draft" : form.status,
-          title,
-          type: form.type,
-          visibility: form.visibility
-        });
-        if (form.tagIDs.length > 0) {
-          await setContentTags(created.id, { tag_ids: form.tagIDs });
-        }
-        setMessage({ tone: "success", text: "内容已创建。" });
-      } else if (formTarget) {
-        await updateContent(formTarget.id, {
-          ai_access: form.aiAccess,
-          body: form.body || null,
-          cover_attachment_id: coverAttachmentID,
-          excerpt: form.excerpt || null,
-          slug,
-          title,
-          type: form.type,
-          visibility: form.visibility
-        });
-        await setContentTags(formTarget.id, { tag_ids: form.tagIDs });
-        if (form.status !== formTarget.status) {
-          await transitionContentStatus(formTarget.id, { status: form.status });
-        }
-        setMessage({ tone: "success", text: "内容已更新。" });
-      }
-
-      closeForm();
-      await refreshContents();
-    } catch (error) {
-      setMessage({ tone: "error", text: humanizeApiError(error) });
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function onDeleteConfirm() {
     if (!deleteTarget) return;
     setSaving(true);
     setMessage(null);
@@ -369,10 +224,10 @@ export function StudioContentPage() {
               <RefreshCw aria-hidden size={18} />
               刷新
             </button>
-            <button className="primary-button" type="button" onClick={openCreate}>
+            <Link className="primary-button" href="/studio/content/new" prefetch={false}>
               <Plus aria-hidden size={18} />
               新建内容
-            </button>
+            </Link>
           </>
         }
         description="管理文章、笔记、项目与发布状态。"
@@ -439,9 +294,9 @@ export function StudioContentPage() {
                         <td>{formatDate(item.updated_at)}</td>
                         <td>
                           <div className={styles.tableActions}>
-                            <button className="secondary-button icon-button" type="button" aria-label={`编辑 ${item.title}`} onClick={() => openEdit(item)}>
+                            <Link className="secondary-button icon-button" href={`/studio/content/${item.id}/edit`} aria-label={`编辑 ${item.title}`} prefetch={false}>
                               <Pencil aria-hidden size={16} />
-                            </button>
+                            </Link>
                             <button className="danger-button icon-button" type="button" aria-label={`删除 ${item.title}`} onClick={() => setDeleteTarget(item)}>
                               <Trash2 aria-hidden size={16} />
                             </button>
@@ -468,109 +323,15 @@ export function StudioContentPage() {
         )}
       </section>
 
-      {formOpen ? renderContentFormModal(formMode, form, tags, saving, formTarget, closeForm, setFormField, toggleFormTag, onSubmitForm) : null}
       {deleteTarget ? renderDeleteModal(deleteTarget, saving, () => setDeleteTarget(null), onDeleteConfirm) : null}
     </>
   );
 }
 
-function renderContentFormModal(
-  mode: ContentFormMode,
-  form: ContentFormState,
-  tags: TagItem[],
-  saving: boolean,
-  target: ContentItem | null,
-  onClose: () => void,
-  onField: <K extends keyof ContentFormState>(key: K, value: ContentFormState[K]) => void,
-  onTag: (id: number, checked: boolean) => void,
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void
-) {
+function renderDeleteModal(target: ContentItem, saving: boolean, onClose: () => void, onSubmit: (event: FormEvent<HTMLFormElement>) => void) {
   return createPortal(
     <div className={styles.overlay} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <form className={styles.modalTall} role="dialog" aria-modal="true" aria-labelledby="content-form-title" onSubmit={onSubmit}>
-        <div className={styles.modalHeader}>
-          <div>
-            <h3 id="content-form-title">{mode === "create" ? "新建内容" : `编辑 ${target?.title ?? "内容"}`}</h3>
-            <p>创建时只能直接进入草稿或审核；发布与归档由后端状态流转控制。</p>
-          </div>
-          <button className="secondary-button icon-button" type="button" aria-label="关闭" onClick={onClose}>
-            <X aria-hidden size={18} />
-          </button>
-        </div>
-
-        <div className={styles.formGrid}>
-          <label className={styles.field}>
-            <span>类型</span>
-            <StudioSelect ariaLabel="内容类型" options={contentTypeFormOptions} value={form.type} onChange={(value) => onField("type", value)} />
-          </label>
-          <label className={styles.field}>
-            <span>状态</span>
-            <StudioSelect ariaLabel="内容状态" options={contentStatusFormOptions} value={form.status} onChange={(value) => onField("status", value)} />
-          </label>
-          <label className={styles.field}>
-            <span>标题</span>
-            <input value={form.title} onChange={(event) => onField("title", event.target.value)} />
-          </label>
-          <label className={styles.field}>
-            <span>Slug</span>
-            <input value={form.slug} onChange={(event) => onField("slug", event.target.value)} />
-          </label>
-          <label className={styles.field}>
-            <span>可见性</span>
-            <StudioSelect ariaLabel="内容可见性" options={visibilityFormOptions} value={form.visibility} onChange={(value) => onField("visibility", value)} />
-          </label>
-          <label className={styles.field}>
-            <span>AI 访问</span>
-            <StudioSelect ariaLabel="AI 访问" options={aiAccessOptions} value={form.aiAccess} onChange={(value) => onField("aiAccess", value)} />
-          </label>
-          <label className={styles.field}>
-            <span>封面附件 ID</span>
-            <input inputMode="numeric" value={form.coverAttachmentID} onChange={(event) => onField("coverAttachmentID", event.target.value)} />
-          </label>
-          <label className={styles.fieldFull}>
-            <span>摘要</span>
-            <textarea className={styles.textarea} rows={3} value={form.excerpt} onChange={(event) => onField("excerpt", event.target.value)} />
-          </label>
-          <label className={styles.fieldFull}>
-            <span>正文</span>
-            <textarea className={styles.textarea} rows={10} value={form.body} onChange={(event) => onField("body", event.target.value)} />
-          </label>
-          <fieldset className={`${styles.checkboxGrid} ${styles.fieldFull}`}>
-            <legend>标签</legend>
-            {tags.length > 0 ? (
-              tags.map((tag) => (
-                <label key={tag.id}>
-                  <span>{tag.name}</span>
-                  <input
-                    checked={form.tagIDs.includes(tag.id)}
-                    type="checkbox"
-                    onChange={(event) => onTag(tag.id, event.target.checked)}
-                  />
-                </label>
-              ))
-            ) : (
-              <span>暂无可用标签</span>
-            )}
-          </fieldset>
-        </div>
-
-        <div className={styles.modalActions}>
-          <button className="secondary-button" disabled={saving} type="button" onClick={onClose}>取消</button>
-          <button className="primary-button" disabled={saving} type="submit">
-            {saving ? <Loader2 aria-hidden className="spin" size={18} /> : <Save aria-hidden size={18} />}
-            保存
-          </button>
-        </div>
-      </form>
-    </div>,
-    document.body
-  );
-}
-
-function renderDeleteModal(target: ContentItem, saving: boolean, onClose: () => void, onConfirm: () => void) {
-  return createPortal(
-    <div className={styles.overlay} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="content-delete-title">
+      <form className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="content-delete-title" onSubmit={onSubmit}>
         <div className={styles.modalHeader}>
           <h3 id="content-delete-title">删除内容</h3>
           <button className="secondary-button icon-button" type="button" aria-label="关闭" onClick={onClose}>
@@ -580,27 +341,27 @@ function renderDeleteModal(target: ContentItem, saving: boolean, onClose: () => 
         <p>确认删除「{target.title}」？该操作会请求后端执行软删除。</p>
         <div className={styles.modalActions}>
           <button className="secondary-button" disabled={saving} type="button" onClick={onClose}>取消</button>
-          <button className="danger-button" disabled={saving} type="button" onClick={onConfirm}>
+          <button className="danger-button" disabled={saving} type="submit">
             <Trash2 aria-hidden size={18} />
             删除
           </button>
         </div>
-      </div>
+      </form>
     </div>,
     document.body
   );
 }
 
 function contentTypeLabel(value: string) {
-  return contentTypeFormOptions.find((option) => option.value === value)?.label ?? value;
+  return contentTypeOptions.find((option) => option.value === value)?.label ?? value;
 }
 
 function contentStatusLabel(value: string) {
-  return contentStatusFormOptions.find((option) => option.value === value)?.label ?? value;
+  return contentStatusOptions.find((option) => option.value === value)?.label ?? value;
 }
 
 function visibilityLabel(value: string) {
-  return visibilityFormOptions.find((option) => option.value === value)?.label ?? value;
+  return visibilityLabelOptions.find((option) => option.value === value)?.label ?? value;
 }
 
 function formatDate(value: string) {

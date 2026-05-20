@@ -11,12 +11,14 @@ const authState = vi.hoisted(() => ({
   claims: null as { uid?: number; role?: string } | null,
   clearAuth: vi.fn()
 }));
+const pathname = vi.hoisted(() => ({ value: "/" }));
 
 vi.mock("@/components/auth/AuthProvider", () => ({
   useAuth: () => authState
 }));
 
 vi.mock("next/navigation", () => ({
+  usePathname: () => pathname.value,
   useRouter: () => ({
     replace: vi.fn()
   })
@@ -30,6 +32,7 @@ describe("SiteHeader", () => {
     authState.role = undefined;
     authState.claims = null;
     authState.clearAuth.mockClear();
+    pathname.value = "/";
   });
 
   it("shows login for anonymous visitors", () => {
@@ -83,5 +86,13 @@ describe("SiteHeader", () => {
     fireEvent.pointerDown(screen.getByTestId("outside"));
 
     expect(screen.queryByRole("menuitem", { name: "登出" })).not.toBeInTheDocument();
+  });
+
+  it("hides the site header on immersive content editor routes", () => {
+    pathname.value = "/studio/content/9/edit";
+
+    const { container } = render(<SiteHeader />);
+
+    expect(container).toBeEmptyDOMElement();
   });
 });
