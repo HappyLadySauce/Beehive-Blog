@@ -34,6 +34,9 @@ func (c *ContentsController) list(ctx context.Context, req *v1.ListContentsReque
 	if req.Type != "" {
 		query = query.Where("type = ?", req.Type)
 	}
+	if req.Slug != "" {
+		query = query.Where("slug = ?", req.Slug)
+	}
 	if req.TagID > 0 {
 		subQuery := c.svc.DB.WithContext(ctx).Model(&model.ContentTag{}).
 			Select("content_id").Where("tag_id = ?", req.TagID)
@@ -117,6 +120,7 @@ func (c *ContentsController) list(ctx context.Context, req *v1.ListContentsReque
 //	@Param			visibility	query		string	false	"Filter by visibility (admin only)"			Enums(public, member, private)
 //	@Param			tag_id		query		int		false	"Filter by tag ID"
 //	@Param			search		query		string	false	"Search title or excerpt"
+//	@Param			slug		query		string	false	"Exact slug match (combine with type for uniqueness)"
 //	@Success		200			{object}	common.BaseResponse{data=v1.ListContentsResponse}	"Admin view; anonymous uses PublicListContentsResponse shape"
 //	@Failure		400			{object}	common.BaseResponse
 //	@Router			/api/v1/contents [get]

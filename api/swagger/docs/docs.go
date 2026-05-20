@@ -1671,6 +1671,12 @@ const docTemplate = `{
                         "description": "Search title or excerpt",
                         "name": "search",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Exact slug match (combine with type for uniqueness)",
+                        "name": "slug",
+                        "in": "query"
                     }
                 ],
                 "responses": {

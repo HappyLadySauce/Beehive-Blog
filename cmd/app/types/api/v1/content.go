@@ -15,6 +15,7 @@ type ListContentsRequest struct {
 	Visibility string `form:"visibility" binding:"omitempty,oneof=public member private"`
 	TagID      int64  `form:"tag_id" binding:"omitempty,min=1"`
 	Search     string `form:"search" binding:"omitempty,max=256"`
+	Slug       string `form:"slug" binding:"omitempty,max=512"`
 }
 
 // CreateContentRequest is the admin-only payload for creating content.

@@ -2322,6 +2322,10 @@ paths:
         in: query
         name: search
         type: string
+      - description: Exact slug match (combine with type for uniqueness)
+        in: query
+        name: slug
+        type: string
       produces:
       - application/json
       responses:
