@@ -2,7 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { Loader2, Pencil, Plus, RefreshCw, Save, Search, Tags, Trash2, X } from "lucide-react";
+import { Loader2, Pencil, Plus, Save, Search, Tags, Trash2, X } from "lucide-react";
 
 import { ToastMessage } from "@/components/toast/ToastProvider";
 import { humanizeApiError } from "@/lib/api/client";
@@ -240,16 +240,10 @@ export function StudioTagsPage() {
     <>
       <StudioTopbar
         actions={
-          <>
-            <button className="secondary-button" disabled={loading} type="button" onClick={refreshTags}>
-              <RefreshCw aria-hidden size={18} />
-              刷新
-            </button>
-            <button className="primary-button" type="button" onClick={openCreate}>
-              <Plus aria-hidden size={18} />
-              新建标签
-            </button>
-          </>
+          <button className="primary-button" type="button" onClick={openCreate}>
+            <Plus aria-hidden size={18} />
+            新建标签
+          </button>
         }
         description="统一整理标签、专题与内容关系，避免 Public 与 Studio 信息架构分裂。"
         eyebrow="Content taxonomy"

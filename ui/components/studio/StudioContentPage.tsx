@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { FileText, Loader2, Pencil, Plus, RefreshCw, Search, Trash2, X } from "lucide-react";
+import { FileText, Loader2, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 
 import { humanizeApiError } from "@/lib/api/client";
 import { deleteContent, listContents } from "@/lib/api/contents";
@@ -219,16 +219,10 @@ export function StudioContentPage() {
     <>
       <StudioTopbar
         actions={
-          <>
-            <button className="secondary-button" disabled={loading} type="button" onClick={refreshContents}>
-              <RefreshCw aria-hidden size={18} />
-              刷新
-            </button>
-            <Link className="primary-button" href="/studio/content/new" prefetch={false}>
-              <Plus aria-hidden size={18} />
-              新建内容
-            </Link>
-          </>
+          <Link className="primary-button" href="/studio/content/new" prefetch={false}>
+            <Plus aria-hidden size={18} />
+            新建内容
+          </Link>
         }
         description="管理文章、笔记、项目与发布状态。"
         eyebrow="Content studio"
