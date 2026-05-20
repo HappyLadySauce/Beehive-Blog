@@ -621,7 +621,7 @@
 }
 
 .userTable th {
-  font-size: 0.76rem;
+  font-size: 0.86rem;
 }
 
 .userSelectColumn {
@@ -1486,7 +1486,7 @@
   border-bottom: 1px solid var(--line);
   color: var(--muted);
   display: grid;
-  font-size: 0.76rem;
+  font-size: 0.86rem;
   font-weight: 900;
   gap: 10px;
   grid-template-columns: 18px 38px minmax(300px, 0.92fr) 108px 70px 76px 84px 112px;
