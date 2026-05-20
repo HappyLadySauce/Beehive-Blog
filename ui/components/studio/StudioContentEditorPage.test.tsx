@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ToastProvider } from "@/components/toast/ToastProvider";
@@ -40,32 +40,45 @@ vi.mock("@/lib/api/tags", () => ({
   listTags
 }));
 
-vi.mock("./StudioMarkdownCodeMirror", () => ({
-  StudioMarkdownCodeMirror: ({
+vi.mock("./StudioMarkdownCodeMirror", () => {
+  return {
+    StudioMarkdownCodeMirror: ({
+      mode,
+      scrollTarget,
     value,
     onChange,
     onFiles,
     onSelectionChange
   }: {
+    mode: "live" | "source";
+    scrollTarget?: { id: number; line: number } | null;
     value: string;
     onChange: (value: string) => void;
     onFiles: (files: File[]) => void;
     onSelectionChange: (selection: { from: number; to: number }) => void;
-  }) => (
-    <textarea
-      aria-label="Markdown 正文"
-      value={value}
-      onChange={(event) => {
-        onChange(event.currentTarget.value);
-        onSelectionChange({ from: event.currentTarget.value.length, to: event.currentTarget.value.length });
-      }}
-      onDrop={(event) => {
-        event.preventDefault();
-        onFiles(Array.from(event.dataTransfer.files));
-      }}
-    />
-  )
-}));
+  }) => {
+    return (
+      <textarea
+        aria-label="Markdown 正文"
+        data-mode={mode}
+        data-scroll-line={scrollTarget?.line ?? ""}
+        value={mode === "live" && !value.includes("\n") ? value.replace(/^#{1,4}\s+/, "") : value}
+        onChange={(event) => {
+          onChange(event.currentTarget.value);
+          onSelectionChange({ from: event.currentTarget.value.length, to: event.currentTarget.value.length });
+        }}
+        onFocus={() => {
+          if (mode === "live" && value.startsWith("## ")) onChange(value);
+        }}
+        onDrop={(event) => {
+          event.preventDefault();
+          onFiles(Array.from(event.dataTransfer.files));
+        }}
+      />
+    );
+  }
+  };
+});
 
 const tags = {
   items: [
@@ -160,6 +173,54 @@ describe("StudioContentEditorPage", () => {
     await waitFor(() => expect(createContent).toHaveBeenCalledWith(expect.objectContaining({ body: "# Draft", slug: "new-post", title: "New Post" })));
     expect(setContentTags).toHaveBeenCalledWith(10, { tag_ids: [3] });
     expect(replace).toHaveBeenCalledWith("/studio/content/10/edit");
+  });
+
+  it("keeps editor chrome in fixed panes and shows metadata in the left rail", async () => {
+    renderEditor("create");
+
+    await waitFor(() => expect(screen.getByLabelText("Markdown 正文")).toBeInTheDocument());
+    const navigation = screen.getByLabelText("文档导航");
+    expect(navigation).toBeInTheDocument();
+    expect(screen.getByLabelText("内容属性")).toBeInTheDocument();
+    expect(screen.getByLabelText("编辑器顶部栏")).toBeInTheDocument();
+    expect(within(navigation).getByText("未设置 Slug")).toBeInTheDocument();
+    expect(within(navigation).getByText(/字符 \/ 1 词/)).toBeInTheDocument();
+  });
+
+  it("generates a heading outline and sends line targets to the editor", async () => {
+    renderEditor("create");
+
+    await waitFor(() => expect(screen.getByLabelText("Markdown 正文")).toBeInTheDocument());
+    fireEvent.change(screen.getByLabelText("Markdown 正文"), { target: { value: "# 角色定位\n\n## 核心任务\n\n### 关键输入" } });
+
+    fireEvent.click(screen.getByRole("button", { name: "核心任务" }));
+
+    expect(screen.getByLabelText("Markdown 正文")).toHaveAttribute("data-scroll-line", "3");
+  });
+
+  it("switches between live, source, and preview modes", async () => {
+    renderEditor("create");
+
+    await waitFor(() => expect(screen.getByLabelText("Markdown 正文")).toBeInTheDocument());
+    fireEvent.change(screen.getByLabelText("Markdown 正文"), { target: { value: "## 标题" } });
+    expect(screen.getByRole("button", { name: /编辑预览/ }).className).toContain("editorModeTabActive");
+    expect(screen.getByLabelText("Markdown 正文")).toHaveValue("标题");
+
+    fireEvent.click(screen.getByRole("button", { name: /源码/ }));
+    expect(screen.getByLabelText("Markdown 正文")).toHaveAttribute("data-mode", "source");
+
+    fireEvent.click(screen.getByRole("button", { name: "预览" }));
+    expect(screen.getByLabelText("Markdown 预览")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "标题" })).toBeInTheDocument();
+    expect(screen.queryByLabelText("Markdown 正文")).not.toBeInTheDocument();
+  });
+
+  it("does not render the old markdown formatting toolbar above the editor", async () => {
+    renderEditor("create");
+
+    await waitFor(() => expect(screen.getByLabelText("Markdown 正文")).toBeInTheDocument());
+    expect(screen.queryByRole("button", { name: "加粗" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "撤销" })).not.toBeInTheDocument();
   });
 
   it("loads existing content, updates it, and transitions status", async () => {

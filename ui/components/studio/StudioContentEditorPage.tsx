@@ -2,9 +2,11 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, FileArchive, FileInput, Loader2, Save, UploadCloud } from "lucide-react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, Code2, Eye, FileInput, Heading2, Loader2, PencilLine, Save, UploadCloud } from "lucide-react";
 import { useRouter } from "next/navigation";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import { useAuth } from "@/components/auth/AuthProvider";
 import { ToastMessage } from "@/components/toast/ToastProvider";
@@ -14,6 +16,7 @@ import { createContent, getContent, setContentTags, transitionContentStatus, upd
 import { listTags } from "@/lib/api/tags";
 import type { AttachmentResponse, ContentAIAccess, ContentDetailResponse, ContentStatus, ContentType, ContentVisibility, TagItem } from "@/lib/api/types";
 import styles from "./Studio.module.css";
+import type { MarkdownScrollTarget } from "./StudioMarkdownCodeMirror";
 import { StudioSelect } from "./StudioSelect";
 
 const MarkdownCodeMirror = dynamic(
@@ -25,6 +28,7 @@ const MarkdownCodeMirror = dynamic(
 );
 
 type EditorMode = "create" | "edit";
+type EditorViewMode = "live" | "source" | "preview";
 type Message = { tone: "success" | "error"; text: string } | null;
 
 type ContentEditorForm = {
@@ -43,6 +47,13 @@ type ContentEditorForm = {
 type StudioContentEditorPageProps = {
   contentId?: number;
   mode: EditorMode;
+};
+
+type OutlineItem = {
+  id: string;
+  level: number;
+  line: number;
+  text: string;
 };
 
 const emptyForm: ContentEditorForm = {
@@ -147,6 +158,19 @@ function insertMarkdownAt(body: string, from: number, to: number, markdown: stri
   };
 }
 
+function extractOutline(body: string): OutlineItem[] {
+  return body.split("\n").flatMap((line, index) => {
+    const match = /^(#{1,4})\s+(.+?)\s*$/.exec(line);
+    if (!match) return [];
+    return [{
+      id: `heading-${index + 1}-${match[2].toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "") || "section"}`,
+      level: match[1].length,
+      line: index + 1,
+      text: match[2].replace(/[*_`[\]()]/g, "")
+    }];
+  });
+}
+
 export function StudioContentEditorPage({ contentId, mode }: StudioContentEditorPageProps) {
   const router = useRouter();
   const { claims } = useAuth();
@@ -159,10 +183,14 @@ export function StudioContentEditorPage({ contentId, mode }: StudioContentEditor
   const [message, setMessage] = useState<Message>(null);
   const [editorNotice, setEditorNotice] = useState("拖拽文件或图片到编辑区可自动上传引用");
   const [selection, setSelection] = useState({ from: 0, to: 0 });
+  const [viewMode, setViewMode] = useState<EditorViewMode>("live");
+  const [scrollTarget, setScrollTarget] = useState<MarkdownScrollTarget | null>(null);
+  const scrollIDRef = useRef(0);
 
   const statusOptions = mode === "create" ? createStatusOptions : editStatusOptions;
   const title = mode === "create" ? "新建内容" : form.title || "编辑内容";
   const bodyStats = useMemo(() => `${form.body.length} 字符 / ${Math.max(1, form.body.split(/\s+/).filter(Boolean).length)} 词`, [form.body]);
+  const outline = useMemo(() => extractOutline(form.body), [form.body]);
 
   useEffect(() => {
     let active = true;
@@ -264,6 +292,17 @@ export function StudioContentEditorPage({ contentId, mode }: StudioContentEditor
     void handleEditorFiles(files);
   }
 
+  function onAssetImport(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []);
+    event.currentTarget.value = "";
+    void handleEditorFiles(files);
+  }
+
+  function scrollToOutlineItem(item: OutlineItem) {
+    scrollIDRef.current += 1;
+    setScrollTarget({ id: scrollIDRef.current, line: item.line });
+  }
+
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const titleValue = form.title.trim();
@@ -344,19 +383,47 @@ export function StudioContentEditorPage({ contentId, mode }: StudioContentEditor
   return (
     <form className={styles.contentEditorPage} onSubmit={onSubmit}>
       <ToastMessage message={message} />
-      <header className={styles.contentEditorHeader}>
+      <header className={styles.contentEditorHeader} aria-label="编辑器顶部栏">
         <div className={styles.contentEditorTitleGroup}>
           <Link className="secondary-button icon-button" href="/studio/content" aria-label="返回内容列表" prefetch={false}>
             <ArrowLeft aria-hidden size={18} />
           </Link>
           <div>
-            <p className={styles.eyebrow}>Content editor</p>
             <h1>{title}</h1>
-            <span>{form.slug || "未设置 Slug"} · {bodyStats}</span>
           </div>
         </div>
         <div className={styles.contentEditorHeaderActions}>
-          <StudioSelect ariaLabel="内容状态" options={statusOptions} value={form.status} onChange={(value) => setField("status", value)} />
+          <div className={styles.editorModeTabs} role="group" aria-label="编辑模式">
+            <button className={viewMode === "live" ? styles.editorModeTabActive : styles.editorModeTab} type="button" onClick={() => setViewMode("live")}>
+              <PencilLine aria-hidden size={15} />
+              编辑预览
+            </button>
+            <button className={viewMode === "source" ? styles.editorModeTabActive : styles.editorModeTab} type="button" onClick={() => setViewMode("source")}>
+              <Code2 aria-hidden size={15} />
+              源码
+            </button>
+            <button className={viewMode === "preview" ? styles.editorModeTabActive : styles.editorModeTab} type="button" onClick={() => setViewMode("preview")}>
+              <Eye aria-hidden size={15} />
+              预览
+            </button>
+          </div>
+          <label className="secondary-button">
+            <FileInput aria-hidden size={16} />
+            导入
+            <input
+              aria-label="导入 Markdown 文件"
+              className={styles.fileInputHidden}
+              type="file"
+              accept=".md,.markdown,text/markdown"
+              multiple
+              disabled={viewMode === "preview"}
+              onChange={onMarkdownImport}
+            />
+          </label>
+          <label className={`secondary-button icon-button ${viewMode === "preview" ? styles.disabledToolButton : ""}`} aria-label="上传文件">
+            <UploadCloud aria-hidden size={16} />
+            <input aria-label="上传文件" className={styles.fileInputHidden} type="file" multiple disabled={viewMode === "preview"} onChange={onAssetImport} />
+          </label>
           <button className="primary-button" disabled={saving || uploading} type="submit">
             {saving ? <Loader2 aria-hidden className="spin" size={18} /> : <Save aria-hidden size={18} />}
             保存
@@ -366,57 +433,58 @@ export function StudioContentEditorPage({ contentId, mode }: StudioContentEditor
 
       <main className={styles.contentEditorGrid}>
         <aside className={styles.contentEditorNavigator} aria-label="文档导航">
-          <div className={styles.markdownNavHeader}>
-            <FileArchive aria-hidden size={16} />
-            docs
+          <div className={styles.contentEditorNavMeta}>
+            <strong>{title}</strong>
+            <span>{form.slug || "未设置 Slug"}</span>
+            <small>{bodyStats}</small>
+            <small>{editorNotice}</small>
           </div>
-          <button className={styles.markdownNavItemActive} type="button">README</button>
+          <div className={styles.markdownNavHeader}>
+            <Heading2 aria-hidden size={16} />
+            目录
+          </div>
+          {outline.length > 0 ? (
+            <div className={styles.contentEditorOutline}>
+              {outline.map((item) => (
+                <button
+                  className={styles.contentEditorOutlineItem}
+                  data-level={item.level}
+                  key={`${item.id}-${item.line}`}
+                  type="button"
+                  onClick={() => scrollToOutlineItem(item)}
+                >
+                  {item.text}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className={styles.contentEditorOutlineEmpty}>暂无目录</p>
+          )}
         </aside>
 
         <section className={styles.contentEditorMain} aria-label="Markdown 编辑器">
-          <div className={styles.contentEditorToolbar}>
-            <div>
-              <strong>Markdown</strong>
-              <span>{editorNotice}</span>
-            </div>
-            <div className={styles.markdownToolActions}>
-              <label className="secondary-button">
-                <FileInput aria-hidden size={16} />
-                导入 Markdown
-                <input
-                  aria-label="导入 Markdown 文件"
-                  className={styles.fileInputHidden}
-                  type="file"
-                  accept=".md,.markdown,text/markdown"
-                  multiple
-                  onChange={onMarkdownImport}
-                />
-              </label>
-              <span className={styles.editorStatusPill}>
-                {uploading ? (
-                  <>
-                    <Loader2 aria-hidden className="spin" size={14} />
-                    上传中
-                  </>
-                ) : (
-                  <>
-                    <UploadCloud aria-hidden size={14} />
-                    拖拽上传
-                  </>
-                )}
-              </span>
-            </div>
-          </div>
-          <MarkdownCodeMirror
-            uploading={uploading}
-            value={form.body}
-            onChange={(value) => setField("body", value)}
-            onFiles={handleEditorFiles}
-            onSelectionChange={setSelection}
-          />
+          {viewMode === "preview" ? (
+            <article className={styles.contentEditorPreview} aria-label="Markdown 预览">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{form.body || "暂无内容"}</ReactMarkdown>
+            </article>
+          ) : (
+            <MarkdownCodeMirror
+              mode={viewMode}
+              scrollTarget={scrollTarget}
+              uploading={uploading}
+              value={form.body}
+              onChange={(value) => setField("body", value)}
+              onFiles={handleEditorFiles}
+              onSelectionChange={setSelection}
+            />
+          )}
         </section>
 
         <aside className={styles.contentEditorInspector} aria-label="内容属性">
+          <label className={styles.field}>
+            <span>状态</span>
+            <StudioSelect ariaLabel="内容状态" options={statusOptions} value={form.status} onChange={(value) => setField("status", value)} />
+          </label>
           <label className={styles.field}>
             <span>标题</span>
             <input aria-label="标题" value={form.title} onChange={(event) => setField("title", event.target.value)} />

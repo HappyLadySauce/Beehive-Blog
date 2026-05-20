@@ -973,8 +973,9 @@
 .contentEditorPage {
   background: var(--bg);
   display: grid;
+  height: 100dvh;
   grid-template-rows: auto minmax(0, 1fr);
-  min-height: 100vh;
+  overflow: hidden;
 }
 
 .contentEditorHeader {
@@ -982,24 +983,30 @@
   background: color-mix(in srgb, var(--bg) 94%, white);
   border-bottom: 1px solid var(--line);
   display: flex;
-  gap: 16px;
+  gap: 12px;
   justify-content: space-between;
-  min-height: 74px;
-  padding: 12px var(--shell-pad-x);
+  min-height: 56px;
+  padding: 6px var(--shell-pad-x);
+  position: sticky;
+  top: 0;
+  z-index: 20;
 }
 
 .contentEditorTitleGroup,
 .contentEditorHeaderActions,
 .contentEditorToolbar,
 .contentEditorToolbar > div,
+.editorModeTabs,
+.editorModeTab,
+.editorModeTabActive,
 .contentEditorLoading {
   align-items: center;
   display: flex;
-  gap: 12px;
+  gap: 10px;
 }
 
 .contentEditorTitleGroup h1 {
-  font-size: 1.2rem;
+  font-size: 1.05rem;
   line-height: 1.2;
   margin: 0;
 }
@@ -1016,14 +1023,18 @@
 }
 
 .contentEditorHeaderActions {
-  flex-wrap: wrap;
+  flex: 1;
+  flex-wrap: nowrap;
   justify-content: flex-end;
+  min-width: 0;
 }
 
 .contentEditorGrid {
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr) 320px;
+  height: 100%;
   min-height: 0;
+  overflow: hidden;
 }
 
 .contentEditorNavigator,
@@ -1033,9 +1044,12 @@
   display: grid;
   gap: 10px;
   grid-auto-rows: max-content;
+  height: 100%;
   min-height: 0;
   overflow-y: auto;
   padding: 14px;
+  position: sticky;
+  top: 0;
 }
 
 .contentEditorInspector {
@@ -1047,7 +1061,8 @@
 .contentEditorMain {
   background: white;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  height: 100%;
   min-height: 0;
   overflow: hidden;
 }
@@ -1055,30 +1070,163 @@
 .contentEditorToolbar {
   border-bottom: 1px solid var(--line);
   justify-content: space-between;
-  min-height: 58px;
+  min-height: 54px;
   padding: 10px 14px;
 }
 
 .contentEditorCodeMirror {
+  height: 100%;
   min-height: 0;
   overflow: hidden;
 }
 
 .contentEditorCodeMirror :global(.cm-editor) {
-  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.95rem;
   height: 100%;
 }
 
+.contentEditorCodeMirror :global(.cm-editor.cm-focused) {
+  outline: none;
+}
+
 .contentEditorCodeMirror :global(.cm-scroller) {
-  font-family: inherit;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 1rem;
   line-height: 1.78;
+  scrollbar-gutter: auto;
+  scrollbar-width: thin;
+}
+
+.contentEditorCodeMirror :global(.cm-scroller::-webkit-scrollbar) {
+  height: 8px;
+  width: 8px;
+}
+
+.contentEditorCodeMirror :global(.cm-scroller::-webkit-scrollbar-track) {
+  background: transparent;
+}
+
+.contentEditorCodeMirror :global(.cm-scroller::-webkit-scrollbar-thumb) {
+  background: #8f8f8f;
+  border-radius: 999px;
+}
+
+.contentEditorCodeMirrorSource :global(.cm-scroller) {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.95rem;
+}
+
+.contentEditorPreview {
+  max-width: 1040px;
+  width: 100%;
+}
+
+.contentEditorCodeMirrorLive :global(.cm-content) {
+  box-sizing: border-box;
+  max-width: none;
+  min-height: 100%;
+  padding: 28px 48px 64px;
+  width: auto;
+}
+
+.contentEditorCodeMirrorLive :global(.cm-line) {
+  padding: 0;
+  text-decoration: none;
+}
+
+.contentEditorCodeMirrorLive :global(.cm-activeLine) {
+  background: transparent;
+}
+
+.contentEditorCodeMirrorLive :global(.cm-line *),
+.contentEditorCodeMirrorLive :global(.cm-activeLine *) {
+  text-decoration: none !important;
 }
 
 .contentEditorCodeMirror :global(.cm-gutters) {
   background: white;
   border-right: 0;
   color: #8ca0af;
+}
+
+.contentEditorCodeMirrorSource :global(.cm-line) {
+  padding-left: 6px;
+}
+
+.contentEditorCodeMirrorLive :global(.cm-gutters) {
+  display: none;
+}
+
+.livePreviewLine {
+  color: #101010;
+}
+
+.livePreviewHeading1,
+.livePreviewHeading2,
+.livePreviewHeading3,
+.livePreviewHeading4 {
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.livePreviewHeading1 {
+  font-size: 2rem;
+  padding: 0.72em 0 0.32em;
+}
+
+.livePreviewHeading2 {
+  font-size: 1.62rem;
+  padding: 0.68em 0 0.28em;
+}
+
+.livePreviewHeading3 {
+  font-size: 1.32rem;
+  padding: 0.58em 0 0.22em;
+}
+
+.livePreviewHeading4 {
+  font-size: 1.1rem;
+  padding: 0.48em 0 0.18em;
+}
+
+.livePreviewListLine {
+  padding-left: 1.25em;
+}
+
+.livePreviewBlankLine {
+  min-height: 0.72em;
+}
+
+.contentEditorPreview {
+  background: white;
+  height: 100%;
+  line-height: 1.78;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 28px 48px 64px;
+}
+
+.contentEditorPreview h1,
+.contentEditorPreview h2,
+.contentEditorPreview h3 {
+  line-height: 1.25;
+  margin: 1.2em 0 0.5em;
+}
+
+.contentEditorPreview h1:first-child,
+.contentEditorPreview h2:first-child,
+.contentEditorPreview h3:first-child {
+  margin-top: 0;
+}
+
+.contentEditorPreview table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.contentEditorPreview th,
+.contentEditorPreview td {
+  border: 1px solid var(--line);
+  padding: 8px 10px;
 }
 
 .contentEditorLoading {
@@ -1106,6 +1254,103 @@
   align-items: center;
   display: flex;
   justify-content: space-between;
+}
+
+.contentEditorNavMeta {
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 4px;
+  padding: 2px 0 12px;
+}
+
+.contentEditorNavMeta strong {
+  font-size: 0.98rem;
+  line-height: 1.3;
+}
+
+.contentEditorNavMeta span,
+.contentEditorNavMeta small,
+.contentEditorOutlineEmpty {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.contentEditorOutline {
+  display: grid;
+  gap: 4px;
+}
+
+.contentEditorOutlineItem {
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  min-height: 32px;
+  overflow: hidden;
+  padding: 7px 8px;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contentEditorOutlineItem[data-level="2"] {
+  padding-left: 18px;
+}
+
+.contentEditorOutlineItem[data-level="3"] {
+  padding-left: 30px;
+}
+
+.contentEditorOutlineItem[data-level="4"] {
+  padding-left: 42px;
+}
+
+.contentEditorOutlineItem:hover,
+.contentEditorOutlineItem:focus-visible {
+  background: #e8ecef;
+  outline: none;
+}
+
+.contentEditorOutlineEmpty {
+  margin: 0;
+}
+
+.editorModeTabs {
+  background: #f7f4ed;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  gap: 2px;
+  padding: 2px;
+}
+
+.editorModeTab,
+.editorModeTabActive {
+  background: transparent;
+  border: 0;
+  border-radius: calc(var(--radius) - 2px);
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 800;
+  min-height: 32px;
+  padding: 6px 8px;
+}
+
+.editorModeTabActive {
+  background: white;
+  color: var(--accent-dark);
+  box-shadow: 0 1px 6px rgba(33, 29, 20, 0.08);
+}
+
+.disabledToolButton {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 .pagination {
