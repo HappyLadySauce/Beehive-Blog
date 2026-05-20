@@ -1,8 +1,8 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { FileUp, Loader2, Pencil, Plus, Save, Trash2, Users, X } from "lucide-react";
+import { FileUp, Loader2, Pencil, Plus, Save, Search, Trash2, Users, X } from "lucide-react";
 
 import { attachmentContentUrl, uploadLocalAttachment } from "@/lib/api/attachments";
 import { humanizeApiError } from "@/lib/api/client";
@@ -10,7 +10,7 @@ import { ToastMessage } from "@/components/toast/ToastProvider";
 import type { ListUsersResponse, UpdateUserRequest, UserItem } from "@/lib/api/types";
 import { createUser, deleteUser, listUsers, updateUser } from "@/lib/api/users";
 import styles from "./Studio.module.css";
-import { StudioPanel } from "./StudioPanel";
+import { StudioPagePagination } from "./StudioPagePagination";
 import { StudioSelect } from "./StudioSelect";
 import { StudioTopbar } from "./StudioTopbar";
 
@@ -332,64 +332,85 @@ export function StudioUsersPage() {
     }
   }
 
-  const totalPages = data ? Math.max(1, Math.ceil(data.total / data.page_size)) : 1;
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil((data?.total ?? 0) / defaultPageSize)),
+    [data?.total]
+  );
   const visibleUserIDs = data?.items.map((user) => user.id) ?? [];
   const allVisibleUsersSelected = visibleUserIDs.length > 0 && visibleUserIDs.every((id) => selectedUserIDs.includes(id));
 
   return (
     <>
       <StudioTopbar
+        actions={
+          <button className="primary-button" type="button" onClick={openCreate}>
+            <Plus aria-hidden size={18} />
+            创建用户
+          </button>
+        }
         description="管理平台注册用户，支持创建、编辑、筛选和删除。"
         eyebrow="User management"
         title="用户"
       />
 
-      {/* Filter bar */}
-      <div className={`${styles.filterBar} ${styles.toolbarPanel}`}>
-        <div className={styles.searchInput}>
-          <input
-            aria-label="搜索用户名或邮箱"
-            placeholder="搜索用户名或邮箱..."
-            type="search"
-            value={search}
-            onChange={(event) => {
+      <ToastMessage message={message} />
+
+      <section className={styles.studioListShell} aria-label="用户管理">
+        <div className={`${styles.filterBar} ${styles.studioListToolbar}`}>
+          <div className={styles.searchInput}>
+            <Search aria-hidden size={18} />
+            <input
+              aria-label="搜索用户名或邮箱"
+              placeholder="搜索用户名或邮箱..."
+              type="search"
+              value={search}
+              onChange={(event) => {
+                setMessage(null);
+                setSearch(event.target.value);
+                setPage(1);
+              }}
+            />
+          </div>
+          <StudioSelect
+            ariaLabel="按状态筛选"
+            className={styles.filterSelect}
+            options={statusOptions}
+            value={statusFilter}
+            onChange={(value) => {
+              setLoading(true);
               setMessage(null);
-              setSearch(event.target.value);
+              setStatusFilter(value);
+              setPage(1);
+            }}
+          />
+          <StudioSelect
+            ariaLabel="按角色筛选"
+            className={styles.filterSelect}
+            options={roleOptions}
+            value={roleFilter}
+            onChange={(value) => {
+              setLoading(true);
+              setMessage(null);
+              setRoleFilter(value);
               setPage(1);
             }}
           />
         </div>
-        <StudioSelect
-          ariaLabel="按状态筛选"
-          className={styles.filterSelect}
-          options={statusOptions}
-          value={statusFilter}
-          onChange={(value) => {
-            setLoading(true);
-            setMessage(null);
-            setStatusFilter(value);
-            setPage(1);
-          }}
-        />
-        <StudioSelect
-          ariaLabel="按角色筛选"
-          className={styles.filterSelect}
-          options={roleOptions}
-          value={roleFilter}
-          onChange={(value) => {
-            setLoading(true);
-            setMessage(null);
-            setRoleFilter(value);
-            setPage(1);
-          }}
-        />
-        <button className={`primary-button ${styles.filterAction}`} type="button" onClick={openCreate}>
-          <Plus aria-hidden size={18} />
-          创建用户
-        </button>
-      </div>
 
-      <StudioPanel title="用户列表">
+        {selectedUserIDs.length > 0 ? (
+          <div className={styles.selectionBar}>
+            <span>已选择 {selectedUserIDs.length} 个用户</span>
+            <button className="primary-button" type="button" onClick={openBulkEdit}>
+              <Pencil aria-hidden size={16} />
+              编辑已选
+            </button>
+            <button className="danger-button" type="button" onClick={openBulkDelete}>
+              <Trash2 aria-hidden size={16} />
+              批量删除
+            </button>
+          </div>
+        ) : null}
+
         {loading ? (
           <div className={styles.emptyState} role="status">
             <Loader2 aria-hidden className="spin" size={24} />
@@ -403,20 +424,7 @@ export function StudioUsersPage() {
           </div>
         ) : (
           <>
-            {selectedUserIDs.length > 0 ? (
-              <div className={styles.selectionBar}>
-                <span>已选择 {selectedUserIDs.length} 个用户</span>
-                <button className="primary-button" type="button" onClick={openBulkEdit}>
-                  <Pencil aria-hidden size={16} />
-                  编辑已选
-                </button>
-                <button className="danger-button" type="button" onClick={openBulkDelete}>
-                  <Trash2 aria-hidden size={16} />
-                  批量删除
-                </button>
-              </div>
-            ) : null}
-            <div className={styles.tableScroll}>
+            <div className={`${styles.tableScroll} ${styles.studioListTableFrame}`}>
               <table className={`${styles.table} ${styles.userTable}`}>
                 <colgroup>
                   <col className={styles.userSelectColumn} />
@@ -495,42 +503,19 @@ export function StudioUsersPage() {
                 </tbody>
               </table>
             </div>
-
-            {/* Pagination */}
-            <div className={styles.pagination}>
-              <button
-                className="secondary-button"
-                disabled={page <= 1}
-                type="button"
-                onClick={() => {
-                  setLoading(true);
-                  setMessage(null);
-                  setPage((p) => Math.max(1, p - 1));
-                }}
-              >
-                上一页
-              </button>
-              <span>
-                第 {data.page} / {totalPages} 页（共 {data.total} 条）
-              </span>
-              <button
-                className="secondary-button"
-                disabled={page >= totalPages}
-                type="button"
-                onClick={() => {
-                  setLoading(true);
-                  setMessage(null);
-                  setPage((p) => p + 1);
-                }}
-              >
-                下一页
-              </button>
-            </div>
+            <StudioPagePagination
+              disabled={loading}
+              page={page}
+              totalPages={totalPages}
+              onPageChange={(next) => {
+                setLoading(true);
+                setMessage(null);
+                setPage(next);
+              }}
+            />
           </>
         )}
-
-        <ToastMessage message={message} />
-      </StudioPanel>
+      </section>
 
       {/* Create / Edit modal */}
       {showForm ? (

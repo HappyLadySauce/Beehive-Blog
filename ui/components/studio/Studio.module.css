@@ -94,10 +94,11 @@
 }
 
 .main {
+  align-content: start;
   container-name: studio;
   container-type: inline-size;
   display: grid;
-  gap: 16px;
+  gap: 12px;
   min-width: 0;
 }
 
