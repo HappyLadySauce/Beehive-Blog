@@ -293,6 +293,15 @@
   padding: 5px 9px;
 }
 
+.statusDot {
+  border-radius: 999px;
+  display: inline-block;
+  height: 10px;
+  margin-right: 8px;
+  vertical-align: middle;
+  width: 10px;
+}
+
 .statusReady {
   background: #edf7f5;
   border-radius: 999px;
@@ -968,6 +977,7 @@
   white-space: nowrap;
 }
 
+.studioListShell,
 .attachmentShell {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -978,6 +988,7 @@
   padding: 14px;
 }
 
+.studioListToolbar,
 .attachmentToolbar {
   align-items: center;
   border-bottom: 1px solid var(--line);
@@ -987,10 +998,12 @@
   padding-bottom: 12px;
 }
 
+.studioListReservedStrip,
 .categoryStrip {
   display: grid;
   gap: 8px;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  min-height: 44px;
 }
 
 .categoryCard,
@@ -1024,10 +1037,15 @@
   opacity: 0.55;
 }
 
+.studioListTableFrame,
 .attachmentList {
   border-top: 1px solid var(--line);
   display: grid;
   font-size: 0.9rem;
+}
+
+.studioListEmptyCell {
+  padding: 14px 12px !important;
 }
 
 .attachmentListHeader {

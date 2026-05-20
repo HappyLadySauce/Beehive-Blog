@@ -6,6 +6,7 @@ import Image from "next/image";
 import {
   CheckCircle2,
   Download,
+  FileArchive,
   FileImage,
   FileUp,
   Grid3X3,
@@ -388,7 +389,6 @@ export function StudioAttachmentsPage() {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
     loadAttachmentsList(batchStartPage, listFilters)
       .then((attachments) => {
         if (active) applyList(attachments);
@@ -801,8 +801,8 @@ export function StudioAttachmentsPage() {
 
       <ToastMessage message={message} />
 
-      <section className={styles.attachmentShell}>
-        <div className={styles.attachmentToolbar}>
+      <section className={styles.studioListShell}>
+        <div className={styles.studioListToolbar}>
           <label className={styles.searchInput}>
             <Search aria-hidden size={18} />
             <input
@@ -849,7 +849,7 @@ export function StudioAttachmentsPage() {
           </div>
         ) : null}
 
-        <div className={styles.categoryStrip}>
+        <div className={styles.studioListReservedStrip} data-testid="attachment-category-strip">
           <CategoryCard active={!categoryID} count={total || batchItems.length} title="全部" onClick={() => {
             setCategoryID("");
             resetPage();
@@ -883,12 +883,20 @@ export function StudioAttachmentsPage() {
           </div>
         ) : visibleItems.length === 0 ? (
           viewMode === "list" ? (
-            <div className={styles.attachmentList}>
+            <div className={styles.studioListTableFrame}>
               <AttachmentListHeader checked={allVisibleSelected} onChange={toggleVisibleSelection} />
-              <div className={styles.emptyState}>暂无附件。上传内容附件后会显示在这里。</div>
+              <div className={styles.studioListEmptyCell}>
+                <div className={styles.emptyState}>
+                  <FileArchive aria-hidden size={28} />
+                  <span>暂无附件。上传内容附件后会显示在这里。</span>
+                </div>
+              </div>
             </div>
           ) : (
-            <div className={styles.emptyState}>暂无附件。上传内容附件后会显示在这里。</div>
+            <div className={styles.emptyState}>
+              <FileArchive aria-hidden size={28} />
+              <span>暂无附件。上传内容附件后会显示在这里。</span>
+            </div>
           )
         ) : viewMode === "grid" ? (
           <div className={styles.attachmentGrid}>
@@ -934,7 +942,7 @@ export function StudioAttachmentsPage() {
             ))}
           </div>
         ) : (
-          <div className={styles.attachmentList}>
+          <div className={styles.studioListTableFrame}>
             <AttachmentListHeader checked={allVisibleSelected} onChange={toggleVisibleSelection} />
             {visibleItems.map((attachment) => {
               const refs = referencesByAttachment.get(attachment.id) ?? [];

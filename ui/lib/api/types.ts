@@ -396,3 +396,144 @@ export type AttachmentCategoryPatchRequest = {
 
 export type DeleteAttachmentResponse = Record<string, never>;
 export type DeleteAttachmentCategoryResponse = Record<string, never>;
+
+export type ContentType = "article" | "note" | "project" | "experience" | "reflection" | "portfolio" | string;
+export type ContentStatus = "draft" | "review" | "published" | "archived" | string;
+export type ContentVisibility = "public" | "member" | "private" | string;
+export type ContentAIAccess = "allowed" | "denied" | string;
+
+export type TagItem = {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  color?: string | null;
+  status?: "active" | "archived" | string;
+  content_count?: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ListTagsRequest = {
+  page?: number;
+  page_size?: number;
+  status?: string;
+  search?: string;
+};
+
+export type ListTagsResponse = {
+  items: TagItem[];
+  total: number;
+  page: number;
+  page_size: number;
+};
+
+export type CreateTagRequest = {
+  name: string;
+  slug: string;
+  description?: string | null;
+  color?: string | null;
+};
+
+export type CreateTagResponse = {
+  id: number;
+};
+
+export type UpdateTagRequest = {
+  name?: string;
+  slug?: string;
+  description?: string | null;
+  color?: string | null;
+  status?: string;
+};
+
+export type TagDetailResponse = TagItem;
+export type DeleteTagResponse = Record<string, never>;
+
+export type ContentItem = {
+  id: number;
+  type: ContentType;
+  title: string;
+  slug: string;
+  excerpt?: string | null;
+  body?: string | null;
+  cover_attachment_id?: number | null;
+  author_id: number;
+  author_username?: string;
+  status: ContentStatus;
+  visibility: ContentVisibility;
+  ai_access: ContentAIAccess;
+  published_at?: string | null;
+  word_count: number;
+  reading_time_minutes: number;
+  metadata?: JsonObject | null;
+  view_count: number;
+  tags?: TagItem[];
+  created_at: string;
+  updated_at: string;
+};
+
+export type ListContentsRequest = {
+  page?: number;
+  page_size?: number;
+  type?: string;
+  status?: string;
+  visibility?: string;
+  tag_id?: number;
+  search?: string;
+  slug?: string;
+};
+
+export type ListContentsResponse = {
+  items: ContentItem[];
+  total: number;
+  page: number;
+  page_size: number;
+};
+
+export type CreateContentRequest = {
+  type: string;
+  title: string;
+  slug: string;
+  excerpt?: string | null;
+  body?: string | null;
+  cover_attachment_id?: number | null;
+  status?: "draft" | "review" | string;
+  visibility?: string;
+  ai_access?: string;
+  word_count?: number;
+  reading_time_minutes?: number;
+  metadata?: JsonObject;
+};
+
+export type CreateContentResponse = {
+  id: number;
+};
+
+export type UpdateContentRequest = {
+  type?: string;
+  title?: string;
+  slug?: string;
+  excerpt?: string | null;
+  body?: string | null;
+  cover_attachment_id?: number | null;
+  visibility?: string;
+  ai_access?: string;
+  word_count?: number;
+  reading_time_minutes?: number;
+  metadata?: JsonObject;
+};
+
+export type ContentDetailResponse = ContentItem & {
+  body?: string | null;
+};
+
+export type TransitionContentStatusRequest = {
+  status: string;
+};
+
+export type SetContentTagsRequest = {
+  tag_ids: number[];
+};
+
+export type DeleteContentResponse = Record<string, never>;

@@ -211,6 +211,20 @@ describe("StudioAttachmentsPage", () => {
     expect(screen.getByRole("button", { name: "第 1 页" })).toHaveAttribute("aria-current", "page");
   });
 
+  it("keeps the list header visible and shows an illustrated empty state", async () => {
+    listAttachments.mockResolvedValue({ ...attachments, items: [], total: 0 });
+    listAttachmentReferences.mockResolvedValue({ items: [] });
+
+    const { container } = renderAttachmentsPage();
+
+    await waitFor(() => expect(screen.getByText("暂无附件。上传内容附件后会显示在这里。")).toBeInTheDocument());
+    expect(screen.getByTestId("attachment-category-strip")).toBeInTheDocument();
+    expect(screen.getByText("预览")).toBeInTheDocument();
+    expect(screen.getByText("名称 / 类型 / 路径")).toBeInTheDocument();
+    expect(screen.getByText("共 1 页")).toBeInTheDocument();
+    expect(container.querySelector(".lucide-file-archive")).toBeInTheDocument();
+  });
+
   it("opens the edit dialog when clicking an attachment row", async () => {
     renderAttachmentsPage();
     await waitFor(() => expect(screen.getByText("Note.md")).toBeInTheDocument());
