@@ -228,6 +228,9 @@ func (h *AttachmentsController) uploadLocal(ctx context.Context, actor pkgattach
 		return replaceCategoriesTx(tx, attachment.ID, in.CategoryIDs)
 	})
 	if err != nil {
+		if cleanupErr := drv.Delete(ctx, objectKey); cleanupErr != nil {
+			klog.ErrorS(cleanupErr, "failed to cleanup uploaded object after database error", "object_key", objectKey)
+		}
 		return model.Attachment{}, err
 	}
 	return attachment, nil

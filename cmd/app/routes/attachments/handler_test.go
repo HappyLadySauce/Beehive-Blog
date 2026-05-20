@@ -2,8 +2,10 @@ package attachments
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -20,6 +22,7 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	pkgattachment "github.com/HappyLadySauce/Beehive-Blog/pkg/attachment"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/attachment/driver"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/config"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/options"
@@ -298,6 +301,52 @@ func TestUploadLocalInvalidOwnerUserID(t *testing.T) {
 	assertEnvelopeCode(t, rec, http.StatusBadRequest)
 }
 
+func TestUploadLocalCleansStorageObjectWhenDatabaseTransactionFails(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	h, mock, fakeDrv := mustNewAttachmentsControllerWithFakeDriver(t)
+	mountID := int64(10)
+	now := time.Now()
+
+	mock.ExpectQuery(`SELECT .* FROM "attachment"\."storage_mounts"`).
+		WithArgs(mountID, 1).
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id", "driver_name", "mount_path", "name", "config", "order_index", "is_default", "disabled", "status", "created_at", "updated_at", "deleted_at",
+		}).AddRow(mountID, "fake", "/", "fake", []byte(`{}`), 0, true, false, "ready", now, now, nil))
+	mock.ExpectBegin()
+	mock.ExpectQuery(`INSERT INTO "attachment"\."attachments"`).
+		WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(int64(99)))
+	mock.ExpectExec(`DELETE FROM "attachment"\."attachment_categories" WHERE attachment_id = \$1`).
+		WithArgs(int64(99)).
+		WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectQuery(`SELECT count\(\*\) FROM "attachment"\."categories"`).
+		WithArgs(int64(404), pkgattachment.CategoryStatusActive).
+		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(int64(0)))
+	mock.ExpectRollback()
+
+	_, err := h.uploadLocal(context.Background(), pkgattachment.Actor{Role: pkgattachment.RoleAdmin}, pkgattachment.LocalUploadInput{
+		Purpose:        pkgattachment.PurposeContent,
+		Filename:       "leak.txt",
+		MimeType:       "text/plain",
+		Size:           int64(len("hi")),
+		Reader:         strings.NewReader("hi"),
+		AccessScope:    pkgattachment.AccessPrivate,
+		CategoryIDs:    []int64{404},
+		StorageMountID: &mountID,
+	})
+	if err == nil {
+		t.Fatal("uploadLocal should fail when category binding validation fails")
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("sql expectations: %v", err)
+	}
+	if len(fakeDrv.deletedKeys) != 1 {
+		t.Fatalf("deleted keys = %v, want one cleanup", fakeDrv.deletedKeys)
+	}
+	if fakeDrv.deletedKeys[0] != fakeDrv.savedKey {
+		t.Fatalf("deleted key = %q, want saved key %q", fakeDrv.deletedKeys[0], fakeDrv.savedKey)
+	}
+}
+
 func TestUploadBatchRejectsTooManyFiles(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	h := mustNewAttachmentsController(t)
@@ -470,6 +519,76 @@ func mustNewAttachmentsControllerWithMock(t *testing.T) (*AttachmentsController,
 		t.Fatalf("NewAttachmentsController: %v", err)
 	}
 	return h, mock
+}
+
+func mustNewAttachmentsControllerWithFakeDriver(t *testing.T) (*AttachmentsController, sqlmock.Sqlmock, *fakeAttachmentDriver) {
+	t.Helper()
+	sqlDB, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("sqlmock.New: %v", err)
+	}
+	t.Cleanup(func() { _ = sqlDB.Close() })
+	db, err := gorm.Open(postgres.New(postgres.Config{Conn: sqlDB}), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("gorm.Open: %v", err)
+	}
+	fakeDrv := &fakeAttachmentDriver{}
+	registry := driver.NewDriverRegistry()
+	registry.Register("fake", func(json.RawMessage) (driver.DriverBackend, error) {
+		return fakeDrv, nil
+	})
+	h, err := NewAttachmentsController(&svc.ServiceContext{
+		DB:             db,
+		Config:         &config.Config{},
+		DriverStore:    driver.NewStore(db),
+		DriverRegistry: registry,
+	})
+	if err != nil {
+		t.Fatalf("NewAttachmentsController: %v", err)
+	}
+	return h, mock, fakeDrv
+}
+
+type fakeAttachmentDriver struct {
+	savedKey    string
+	deletedKeys []string
+}
+
+func (d *fakeAttachmentDriver) DriverName() string {
+	return "fake"
+}
+
+func (d *fakeAttachmentDriver) Save(_ context.Context, req driver.PutRequest) (driver.StoredObject, error) {
+	if req.Reader != nil {
+		_, _ = io.Copy(io.Discard, req.Reader)
+	}
+	d.savedKey = req.ObjectKey
+	return driver.StoredObject{
+		LocalPath: req.ObjectKey,
+		ETag:      "etag",
+		Checksum:  "sha256:test",
+	}, nil
+}
+
+func (d *fakeAttachmentDriver) PresignUpload(context.Context, driver.PresignRequest) (driver.PresignResult, error) {
+	return driver.PresignResult{}, driver.ErrUnsupportedDriver
+}
+
+func (d *fakeAttachmentDriver) PresignDownload(context.Context, string, time.Duration) (driver.PresignResult, error) {
+	return driver.PresignResult{}, driver.ErrUnsupportedDriver
+}
+
+func (d *fakeAttachmentDriver) LocalFilePath(localPath string) (string, error) {
+	return localPath, nil
+}
+
+func (d *fakeAttachmentDriver) Delete(_ context.Context, objectKey string) error {
+	d.deletedKeys = append(d.deletedKeys, objectKey)
+	return nil
+}
+
+func (d *fakeAttachmentDriver) HealthCheck(context.Context) error {
+	return nil
 }
 
 func newGormTestDB(t *testing.T) *gorm.DB {
