@@ -91,7 +91,7 @@ export function StudioCategoriesPage() {
   // Load all categories (high page size) for parent dropdown.
   // 加载全量分类用于父级下拉选择。
   useEffect(() => {
-    listCategories({ page_size: 200 })
+    listCategories({ page_size: 100 })
       .then((result) => setAllCategories(result.items))
       .catch(() => { /* non-critical */ });
   }, [data?.total]);
