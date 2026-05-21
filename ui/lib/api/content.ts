@@ -1,4 +1,41 @@
-import type { PublicPost } from "./types";
+import type { BaseResponse, PublicPost } from "./types";
+
+type PublicContentListResponse = {
+  items: PublicContentItem[];
+  total: number;
+  page: number;
+  page_size: number;
+};
+
+type PublicContentDetailResponse = PublicContentItem & {
+  body?: string | null;
+};
+
+type PublicContentItem = {
+  id: number;
+  type: string;
+  title: string;
+  slug: string;
+  excerpt?: string | null;
+  published_at?: string | null;
+  word_count?: number;
+  reading_time_minutes?: number;
+  tags?: Array<{ name: string; slug?: string; color?: string | null }>;
+  created_at: string;
+  updated_at: string;
+};
+
+class PublicContentApiError extends Error {
+  readonly status: number;
+  readonly code: number;
+
+  constructor(message: string, status: number, code = status) {
+    super(message);
+    this.name = "PublicContentApiError";
+    this.status = status;
+    this.code = code;
+  }
+}
 
 const fallbackPosts: PublicPost[] = [
   {
@@ -33,12 +70,123 @@ const fallbackPosts: PublicPost[] = [
   }
 ];
 
-export async function listPublicPosts(): Promise<PublicPost[]> {
-  const endpoint = process.env.PUBLIC_CONTENT_ENDPOINT;
-  if (!endpoint) return fallbackPosts;
+const publicContentTags = {
+  list: "public-posts",
+  detail: (slug: string) => `public-post:${slug}`
+};
+
+export async function listPublicPosts(options: { pageSize?: number } = {}): Promise<PublicPost[]> {
+  try {
+    const result = await fetchPublicContentList({ pageSize: options.pageSize ?? 20 });
+    return result.items.map((item) => publicItemToPost(item));
+  } catch {
+    return fallbackPublicPosts();
+  }
+}
+
+export async function getPublicPost(slug: string): Promise<PublicPost | null> {
+  try {
+    const result = await fetchPublicContentList({ slug, pageSize: 1 });
+    const item = result.items[0];
+    if (!item) return null;
+
+    const detail = await fetchPublicContent<PublicContentDetailResponse>(`/contents/${item.id}`, {
+      next: { revalidate: 60, tags: [publicContentTags.list, publicContentTags.detail(slug)] }
+    });
+    return publicItemToPost(detail);
+  } catch (error) {
+    if (error instanceof PublicContentApiError && error.status === 404) {
+      return null;
+    }
+    if (isProductionRuntime()) {
+      return null;
+    }
+    return fallbackPosts.find((post) => post.slug === slug) ?? null;
+  }
+}
+
+async function fetchPublicContentList(params: { slug?: string; pageSize: number }) {
+  const searchParams = new URLSearchParams({
+    page: "1",
+    page_size: String(params.pageSize),
+    type: "article"
+  });
+  if (params.slug) searchParams.set("slug", params.slug);
+
+  return fetchPublicContent<PublicContentListResponse>(`/contents?${searchParams.toString()}`, {
+    next: { revalidate: 60, tags: [publicContentTags.list] }
+  });
+}
+
+async function fetchPublicContent<T>(path: string, init: RequestInit & { next?: { revalidate?: number; tags?: string[] } } = {}) {
+  const response = await fetch(goApiUrl(path), {
+    ...init,
+    method: init.method ?? "GET",
+    headers: {
+      accept: "application/json",
+      ...init.headers
+    }
+  });
+
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    throw new PublicContentApiError("API returned an invalid response", response.status, response.status);
+  }
+
+  let envelope: BaseResponse<T>;
+  try {
+    envelope = (await response.json()) as BaseResponse<T>;
+  } catch {
+    throw new PublicContentApiError("API returned an invalid response", response.status, response.status);
+  }
+
+  if (!response.ok || envelope.code < 200 || envelope.code >= 300) {
+    throw new PublicContentApiError(envelope.message || "Request failed", response.status, envelope.code);
+  }
+
+  return envelope.data;
+}
+
+function goApiUrl(path: string) {
+  const baseUrl = process.env.BEEHIVE_API_BASE_URL ?? "http://localhost:8080";
+  return `${baseUrl}/api/v1${path}`;
+}
+
+function publicItemToPost(item: PublicContentDetailResponse): PublicPost {
+  const body = item.body?.trim() ?? "";
+  return {
+    slug: item.slug,
+    title: item.title,
+    description: item.excerpt?.trim() || excerptFromBody(body) || item.title,
+    body,
+    publishedAt: item.published_at ?? item.updated_at ?? item.created_at,
+    tags: item.tags?.map((tag) => tag.name).filter(Boolean) ?? [],
+    readingMinutes: item.reading_time_minutes ?? readingMinutesFromBody(body)
+  };
+}
+
+function excerptFromBody(body: string) {
+  const plainText = body
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/[#>*_`~\-[\]()]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return plainText.slice(0, 120);
+}
+
+function readingMinutesFromBody(body: string) {
+  const wordCount = body.trim() ? body.trim().split(/\s+/).length : 0;
+  if (wordCount === 0) return 0;
+  return Math.max(1, Math.ceil(wordCount / 200));
+}
+
+async function fallbackPublicPosts() {
+  if (isProductionRuntime()) return [];
+  const legacyEndpoint = process.env.PUBLIC_CONTENT_ENDPOINT;
+  if (!legacyEndpoint) return fallbackPosts;
 
   try {
-    const response = await fetch(endpoint, { next: { revalidate: 60, tags: ["public-posts"] } });
+    const response = await fetch(legacyEndpoint, { next: { revalidate: 60, tags: [publicContentTags.list] } });
     if (!response.ok) return fallbackPosts;
     const posts = (await response.json()) as PublicPost[];
     return Array.isArray(posts) ? posts : fallbackPosts;
@@ -47,7 +195,6 @@ export async function listPublicPosts(): Promise<PublicPost[]> {
   }
 }
 
-export async function getPublicPost(slug: string): Promise<PublicPost | null> {
-  const posts = await listPublicPosts();
-  return posts.find((post) => post.slug === slug) ?? null;
+function isProductionRuntime() {
+  return process.env.NODE_ENV === "production";
 }

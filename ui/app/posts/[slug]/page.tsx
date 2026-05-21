@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import { getPublicPost, listPublicPosts } from "@/lib/api/content";
 
@@ -66,9 +68,7 @@ export default async function PostDetailPage({ params }: PageProps) {
           ))}
         </div>
         <div className="article-body">
-          {post.body.split("\n").map((paragraph) => (
-            <p key={paragraph}>{paragraph}</p>
-          ))}
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.body}</ReactMarkdown>
         </div>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       </article>

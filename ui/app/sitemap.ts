@@ -4,7 +4,7 @@ import { listPublicPosts } from "@/lib/api/content";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  const posts = await listPublicPosts();
+  const posts = await listPublicPosts({ pageSize: 100 });
 
   return [
     {

@@ -19,9 +19,11 @@ export default async function PostsPage() {
         <p>面向读者的正式输出，首屏由服务端渲染，便于搜索引擎索引和弱网阅读。</p>
       </section>
       <section className="post-grid" aria-label="文章列表">
-        {posts.map((post) => (
-          <PostCard key={post.slug} post={post} />
-        ))}
+        {posts.length > 0 ? (
+          posts.map((post) => <PostCard key={post.slug} post={post} />)
+        ) : (
+          <div className="public-empty">暂无公开文章。发布第一篇公开文章后会显示在这里。</div>
+        )}
       </section>
     </main>
   );

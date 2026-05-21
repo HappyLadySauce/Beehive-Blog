@@ -40,9 +40,11 @@ export default async function HomePage() {
           </Link>
         </div>
         <div className="post-grid">
-          {posts.slice(0, 3).map((post) => (
-            <PostCard key={post.slug} post={post} />
-          ))}
+          {posts.length > 0 ? (
+            posts.slice(0, 3).map((post) => <PostCard key={post.slug} post={post} />)
+          ) : (
+            <div className="public-empty">暂无公开文章。发布第一篇公开文章后会显示在这里。</div>
+          )}
         </div>
       </section>
     </main>

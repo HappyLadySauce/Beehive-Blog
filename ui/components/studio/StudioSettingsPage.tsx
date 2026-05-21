@@ -143,12 +143,15 @@ export function StudioSettingsPage() {
     }
 
     let active = true;
-    setLoadingGithub(true);
+    const currentSettings = settings;
+    void loadGithubSettings();
 
-    loadGithubOAuth2Settings()
-      .then((githubPayload) => {
+    async function loadGithubSettings() {
+      setLoadingGithub(true);
+      try {
+        const githubPayload = await loadGithubOAuth2Settings();
         if (!active) return;
-        const githubOAuth2Settings = githubPayload.github_oauth2 ?? settings.github_oauth2 ?? defaultGithubOAuth2;
+        const githubOAuth2Settings = githubPayload.github_oauth2 ?? currentSettings.github_oauth2 ?? defaultGithubOAuth2;
         setSettings((current) =>
           current
             ? {
@@ -160,13 +163,12 @@ export function StudioSettingsPage() {
         );
         setGithubOAuth2(githubOAuth2Settings);
         setGithubLoaded(true);
-      })
-      .catch((error) => {
+      } catch (error) {
         if (active) setMessage({ tone: "error", text: humanizeApiError(error) });
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoadingGithub(false);
-      });
+      }
+    }
 
     return () => {
       active = false;

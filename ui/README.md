@@ -41,7 +41,7 @@ Optional env overrides:
 
 ## Environment
 
-- `BEEHIVE_API_BASE_URL`: server-side rewrite target for Go, defaults to `http://localhost:8080`.
+- `BEEHIVE_API_BASE_URL`: server-side Go API target for BFF and Public SSR content, defaults to `http://localhost:8080`.
 - `NEXT_PUBLIC_API_BASE_URL`: browser API base, defaults to `/api/v1`.
 - `NEXT_PUBLIC_SITE_URL`: canonical site URL, defaults to `http://localhost:3000`.
-- `PUBLIC_CONTENT_ENDPOINT`: optional public JSON endpoint for SSR posts. If omitted, the UI uses seeded public posts until content APIs are available.
+- `PUBLIC_CONTENT_ENDPOINT`: deprecated development fallback for seeded-style public JSON posts. Public pages now read Go `/api/v1/contents`; production does not show fallback posts when the Go API is unavailable.

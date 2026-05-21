@@ -119,18 +119,19 @@ export function StudioUsersPage() {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
+    void loadUsers();
 
-    loadUsersList(page, statusFilter, roleFilter, debouncedSearch)
-      .then((result) => {
+    async function loadUsers() {
+      setLoading(true);
+      try {
+        const result = await loadUsersList(page, statusFilter, roleFilter, debouncedSearch);
         if (active) setData(result);
-      })
-      .catch((error: unknown) => {
+      } catch (error) {
         if (active) setMessage({ tone: "error", text: humanizeApiError(error) });
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    }
 
     return () => {
       active = false;
