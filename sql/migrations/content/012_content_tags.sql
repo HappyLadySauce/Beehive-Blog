@@ -9,15 +9,11 @@ CREATE TABLE IF NOT EXISTS content.tags (
   description TEXT NULL,
   -- Hex color code including #, e.g. #FF5733. / 十六进制颜色码，包含 #。
   color       VARCHAR(7) NULL,
-  -- Lifecycle status. / 生命周期状态。
-  status      VARCHAR(16) NOT NULL DEFAULT 'active',
 
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted_at  TIMESTAMPTZ NULL,
 
-  CONSTRAINT chk_content_tags_status
-    CHECK (status IN ('active', 'archived')),
   CONSTRAINT chk_content_tags_color_format
     CHECK (color IS NULL OR color ~ '^#[0-9A-Fa-f]{6}$')
 );
@@ -61,8 +57,6 @@ COMMENT ON COLUMN content.tags.description IS
   'Optional description of the tag. / 标签的可选描述。';
 COMMENT ON COLUMN content.tags.color IS
   'Optional hex color code including the # prefix, e.g. #FF5733. / 可选十六进制颜色码，包含 # 前缀。';
-COMMENT ON COLUMN content.tags.status IS
-  'Lifecycle: active | archived. / 生命周期状态。';
 COMMENT ON COLUMN content.tags.created_at IS
   'Row creation timestamp, maintained by GORM CreatedAt. / 行创建时间，由 GORM CreatedAt 维护。';
 COMMENT ON COLUMN content.tags.updated_at IS
@@ -79,3 +73,11 @@ COMMENT ON COLUMN content.content_tags.tag_id IS
   'FK to content.tags. / 标签外键。';
 COMMENT ON COLUMN content.content_tags.created_at IS
   'Junction row creation timestamp. / 联结行创建时间。';
+
+-- Trigram indexes for fuzzy text search on tags.
+-- 标签的 trigram 模糊搜索索引。
+CREATE INDEX IF NOT EXISTS idx_content_tags_name_trgm
+  ON content.tags USING GIN (name gin_trgm_ops);
+
+CREATE INDEX IF NOT EXISTS idx_content_tags_slug_trgm
+  ON content.tags USING GIN (slug gin_trgm_ops);

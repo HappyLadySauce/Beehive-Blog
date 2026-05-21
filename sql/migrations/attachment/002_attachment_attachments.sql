@@ -1,19 +1,17 @@
-CREATE SCHEMA IF NOT EXISTS attachment;
-
--- attachment.attachments: unified metadata table for s3 / oss / local attachments.
--- It separates ownership, upload completion, access policy, business lifecycle,
+-- attachment.attachments: unified metadata table for storage attachments.
+-- Separates ownership, upload completion, access policy, business lifecycle,
 -- and GORM soft-deletion so handlers can enforce each concern explicitly.
--- attachment.attachments：统一登记 s3 / oss / local 三类附件元数据。
--- 表结构将归属、上传完成状态、访问策略、业务生命周期与 GORM 软删拆开，
+-- Storage location is resolved via storage_mount_id → storage_mounts at
+-- upload/download time; object_key is the sole object locator within a mount.
+-- attachment.attachments：统一登记附件元数据。
+-- 将归属、上传完成状态、访问策略、业务生命周期与 GORM 软删拆开，
 -- 便于接口层分别执行权限、安全与清理策略。
+-- 存储位置通过 storage_mount_id → storage_mounts 解析；object_key 是挂载项内的唯一对象定位符。
 CREATE TABLE attachment.attachments (
   id              BIGSERIAL PRIMARY KEY,
 
-  -- Business owner. The FK is declared by a later migration because this
-  -- migration must run before identity.users; application code must still
-  -- validate the owner in request scope.
-  -- 业务归属。此处不声明外键，因为本迁移必须先于 identity.users 执行；
-  -- 外键由后续迁移追加；应用层仍需在请求上下文中校验归属。
+  -- Business owner. FK is added in identity/004 after identity.users exists.
+  -- 业务归属。外键在 identity/004 中追加（identity.users 创建之后）。
   owner_user_id   BIGINT,
 
   -- Attachment purpose drives validation policy in the application layer.
@@ -26,15 +24,16 @@ CREATE TABLE attachment.attachments (
   mime_type       VARCHAR(127) NOT NULL,
   size            BIGINT NOT NULL CHECK (size >= 0),
 
-  -- Storage backend selector. / 存储后端选择。
-  storage_type    VARCHAR(16) NOT NULL DEFAULT 'local',
+  -- Storage mount and object key resolve the driver + config at runtime.
+  -- 通过 storage_mount_id + object_key 在运行时解析驱动与配置。
+  storage_mount_id BIGINT NOT NULL
+    CONSTRAINT fk_attachment_storage_mount
+    REFERENCES attachment.storage_mounts (id),
+  object_key      VARCHAR(1024) NOT NULL,
 
-  -- Remote (s3 / oss). / 远端字段。
-  bucket          VARCHAR(63),
-  object_key      VARCHAR(1024),
-
-  -- Local. / 本地字段。
-  local_path      VARCHAR(1024),
+  -- Provider-specific metadata such as version id, headers, etag details.
+  -- 提供方扩展元数据，如 version id、headers、etag 详情。
+  storage_metadata JSONB NOT NULL DEFAULT '{}',
 
   -- Optional integrity / cache fields. / 可选完整性与缓存字段。
   etag            VARCHAR(80),
@@ -71,8 +70,6 @@ CREATE TABLE attachment.attachments (
 
   CONSTRAINT chk_attachment_purpose
     CHECK (purpose IN ('avatar', 'content', 'system', 'other')),
-  CONSTRAINT chk_attachment_storage_type
-    CHECK (storage_type IN ('s3', 'oss', 'local')),
   CONSTRAINT chk_attachment_access_scope
     CHECK (access_scope IN ('private', 'public')),
   CONSTRAINT chk_attachment_upload_status
@@ -84,33 +81,11 @@ CREATE TABLE attachment.attachments (
   CONSTRAINT chk_attachment_avatar_mime_type
     CHECK (purpose <> 'avatar' OR mime_type LIKE 'image/%'),
   CONSTRAINT chk_attachment_public_requires_ready_upload
-    CHECK (access_scope <> 'public' OR upload_status = 'ready'),
-  CONSTRAINT chk_attachment_storage_location
-    CHECK (
-      (
-        storage_type = 'local'
-        AND local_path IS NOT NULL
-        AND bucket IS NULL
-        AND object_key IS NULL
-      )
-      OR
-      (
-        storage_type IN ('s3', 'oss')
-        AND bucket IS NOT NULL
-        AND object_key IS NOT NULL
-        AND local_path IS NULL
-      )
-    )
+    CHECK (access_scope <> 'public' OR upload_status = 'ready')
 );
 
 COMMENT ON TABLE attachment.attachments IS
   'Attachment metadata and storage registry. Ownership, upload_status, access_scope, status and deleted_at are intentionally separate so authorization, publication, lifecycle and soft-deletion do not overlap. / 附件元数据与存储登记表。owner、upload_status、access_scope、status、deleted_at 被刻意拆分，避免授权、发布、生命周期和软删语义混用。';
-
--- Listing live attachments by storage_type with stable newest-first pagination.
--- 活跃附件按 storage_type 过滤并按最新优先稳定分页。
-CREATE INDEX idx_attachment_attachments_live_storage_type_created_at
-  ON attachment.attachments (storage_type, created_at DESC, id DESC)
-  WHERE deleted_at IS NULL;
 
 -- Owner-scoped library listing with stable newest-first pagination.
 -- 按归属用户查询附件库并按最新优先稳定分页。
@@ -139,21 +114,17 @@ CREATE INDEX idx_attachment_attachments_deleted_at
   ON attachment.attachments (deleted_at)
   WHERE deleted_at IS NOT NULL;
 
--- Per-bucket uniqueness for remote objects among live rows.
--- 远端对象在活跃行内按 bucket 维度去重。
-CREATE UNIQUE INDEX ux_attachment_attachments_remote_object
-  ON attachment.attachments (storage_type, bucket, object_key)
-  WHERE deleted_at IS NULL
-    AND storage_type IN ('s3', 'oss')
-    AND object_key IS NOT NULL;
+-- Object keys are unique within an active mount.
+-- 活跃行内，同一 mount 下 object_key 唯一。
+CREATE UNIQUE INDEX ux_attachment_attachments_mount_object_key
+  ON attachment.attachments (storage_mount_id, object_key)
+  WHERE deleted_at IS NULL;
 
--- Per-path uniqueness for local objects among live rows.
--- 本地对象在活跃行内按 local_path 去重。
-CREATE UNIQUE INDEX ux_attachment_attachments_local_path
-  ON attachment.attachments (storage_type, local_path)
-  WHERE deleted_at IS NULL
-    AND storage_type = 'local'
-    AND local_path IS NOT NULL;
+-- Listing live attachments by mount with stable newest-first pagination.
+-- 活跃附件按 mount 过滤并按最新优先稳定分页。
+CREATE INDEX idx_attachment_attachments_live_mount_created_at
+  ON attachment.attachments (storage_mount_id, created_at DESC, id DESC)
+  WHERE deleted_at IS NULL;
 
 COMMENT ON COLUMN attachment.attachments.owner_user_id IS
   'User id that owns this attachment. The FK is added after identity.users is created; handlers must still validate ownership before writes and reads. / 拥有该附件的用户 id。外键在 identity.users 创建后追加；接口层在读写前仍必须校验归属。';
@@ -167,14 +138,12 @@ COMMENT ON COLUMN attachment.attachments.mime_type IS
   'IANA media type of the content. / 内容的 IANA 媒体类型。';
 COMMENT ON COLUMN attachment.attachments.size IS
   'Content size in bytes; must be non-negative. / 内容字节数；必须非负。';
-COMMENT ON COLUMN attachment.attachments.storage_type IS
-  'Storage backend: s3 | oss | local. / 存储后端类型。';
-COMMENT ON COLUMN attachment.attachments.bucket IS
-  'Bucket name for s3/oss; NULL for local. / 远端桶名，本地为空。';
+COMMENT ON COLUMN attachment.attachments.storage_mount_id IS
+  'Required storage mount used to resolve driver and config. / 必填存储挂载项，用于解析驱动和配置。';
 COMMENT ON COLUMN attachment.attachments.object_key IS
-  'Object key for s3/oss; URL is derived at read time. Remote attachment lookup should use storage_type + bucket + object_key together, not object_key alone. / 远端对象键，访问 URL 在读取时拼装或签名。远端附件定位应联合使用 storage_type + bucket + object_key，而不是仅用 object_key。';
-COMMENT ON COLUMN attachment.attachments.local_path IS
-  'Relative path under configured local root. / 配置的本地根目录下的相对路径。';
+  'Object key inside the selected storage mount. / 所选存储挂载项内的对象键。';
+COMMENT ON COLUMN attachment.attachments.storage_metadata IS
+  'Provider-specific metadata such as version id, headers, etag details. / 提供方扩展元数据，如 version id、headers、etag 详情。';
 COMMENT ON COLUMN attachment.attachments.etag IS
   'Provider-returned entity tag, used for cache validation. / 提供方返回的实体标签，用于缓存校验。';
 COMMENT ON COLUMN attachment.attachments.checksum IS
@@ -192,31 +161,6 @@ COMMENT ON COLUMN attachment.attachments.updated_at IS
 COMMENT ON COLUMN attachment.attachments.deleted_at IS
   'Soft-deletion timestamp aligned with gorm.DeletedAt. / 与 gorm.DeletedAt 对齐的软删时间戳。';
 
--- When an attachment becomes soft-deleted, unlink it from any user avatar FK
--- so those users fall back to the application default avatar.
--- 附件行一旦软删，自动解除所有用户头像外键引用，
--- 使这些用户回退到应用层默认头像。
-CREATE OR REPLACE FUNCTION attachment.fn_clear_identity_users_avatar_on_attachment_soft_delete()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  UPDATE identity.users
-  SET avatar_attachment_id = NULL,
-      updated_at = NOW()
-  WHERE avatar_attachment_id = NEW.id;
-  RETURN NEW;
-END;
-$$;
-
-COMMENT ON FUNCTION attachment.fn_clear_identity_users_avatar_on_attachment_soft_delete() IS
-  'When attachment.attachments.deleted_at changes from NULL to non-NULL, clears identity.users.avatar_attachment_id and refreshes identity.users.updated_at so affected users fall back to the application default avatar. / 当 attachment.attachments.deleted_at 从 NULL 变为非 NULL 时，清空 identity.users.avatar_attachment_id 并刷新 identity.users.updated_at，使受影响用户回退到应用层默认头像。';
-
-CREATE TRIGGER trg_attachment_attachments_clear_users_avatar_on_soft_delete
-  AFTER UPDATE OF deleted_at ON attachment.attachments
-  FOR EACH ROW
-  WHEN (OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL)
-  EXECUTE PROCEDURE attachment.fn_clear_identity_users_avatar_on_attachment_soft_delete();
-
-COMMENT ON TRIGGER trg_attachment_attachments_clear_users_avatar_on_soft_delete ON attachment.attachments IS
-  'On soft-delete only (deleted_at NULL -> non-NULL), unlink user avatars from this attachment, refresh affected identity.users.updated_at values, and make those users fall back to the application default avatar. / 仅在软删时（deleted_at 从 NULL 变为非 NULL）解除用户头像对本附件的引用，刷新受影响 identity.users.updated_at，并使这些用户回退到应用层默认头像。';
+-- Soft-delete trigger that clears identity.users.avatar_attachment_id is
+-- created in identity/004 after identity.users exists.
+-- 软删时清除 identity.users.avatar_attachment_id 的触发器在 identity/004 中创建。

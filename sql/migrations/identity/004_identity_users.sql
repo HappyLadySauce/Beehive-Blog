@@ -1,11 +1,9 @@
 CREATE SCHEMA IF NOT EXISTS identity;
 
 -- identity.users: core user rows; avatar points at attachment.attachments (FK).
--- Run after 000_attachment_attachments.sql (basename sort: 000 before 001).
+-- Run after attachment migrations so attachment.attachments exists for the avatar FK.
 -- identity.users：核心用户；头像外键指向 attachment.attachments。
--- 须在 000_attachment_attachments.sql 之后执行（按文件名前缀 000 < 001）。
--- IF NOT EXISTS allows -force re-apply after checksum changes without 42P07 on existing DBs.
--- 使用 IF NOT EXISTS 便于在 checksum 变更后用 -force 重跑，避免库中已有对象时报 42P07。
+-- 须在 attachment 迁移之后执行，确保 attachment.attachments 存在。
 CREATE TABLE IF NOT EXISTS identity.users (
   id BIGSERIAL PRIMARY KEY,
 
@@ -82,10 +80,57 @@ COMMENT ON COLUMN identity.users.updated_at IS
 COMMENT ON COLUMN identity.users.deleted_at IS
   'Soft-deletion timestamp aligned with gorm.DeletedAt. / 与 gorm.DeletedAt 对齐的软删时间戳。';
 
--- Default bootstrap admin for fresh installs (password set in 011_identity_user_credentials.sql).
--- 全新安装时的默认管理员（密码哈希在 011_identity_user_credentials.sql 中写入）。
+-- Default bootstrap admin for fresh installs (password set in 005_identity_user_credentials.sql).
+-- 全新安装时的默认管理员（密码哈希在 005_identity_user_credentials.sql 中写入）。
 INSERT INTO identity.users (username, nickname, role, status, created_at, updated_at)
 SELECT 'admin', 'Administrator', 'admin', 'active', NOW(), NOW()
 WHERE NOT EXISTS (
   SELECT 1 FROM identity.users u WHERE u.username = 'admin' AND u.deleted_at IS NULL
 );
+
+-- =========================================================================
+-- Add the owner FK from attachment.attachments to identity.users.
+-- This was deferred until identity.users existed.
+-- 追加 attachment.attachments → identity.users 的归属外键。
+-- =========================================================================
+ALTER TABLE attachment.attachments
+  ADD CONSTRAINT IF NOT EXISTS fk_attachment_attachments_owner_user
+  FOREIGN KEY (owner_user_id)
+  REFERENCES identity.users (id)
+  ON DELETE RESTRICT;
+
+COMMENT ON CONSTRAINT fk_attachment_attachments_owner_user ON attachment.attachments IS
+  'Owner user FK for non-system attachments. Hard-deleting a user with attachments is restricted; account removal should use identity.users.deleted_at. / 非 system 附件的归属用户外键。拥有附件的用户不允许物理删除；账号移除应使用 identity.users.deleted_at 软删。';
+
+-- =========================================================================
+-- When an attachment becomes soft-deleted, unlink it from any user avatar FK
+-- so those users fall back to the application default avatar.
+-- 附件行一旦软删，自动解除所有用户头像外键引用，
+-- 使这些用户回退到应用层默认头像。
+-- =========================================================================
+CREATE OR REPLACE FUNCTION attachment.fn_clear_identity_users_avatar_on_attachment_soft_delete()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  UPDATE identity.users
+  SET avatar_attachment_id = NULL,
+      updated_at = NOW()
+  WHERE avatar_attachment_id = NEW.id;
+  RETURN NEW;
+END;
+$$;
+
+COMMENT ON FUNCTION attachment.fn_clear_identity_users_avatar_on_attachment_soft_delete() IS
+  'When attachment.attachments.deleted_at changes from NULL to non-NULL, clears identity.users.avatar_attachment_id and refreshes identity.users.updated_at so affected users fall back to the application default avatar. / 当 attachment.attachments.deleted_at 从 NULL 变为非 NULL 时，清空 identity.users.avatar_attachment_id 并刷新 identity.users.updated_at，使受影响用户回退到应用层默认头像。';
+
+DROP TRIGGER IF EXISTS trg_attachment_attachments_clear_users_avatar_on_soft_delete ON attachment.attachments;
+
+CREATE TRIGGER trg_attachment_attachments_clear_users_avatar_on_soft_delete
+  AFTER UPDATE OF deleted_at ON attachment.attachments
+  FOR EACH ROW
+  WHEN (OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL)
+  EXECUTE PROCEDURE attachment.fn_clear_identity_users_avatar_on_attachment_soft_delete();
+
+COMMENT ON TRIGGER trg_attachment_attachments_clear_users_avatar_on_soft_delete ON attachment.attachments IS
+  'On soft-delete only (deleted_at NULL -> non-NULL), unlink user avatars from this attachment, refresh affected identity.users.updated_at values, and make those users fall back to the application default avatar. / 仅在软删时（deleted_at 从 NULL 变为非 NULL）解除用户头像对本附件的引用，刷新受影响 identity.users.updated_at，并使这些用户回退到应用层默认头像。';

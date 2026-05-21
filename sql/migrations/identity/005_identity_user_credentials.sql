@@ -1,9 +1,9 @@
 -- identity.user_credentials: password hashes for local authentication, one active per user.
 -- identity.user_credentials：本地认证的密码哈希，每个活跃用户仅一条。
--- Must run after 010_identity_users.sql.
--- 必须在 010_identity_users.sql 之后执行。
--- IF NOT EXISTS pairs with versioned -force re-apply (same rationale as 010).
--- 与 versioned 模式下 -force 重跑策略一致，见 010 文件头注释。
+-- Must run after 004_identity_users.sql.
+-- 必须在 004_identity_users.sql 之后执行。
+-- Default admin password: Admin@123 (bcrypt cost 12, matches pkg/auth/passwd.DefaultCost).
+-- 默认管理员密码：Admin@123（bcrypt cost 12，与 pkg/auth/passwd.DefaultCost 一致）。
 CREATE TABLE IF NOT EXISTS identity.user_credentials (
   id BIGSERIAL PRIMARY KEY,
 

@@ -1,7 +1,7 @@
 CREATE SCHEMA IF NOT EXISTS content;
 
--- content.contents: unified content table supporting multiple content types.
--- content.contents：统一内容表，支持多种内容类型（article / note / project / experience / reflection / portfolio）。
+-- content.contents: unified content table supporting article, note, and project content.
+-- content.contents：统一内容表，支持 article / note / project 三种内容类型。
 CREATE TABLE IF NOT EXISTS content.contents (
   id              BIGSERIAL PRIMARY KEY,
 
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS content.contents (
   deleted_at      TIMESTAMPTZ NULL,
 
   CONSTRAINT chk_content_contents_type
-    CHECK (type IN ('article', 'note', 'project', 'experience', 'reflection', 'portfolio')),
+    CHECK (type IN ('article', 'note', 'project')),
   CONSTRAINT chk_content_contents_status
     CHECK (status IN ('draft', 'review', 'published', 'archived')),
   CONSTRAINT chk_content_contents_visibility
@@ -99,10 +99,10 @@ CREATE INDEX IF NOT EXISTS idx_content_contents_metadata
   ON content.contents USING GIN (metadata);
 
 COMMENT ON TABLE content.contents IS
-  'Unified content table. Carries multiple content types (article, note, project, experience, reflection, portfolio) to avoid the "only articles" bottleneck. Status, visibility and ai_access are independent axes. / 统一内容表。携带多种内容类型（文章、笔记、项目、经历、反思、作品集），避免"仅有文章"瓶颈。状态、可见性和 AI 访问是独立维度。';
+  'Unified content table. Carries article, note, and project content. Status, visibility and ai_access are independent axes. / 统一内容表。承载文章、笔记、项目内容。状态、可见性和 AI 访问是独立维度。';
 
 COMMENT ON COLUMN content.contents.type IS
-  'Content type discriminator: article | note | project | experience | reflection | portfolio. / 内容类型区分。';
+  'Content type discriminator: article | note | project. / 内容类型区分。';
 COMMENT ON COLUMN content.contents.title IS
   'Human-readable title, rendered in list views and detail pages. / 人类可读标题，在列表视图和详情页中渲染。';
 COMMENT ON COLUMN content.contents.slug IS
@@ -128,7 +128,7 @@ COMMENT ON COLUMN content.contents.word_count IS
 COMMENT ON COLUMN content.contents.reading_time_minutes IS
   'Estimated reading time derived from word_count (word_count / 200, min 1). / 根据字数估算的阅读分钟数（字数÷200，最少 1 分钟）。';
 COMMENT ON COLUMN content.contents.metadata IS
-  'Type-specific structured data as JSONB. e.g. project: {repo_url, tech_stack, live_url}; experience: {company, role, start_date, end_date, location}; reflection: {mood, context}. / 类型特定的结构化数据，JSONB 格式。';
+  'Type-specific structured data as JSONB. e.g. project: {repo_url, tech_stack, live_url}. / 类型特定的结构化数据，JSONB 格式。';
 COMMENT ON COLUMN content.contents.view_count IS
   'View counter incremented on each public read. / 每次公开读取时递增的浏览计数器。';
 COMMENT ON COLUMN content.contents.created_at IS
@@ -137,3 +137,15 @@ COMMENT ON COLUMN content.contents.updated_at IS
   'Row last-update timestamp, maintained by GORM UpdatedAt. / 行最近更新时间，由 GORM UpdatedAt 维护。';
 COMMENT ON COLUMN content.contents.deleted_at IS
   'Soft-deletion timestamp aligned with gorm.DeletedAt. / 与 gorm.DeletedAt 对齐的软删时间戳。';
+
+-- =========================================================================
+-- Trigram indexes for fuzzy text search (requires pg_trgm extension).
+-- 模糊文本搜索 trigram 索引（依赖 pg_trgm 扩展）。
+-- =========================================================================
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+CREATE INDEX IF NOT EXISTS idx_content_contents_title_trgm
+  ON content.contents USING GIN (title gin_trgm_ops);
+
+CREATE INDEX IF NOT EXISTS idx_content_contents_excerpt_trgm
+  ON content.contents USING GIN (COALESCE(excerpt, '') gin_trgm_ops);

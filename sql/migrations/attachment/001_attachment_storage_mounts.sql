@@ -77,3 +77,38 @@ COMMENT ON COLUMN attachment.storage_mounts.status IS
     'unknown | work | error. Updated by health-check endpoint or background task. / 由健康检查端点或后台任务更新。';
 COMMENT ON COLUMN attachment.storage_mounts.created_by IS
     'Admin user id who created this mount. / 创建此挂载项的管理员用户 ID。';
+
+-- Seed default local mount so uploads have a database-owned default target.
+-- 创建默认 local 挂载项，使未指定 storage_mount_id 的上传由数据库配置决定。
+INSERT INTO attachment.storage_mounts (
+    driver_name, mount_path, name, config,
+    order_index, is_default, disabled, status
+)
+VALUES (
+    'local', '/local', 'Local Storage',
+    '{"root":"data/attachments"}',
+    0, true, false, 'unknown'
+)
+ON CONFLICT DO NOTHING;
+
+-- Seed disabled remote placeholders. Administrators must edit config before
+-- enabling them.
+-- 创建禁用的远端占位 mount，管理员必须补齐配置后才能启用。
+INSERT INTO attachment.storage_mounts (
+    driver_name, mount_path, name, config,
+    order_index, is_default, disabled, status, last_error
+)
+VALUES
+(
+    's3', '/s3', 'S3 Storage',
+    '{"bucket":"","upload_base_url":"","download_base_url":""}',
+    10, false, true, 'error',
+    'remote storage config requires bucket, upload_base_url and download_base_url'
+),
+(
+    'oss', '/oss', 'OSS Storage',
+    '{"bucket":"","upload_base_url":"","download_base_url":""}',
+    20, false, true, 'error',
+    'remote storage config requires bucket, upload_base_url and download_base_url'
+)
+ON CONFLICT DO NOTHING;
