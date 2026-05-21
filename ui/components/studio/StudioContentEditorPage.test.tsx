@@ -10,7 +10,9 @@ const createContent = vi.hoisted(() => vi.fn());
 const getContent = vi.hoisted(() => vi.fn());
 const updateContent = vi.hoisted(() => vi.fn());
 const transitionContentStatus = vi.hoisted(() => vi.fn());
+const setContentCategories = vi.hoisted(() => vi.fn());
 const setContentTags = vi.hoisted(() => vi.fn());
+const listCategories = vi.hoisted(() => vi.fn());
 const listTags = vi.hoisted(() => vi.fn());
 
 vi.mock("next/navigation", () => ({
@@ -31,9 +33,14 @@ vi.mock("@/lib/api/attachments", () => ({
 vi.mock("@/lib/api/contents", () => ({
   createContent,
   getContent,
+  setContentCategories,
   setContentTags,
   transitionContentStatus,
   updateContent
+}));
+
+vi.mock("@/lib/api/categories", () => ({
+  listCategories
 }));
 
 vi.mock("@/lib/api/tags", () => ({
@@ -89,6 +96,15 @@ const tags = {
   total: 1
 };
 
+const categories = {
+  items: [
+    { id: 5, name: "工程", slug: "engineering", parent_id: null, sort_order: 0, created_at: "2026-05-15T00:00:00Z", updated_at: "2026-05-15T00:00:00Z" }
+  ],
+  page: 1,
+  page_size: 100,
+  total: 1
+};
+
 const contentDetail = {
   ai_access: "allowed",
   author_id: 1,
@@ -125,13 +141,17 @@ describe("StudioContentEditorPage", () => {
     getContent.mockReset();
     updateContent.mockReset();
     transitionContentStatus.mockReset();
+    setContentCategories.mockReset();
     setContentTags.mockReset();
+    listCategories.mockReset();
     listTags.mockReset();
+    listCategories.mockResolvedValue(categories);
     listTags.mockResolvedValue(tags);
     getContent.mockResolvedValue(contentDetail);
     createContent.mockResolvedValue({ id: 10 });
     updateContent.mockResolvedValue(contentDetail);
     transitionContentStatus.mockResolvedValue(contentDetail);
+    setContentCategories.mockResolvedValue({});
     setContentTags.mockResolvedValue({});
     uploadLocalAttachmentsBatch.mockResolvedValue({
       failed: 0,

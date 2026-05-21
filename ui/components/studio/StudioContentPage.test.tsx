@@ -8,6 +8,10 @@ import { resetContentPageModuleStateForTests, StudioContentPage } from "./Studio
 const listContents = vi.hoisted(() => vi.fn());
 const deleteContent = vi.hoisted(() => vi.fn());
 const listTags = vi.hoisted(() => vi.fn());
+const createCategory = vi.hoisted(() => vi.fn());
+const deleteCategory = vi.hoisted(() => vi.fn());
+const listCategories = vi.hoisted(() => vi.fn());
+const updateCategory = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api/contents", () => ({
   deleteContent,
@@ -16,6 +20,13 @@ vi.mock("@/lib/api/contents", () => ({
 
 vi.mock("@/lib/api/tags", () => ({
   listTags
+}));
+
+vi.mock("@/lib/api/categories", () => ({
+  createCategory,
+  deleteCategory,
+  listCategories,
+  updateCategory
 }));
 
 const contentList = {
@@ -54,6 +65,24 @@ const tags = {
   total: 1
 };
 
+const categories = {
+  items: [
+    {
+      content_count: 2,
+      created_at: "2026-05-15T00:00:00Z",
+      id: 7,
+      name: "工程",
+      parent_id: null,
+      slug: "engineering",
+      sort_order: 0,
+      updated_at: "2026-05-15T00:00:00Z"
+    }
+  ],
+  page: 1,
+  page_size: 100,
+  total: 1
+};
+
 function renderContentPage(strict = false) {
   const element = (
     <ToastProvider>
@@ -69,8 +98,16 @@ describe("StudioContentPage", () => {
     listContents.mockReset();
     deleteContent.mockReset();
     listTags.mockReset();
+    createCategory.mockReset();
+    deleteCategory.mockReset();
+    listCategories.mockReset();
+    updateCategory.mockReset();
     listContents.mockResolvedValue(contentList);
     listTags.mockResolvedValue(tags);
+    listCategories.mockResolvedValue(categories);
+    createCategory.mockResolvedValue({ id: 12 });
+    updateCategory.mockResolvedValue(categories.items[0]);
+    deleteCategory.mockResolvedValue({});
     deleteContent.mockResolvedValue({});
   });
 
@@ -80,7 +117,9 @@ describe("StudioContentPage", () => {
     await waitFor(() => expect(screen.getByText("Hello World")).toBeInTheDocument());
     expect(screen.getByRole("region", { name: "内容工作台" })).toBeInTheDocument();
     expect(screen.getByText("AI")).toBeInTheDocument();
+    expect(screen.getByText("工程")).toBeInTheDocument();
     expect(listTags).toHaveBeenCalledWith({ page: 1, page_size: 100 });
+    expect(listCategories).toHaveBeenCalledWith({ page: 1, page_size: 100 });
     expect(listContents).toHaveBeenCalledWith(expect.objectContaining({ page: 1, page_size: 20 }));
   });
 
@@ -99,16 +138,45 @@ describe("StudioContentPage", () => {
   it("dedupes identical in-flight list and metadata requests", async () => {
     let resolveContents: (value: typeof contentList) => void = () => undefined;
     let resolveTags: (value: typeof tags) => void = () => undefined;
+    let resolveCategories: (value: typeof categories) => void = () => undefined;
     listContents.mockReturnValue(new Promise((resolve) => { resolveContents = resolve; }));
     listTags.mockReturnValue(new Promise((resolve) => { resolveTags = resolve; }));
+    listCategories.mockReturnValue(new Promise((resolve) => { resolveCategories = resolve; }));
 
     renderContentPage(true);
     resolveContents(contentList);
     resolveTags(tags);
+    resolveCategories(categories);
 
     await waitFor(() => expect(screen.getByText("Hello World")).toBeInTheDocument());
     expect(listContents).toHaveBeenCalledTimes(1);
     expect(listTags).toHaveBeenCalledTimes(1);
+    expect(listCategories).toHaveBeenCalledTimes(1);
+  });
+
+  it("filters contents from the inline category strip", async () => {
+    renderContentPage();
+    await waitFor(() => expect(screen.getByText("工程")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByText("工程").closest("button")!);
+
+    await waitFor(() => expect(listContents).toHaveBeenLastCalledWith(expect.objectContaining({ category_id: 7 })));
+  });
+
+  it("creates categories from the content page reserved strip", async () => {
+    renderContentPage();
+    await waitFor(() => expect(screen.getByText("工程")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "新建" }));
+    fireEvent.change(screen.getByLabelText("名称"), { target: { value: "架构" } });
+    fireEvent.change(screen.getByLabelText("Slug"), { target: { value: "architecture" } });
+    fireEvent.click(screen.getByRole("button", { name: "创建分类" }));
+
+    await waitFor(() => expect(createCategory).toHaveBeenCalledWith(expect.objectContaining({
+      name: "架构",
+      slug: "architecture"
+    })));
+    expect(listCategories).toHaveBeenCalledTimes(2);
   });
 
   it("links create and edit actions to standalone editor routes", async () => {

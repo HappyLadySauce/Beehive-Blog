@@ -1522,10 +1522,24 @@
   font: inherit;
   font-weight: 700;
   gap: 8px;
-  justify-content: space-between;
+  justify-content: flex-start;
   min-height: 42px;
   padding: 10px 12px;
   text-align: left;
+}
+
+.categoryCard > span,
+.categoryCardActive > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.categoryCard > small,
+.categoryCardActive > small {
+  margin-left: auto;
+  text-align: right;
 }
 
 .categoryCard:hover,

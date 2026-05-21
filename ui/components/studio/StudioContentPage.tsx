@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { FileText, Loader2, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { FileText, Loader2, MoreHorizontal, Pencil, Plus, Save, Search, Trash2, X } from "lucide-react";
 
 import { humanizeApiError } from "@/lib/api/client";
+import { createCategory, deleteCategory, listCategories, updateCategory } from "@/lib/api/categories";
 import { deleteContent, listContents } from "@/lib/api/contents";
 import { listTags } from "@/lib/api/tags";
-import type { ContentItem, ListContentsResponse, ListTagsResponse, TagItem } from "@/lib/api/types";
+import type { CategoryItem, ContentItem, ListCategoriesResponse, ListContentsResponse, ListTagsResponse, TagItem } from "@/lib/api/types";
 import { ToastMessage } from "@/components/toast/ToastProvider";
 import styles from "./Studio.module.css";
 import { StudioPagePagination } from "./StudioPagePagination";
@@ -19,6 +20,15 @@ const pageSize = 20;
 const searchDebounceMs = 400;
 
 type Message = { tone: "success" | "error"; text: string } | null;
+type CategoryFormMode = "create" | "edit";
+
+type CategoryFormState = {
+  name: string;
+  slug: string;
+  description: string;
+  parentId: string;
+  sortOrder: string;
+};
 
 type ContentListFilters = {
   page: number;
@@ -26,14 +36,20 @@ type ContentListFilters = {
   type: string;
   visibility: string;
   tagID: string;
+  categoryID: string;
   search: string;
 };
 
+type ContentMetadata = {
+  categories: ListCategoriesResponse;
+  tags: ListTagsResponse;
+};
+
 let contentListInflight: { key: string; promise: Promise<ListContentsResponse> } | null = null;
-let contentMetadataInflight: Promise<ListTagsResponse> | null = null;
+let contentMetadataInflight: Promise<ContentMetadata> | null = null;
 
 function contentListKey(filters: ContentListFilters) {
-  return `${filters.page}\x1e${filters.status}\x1e${filters.type}\x1e${filters.visibility}\x1e${filters.tagID}\x1e${filters.search}`;
+  return `${filters.page}\x1e${filters.status}\x1e${filters.type}\x1e${filters.visibility}\x1e${filters.tagID}\x1e${filters.categoryID}\x1e${filters.search}`;
 }
 
 function requestContentList(filters: ContentListFilters) {
@@ -41,6 +57,7 @@ function requestContentList(filters: ContentListFilters) {
     page: filters.page,
     page_size: pageSize,
     search: filters.search || undefined,
+    category_id: filters.categoryID ? Number(filters.categoryID) : undefined,
     status: filters.status || undefined,
     tag_id: filters.tagID ? Number(filters.tagID) : undefined,
     type: filters.type || undefined,
@@ -63,7 +80,10 @@ function loadContentList(filters: ContentListFilters) {
 }
 
 function requestContentMetadata() {
-  return listTags({ page: 1, page_size: 100 });
+  return Promise.all([listTags({ page: 1, page_size: 100 }), listCategories({ page: 1, page_size: 100 })]).then(([tags, categories]) => ({
+    categories,
+    tags
+  }));
 }
 
 function loadContentMetadata() {
@@ -115,9 +135,18 @@ const visibilityOptions = [
 
 const visibilityLabelOptions = visibilityOptions.filter((option) => option.value !== "");
 
+const emptyCategoryForm: CategoryFormState = {
+  description: "",
+  name: "",
+  parentId: "",
+  slug: "",
+  sortOrder: "0"
+};
+
 export function StudioContentPage() {
   const [data, setData] = useState<ListContentsResponse | null>(null);
   const [tags, setTags] = useState<TagItem[]>([]);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -125,10 +154,16 @@ export function StudioContentPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [visibilityFilter, setVisibilityFilter] = useState("");
   const [tagFilter, setTagFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<Message>(null);
   const [deleteTarget, setDeleteTarget] = useState<ContentItem | null>(null);
+  const [categoryFormMode, setCategoryFormMode] = useState<CategoryFormMode>("create");
+  const [categoryFormOpen, setCategoryFormOpen] = useState(false);
+  const [categoryFormTarget, setCategoryFormTarget] = useState<CategoryItem | null>(null);
+  const [categoryForm, setCategoryForm] = useState<CategoryFormState>(emptyCategoryForm);
+  const [categoryDeleteTarget, setCategoryDeleteTarget] = useState<CategoryItem | null>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), searchDebounceMs);
@@ -138,13 +173,14 @@ export function StudioContentPage() {
   const filters = useMemo(
     () => ({
       page,
+      categoryID: categoryFilter,
       search: debouncedSearch,
       status: statusFilter,
       tagID: tagFilter,
       type: typeFilter,
       visibility: visibilityFilter
     }),
-    [debouncedSearch, page, statusFilter, tagFilter, typeFilter, visibilityFilter]
+    [categoryFilter, debouncedSearch, page, statusFilter, tagFilter, typeFilter, visibilityFilter]
   );
 
   const tagOptions = useMemo(
@@ -153,6 +189,25 @@ export function StudioContentPage() {
   );
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil((data?.total ?? 0) / pageSize)), [data?.total]);
+
+  const excludedCategoryIDs = useMemo(
+    () => (categoryFormTarget ? descendantIDs(categoryFormTarget.id, categories) : new Set<number>()),
+    [categories, categoryFormTarget]
+  );
+
+  const categoryParentOptions = useMemo(
+    () => [
+      { value: "", label: "无（顶级分类）" },
+      ...categories
+        .filter((cat) => {
+          if (categoryFormTarget && cat.id === categoryFormTarget.id) return false;
+          if (excludedCategoryIDs.has(cat.id)) return false;
+          return true;
+        })
+        .map((cat) => ({ value: String(cat.id), label: cat.name }))
+    ],
+    [categories, categoryFormTarget, excludedCategoryIDs]
+  );
 
   const refreshContents = useCallback(async () => {
     try {
@@ -167,7 +222,10 @@ export function StudioContentPage() {
     let active = true;
     loadContentMetadata()
       .then((result) => {
-        if (active) setTags(result.items);
+        if (active) {
+          setTags(result.tags.items);
+          setCategories(result.categories.items);
+        }
       })
       .catch((error: unknown) => {
         if (active) setMessage({ tone: "error", text: humanizeApiError(error) });
@@ -198,6 +256,43 @@ export function StudioContentPage() {
     setPage(1);
   }
 
+  async function refreshContentMetadata() {
+    const result = await requestContentMetadata();
+    setTags(result.tags.items);
+    setCategories(result.categories.items);
+  }
+
+  function openCategoryCreate() {
+    setCategoryFormMode("create");
+    setCategoryFormTarget(null);
+    setCategoryForm(emptyCategoryForm);
+    setMessage(null);
+    setCategoryFormOpen(true);
+  }
+
+  function openCategoryEdit(category: CategoryItem) {
+    setCategoryFormMode("edit");
+    setCategoryFormTarget(category);
+    setCategoryForm({
+      description: category.description ?? "",
+      name: category.name,
+      parentId: category.parent_id ? String(category.parent_id) : "",
+      slug: category.slug,
+      sortOrder: String(category.sort_order)
+    });
+    setMessage(null);
+    setCategoryFormOpen(true);
+  }
+
+  function closeCategoryForm() {
+    setCategoryFormOpen(false);
+    setCategoryFormTarget(null);
+  }
+
+  function setCategoryFormField<K extends keyof CategoryFormState>(key: K, value: CategoryFormState[K]) {
+    setCategoryForm((current) => ({ ...current, [key]: value }));
+  }
+
   async function onDeleteConfirm(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!deleteTarget) return;
@@ -208,6 +303,76 @@ export function StudioContentPage() {
       setDeleteTarget(null);
       setMessage({ tone: "success", text: "内容已删除。" });
       await refreshContents();
+    } catch (error) {
+      setMessage({ tone: "error", text: humanizeApiError(error) });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function onCategorySubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const name = categoryForm.name.trim();
+    const slug = categoryForm.slug.trim();
+    if (!name || !slug) {
+      setMessage({ tone: "error", text: "分类名称和 Slug 不能为空。" });
+      return;
+    }
+    const sortOrder = parseInt(categoryForm.sortOrder, 10);
+    if (isNaN(sortOrder) || sortOrder < 0) {
+      setMessage({ tone: "error", text: "排序必须为非负整数。" });
+      return;
+    }
+
+    setSaving(true);
+    setMessage(null);
+    try {
+      if (categoryFormMode === "create") {
+        await createCategory({
+          description: categoryForm.description || null,
+          name,
+          parent_id: categoryForm.parentId ? Number(categoryForm.parentId) : null,
+          slug,
+          sort_order: sortOrder
+        });
+        setMessage({ tone: "success", text: "分类已创建。" });
+      } else if (categoryFormTarget) {
+        await updateCategory(categoryFormTarget.id, {
+          description: categoryForm.description || null,
+          name,
+          parent_id: categoryForm.parentId ? Number(categoryForm.parentId) : null,
+          slug,
+          sort_order: sortOrder
+        });
+        setMessage({ tone: "success", text: "分类已更新。" });
+      }
+      closeCategoryForm();
+      await refreshContentMetadata();
+      await refreshContents();
+    } catch (error) {
+      setMessage({ tone: "error", text: humanizeApiError(error) });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function onCategoryDeleteConfirm() {
+    if (!categoryDeleteTarget) return;
+    setSaving(true);
+    setMessage(null);
+    try {
+      await deleteCategory(categoryDeleteTarget.id);
+      const wasActiveFilter = categoryFilter === String(categoryDeleteTarget.id);
+      if (wasActiveFilter) {
+        setCategoryFilter("");
+        resetPage();
+      }
+      setCategoryDeleteTarget(null);
+      setMessage({ tone: "success", text: "分类已删除。" });
+      await refreshContentMetadata();
+      const nextFilters = wasActiveFilter ? { ...filters, categoryID: "", page: 1 } : filters;
+      const result = await requestContentList(nextFilters);
+      setData(result);
     } catch (error) {
       setMessage({ tone: "error", text: humanizeApiError(error) });
     } finally {
@@ -250,7 +415,29 @@ export function StudioContentPage() {
           <StudioSelect ariaLabel="筛选可见性" className={styles.filterSelect} options={visibilityOptions} value={visibilityFilter} onChange={(value) => { setVisibilityFilter(value); resetPage(); }} />
           <StudioSelect ariaLabel="筛选标签" className={styles.filterSelect} options={tagOptions} value={tagFilter} onChange={(value) => { setTagFilter(value); resetPage(); }} />
         </div>
-        <div className={styles.studioListReservedStrip} data-testid="content-category-reserved-strip" aria-hidden="true" />
+        <div className={styles.studioListReservedStrip} data-testid="content-category-reserved-strip">
+          <CategoryCard active={!categoryFilter} count={data?.total ?? 0} title="全部" onClick={() => {
+            setCategoryFilter("");
+            resetPage();
+          }} />
+          {categories.map((category) => (
+            <CategoryCard
+              active={categoryFilter === String(category.id)}
+              count={category.content_count ?? 0}
+              key={category.id}
+              title={category.name}
+              onEdit={() => openCategoryEdit(category)}
+              onClick={() => {
+                setCategoryFilter(String(category.id));
+                resetPage();
+              }}
+            />
+          ))}
+          <button className={styles.categoryCard} type="button" onClick={openCategoryCreate}>
+            <span>新建</span>
+            <Plus aria-hidden size={18} />
+          </button>
+        </div>
 
         {loading ? (
           <div className={styles.emptyState}>
@@ -318,7 +505,156 @@ export function StudioContentPage() {
       </section>
 
       {deleteTarget ? renderDeleteModal(deleteTarget, saving, () => setDeleteTarget(null), onDeleteConfirm) : null}
+      {categoryFormOpen ? renderCategoryFormModal(
+        categoryFormMode,
+        categoryForm,
+        saving,
+        categoryFormTarget,
+        closeCategoryForm,
+        setCategoryFormField,
+        onCategorySubmit,
+        categoryParentOptions,
+        categoryFormTarget ? () => {
+          setCategoryFormOpen(false);
+          setCategoryDeleteTarget(categoryFormTarget);
+        } : undefined
+      ) : null}
+      {categoryDeleteTarget ? renderCategoryDeleteModal(categoryDeleteTarget, saving, () => setCategoryDeleteTarget(null), onCategoryDeleteConfirm) : null}
     </>
+  );
+}
+
+function descendantIDs(root: number, categories: CategoryItem[]): Set<number> {
+  const ids = new Set<number>();
+  const queue = [root];
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    for (const category of categories) {
+      if (category.parent_id === current && !ids.has(category.id)) {
+        ids.add(category.id);
+        queue.push(category.id);
+      }
+    }
+  }
+  return ids;
+}
+
+function CategoryCard({
+  active,
+  count,
+  title,
+  onClick,
+  onEdit
+}: {
+  active?: boolean;
+  count?: number;
+  title: string;
+  onClick?: () => void;
+  onEdit?: () => void;
+}) {
+  return (
+    <button className={`${styles.categoryCard} ${active ? styles.categoryCardActive : ""}`} type="button" onClick={onClick}>
+      <span>{title}</span>
+      {typeof count === "number" ? <small>{count}</small> : null}
+      {onEdit ? (
+        <MoreHorizontal
+          aria-hidden
+          size={16}
+          onClick={(event) => {
+            event.stopPropagation();
+            onEdit();
+          }}
+        />
+      ) : null}
+    </button>
+  );
+}
+
+function renderCategoryFormModal(
+  mode: CategoryFormMode,
+  form: CategoryFormState,
+  saving: boolean,
+  target: CategoryItem | null,
+  onClose: () => void,
+  onField: <K extends keyof CategoryFormState>(key: K, value: CategoryFormState[K]) => void,
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void,
+  parentOptions: { value: string; label: string }[],
+  onDelete?: () => void
+) {
+  return createPortal(
+    <div className={styles.overlay} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <div className={styles.modalWide} role="dialog" aria-modal="true" aria-labelledby="content-cat-form-title">
+        <div className={styles.modalHeader}>
+          <div>
+            <h3 id="content-cat-form-title">{mode === "create" ? "新建分类" : `编辑 ${target?.name ?? "分类"}`}</h3>
+            <p>分类用于内容主题归类，创建后可在内容编辑页绑定。</p>
+          </div>
+          <button className="secondary-button icon-button" type="button" aria-label="关闭" onClick={onClose}>
+            <X aria-hidden size={18} />
+          </button>
+        </div>
+
+        <form className={styles.formGrid} id="content-category-form" onSubmit={onSubmit}>
+          <label className={styles.field}>
+            <span>名称</span>
+            <input value={form.name} onChange={(event) => onField("name", event.target.value)} />
+          </label>
+          <label className={styles.field}>
+            <span>Slug</span>
+            <input value={form.slug} onChange={(event) => onField("slug", event.target.value)} />
+          </label>
+          <label className={styles.field}>
+            <span>父级分类</span>
+            <StudioSelect ariaLabel="父级分类" options={parentOptions} value={form.parentId} onChange={(value) => onField("parentId", value)} />
+          </label>
+          <label className={styles.field}>
+            <span>排序</span>
+            <input type="number" min={0} value={form.sortOrder} onChange={(event) => onField("sortOrder", event.target.value)} />
+          </label>
+          <label className={styles.fieldFull}>
+            <span>描述</span>
+            <textarea className={styles.textarea} rows={4} value={form.description} onChange={(event) => onField("description", event.target.value)} />
+          </label>
+        </form>
+
+        <div className={styles.modalActions}>
+          {onDelete ? (
+            <button className="danger-button" disabled={saving} type="button" onClick={onDelete}>
+              删除分类
+            </button>
+          ) : null}
+          <button className="primary-button" disabled={saving} form="content-category-form" type="submit">
+            {saving ? <Loader2 aria-hidden className="spin" size={18} /> : <Save aria-hidden size={18} />}
+            {mode === "create" ? "创建分类" : "保存分类"}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+function renderCategoryDeleteModal(target: CategoryItem, saving: boolean, onClose: () => void, onConfirm: () => void) {
+  return createPortal(
+    <div className={styles.overlay} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="content-cat-delete-title">
+        <div className={styles.modalHeader}>
+          <h3 id="content-cat-delete-title">删除分类</h3>
+          <button className="secondary-button icon-button" type="button" aria-label="关闭" onClick={onClose}>
+            <X aria-hidden size={18} />
+          </button>
+        </div>
+        <p>确认删除「{target.name}」？如果已有内容引用，后端会拒绝删除并返回冲突原因。</p>
+        <div className={styles.modalActions}>
+          <button className="secondary-button" disabled={saving} type="button" onClick={onClose}>取消</button>
+          <button className="danger-button" disabled={saving} type="button" onClick={onConfirm}>
+            <Trash2 aria-hidden size={18} />
+            删除
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 
