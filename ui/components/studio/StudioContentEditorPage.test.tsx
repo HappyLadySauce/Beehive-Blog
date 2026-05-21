@@ -13,6 +13,7 @@ const transitionContentStatus = vi.hoisted(() => vi.fn());
 const setContentCategories = vi.hoisted(() => vi.fn());
 const setContentTags = vi.hoisted(() => vi.fn());
 const createContentVersion = vi.hoisted(() => vi.fn());
+const deleteContentVersion = vi.hoisted(() => vi.fn());
 const listContentVersions = vi.hoisted(() => vi.fn());
 const restoreContentVersion = vi.hoisted(() => vi.fn());
 const upsertAutoContentVersion = vi.hoisted(() => vi.fn());
@@ -39,6 +40,7 @@ vi.mock("@/lib/api/contents", async () => {
   return {
     createContent,
     createContentVersion,
+    deleteContentVersion,
     getContent,
     setContentCategories,
     setContentTags,
@@ -162,6 +164,7 @@ describe("StudioContentEditorPage", () => {
     setContentCategories.mockReset();
     setContentTags.mockReset();
     createContentVersion.mockReset();
+    deleteContentVersion.mockReset();
     listCategories.mockReset();
     listTags.mockReset();
     listContentVersions.mockReset();
@@ -170,6 +173,7 @@ describe("StudioContentEditorPage", () => {
     listCategories.mockResolvedValue(categories);
     listTags.mockResolvedValue(tags);
     createContentVersion.mockResolvedValue({ id: 1 });
+    deleteContentVersion.mockResolvedValue({});
     listContentVersions.mockResolvedValue({ items: [] });
     restoreContentVersion.mockResolvedValue(contentDetail);
     upsertAutoContentVersion.mockResolvedValue({ id: 1 });
@@ -337,6 +341,34 @@ describe("StudioContentEditorPage", () => {
 
     await waitFor(() => expect(restoreContentVersion).toHaveBeenCalledWith(9, 2));
     confirmSpy.mockRestore();
+  });
+
+  it("deletes a version through a Studio confirmation dialog", async () => {
+    listContentVersions.mockResolvedValue({
+      items: [{
+        body: "# Old",
+        change_summary: null,
+        content_id: 9,
+        created_at: "2026-05-21T00:00:00Z",
+        created_by: 1,
+        excerpt: "Old excerpt",
+        id: 2,
+        name: "发布前版本",
+        snapshot_type: "manual",
+        title: "Old title",
+        version_number: 2
+      }]
+    });
+    renderEditor("edit");
+
+    await waitFor(() => expect(screen.getByText("版本历史")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("版本历史"));
+    fireEvent.click(await screen.findByRole("button", { name: "删除版本 2" }));
+
+    expect(screen.getByRole("alertdialog", { name: "确认删除版本" })).toBeInTheDocument();
+    fireEvent.click(within(screen.getByRole("alertdialog", { name: "确认删除版本" })).getByRole("button", { name: "删除版本" }));
+
+    await waitFor(() => expect(deleteContentVersion).toHaveBeenCalledWith(9, 2));
   });
 
   it("imports markdown files into the editor body", async () => {

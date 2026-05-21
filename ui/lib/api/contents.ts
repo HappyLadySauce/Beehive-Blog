@@ -127,3 +127,9 @@ export function restoreContentVersion(id: number, versionNumber: number, payload
     body: JSON.stringify(payload ?? {})
   });
 }
+
+export function deleteContentVersion(id: number, versionNumber: number) {
+  return apiFetch<Record<string, never>>(`/bff/contents/${id}/versions/${versionNumber}`, {
+    method: "DELETE"
+  });
+}

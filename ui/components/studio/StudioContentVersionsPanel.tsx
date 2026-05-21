@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { History, Loader2, RotateCcw, Save } from "lucide-react";
+import { History, Loader2, RotateCcw, Save, Trash2 } from "lucide-react";
 
 import { humanizeApiError } from "@/lib/api/client";
-import { createContentVersion, listContentVersions, restoreContentVersion } from "@/lib/api/contents";
+import { createContentVersion, deleteContentVersion, listContentVersions, restoreContentVersion } from "@/lib/api/contents";
 import type { ContentDetailResponse, VersionItem } from "@/lib/api/types";
 import styles from "./Studio.module.css";
 
@@ -18,10 +18,12 @@ export function StudioContentVersionsPanel({ contentId, onRestored }: Props) {
   const [versions, setVersions] = useState<VersionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<number | null>(null);
   const [restoring, setRestoring] = useState<number | null>(null);
   const [snapshotName, setSnapshotName] = useState("");
   const [snapshotSummary, setSnapshotSummary] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<VersionItem | null>(null);
   const [restoreTarget, setRestoreTarget] = useState<VersionItem | null>(null);
   const [message, setMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
 
@@ -79,6 +81,22 @@ export function StudioContentVersionsPanel({ contentId, onRestored }: Props) {
     }
   }
 
+  async function remove(versionNumber: number) {
+    if (deleting !== null) return;
+    setDeleting(versionNumber);
+    setMessage(null);
+    try {
+      await deleteContentVersion(contentId, versionNumber);
+      setVersions((current) => current.filter((version) => version.version_number !== versionNumber));
+      setExpanded((current) => (current === versionNumber ? null : current));
+      setMessage({ tone: "success", text: "版本已删除。" });
+    } catch (error) {
+      setMessage({ tone: "error", text: humanizeApiError(error) });
+    } finally {
+      setDeleting(null);
+    }
+  }
+
   const toggleExpand = (versionNumber: number) => {
     setExpanded((current) => (current === versionNumber ? null : versionNumber));
   };
@@ -123,7 +141,7 @@ export function StudioContentVersionsPanel({ contentId, onRestored }: Props) {
         <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
           {versions.map((version) => (
             <li key={version.id} style={{ borderBottom: "1px solid #e5e7eb", padding: "8px 0" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                 <button
                   style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 500, textAlign: "left", padding: 0 }}
                   type="button"
@@ -138,22 +156,32 @@ export function StudioContentVersionsPanel({ contentId, onRestored }: Props) {
                     {new Date(version.created_at).toLocaleString()}
                   </span>
                 </button>
-                <button
-                  className="secondary-button"
-                  disabled={restoring !== null}
-                  style={{ fontSize: 12 }}
-                  type="button"
-                  onClick={() => setRestoreTarget(version)}
-                >
-                  {restoring === version.version_number ? <Loader2 aria-hidden className="spin" size={12} /> : <RotateCcw aria-hidden size={12} />}
-                  回滚到此版本
-                </button>
+                <div className={styles.versionActions}>
+                  <button
+                    className="secondary-button"
+                    disabled={restoring !== null || deleting !== null}
+                    type="button"
+                    onClick={() => setRestoreTarget(version)}
+                  >
+                    {restoring === version.version_number ? <Loader2 aria-hidden className="spin" size={12} /> : <RotateCcw aria-hidden size={12} />}
+                    回滚到此版本
+                  </button>
+                  <button
+                    aria-label={`删除版本 ${version.version_number}`}
+                    className="secondary-button icon-button"
+                    disabled={restoring !== null || deleting !== null}
+                    type="button"
+                    onClick={() => setDeleteTarget(version)}
+                  >
+                    {deleting === version.version_number ? <Loader2 aria-hidden className="spin" size={12} /> : <Trash2 aria-hidden size={12} />}
+                  </button>
+                </div>
               </div>
               {expanded === version.version_number && (
-                <div style={{ marginTop: 8, fontSize: 13, background: "#f9fafb", borderRadius: 4, padding: "8px 12px" }}>
-                  <div style={{ fontWeight: 600, marginBottom: 4 }}>{version.title}</div>
-                  {version.excerpt && <div style={{ color: "#6b7280", marginBottom: 4, fontStyle: "italic" }}>{version.excerpt}</div>}
-                  <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", fontSize: 12, margin: 0, maxHeight: 200, overflow: "auto" }}>
+                <div className={styles.versionPreview}>
+                  <div className={styles.versionPreviewTitle}>{version.title}</div>
+                  {version.excerpt && <div className={styles.versionPreviewExcerpt}>{version.excerpt}</div>}
+                  <pre className={styles.versionPreviewBody}>
                     {version.body || "(无正文)"}
                   </pre>
                 </div>
@@ -174,8 +202,24 @@ export function StudioContentVersionsPanel({ contentId, onRestored }: Props) {
           }}
         />
       ) : null}
+      {deleteTarget ? (
+        <DeleteVersionDialog
+          deleting={deleting === deleteTarget.version_number}
+          version={deleteTarget}
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={() => {
+            const versionNumber = deleteTarget.version_number;
+            setDeleteTarget(null);
+            void remove(versionNumber);
+          }}
+        />
+      ) : null}
     </div>
   );
+}
+
+function versionDisplayName(version: VersionItem) {
+  return version.snapshot_type === "auto" ? "自动保存" : version.name || `v${version.version_number}`;
 }
 
 function RestoreConfirmDialog(props: {
@@ -184,7 +228,7 @@ function RestoreConfirmDialog(props: {
   onCancel: () => void;
   onConfirm: () => void;
 }) {
-  const versionLabel = props.version.snapshot_type === "auto" ? "自动保存" : props.version.name || `v${props.version.version_number}`;
+  const versionLabel = versionDisplayName(props.version);
 
   return createPortal(
     <div className={styles.overlay} role="presentation">
@@ -200,6 +244,34 @@ function RestoreConfirmDialog(props: {
           <button className="danger-button" disabled={props.restoring} type="button" onClick={props.onConfirm}>
             {props.restoring ? <Loader2 aria-hidden className="spin" size={14} /> : <RotateCcw aria-hidden size={14} />}
             确认回滚
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+function DeleteVersionDialog(props: {
+  deleting: boolean;
+  version: VersionItem;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const versionLabel = versionDisplayName(props.version);
+
+  return createPortal(
+    <div className={styles.overlay} role="presentation">
+      <div aria-labelledby="delete-version-title" aria-modal="true" className={styles.modal} role="alertdialog">
+        <h3 id="delete-version-title">确认删除版本</h3>
+        <p>确认删除「{versionLabel}」？删除后该版本不能再用于回滚。</p>
+        <div className={styles.modalActions}>
+          <button className="secondary-button" disabled={props.deleting} type="button" onClick={props.onCancel}>
+            取消
+          </button>
+          <button className="danger-button" disabled={props.deleting} type="button" onClick={props.onConfirm}>
+            {props.deleting ? <Loader2 aria-hidden className="spin" size={14} /> : <Trash2 aria-hidden size={14} />}
+            删除版本
           </button>
         </div>
       </div>

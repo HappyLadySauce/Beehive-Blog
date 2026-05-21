@@ -217,6 +217,53 @@ func (c *ContentsController) CreateVersion(ctx *gin.Context) {
 	common.Success(ctx, resp)
 }
 
+// deleteVersion removes one version snapshot for a content item.
+// deleteVersion 删除某篇内容的一个版本快照。
+func (c *ContentsController) deleteVersion(ctx context.Context, contentID int64, versionNumber int) error {
+	result := c.svc.DB.WithContext(ctx).
+		Where("content_id = ? AND version_number = ?", contentID, versionNumber).
+		Delete(&model.ContentVersion{})
+	if result.Error != nil {
+		return common.NewInternal("failed to delete version", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return common.NewNotFound("version not found", fmt.Errorf("content %d version %d not found", contentID, versionNumber))
+	}
+	return nil
+}
+
+// DeleteVersion handles DELETE /api/v1/contents/:id/versions/:versionNumber (admin).
+// DeleteVersion 处理 DELETE /api/v1/contents/:id/versions/:versionNumber（管理员）。
+//
+//	@Summary		Delete content version
+//	@Description	Deletes one version snapshot for a content item. Admin only. 中文：删除某篇内容的一个版本快照（仅管理员）。
+//	@Tags			contents
+//	@Security		BearerAuth
+//	@Produce		json
+//	@Param			id				path	int	true	"Content ID"
+//	@Param			versionNumber	path	int	true	"Version number to delete"
+//	@Success		200				{object}	common.BaseResponse{data=map[string]interface{}}
+//	@Failure		400				{object}	common.BaseResponse
+//	@Failure		401				{object}	common.BaseResponse
+//	@Failure		403				{object}	common.BaseResponse
+//	@Failure		404				{object}	common.BaseResponse
+//	@Router			/api/v1/contents/{id}/versions/{versionNumber} [delete]
+func (c *ContentsController) DeleteVersion(ctx *gin.Context) {
+	id, ok := parseContentID(ctx)
+	if !ok {
+		return
+	}
+	vn, ok := parseVersionNumber(ctx)
+	if !ok {
+		return
+	}
+	if err := c.deleteVersion(ctx.Request.Context(), id, vn); err != nil {
+		common.Fail(ctx, err)
+		return
+	}
+	common.Success(ctx, gin.H{})
+}
+
 // restoreVersion restores a version snapshot back to the content row inside a transaction.
 // An auto snapshot is created before restore to prevent data loss.
 // restoreVersion 在事务中将版本快照写回内容行。回滚前自动创建快照以防止数据丢失。
