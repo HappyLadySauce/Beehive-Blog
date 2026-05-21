@@ -8,7 +8,9 @@ import { ToastMessage } from "@/components/toast/ToastProvider";
 import { humanizeApiError } from "@/lib/api/client";
 import { createTag, deleteTag, listTags, updateTag } from "@/lib/api/tags";
 import type { ListTagsResponse, TagItem } from "@/lib/api/types";
+import { slugifyTaxonomyName, type SlugMode } from "@/lib/slug";
 import styles from "./Studio.module.css";
+import { StudioSlugField } from "./StudioSlugField";
 import { StudioPagePagination } from "./StudioPagePagination";
 import { StudioTopbar } from "./StudioTopbar";
 
@@ -106,6 +108,7 @@ export function StudioTagsPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [formTarget, setFormTarget] = useState<TagItem | null>(null);
   const [form, setForm] = useState<TagFormState>(emptyForm);
+  const [slugMode, setSlugMode] = useState<SlugMode>("auto");
   const [deleteTarget, setDeleteTarget] = useState<TagItem | null>(null);
 
   useEffect(() => {
@@ -157,6 +160,7 @@ export function StudioTagsPage() {
     setFormMode("create");
     setFormTarget(null);
     setForm(emptyForm);
+    setSlugMode("auto");
     setMessage(null);
     setFormOpen(true);
   }
@@ -170,6 +174,7 @@ export function StudioTagsPage() {
       name: tag.name,
       slug: tag.slug
     });
+    setSlugMode("manual");
     setMessage(null);
     setFormOpen(true);
   }
@@ -180,6 +185,14 @@ export function StudioTagsPage() {
   }
 
   function setFormField<K extends keyof TagFormState>(key: K, value: TagFormState[K]) {
+    if (key === "name" && typeof value === "string") {
+      setForm((current) => ({
+        ...current,
+        name: value,
+        slug: slugMode === "auto" ? slugifyTaxonomyName(value) : current.slug
+      }));
+      return;
+    }
     setForm((current) => ({ ...current, [key]: value }));
   }
 
@@ -335,7 +348,7 @@ export function StudioTagsPage() {
         )}
       </section>
 
-      {formOpen ? renderTagFormModal(formMode, form, saving, formTarget, closeForm, setFormField, onSubmitForm) : null}
+      {formOpen ? renderTagFormModal(formMode, form, saving, formTarget, slugMode, setSlugMode, closeForm, setFormField, onSubmitForm) : null}
       {deleteTarget ? renderDeleteModal(deleteTarget, saving, () => setDeleteTarget(null), onDeleteConfirm) : null}
     </>
   );
@@ -346,6 +359,8 @@ function renderTagFormModal(
   form: TagFormState,
   saving: boolean,
   target: TagItem | null,
+  slugMode: SlugMode,
+  onSlugModeChange: (mode: SlugMode) => void,
   onClose: () => void,
   onField: <K extends keyof TagFormState>(key: K, value: TagFormState[K]) => void,
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
@@ -366,12 +381,20 @@ function renderTagFormModal(
         <div className={styles.formGrid}>
           <label className={styles.field}>
             <span>名称</span>
-            <input value={form.name} onChange={(event) => onField("name", event.target.value)} />
+            <input aria-label="名称" value={form.name} onChange={(event) => onField("name", event.target.value)} />
           </label>
-          <label className={styles.field}>
-            <span>Slug</span>
-            <input value={form.slug} onChange={(event) => onField("slug", event.target.value)} />
-          </label>
+          <div className={styles.fieldFull}>
+            <StudioSlugField
+              disabled={saving}
+              maxLength={64}
+              slug={form.slug}
+              slugMode={slugMode}
+              sourceLabel="名称"
+              sourceValue={form.name}
+              onSlugChange={(value) => onField("slug", value)}
+              onSlugModeChange={onSlugModeChange}
+            />
+          </div>
           <label className={styles.field}>
             <span>颜色</span>
             <input placeholder="#2f8f79" value={form.color} onChange={(event) => onField("color", event.target.value)} />

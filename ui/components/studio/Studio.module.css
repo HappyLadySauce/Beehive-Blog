@@ -364,6 +364,21 @@
   font-weight: 700;
 }
 
+.slugFieldHeader {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.slugFieldHint {
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
 .field input,
 .fieldFull input,
 .textarea {

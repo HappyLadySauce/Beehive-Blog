@@ -98,7 +98,6 @@ describe("StudioTagsPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "新建标签" }));
     fireEvent.change(screen.getByLabelText("名称"), { target: { value: "Product" } });
-    fireEvent.change(screen.getByLabelText("Slug"), { target: { value: "product" } });
     fireEvent.change(screen.getByLabelText("颜色"), { target: { value: "#123456" } });
     fireEvent.click(screen.getByRole("button", { name: "保存" }));
 
@@ -132,11 +131,24 @@ describe("StudioTagsPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "新建标签" }));
     fireEvent.change(screen.getByLabelText("名称"), { target: { value: "Product" } });
-    fireEvent.change(screen.getByLabelText("Slug"), { target: { value: "product" } });
     fireEvent.change(screen.getByLabelText("颜色"), { target: { value: "   " } });
     fireEvent.click(screen.getByRole("button", { name: "保存" }));
 
     await waitFor(() => expect(createTag).toHaveBeenCalledWith(expect.objectContaining({ color: null, name: "Product", slug: "product" })));
+  });
+
+  it("auto-generates slug from Chinese tag name on create", async () => {
+    renderTagsPage();
+    await waitFor(() => expect(screen.getByText("AI")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "新建标签" }));
+    fireEvent.change(screen.getByLabelText("名称"), { target: { value: "产品动态" } });
+    fireEvent.click(screen.getByRole("button", { name: "保存" }));
+
+    await waitFor(() => expect(createTag).toHaveBeenCalledWith(expect.objectContaining({
+      name: "产品动态",
+      slug: expect.stringMatching(/^[a-z0-9]+(-[a-z0-9]+)*$/)
+    })));
   });
 
   it("shows upstream conflict when referenced tag deletion fails", async () => {

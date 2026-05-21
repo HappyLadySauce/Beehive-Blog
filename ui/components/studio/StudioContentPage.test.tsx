@@ -169,12 +169,11 @@ describe("StudioContentPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "新建" }));
     fireEvent.change(screen.getByLabelText("名称"), { target: { value: "架构" } });
-    fireEvent.change(screen.getByLabelText("Slug"), { target: { value: "architecture" } });
     fireEvent.click(screen.getByRole("button", { name: "创建分类" }));
 
     await waitFor(() => expect(createCategory).toHaveBeenCalledWith(expect.objectContaining({
       name: "架构",
-      slug: "architecture"
+      slug: expect.stringMatching(/^[a-z0-9]+(-[a-z0-9]+)*$/)
     })));
     expect(listCategories).toHaveBeenCalledTimes(2);
   });

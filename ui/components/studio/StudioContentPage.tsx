@@ -10,8 +10,10 @@ import { createCategory, deleteCategory, listCategories, updateCategory } from "
 import { deleteContent, listContents } from "@/lib/api/contents";
 import { listTags } from "@/lib/api/tags";
 import type { CategoryItem, ContentItem, ListCategoriesResponse, ListContentsResponse, ListTagsResponse, TagItem } from "@/lib/api/types";
+import { slugifyTaxonomyName, type SlugMode } from "@/lib/slug";
 import { ToastMessage } from "@/components/toast/ToastProvider";
 import styles from "./Studio.module.css";
+import { StudioSlugField } from "./StudioSlugField";
 import { StudioPagePagination } from "./StudioPagePagination";
 import { StudioSelect } from "./StudioSelect";
 import { StudioTopbar } from "./StudioTopbar";
@@ -160,6 +162,7 @@ export function StudioContentPage() {
   const [categoryFormOpen, setCategoryFormOpen] = useState(false);
   const [categoryFormTarget, setCategoryFormTarget] = useState<CategoryItem | null>(null);
   const [categoryForm, setCategoryForm] = useState<CategoryFormState>(emptyCategoryForm);
+  const [categorySlugMode, setCategorySlugMode] = useState<SlugMode>("auto");
   const [categoryDeleteTarget, setCategoryDeleteTarget] = useState<CategoryItem | null>(null);
 
   useEffect(() => {
@@ -263,6 +266,7 @@ export function StudioContentPage() {
     setCategoryFormMode("create");
     setCategoryFormTarget(null);
     setCategoryForm(emptyCategoryForm);
+    setCategorySlugMode("auto");
     setMessage(null);
     setCategoryFormOpen(true);
   }
@@ -277,6 +281,7 @@ export function StudioContentPage() {
       slug: category.slug,
       sortOrder: String(category.sort_order)
     });
+    setCategorySlugMode("manual");
     setMessage(null);
     setCategoryFormOpen(true);
   }
@@ -287,6 +292,14 @@ export function StudioContentPage() {
   }
 
   function setCategoryFormField<K extends keyof CategoryFormState>(key: K, value: CategoryFormState[K]) {
+    if (key === "name" && typeof value === "string") {
+      setCategoryForm((current) => ({
+        ...current,
+        name: value,
+        slug: categorySlugMode === "auto" ? slugifyTaxonomyName(value) : current.slug
+      }));
+      return;
+    }
     setCategoryForm((current) => ({ ...current, [key]: value }));
   }
 
@@ -507,6 +520,8 @@ export function StudioContentPage() {
         categoryForm,
         saving,
         categoryFormTarget,
+        categorySlugMode,
+        setCategorySlugMode,
         closeCategoryForm,
         setCategoryFormField,
         onCategorySubmit,
@@ -572,6 +587,8 @@ function renderCategoryFormModal(
   form: CategoryFormState,
   saving: boolean,
   target: CategoryItem | null,
+  slugMode: SlugMode,
+  onSlugModeChange: (mode: SlugMode) => void,
   onClose: () => void,
   onField: <K extends keyof CategoryFormState>(key: K, value: CategoryFormState[K]) => void,
   onSubmit: (event: FormEvent<HTMLFormElement>) => void,
@@ -594,12 +611,20 @@ function renderCategoryFormModal(
         <form className={styles.formGrid} id="content-category-form" onSubmit={onSubmit}>
           <label className={styles.field}>
             <span>名称</span>
-            <input value={form.name} onChange={(event) => onField("name", event.target.value)} />
+            <input aria-label="名称" value={form.name} onChange={(event) => onField("name", event.target.value)} />
           </label>
-          <label className={styles.field}>
-            <span>Slug</span>
-            <input value={form.slug} onChange={(event) => onField("slug", event.target.value)} />
-          </label>
+          <div className={styles.fieldFull}>
+            <StudioSlugField
+              disabled={saving}
+              maxLength={64}
+              slug={form.slug}
+              slugMode={slugMode}
+              sourceLabel="名称"
+              sourceValue={form.name}
+              onSlugChange={(value) => onField("slug", value)}
+              onSlugModeChange={onSlugModeChange}
+            />
+          </div>
           <label className={styles.field}>
             <span>父级分类</span>
             <StudioSelect ariaLabel="父级分类" options={parentOptions} value={form.parentId} onChange={(value) => onField("parentId", value)} />

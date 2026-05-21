@@ -15,8 +15,11 @@ import { humanizeApiError } from "@/lib/api/client";
 import { createContent, getContent, setContentCategories, setContentTags, transitionContentStatusTo, updateContent, upsertAutoContentVersion } from "@/lib/api/contents";
 import { listCategories } from "@/lib/api/categories";
 import { listTags } from "@/lib/api/tags";
+import { publicContentConfig } from "@/lib/api/content";
 import type { AttachmentResponse, CategoryItem, ContentAIAccess, ContentDetailResponse, ContentStatus, ContentType, ContentVisibility, TagItem } from "@/lib/api/types";
+import { slugifyContentTitle, type SlugMode } from "@/lib/slug";
 import styles from "./Studio.module.css";
+import { StudioSlugField } from "./StudioSlugField";
 import type { MarkdownScrollTarget } from "./StudioMarkdownCodeMirror";
 import { StudioContentVersionsPanel } from "./StudioContentVersionsPanel";
 import { StudioSelect } from "./StudioSelect";
@@ -215,6 +218,7 @@ export function StudioContentEditorPage({ contentId, mode }: StudioContentEditor
   const [selection, setSelection] = useState({ from: 0, to: 0 });
   const [viewMode, setViewMode] = useState<EditorViewMode>("live");
   const [scrollTarget, setScrollTarget] = useState<MarkdownScrollTarget | null>(null);
+  const [slugMode, setSlugMode] = useState<SlugMode>(mode === "create" ? "auto" : "manual");
   const scrollIDRef = useRef(0);
   const versionBaselineRef = useRef<VersionTrackedFields | null>(null);
 
@@ -257,6 +261,22 @@ export function StudioContentEditorPage({ contentId, mode }: StudioContentEditor
   function setField<K extends keyof ContentEditorForm>(key: K, value: ContentEditorForm[K]) {
     setForm((current) => ({ ...current, [key]: value }));
   }
+
+  function onTitleChange(value: string) {
+    setForm((current) => ({
+      ...current,
+      title: value,
+      slug: slugMode === "auto" ? slugifyContentTitle(value) : current.slug
+    }));
+  }
+
+  const slugPathPreview = useMemo(() => {
+    const slug = form.slug.trim();
+    if (!slug || !form.type) return null;
+    const config = publicContentConfig[form.type as keyof typeof publicContentConfig];
+    if (!config) return null;
+    return `${config.detailPath}/${slug}`;
+  }, [form.slug, form.type]);
 
   function toggleTag(id: number, checked: boolean) {
     setForm((current) => ({
@@ -546,12 +566,19 @@ export function StudioContentEditorPage({ contentId, mode }: StudioContentEditor
           </label>
           <label className={styles.field}>
             <span>标题</span>
-            <input aria-label="标题" value={form.title} onChange={(event) => setField("title", event.target.value)} />
+            <input aria-label="标题" value={form.title} onChange={(event) => onTitleChange(event.target.value)} />
           </label>
-          <label className={styles.field}>
-            <span>Slug</span>
-            <input aria-label="Slug" value={form.slug} onChange={(event) => setField("slug", event.target.value)} />
-          </label>
+          <StudioSlugField
+            disabled={saving}
+            maxLength={200}
+            pathPreview={slugPathPreview}
+            slug={form.slug}
+            slugMode={slugMode}
+            sourceLabel="标题"
+            sourceValue={form.title}
+            onSlugChange={(value) => setField("slug", value)}
+            onSlugModeChange={setSlugMode}
+          />
           <label className={styles.field}>
             <span>类型</span>
             <StudioSelect ariaLabel="内容类型" options={contentTypeOptions} value={form.type} onChange={(value) => setField("type", value as ContentType)} />

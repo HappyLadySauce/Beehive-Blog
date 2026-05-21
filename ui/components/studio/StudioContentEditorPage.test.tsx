@@ -215,7 +215,6 @@ describe("StudioContentEditorPage", () => {
 
     await waitFor(() => expect(screen.getByLabelText("Markdown 正文")).toBeInTheDocument());
     fireEvent.change(screen.getByLabelText("标题"), { target: { value: "New Post" } });
-    fireEvent.change(screen.getByLabelText("Slug"), { target: { value: "new-post" } });
     fireEvent.change(screen.getByLabelText("Markdown 正文"), { target: { value: "# Draft" } });
     fireEvent.click(screen.getByLabelText("AI"));
     fireEvent.click(screen.getByRole("button", { name: "保存" }));
@@ -223,6 +222,28 @@ describe("StudioContentEditorPage", () => {
     await waitFor(() => expect(createContent).toHaveBeenCalledWith(expect.objectContaining({ body: "# Draft", slug: "new-post", title: "New Post" })));
     expect(setContentTags).toHaveBeenCalledWith(10, { tag_ids: [3] });
     expect(replace).toHaveBeenCalledWith("/studio/content/10/edit");
+  });
+
+  it("auto-generates slug from title on create and respects manual override", async () => {
+    renderEditor("create");
+
+    await waitFor(() => expect(screen.getByLabelText("Markdown 正文")).toBeInTheDocument());
+    fireEvent.change(screen.getByLabelText("标题"), { target: { value: "AI 协作写作" } });
+    expect((screen.getByLabelText("Slug") as HTMLInputElement).value).toMatch(/ai/);
+
+    fireEvent.click(screen.getByRole("button", { name: "自定义" }));
+    fireEvent.change(screen.getByLabelText("Slug"), { target: { value: "custom-slug" } });
+    fireEvent.change(screen.getByLabelText("标题"), { target: { value: "Another Title" } });
+    expect(screen.getByLabelText("Slug")).toHaveValue("custom-slug");
+  });
+
+  it("does not auto-update slug when editing existing content", async () => {
+    renderEditor("edit");
+
+    await waitFor(() => expect(screen.getByLabelText("标题")).toHaveValue("Hello World"));
+    expect(screen.getByLabelText("Slug")).toHaveValue("hello-world");
+    fireEvent.change(screen.getByLabelText("标题"), { target: { value: "Renamed Title" } });
+    expect(screen.getByLabelText("Slug")).toHaveValue("hello-world");
   });
 
   it("keeps editor chrome in fixed panes and shows metadata in the left rail", async () => {
