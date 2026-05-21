@@ -375,6 +375,77 @@
   width: 100%;
 }
 
+.colorControl {
+  align-self: end;
+  display: grid;
+  gap: 10px;
+}
+
+.colorPickerRow {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.colorPickerButton {
+  align-items: center;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.9rem;
+  font-weight: 800;
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 12px;
+  position: relative;
+}
+
+.colorPickerButton:focus-within,
+.colorPickerButton:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px #d8f1ec;
+}
+
+.colorPickerButton input {
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  width: 1px;
+}
+
+.colorPreview {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.65);
+  display: inline-block;
+  height: 22px;
+  width: 22px;
+}
+
+.colorPalette {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(8, 28px);
+  width: max-content;
+}
+
+.colorSwatch,
+.colorSwatchActive {
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 999px;
+  cursor: pointer;
+  height: 28px;
+  padding: 0;
+  width: 28px;
+}
+
+.colorSwatchActive {
+  box-shadow: 0 0 0 3px #d8f1ec, 0 0 0 5px var(--accent);
+}
+
 .selectRoot {
   position: relative;
   width: 100%;

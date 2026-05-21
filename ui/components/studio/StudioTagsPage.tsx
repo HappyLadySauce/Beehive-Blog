@@ -71,6 +71,29 @@ const emptyForm: TagFormState = {
   slug: ""
 };
 
+const tagColorPalette = [
+  "#2f8f79",
+  "#0f766e",
+  "#0891b2",
+  "#2563eb",
+  "#4f46e5",
+  "#7c3aed",
+  "#9333ea",
+  "#db2777",
+  "#dc2626",
+  "#ea580c",
+  "#d97706",
+  "#ca8a04",
+  "#65a30d",
+  "#16a34a",
+  "#475569",
+  "#111827"
+];
+
+function colorPickerValue(value: string) {
+  return /^#[0-9a-fA-F]{6}$/.test(value.trim()) ? value.trim() : "#2f8f79";
+}
+
 export function StudioTagsPage() {
   const [data, setData] = useState<ListTagsResponse | null>(null);
   const [page, setPage] = useState(1);
@@ -353,6 +376,34 @@ function renderTagFormModal(
             <span>颜色</span>
             <input placeholder="#2f8f79" value={form.color} onChange={(event) => onField("color", event.target.value)} />
           </label>
+          <div className={styles.colorControl} aria-label="标签颜色选择">
+            <div className={styles.colorPickerRow}>
+              <label className={styles.colorPickerButton}>
+                <span aria-hidden className={styles.colorPreview} style={{ background: colorPickerValue(form.color) }} />
+                <span>颜色选择器</span>
+                <input
+                  aria-label="颜色选择器"
+                  type="color"
+                  value={colorPickerValue(form.color)}
+                  onChange={(event) => onField("color", event.target.value)}
+                />
+              </label>
+              <button className="secondary-button" type="button" onClick={() => onField("color", "")}>清空颜色</button>
+            </div>
+            <div className={styles.colorPalette} aria-label="常用颜色调色板">
+              {tagColorPalette.map((color) => (
+                <button
+                  aria-label={`选择颜色 ${color}`}
+                  className={colorPickerValue(form.color).toLowerCase() === color ? styles.colorSwatchActive : styles.colorSwatch}
+                  key={color}
+                  style={{ background: color }}
+                  title={color}
+                  type="button"
+                  onClick={() => onField("color", color)}
+                />
+              ))}
+            </div>
+          </div>
           <label className={styles.fieldFull}>
             <span>描述</span>
             <textarea className={styles.textarea} rows={4} value={form.description} onChange={(event) => onField("description", event.target.value)} />

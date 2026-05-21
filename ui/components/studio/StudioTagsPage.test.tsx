@@ -111,6 +111,21 @@ describe("StudioTagsPage", () => {
     await waitFor(() => expect(updateTag).toHaveBeenCalledWith(3, expect.objectContaining({ name: "AI Updated" })));
   });
 
+  it("lets users pick tag colors from a palette or native color picker", async () => {
+    renderTagsPage();
+    await waitFor(() => expect(screen.getByText("AI")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "新建标签" }));
+    fireEvent.click(screen.getByRole("button", { name: "选择颜色 #2563eb" }));
+    expect(screen.getByLabelText("颜色")).toHaveValue("#2563eb");
+
+    fireEvent.change(screen.getByLabelText("颜色选择器"), { target: { value: "#db2777" } });
+    expect(screen.getByLabelText("颜色")).toHaveValue("#db2777");
+
+    fireEvent.click(screen.getByRole("button", { name: "清空颜色" }));
+    expect(screen.getByLabelText("颜色")).toHaveValue("");
+  });
+
   it("trims blank tag color before validation and mutation", async () => {
     renderTagsPage();
     await waitFor(() => expect(screen.getByText("AI")).toBeInTheDocument());
