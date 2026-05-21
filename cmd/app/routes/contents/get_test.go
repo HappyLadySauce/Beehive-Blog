@@ -189,7 +189,7 @@ func TestGetContentAdminReturnsFullFields(t *testing.T) {
 	}
 }
 
-func TestGetContentPublicOmitsArchivedTags(t *testing.T) {
+func TestGetContentPublicLoadsLinkedTags(t *testing.T) {
 	c, mock := newCrudTestController(t)
 	now := time.Now()
 
@@ -213,9 +213,9 @@ func TestGetContentPublicOmitsArchivedTags(t *testing.T) {
 			AddRow(1, 2, now))
 
 	mock.ExpectQuery(`SELECT \* FROM "content"."tags" WHERE`).
-		WithArgs(int64(1), int64(2), "active").
+		WithArgs(int64(1), int64(2)).
 		WillReturnRows(sqlmock.NewRows(tagColumns()).
-			AddRow(1, "Active", "active", nil, nil, "active", now, now, nil))
+			AddRow(1, "Active", "active", nil, nil, now, now, nil))
 
 	ctx, rec := testCrudContextWithID(http.MethodGet, "/api/v1/contents/1", nil, "1")
 	c.Get(ctx)
@@ -229,7 +229,7 @@ func TestGetContentPublicOmitsArchivedTags(t *testing.T) {
 		t.Fatalf("unmarshal data: %v", err)
 	}
 	if len(resp.Tags) != 1 {
-		t.Fatalf("tags len = %d, want 1 (archived omitted)", len(resp.Tags))
+		t.Fatalf("tags len = %d, want 1 (missing tag rows omitted)", len(resp.Tags))
 	}
 	if resp.Tags[0].Slug != "active" {
 		t.Fatalf("tag slug = %q, want active", resp.Tags[0].Slug)
@@ -306,5 +306,5 @@ func TestGetContentViewCountFailureStillOK(t *testing.T) {
 }
 
 func tagColumns() []string {
-	return []string{"id", "name", "slug", "description", "color", "status", "created_at", "updated_at", "deleted_at"}
+	return []string{"id", "name", "slug", "description", "color", "created_at", "updated_at", "deleted_at"}
 }

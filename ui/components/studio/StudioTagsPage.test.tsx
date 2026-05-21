@@ -28,7 +28,6 @@ const tags = {
       id: 3,
       name: "AI",
       slug: "ai",
-      status: "active",
       updated_at: "2026-05-15T00:00:00Z"
     }
   ],

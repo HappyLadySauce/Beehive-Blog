@@ -63,7 +63,7 @@ function loadContentList(filters: ContentListFilters) {
 }
 
 function requestContentMetadata() {
-  return listTags({ page: 1, page_size: 100, status: "active" });
+  return listTags({ page: 1, page_size: 100 });
 }
 
 function loadContentMetadata() {

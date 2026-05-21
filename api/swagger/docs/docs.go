@@ -3486,7 +3486,7 @@ const docTemplate = `{
         },
         "/api/v1/tags": {
             "get": {
-                "description": "Paginated list of tags. Without token: active tags only and each TagItem omits status. With admin Bearer: all tags including archived, with status field. 中文：无 token 仅 active 标签且 TagItem 不含 status；管理员 Bearer 含已归档且带 status。",
+                "description": "Paginated list of non-deleted tags. Optional admin Bearer for management UIs. 中文：分页返回未软删标签；可选管理员 Bearer 用于管理端。",
                 "produces": [
                     "application/json"
                 ],
@@ -3510,16 +3510,6 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "enum": [
-                            "active",
-                            "archived"
-                        ],
-                        "type": "string",
-                        "description": "Filter by status (admin only)",
-                        "name": "status",
-                        "in": "query"
-                    },
-                    {
                         "type": "string",
                         "description": "Search name or slug",
                         "name": "search",
@@ -3528,7 +3518,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Public items omit status in TagItem",
+                        "description": "OK",
                         "schema": {
                             "allOf": [
                                 {
@@ -3629,7 +3619,7 @@ const docTemplate = `{
         },
         "/api/v1/tags/{id}": {
             "get": {
-                "description": "Returns a tag by ID. Without token: active tag only, TagItem omits status. With admin Bearer: full TagDetailResponse including status. 中文：无 token 仅 active 且 TagItem 不含 status；管理员 Bearer 返回完整 TagDetailResponse（含 status）。",
+                "description": "Returns a non-deleted tag by ID. Soft-deleted tags return 404. 中文：按 ID 返回未软删标签；已软删返回 404。",
                 "produces": [
                     "application/json"
                 ],
@@ -3685,7 +3675,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Soft-deletes a tag when not referenced by content. Admin only. 中文：在无内容引用时软删除标签（仅管理员）。",
+                "description": "Soft-deletes a tag when not referenced by content; removed tags no longer appear in listings. Admin only. 中文：无内容引用时软删除标签，删除后列表不可见（仅管理员）。",
                 "produces": [
                     "application/json"
                 ],
@@ -5687,9 +5677,6 @@ const docTemplate = `{
                 "slug": {
                     "type": "string"
                 },
-                "status": {
-                    "type": "string"
-                },
                 "updated_at": {
                     "type": "string"
                 }
@@ -5717,9 +5704,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "slug": {
-                    "type": "string"
-                },
-                "status": {
                     "type": "string"
                 },
                 "updated_at": {
@@ -5817,13 +5801,6 @@ const docTemplate = `{
                 "slug": {
                     "type": "string",
                     "maxLength": 64
-                },
-                "status": {
-                    "type": "string",
-                    "enum": [
-                        "active",
-                        "archived"
-                    ]
                 }
             }
         },

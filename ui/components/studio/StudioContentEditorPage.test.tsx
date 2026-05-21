@@ -82,7 +82,7 @@ vi.mock("./StudioMarkdownCodeMirror", () => {
 
 const tags = {
   items: [
-    { id: 3, name: "AI", slug: "ai", status: "active", created_at: "2026-05-15T00:00:00Z", updated_at: "2026-05-15T00:00:00Z" }
+    { id: 3, name: "AI", slug: "ai", created_at: "2026-05-15T00:00:00Z", updated_at: "2026-05-15T00:00:00Z" }
   ],
   page: 1,
   page_size: 100,

@@ -18,7 +18,6 @@ func (t *TagsController) create(ctx context.Context, req *v1.CreateTagRequest) (
 		Slug:        req.Slug,
 		Description: req.Description,
 		Color:       req.Color,
-		Status:      "active",
 	}
 	if err := t.svc.DB.WithContext(ctx).Create(&tag).Error; err != nil {
 		return nil, mapTagCreateUniqueViolation(err)

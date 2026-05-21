@@ -7,7 +7,6 @@ import "time"
 type ListTagsRequest struct {
 	Page     int    `form:"page" binding:"omitempty,min=1"`
 	PageSize int    `form:"page_size" binding:"omitempty,min=1,max=100"`
-	Status   string `form:"status" binding:"omitempty,oneof=active archived"`
 	Search   string `form:"search" binding:"omitempty,max=64"`
 }
 
@@ -28,7 +27,6 @@ type UpdateTagRequest struct {
 	Slug        *string `json:"slug,omitempty" binding:"omitempty,max=64"`
 	Description *string `json:"description,omitempty"`
 	Color       *string `json:"color,omitempty" binding:"omitempty,len=7"`
-	Status      *string `json:"status,omitempty" binding:"omitempty,oneof=active archived"`
 }
 
 // TagItem is the response item for tag listings.
@@ -39,7 +37,6 @@ type TagItem struct {
 	Slug         string     `json:"slug"`
 	Description  *string    `json:"description,omitempty"`
 	Color        *string    `json:"color,omitempty"`
-	Status       string     `json:"status"`
 	ContentCount int64      `json:"content_count,omitempty"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`

@@ -69,7 +69,7 @@ func (c *ContentsController) list(ctx context.Context, req *v1.ListContentsReque
 	if err != nil {
 		return nil, common.NewInternal("failed to load author usernames", err)
 	}
-	tagMap, err := batchLoadContentTags(ctx, c, contentIDs, !admin)
+	tagMap, err := batchLoadContentTags(ctx, c, contentIDs)
 	if err != nil {
 		return nil, common.NewInternal("failed to load content tags", err)
 	}
@@ -158,18 +158,14 @@ func batchLoadAuthorUsernames(ctx context.Context, ctrl *ContentsController, ids
 	return m, nil
 }
 
-// fetchTagsByIDs loads tag rows; activeOnly restricts to status = 'active'.
-// fetchTagsByIDs 加载标签行；activeOnly 为 true 时仅返回 active 标签。
-func fetchTagsByIDs(ctx context.Context, ctrl *ContentsController, tagIDs []int64, activeOnly bool) ([]model.Tag, error) {
+// fetchTagsByIDs loads tag rows (non-soft-deleted via GORM scope).
+// fetchTagsByIDs 加载标签行（GORM 默认 scope 排除软删）。
+func fetchTagsByIDs(ctx context.Context, ctrl *ContentsController, tagIDs []int64) ([]model.Tag, error) {
 	if len(tagIDs) == 0 {
 		return nil, nil
 	}
-	query := ctrl.svc.DB.WithContext(ctx).Where("id IN ?", uniqueInt64(tagIDs))
-	if activeOnly {
-		query = query.Where("status = ?", "active")
-	}
 	var tags []model.Tag
-	if err := query.Find(&tags).Error; err != nil {
+	if err := ctrl.svc.DB.WithContext(ctx).Where("id IN ?", uniqueInt64(tagIDs)).Find(&tags).Error; err != nil {
 		return nil, err
 	}
 	return tags, nil
@@ -190,7 +186,7 @@ func tagsToItems(tags []model.Tag) []v1.TagItem {
 
 // batchLoadContentTags loads tags for multiple content IDs in two queries.
 // batchLoadContentTags 通过两次查询批量加载多个内容的标签。
-func batchLoadContentTags(ctx context.Context, ctrl *ContentsController, contentIDs []int64, activeOnly bool) (map[int64][]v1.TagItem, error) {
+func batchLoadContentTags(ctx context.Context, ctrl *ContentsController, contentIDs []int64) (map[int64][]v1.TagItem, error) {
 	if len(contentIDs) == 0 {
 		return nil, nil
 	}
@@ -209,7 +205,7 @@ func batchLoadContentTags(ctx context.Context, ctrl *ContentsController, content
 		tagIDs[i] = ct.TagID
 	}
 
-	tags, err := fetchTagsByIDs(ctx, ctrl, tagIDs, activeOnly)
+	tags, err := fetchTagsByIDs(ctx, ctrl, tagIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -250,7 +246,7 @@ func uniqueInt64(ids []int64) []int64 {
 
 // loadContentTags fetches tags for a single content ID.
 // loadContentTags 获取单个内容的标签列表。
-func loadContentTags(ctx context.Context, ctrl *ContentsController, contentID int64, activeOnly bool) ([]v1.TagItem, error) {
+func loadContentTags(ctx context.Context, ctrl *ContentsController, contentID int64) ([]v1.TagItem, error) {
 	var cts []model.ContentTag
 	if err := ctrl.svc.DB.WithContext(ctx).Where("content_id = ?", contentID).Find(&cts).Error; err != nil {
 		return nil, err
@@ -262,7 +258,7 @@ func loadContentTags(ctx context.Context, ctrl *ContentsController, contentID in
 	for i, ct := range cts {
 		tagIDs[i] = ct.TagID
 	}
-	tags, err := fetchTagsByIDs(ctx, ctrl, tagIDs, activeOnly)
+	tags, err := fetchTagsByIDs(ctx, ctrl, tagIDs)
 	if err != nil {
 		return nil, err
 	}

@@ -194,7 +194,7 @@ export function StudioContentEditorPage({ contentId, mode }: StudioContentEditor
 
   useEffect(() => {
     let active = true;
-    const load = mode === "edit" && contentId ? Promise.all([listTags({ page: 1, page_size: 100, status: "active" }), getContent(contentId)]) : Promise.all([listTags({ page: 1, page_size: 100, status: "active" })]);
+    const load = mode === "edit" && contentId ? Promise.all([listTags({ page: 1, page_size: 100 }), getContent(contentId)]) : Promise.all([listTags({ page: 1, page_size: 100 })]);
 
     load
       .then((result) => {

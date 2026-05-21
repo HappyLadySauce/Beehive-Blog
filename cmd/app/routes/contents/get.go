@@ -30,7 +30,6 @@ func (c *ContentsController) get(ctx context.Context, id int64, admin bool) (int
 		// authorUsername used below in both branches.
 	}
 
-	activeOnly := !admin
 	if !admin {
 		if result := c.svc.DB.WithContext(ctx).
 			Exec("UPDATE content.contents SET view_count = view_count + 1 WHERE id = ?", id); result.Error != nil {
@@ -39,7 +38,7 @@ func (c *ContentsController) get(ctx context.Context, id int64, admin bool) (int
 
 		item := toPublicContentItem(content)
 		item.AuthorUsername = user.Username
-		tags, err := loadContentTags(ctx, c, content.ID, activeOnly)
+		tags, err := loadContentTags(ctx, c, content.ID)
 		if err != nil {
 			return nil, common.NewInternal("failed to load content tags", err)
 		}
@@ -53,7 +52,7 @@ func (c *ContentsController) get(ctx context.Context, id int64, admin bool) (int
 
 	item := toContentItem(content)
 	item.AuthorUsername = user.Username
-	tags, err := loadContentTags(ctx, c, content.ID, activeOnly)
+	tags, err := loadContentTags(ctx, c, content.ID)
 	if err != nil {
 		return nil, common.NewInternal("failed to load content tags", err)
 	}

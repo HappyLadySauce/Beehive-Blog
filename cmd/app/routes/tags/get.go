@@ -12,12 +12,9 @@ import (
 
 // get returns a single tag by ID.
 // get 根据 ID 返回单个标签。
-func (t *TagsController) get(ctx context.Context, id int64, admin bool) (*v1.TagDetailResponse, error) {
-	query := t.svc.DB.WithContext(ctx).Model(&model.Tag{}).Where("id = ?", id)
-	if !admin {
-		query = query.Where("status = ?", "active")
-	}
+func (t *TagsController) get(ctx context.Context, id int64) (*v1.TagDetailResponse, error) {
 	var tag model.Tag
+	query := t.svc.DB.WithContext(ctx).Model(&model.Tag{}).Where("id = ?", id)
 	if err := query.First(&tag).Error; err != nil {
 		return nil, mapFirstError(err, "tag not found", "failed to fetch tag")
 	}
@@ -25,12 +22,6 @@ func (t *TagsController) get(ctx context.Context, id int64, admin bool) (*v1.Tag
 	var contentCount int64
 	if err := t.svc.DB.WithContext(ctx).Model(&model.ContentTag{}).Where("tag_id = ?", tag.ID).Count(&contentCount).Error; err != nil {
 		return nil, common.NewInternal("failed to count tag content", err)
-	}
-
-	if !admin {
-		item := toPublicTagItem(tag)
-		item.ContentCount = contentCount
-		return &v1.TagDetailResponse{TagItem: item}, nil
 	}
 
 	item := toTagItem(tag)
@@ -42,7 +33,7 @@ func (t *TagsController) get(ctx context.Context, id int64, admin bool) (*v1.Tag
 // Get 处理 GET /api/v1/tags/:id。
 //
 //	@Summary		Get tag detail
-//	@Description	Returns a tag by ID. Without token: active tag only, TagItem omits status. With admin Bearer: full TagDetailResponse including status. 中文：无 token 仅 active 且 TagItem 不含 status；管理员 Bearer 返回完整 TagDetailResponse（含 status）。
+//	@Description	Returns a non-deleted tag by ID. Soft-deleted tags return 404. 中文：按 ID 返回未软删标签；已软删返回 404。
 //	@Tags			tags
 //	@Produce		json
 //	@Param			id	path		int	true	"Tag ID"
@@ -55,8 +46,7 @@ func (t *TagsController) Get(ctx *gin.Context) {
 	if !ok {
 		return
 	}
-	actor := actorFromContext(ctx)
-	resp, err := t.get(ctx.Request.Context(), id, actor.isAdmin())
+	resp, err := t.get(ctx.Request.Context(), id)
 	if err != nil {
 		common.Fail(ctx, err)
 		return
@@ -93,18 +83,14 @@ func (t *TagsController) update(ctx context.Context, id int64, req *v1.UpdateTag
 			updates["color"] = *req.Color
 		}
 	}
-	if req.Status != nil {
-		updates["status"] = *req.Status
-	}
-
 	if len(updates) == 0 {
-		return t.get(ctx, id, true)
+		return t.get(ctx, id)
 	}
 
 	if err := t.svc.DB.WithContext(ctx).Model(&tag).Updates(updates).Error; err != nil {
 		return nil, mapTagUpdateUniqueViolation(err)
 	}
-	return t.get(ctx, id, true)
+	return t.get(ctx, id)
 }
 
 // Update handles PATCH /api/v1/tags/:id (admin).

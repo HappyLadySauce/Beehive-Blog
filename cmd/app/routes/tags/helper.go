@@ -45,21 +45,6 @@ func toTagItem(t model.Tag) v1.TagItem {
 		Slug:        t.Slug,
 		Description: t.Description,
 		Color:       t.Color,
-		Status:      t.Status,
-		CreatedAt:   t.CreatedAt,
-		UpdatedAt:   t.UpdatedAt,
-	}
-}
-
-// toPublicTagItem converts a model.Tag to its public API response item (status omitted).
-// toPublicTagItem 将 model.Tag 转换为公开 API 响应项（不含 status）。
-func toPublicTagItem(t model.Tag) v1.TagItem {
-	return v1.TagItem{
-		ID:          t.ID,
-		Name:        t.Name,
-		Slug:        t.Slug,
-		Description: t.Description,
-		Color:       t.Color,
 		CreatedAt:   t.CreatedAt,
 		UpdatedAt:   t.UpdatedAt,
 	}

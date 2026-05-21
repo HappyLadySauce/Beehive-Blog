@@ -10,7 +10,6 @@ import { createTag, deleteTag, listTags, updateTag } from "@/lib/api/tags";
 import type { ListTagsResponse, TagItem } from "@/lib/api/types";
 import styles from "./Studio.module.css";
 import { StudioPagePagination } from "./StudioPagePagination";
-import { StudioSelect } from "./StudioSelect";
 import { StudioTopbar } from "./StudioTopbar";
 
 const pageSize = 20;
@@ -24,27 +23,24 @@ type TagFormState = {
   slug: string;
   description: string;
   color: string;
-  status: string;
 };
 
 type TagListFilters = {
   page: number;
-  status: string;
   search: string;
 };
 
 let tagsListInflight: { key: string; promise: Promise<ListTagsResponse> } | null = null;
 
 function tagsListKey(filters: TagListFilters) {
-  return `${filters.page}\x1e${filters.status}\x1e${filters.search}`;
+  return `${filters.page}\x1e${filters.search}`;
 }
 
 function requestTagsList(filters: TagListFilters) {
   return listTags({
     page: filters.page,
     page_size: pageSize,
-    search: filters.search || undefined,
-    status: filters.status || undefined
+    search: filters.search || undefined
   });
 }
 
@@ -68,20 +64,11 @@ export function resetTagsPageModuleStateForTests() {
   tagsListInflight = null;
 }
 
-const statusOptions = [
-  { value: "", label: "状态：全部" },
-  { value: "active", label: "启用" },
-  { value: "archived", label: "归档" }
-] as const;
-
-const statusFormOptions = statusOptions.filter((option) => option.value !== "");
-
 const emptyForm: TagFormState = {
   color: "",
   description: "",
   name: "",
-  slug: "",
-  status: "active"
+  slug: ""
 };
 
 export function StudioTagsPage() {
@@ -89,7 +76,6 @@ export function StudioTagsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<Message>(null);
@@ -107,10 +93,9 @@ export function StudioTagsPage() {
   const filters = useMemo(
     () => ({
       page,
-      search: debouncedSearch,
-      status: statusFilter
+      search: debouncedSearch
     }),
-    [debouncedSearch, page, statusFilter]
+    [debouncedSearch, page]
   );
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil((data?.total ?? 0) / pageSize)), [data?.total]);
@@ -160,8 +145,7 @@ export function StudioTagsPage() {
       color: tag.color ?? "",
       description: tag.description ?? "",
       name: tag.name,
-      slug: tag.slug,
-      status: tag.status ?? "active"
+      slug: tag.slug
     });
     setMessage(null);
     setFormOpen(true);
@@ -206,8 +190,7 @@ export function StudioTagsPage() {
           color: color || null,
           description: form.description || null,
           name,
-          slug,
-          status: form.status
+          slug
         });
         setMessage({ tone: "success", text: "标签已更新。" });
       }
@@ -266,16 +249,6 @@ export function StudioTagsPage() {
               }}
             />
           </div>
-          <StudioSelect
-            ariaLabel="筛选标签状态"
-            className={styles.filterSelect}
-            options={statusOptions}
-            value={statusFilter}
-            onChange={(value) => {
-              setStatusFilter(value);
-              resetPage();
-            }}
-          />
         </div>
 
         {loading ? (
@@ -291,7 +264,6 @@ export function StudioTagsPage() {
                   <tr>
                     <th>标签</th>
                     <th>Slug</th>
-                    <th>状态</th>
                     <th>内容数</th>
                     <th>更新时间</th>
                     <th>操作</th>
@@ -307,7 +279,6 @@ export function StudioTagsPage() {
                           {tag.description ? <p>{tag.description}</p> : null}
                         </td>
                         <td><span className={styles.codePill}>{tag.slug}</span></td>
-                        <td><span className={styles.statusPill}>{tagStatusLabel(tag.status ?? "active")}</span></td>
                         <td>{tag.content_count ?? 0}</td>
                         <td>{formatDate(tag.updated_at)}</td>
                         <td>
@@ -324,7 +295,7 @@ export function StudioTagsPage() {
                     ))
                   ) : (
                     <tr>
-                      <td className={styles.studioListEmptyCell} colSpan={6}>
+                      <td className={styles.studioListEmptyCell} colSpan={5}>
                         <div className={styles.emptyState}>
                           <Tags aria-hidden size={28} />
                           <strong>暂无标签</strong>
@@ -382,10 +353,6 @@ function renderTagFormModal(
             <span>颜色</span>
             <input placeholder="#2f8f79" value={form.color} onChange={(event) => onField("color", event.target.value)} />
           </label>
-          <label className={styles.field}>
-            <span>状态</span>
-            <StudioSelect ariaLabel="标签状态" disabled={mode === "create"} options={statusFormOptions} value={form.status} onChange={(value) => onField("status", value)} />
-          </label>
           <label className={styles.fieldFull}>
             <span>描述</span>
             <textarea className={styles.textarea} rows={4} value={form.description} onChange={(event) => onField("description", event.target.value)} />
@@ -427,10 +394,6 @@ function renderDeleteModal(target: TagItem, saving: boolean, onClose: () => void
     </div>,
     document.body
   );
-}
-
-function tagStatusLabel(value: string) {
-  return statusFormOptions.find((option) => option.value === value)?.label ?? value;
 }
 
 function formatDate(value: string) {

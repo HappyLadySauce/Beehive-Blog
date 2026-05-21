@@ -27,7 +27,7 @@ func (c *ContentsController) getContentTags(ctx context.Context, contentID int64
 		return nil, common.NewNotFound("content not found", fmt.Errorf("content %d not found", contentID))
 	}
 
-	return loadContentTags(ctx, c, contentID, !admin)
+	return loadContentTags(ctx, c, contentID)
 }
 
 // GetContentTags handles GET /api/v1/contents/:id/tags.

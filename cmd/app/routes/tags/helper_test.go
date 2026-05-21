@@ -88,7 +88,7 @@ func assertCrudError(t *testing.T, rec *httptest.ResponseRecorder, env crudEnvel
 }
 
 func tagColumns() []string {
-	return []string{"id", "name", "slug", "description", "color", "status", "created_at", "updated_at", "deleted_at"}
+	return []string{"id", "name", "slug", "description", "color", "created_at", "updated_at", "deleted_at"}
 }
 
 func testTagsJWT(t *testing.T) *jwt.Issuer {

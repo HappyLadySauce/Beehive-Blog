@@ -39,7 +39,7 @@ func (t *TagsController) del(ctx context.Context, id int64) error {
 // Delete 处理 DELETE /api/v1/tags/:id（管理员）。
 //
 //	@Summary		Delete tag
-//	@Description	Soft-deletes a tag when not referenced by content. Admin only. 中文：在无内容引用时软删除标签（仅管理员）。
+//	@Description	Soft-deletes a tag when not referenced by content; removed tags no longer appear in listings. Admin only. 中文：无内容引用时软删除标签，删除后列表不可见（仅管理员）。
 //	@Tags			tags
 //	@Security		BearerAuth
 //	@Produce		json

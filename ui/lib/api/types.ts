@@ -408,7 +408,6 @@ export type TagItem = {
   slug: string;
   description?: string | null;
   color?: string | null;
-  status?: "active" | "archived" | string;
   content_count?: number;
   created_at: string;
   updated_at: string;
@@ -417,7 +416,6 @@ export type TagItem = {
 export type ListTagsRequest = {
   page?: number;
   page_size?: number;
-  status?: string;
   search?: string;
 };
 
@@ -444,7 +442,6 @@ export type UpdateTagRequest = {
   slug?: string;
   description?: string | null;
   color?: string | null;
-  status?: string;
 };
 
 export type TagDetailResponse = TagItem;

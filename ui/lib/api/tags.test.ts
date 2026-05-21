@@ -11,10 +11,10 @@ describe("tags API client", () => {
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ items: [], total: 0, page: 1, page_size: 20 }));
     vi.stubGlobal("fetch", fetchMock);
 
-    await listTags({ page: 1, page_size: 20, search: "ai", status: "active" });
+    await listTags({ page: 1, page_size: 20, search: "ai" });
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/bff/tags?page=1&page_size=20&status=active&search=ai",
+      "/api/bff/tags?page=1&page_size=20&search=ai",
       expect.objectContaining({ method: "GET" })
     );
   });

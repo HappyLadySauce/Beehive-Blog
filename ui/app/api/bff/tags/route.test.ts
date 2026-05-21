@@ -29,13 +29,13 @@ describe("BFF tags route", () => {
     const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ items: [], total: 0, page: 1, page_size: 20 }));
     vi.stubGlobal("fetch", fetchMock);
 
-    const response = await GET(new Request("http://localhost/api/bff/tags?status=active&search=ai"));
+    const response = await GET(new Request("http://localhost/api/bff/tags?search=ai"));
     const body = await response.json();
 
     expect(response.status).toBe(200);
     expect(body.data.items).toEqual([]);
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://localhost:8080/api/v1/tags?status=active&search=ai",
+      "http://localhost:8080/api/v1/tags?search=ai",
       expect.objectContaining({
         method: "GET",
         headers: expect.objectContaining({ authorization: "Bearer access-token" })

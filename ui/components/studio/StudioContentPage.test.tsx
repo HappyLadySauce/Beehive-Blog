@@ -31,7 +31,7 @@ const contentList = {
       reading_time_minutes: 1,
       slug: "hello-world",
       status: "draft",
-      tags: [{ id: 3, name: "AI", slug: "ai", status: "active", created_at: "2026-05-15T00:00:00Z", updated_at: "2026-05-15T00:00:00Z" }],
+      tags: [{ id: 3, name: "AI", slug: "ai", created_at: "2026-05-15T00:00:00Z", updated_at: "2026-05-15T00:00:00Z" }],
       title: "Hello World",
       type: "article",
       updated_at: "2026-05-15T00:00:00Z",
@@ -47,7 +47,7 @@ const contentList = {
 
 const tags = {
   items: [
-    { id: 3, name: "AI", slug: "ai", status: "active", created_at: "2026-05-15T00:00:00Z", updated_at: "2026-05-15T00:00:00Z" }
+    { id: 3, name: "AI", slug: "ai", created_at: "2026-05-15T00:00:00Z", updated_at: "2026-05-15T00:00:00Z" }
   ],
   page: 1,
   page_size: 100,
@@ -80,7 +80,7 @@ describe("StudioContentPage", () => {
     await waitFor(() => expect(screen.getByText("Hello World")).toBeInTheDocument());
     expect(screen.getByRole("region", { name: "内容工作台" })).toBeInTheDocument();
     expect(screen.getByText("AI")).toBeInTheDocument();
-    expect(listTags).toHaveBeenCalledWith({ page: 1, page_size: 100, status: "active" });
+    expect(listTags).toHaveBeenCalledWith({ page: 1, page_size: 100 });
     expect(listContents).toHaveBeenCalledWith(expect.objectContaining({ page: 1, page_size: 20 }));
   });
 

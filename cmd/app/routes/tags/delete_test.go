@@ -31,7 +31,7 @@ func TestDeleteTagReferencedConflict(t *testing.T) {
 	mock.ExpectQuery(`SELECT \* FROM "content"."tags" WHERE`).
 		WithArgs(int64(1), 1).
 		WillReturnRows(sqlmock.NewRows(tagColumns()).
-			AddRow(1, "Go", "go", nil, nil, "active", now, now, nil))
+			AddRow(1, "Go", "go", nil, nil, now, now, nil))
 	mock.ExpectQuery(`SELECT count\(\*\) FROM "content"."content_tags" WHERE`).
 		WithArgs(int64(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(3))
@@ -52,7 +52,7 @@ func TestDeleteTagSuccess(t *testing.T) {
 	mock.ExpectQuery(`SELECT \* FROM "content"."tags" WHERE`).
 		WithArgs(int64(1), 1).
 		WillReturnRows(sqlmock.NewRows(tagColumns()).
-			AddRow(1, "Go", "go", nil, nil, "active", now, now, nil))
+			AddRow(1, "Go", "go", nil, nil, now, now, nil))
 	mock.ExpectQuery(`SELECT count\(\*\) FROM "content"."content_tags" WHERE`).
 		WithArgs(int64(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))

@@ -14,7 +14,6 @@ type Tag struct {
 	Slug        string         `gorm:"column:slug;size:64;not null"`
 	Description *string        `gorm:"column:description"`
 	Color       *string        `gorm:"column:color;size:7"`
-	Status      string         `gorm:"column:status;size:16;not null;default:active"`
 	CreatedAt   time.Time      `gorm:"column:created_at;not null"`
 	UpdatedAt   time.Time      `gorm:"column:updated_at;not null"`
 	DeletedAt   gorm.DeletedAt `gorm:"column:deleted_at;index"`

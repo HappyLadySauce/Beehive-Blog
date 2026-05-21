@@ -14,21 +14,13 @@ import (
 
 // list queries tags with pagination and optional filters.
 // list 查询标签列表（分页+可选筛选）。
-func (t *TagsController) list(ctx context.Context, req *v1.ListTagsRequest, admin bool) (interface{}, error) {
+func (t *TagsController) list(ctx context.Context, req *v1.ListTagsRequest) (*v1.ListTagsResponse, error) {
 	page, pageSize := pagination.NormalizeOffset(req.Page, req.PageSize)
 
 	query := t.svc.DB.WithContext(ctx).Model(&model.Tag{})
 	if req.Search != "" {
 		pattern := "%" + req.Search + "%"
 		query = query.Where("name ILIKE ? OR slug ILIKE ?", pattern, pattern)
-	}
-
-	// Non-admin always sees active tags only; admin can filter by status.
-	// 非管理员仅看到 active 标签；管理员可按状态筛选。
-	if !admin {
-		query = query.Where("status = ?", "active")
-	} else if req.Status != "" {
-		query = query.Where("status = ?", req.Status)
 	}
 
 	var total int64
@@ -51,21 +43,6 @@ func (t *TagsController) list(ctx context.Context, req *v1.ListTagsRequest, admi
 		return nil, common.NewInternal("failed to load tag content counts", err)
 	}
 
-	if !admin {
-		items := make([]v1.TagItem, len(tags))
-		for i, tag := range tags {
-			item := toPublicTagItem(tag)
-			item.ContentCount = countMap[tag.ID]
-			items[i] = item
-		}
-		return &v1.ListTagsResponse{
-			Items:    items,
-			Total:    total,
-			Page:     page,
-			PageSize: pageSize,
-		}, nil
-	}
-
 	items := make([]v1.TagItem, len(tags))
 	for i, tag := range tags {
 		item := toTagItem(tag)
@@ -85,14 +62,13 @@ func (t *TagsController) list(ctx context.Context, req *v1.ListTagsRequest, admi
 // List 处理 GET /api/v1/tags。
 //
 //	@Summary		List tags
-//	@Description	Paginated list of tags. Without token: active tags only and each TagItem omits status. With admin Bearer: all tags including archived, with status field. 中文：无 token 仅 active 标签且 TagItem 不含 status；管理员 Bearer 含已归档且带 status。
+//	@Description	Paginated list of non-deleted tags. Optional admin Bearer for management UIs. 中文：分页返回未软删标签；可选管理员 Bearer 用于管理端。
 //	@Tags			tags
 //	@Produce		json
 //	@Param			page		query		int		false	"Page number (default 1)"				default(1)
 //	@Param			page_size	query		int		false	"Items per page (default 20, max 100)"	default(20)
-//	@Param			status		query		string	false	"Filter by status (admin only)"			Enums(active, archived)
 //	@Param			search		query		string	false	"Search name or slug"
-//	@Success		200			{object}	common.BaseResponse{data=v1.ListTagsResponse}	"Public items omit status in TagItem"
+//	@Success		200			{object}	common.BaseResponse{data=v1.ListTagsResponse}
 //	@Failure		400			{object}	common.BaseResponse
 //	@Router			/api/v1/tags [get]
 func (t *TagsController) List(ctx *gin.Context) {
@@ -101,8 +77,7 @@ func (t *TagsController) List(ctx *gin.Context) {
 		common.Fail(ctx, common.NewBadRequest("invalid query parameters", err))
 		return
 	}
-	actor := actorFromContext(ctx)
-	resp, err := t.list(ctx.Request.Context(), &req, actor.isAdmin())
+	resp, err := t.list(ctx.Request.Context(), &req)
 	if err != nil {
 		common.Fail(ctx, err)
 		return
