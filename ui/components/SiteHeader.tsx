@@ -49,6 +49,8 @@ export function SiteHeader() {
       </Link>
       <nav className="main-nav" aria-label="主导航">
         <Link href="/posts">文章</Link>
+        <Link href="/notes">笔记</Link>
+        <Link href="/projects">项目</Link>
         {loading ? null : isAuthenticated ? (
           <div className="user-menu" ref={menuRef}>
             <button

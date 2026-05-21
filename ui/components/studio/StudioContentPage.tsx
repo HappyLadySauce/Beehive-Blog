@@ -108,10 +108,7 @@ const typeOptions = [
   { value: "", label: "类型：全部" },
   { value: "article", label: "文章" },
   { value: "note", label: "笔记" },
-  { value: "project", label: "项目" },
-  { value: "experience", label: "经历" },
-  { value: "reflection", label: "复盘" },
-  { value: "portfolio", label: "作品集" }
+  { value: "project", label: "项目" }
 ] as const;
 
 const contentTypeOptions = typeOptions.filter((option) => option.value !== "");

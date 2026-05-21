@@ -55,6 +55,45 @@ describe("public content API", () => {
     ]);
   });
 
+  it("lists public notes and projects with their type-specific routes", async () => {
+    vi.stubEnv("BEEHIVE_API_BASE_URL", "http://go.test");
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        jsonResponse({
+          items: [
+            {
+              id: 11,
+              type: "note",
+              title: "公开笔记",
+              slug: "public-note",
+              excerpt: "笔记摘要",
+              published_at: "2026-05-21T00:00:00.000Z",
+              reading_time_minutes: 1,
+              tags: [],
+              created_at: "2026-05-21T00:00:00.000Z",
+              updated_at: "2026-05-21T00:00:00.000Z"
+            }
+          ],
+          total: 1,
+          page: 1,
+          page_size: 20
+        })
+      )
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { listPublicContents } = await import("./content");
+    const notes = await listPublicContents("note");
+    const projects = await listPublicContents("project");
+
+    expect(fetchMock.mock.calls.map((call) => call[0])).toEqual([
+      "http://go.test/api/v1/contents?page=1&page_size=20&type=note",
+      "http://go.test/api/v1/contents?page=1&page_size=20&type=project"
+    ]);
+    expect(notes[0]).toMatchObject({ type: "note", typeLabel: "笔记", href: "/notes/public-note" });
+    expect(projects[0]).toMatchObject({ type: "project", typeLabel: "项目", href: "/projects/public-note" });
+  });
+
   it("loads a public post detail by slug and then by id", async () => {
     vi.stubEnv("BEEHIVE_API_BASE_URL", "http://go.test");
     const fetchMock = vi
@@ -97,13 +136,48 @@ describe("public content API", () => {
       );
     vi.stubGlobal("fetch", fetchMock);
 
-    const { getPublicPost } = await import("./content");
+    const { getPublicContent, getPublicPost } = await import("./content");
     const post = await getPublicPost("markdown-post");
+    fetchMock.mockClear();
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse({
+          items: [
+            {
+              id: 10,
+              type: "project",
+              title: "项目",
+              slug: "project-post",
+              excerpt: "项目摘要",
+              published_at: "2026-05-21T00:00:00.000Z",
+              reading_time_minutes: 2,
+              tags: [],
+              created_at: "2026-05-21T00:00:00.000Z",
+              updated_at: "2026-05-21T00:00:00.000Z"
+            }
+          ],
+          total: 1,
+          page: 1,
+          page_size: 1
+        })
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          id: 10,
+          type: "project",
+          title: "项目",
+          slug: "project-post",
+          excerpt: "项目摘要",
+          body: "## 项目目标",
+          published_at: "2026-05-21T00:00:00.000Z",
+          reading_time_minutes: 2,
+          tags: [],
+          created_at: "2026-05-21T00:00:00.000Z",
+          updated_at: "2026-05-21T00:00:00.000Z"
+        })
+      );
+    const project = await getPublicContent("project", "project-post");
 
-    expect(fetchMock.mock.calls.map((call) => call[0])).toEqual([
-      "http://go.test/api/v1/contents?page=1&page_size=1&type=article&slug=markdown-post",
-      "http://go.test/api/v1/contents/9"
-    ]);
     expect(post).toMatchObject({
       slug: "markdown-post",
       title: "Markdown 文章",
@@ -111,6 +185,7 @@ describe("public content API", () => {
       body: "## 二级标题\n\n正文内容",
       tags: ["Markdown"]
     });
+    expect(project).toMatchObject({ type: "project", href: "/projects/project-post", body: "## 项目目标" });
   });
 
   it("uses seeded fallback posts only outside production when the backend fails", async () => {

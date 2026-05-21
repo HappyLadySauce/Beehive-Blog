@@ -126,7 +126,7 @@ func (c *ContentsController) list(ctx context.Context, req *v1.ListContentsReque
 //	@Produce		json
 //	@Param			page		query		int		false	"Page number (default 1)"						default(1)
 //	@Param			page_size	query		int		false	"Items per page (default 20, max 100)"			default(20)
-//	@Param			type		query		string	false	"Filter by content type"						Enums(article, note, project, experience, reflection, portfolio)
+//	@Param			type		query		string	false	"Filter by content type"						Enums(article, note, project)
 //	@Param			status		query		string	false	"Filter by status (admin only)"				Enums(draft, review, published, archived)
 //	@Param			visibility	query		string	false	"Filter by visibility (admin only)"			Enums(public, member, private)
 //	@Param			tag_id		query		int		false	"Filter by tag ID"

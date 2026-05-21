@@ -97,6 +97,27 @@ func TestCreateContentRejectsPublishedStatus(t *testing.T) {
 	assertCrudError(t, rec, env, http.StatusBadRequest, "invalid request body")
 }
 
+func TestCreateContentRejectsRemovedContentTypes(t *testing.T) {
+	for _, contentType := range []string{"experience", "reflection", "portfolio"} {
+		t.Run(contentType, func(t *testing.T) {
+			c, _ := newCrudTestController(t)
+			reqBody := v1.CreateContentRequest{
+				Type:  contentType,
+				Title: "Removed Type",
+				Slug:  "removed-type",
+			}
+			body, _ := json.Marshal(reqBody)
+
+			ctx, rec := testCrudContext(http.MethodPost, "/api/v1/contents", bytes.NewReader(body))
+			ctx.Set(jwt.ClaimsKey, &jwt.Claims{UID: 10, Role: "admin"})
+
+			c.Create(ctx)
+			env := decodeCrudEnvelope(t, rec)
+			assertCrudError(t, rec, env, http.StatusBadRequest, "invalid request body")
+		})
+	}
+}
+
 func TestCreateContentUnauthorized(t *testing.T) {
 	c, _ := newCrudTestController(t)
 	reqBody := v1.CreateContentRequest{

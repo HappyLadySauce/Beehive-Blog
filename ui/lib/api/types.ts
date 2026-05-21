@@ -47,6 +47,8 @@ export type LoginRequest =
       state: string;
     };
 
+export type PublicContentKind = "article" | "note" | "project";
+
 export type PublicPost = {
   slug: string;
   title: string;
@@ -55,6 +57,12 @@ export type PublicPost = {
   publishedAt: string;
   tags: string[];
   readingMinutes: number;
+};
+
+export type PublicContent = PublicPost & {
+  type: PublicContentKind;
+  typeLabel: string;
+  href: string;
 };
 
 export type EmailSettingsPublic = {
@@ -396,7 +404,7 @@ export type AttachmentCategoryPatchRequest = {
 export type DeleteAttachmentResponse = Record<string, never>;
 export type DeleteAttachmentCategoryResponse = Record<string, never>;
 
-export type ContentType = "article" | "note" | "project" | "experience" | "reflection" | "portfolio" | string;
+export type ContentType = "article" | "note" | "project" | string;
 export type ContentStatus = "draft" | "review" | "published" | "archived" | string;
 export type ContentVisibility = "public" | "member" | "private" | string;
 export type ContentAIAccess = "allowed" | "denied" | string;

@@ -1,4 +1,4 @@
-import type { BaseResponse, PublicPost } from "./types";
+import type { BaseResponse, PublicContent, PublicContentKind, PublicPost } from "./types";
 
 type PublicContentListResponse = {
   items: PublicContentItem[];
@@ -70,30 +70,50 @@ const fallbackPosts: PublicPost[] = [
   }
 ];
 
+export const publicContentConfig: Record<PublicContentKind, { label: string; listPath: string; detailPath: string }> = {
+  article: { label: "文章", listPath: "/posts", detailPath: "/posts" },
+  note: { label: "笔记", listPath: "/notes", detailPath: "/notes" },
+  project: { label: "项目", listPath: "/projects", detailPath: "/projects" }
+};
+
 const publicContentTags = {
-  list: "public-posts",
-  detail: (slug: string) => `public-post:${slug}`
+  list: (type: PublicContentKind) => `public-${type}s`,
+  detail: (type: PublicContentKind, slug: string) => `public-${type}:${slug}`
 };
 
 export async function listPublicPosts(options: { pageSize?: number } = {}): Promise<PublicPost[]> {
-  try {
-    const result = await fetchPublicContentList({ pageSize: options.pageSize ?? 20 });
-    return result.items.map((item) => publicItemToPost(item));
-  } catch {
-    return fallbackPublicPosts();
-  }
+  const contents = await listPublicContents("article", options);
+  return contents.map(publicContentToPost);
 }
 
 export async function getPublicPost(slug: string): Promise<PublicPost | null> {
+  const content = await getPublicContent("article", slug);
+  if (!content) return null;
+  return publicContentToPost(content);
+}
+
+export async function listPublicContents(
+  type: PublicContentKind,
+  options: { pageSize?: number } = {}
+): Promise<PublicContent[]> {
   try {
-    const result = await fetchPublicContentList({ slug, pageSize: 1 });
+    const result = await fetchPublicContentList({ type, pageSize: options.pageSize ?? 20 });
+    return result.items.map((item) => publicItemToContent(type, item));
+  } catch {
+    return fallbackPublicContents(type);
+  }
+}
+
+export async function getPublicContent(type: PublicContentKind, slug: string): Promise<PublicContent | null> {
+  try {
+    const result = await fetchPublicContentList({ type, slug, pageSize: 1 });
     const item = result.items[0];
     if (!item) return null;
 
     const detail = await fetchPublicContent<PublicContentDetailResponse>(`/contents/${item.id}`, {
-      next: { revalidate: 60, tags: [publicContentTags.list, publicContentTags.detail(slug)] }
+      next: { revalidate: 60, tags: [publicContentTags.list(type), publicContentTags.detail(type, slug)] }
     });
-    return publicItemToPost(detail);
+    return publicItemToContent(type, detail);
   } catch (error) {
     if (error instanceof PublicContentApiError && error.status === 404) {
       return null;
@@ -101,20 +121,20 @@ export async function getPublicPost(slug: string): Promise<PublicPost | null> {
     if (isProductionRuntime()) {
       return null;
     }
-    return fallbackPosts.find((post) => post.slug === slug) ?? null;
+    return fallbackPublicContents(type).then((items) => items.find((item) => item.slug === slug) ?? null);
   }
 }
 
-async function fetchPublicContentList(params: { slug?: string; pageSize: number }) {
+async function fetchPublicContentList(params: { type: PublicContentKind; slug?: string; pageSize: number }) {
   const searchParams = new URLSearchParams({
     page: "1",
     page_size: String(params.pageSize),
-    type: "article"
+    type: params.type
   });
   if (params.slug) searchParams.set("slug", params.slug);
 
   return fetchPublicContent<PublicContentListResponse>(`/contents?${searchParams.toString()}`, {
-    next: { revalidate: 60, tags: [publicContentTags.list] }
+    next: { revalidate: 60, tags: [publicContentTags.list(params.type)] }
   });
 }
 
@@ -152,9 +172,12 @@ function goApiUrl(path: string) {
   return `${baseUrl}/api/v1${path}`;
 }
 
-function publicItemToPost(item: PublicContentDetailResponse): PublicPost {
+function publicItemToContent(type: PublicContentKind, item: PublicContentDetailResponse): PublicContent {
   const body = item.body?.trim() ?? "";
   return {
+    type,
+    typeLabel: publicContentConfig[type].label,
+    href: `${publicContentConfig[type].detailPath}/${item.slug}`,
     slug: item.slug,
     title: item.title,
     description: item.excerpt?.trim() || excerptFromBody(body) || item.title,
@@ -180,19 +203,43 @@ function readingMinutesFromBody(body: string) {
   return Math.max(1, Math.ceil(wordCount / 200));
 }
 
-async function fallbackPublicPosts() {
+async function fallbackPublicContents(type: PublicContentKind): Promise<PublicContent[]> {
   if (isProductionRuntime()) return [];
+  if (type !== "article") return [];
   const legacyEndpoint = process.env.PUBLIC_CONTENT_ENDPOINT;
-  if (!legacyEndpoint) return fallbackPosts;
+  if (!legacyEndpoint) return fallbackPosts.map((post) => fallbackPostToContent(type, post));
 
   try {
-    const response = await fetch(legacyEndpoint, { next: { revalidate: 60, tags: [publicContentTags.list] } });
-    if (!response.ok) return fallbackPosts;
+    const response = await fetch(legacyEndpoint, { next: { revalidate: 60, tags: [publicContentTags.list(type)] } });
+    if (!response.ok) return fallbackPosts.map((post) => fallbackPostToContent(type, post));
     const posts = (await response.json()) as PublicPost[];
-    return Array.isArray(posts) ? posts : fallbackPosts;
+    return Array.isArray(posts)
+      ? posts.map((post) => fallbackPostToContent(type, post))
+      : fallbackPosts.map((post) => fallbackPostToContent(type, post));
   } catch {
-    return fallbackPosts;
+    return fallbackPosts.map((post) => fallbackPostToContent(type, post));
   }
+}
+
+function fallbackPostToContent(type: PublicContentKind, post: PublicPost): PublicContent {
+  return {
+    ...post,
+    type,
+    typeLabel: publicContentConfig[type].label,
+    href: `${publicContentConfig[type].detailPath}/${post.slug}`
+  };
+}
+
+function publicContentToPost(content: PublicContent): PublicPost {
+  return {
+    slug: content.slug,
+    title: content.title,
+    description: content.description,
+    body: content.body,
+    publishedAt: content.publishedAt,
+    tags: content.tags,
+    readingMinutes: content.readingMinutes
+  };
 }
 
 function isProductionRuntime() {

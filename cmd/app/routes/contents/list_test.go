@@ -37,6 +37,44 @@ func TestListContentsSlugFilter(t *testing.T) {
 	}
 }
 
+func TestListContentsAllowsPublicNoteAndProjectTypes(t *testing.T) {
+	for _, contentType := range []string{"note", "project"} {
+		t.Run(contentType, func(t *testing.T) {
+			c, mock := newCrudTestController(t)
+
+			mock.ExpectQuery(`SELECT count\(\*\) FROM "content"."contents" WHERE`).
+				WithArgs("published", "public", contentType).
+				WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+			mock.ExpectQuery(`SELECT \* FROM "content"."contents" WHERE`).
+				WithArgs("published", "public", contentType, 10).
+				WillReturnRows(sqlmock.NewRows(contentColumns()))
+
+			ctx, rec := testCrudContext(http.MethodGet, "/api/v1/contents?type="+contentType, nil)
+			c.List(ctx)
+			env := decodeCrudEnvelope(t, rec)
+			if rec.Code != http.StatusOK || env.Code != 200 {
+				t.Fatalf("HTTP=%d code=%d", rec.Code, env.Code)
+			}
+			if err := mock.ExpectationsWereMet(); err != nil {
+				t.Fatalf("unmet expectations: %v", err)
+			}
+		})
+	}
+}
+
+func TestListContentsRejectsRemovedContentTypes(t *testing.T) {
+	for _, contentType := range []string{"experience", "reflection", "portfolio"} {
+		t.Run(contentType, func(t *testing.T) {
+			c, _ := newCrudTestController(t)
+
+			ctx, rec := testCrudContext(http.MethodGet, "/api/v1/contents?type="+contentType, nil)
+			c.List(ctx)
+			env := decodeCrudEnvelope(t, rec)
+			assertCrudError(t, rec, env, http.StatusBadRequest, "invalid query parameters")
+		})
+	}
+}
+
 func TestListContentsBatchLoadAuthorFailure(t *testing.T) {
 	c, mock := newCrudTestController(t)
 	now := time.Now()

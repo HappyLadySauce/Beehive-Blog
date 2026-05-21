@@ -10,7 +10,7 @@ import (
 type ListContentsRequest struct {
 	Page       int    `form:"page" binding:"omitempty,min=1"`
 	PageSize   int    `form:"page_size" binding:"omitempty,min=1,max=100"`
-	Type       string `form:"type" binding:"omitempty,oneof=article note project experience reflection portfolio"`
+	Type       string `form:"type" binding:"omitempty,oneof=article note project"`
 	Status     string `form:"status" binding:"omitempty,oneof=draft review published archived"`
 	Visibility string `form:"visibility" binding:"omitempty,oneof=public member private"`
 	TagID      int64  `form:"tag_id" binding:"omitempty,min=1"`
@@ -22,7 +22,7 @@ type ListContentsRequest struct {
 // CreateContentRequest is the admin-only payload for creating content.
 // CreateContentRequest 为管理员创建内容的请求体。
 type CreateContentRequest struct {
-	Type               string          `json:"type" binding:"required,oneof=article note project experience reflection portfolio"`
+	Type               string          `json:"type" binding:"required,oneof=article note project"`
 	Title              string          `json:"title" binding:"required,max=512"`
 	Slug               string          `json:"slug" binding:"required,max=512"`
 	Excerpt            *string         `json:"excerpt,omitempty"`
@@ -40,7 +40,7 @@ type CreateContentRequest struct {
 // Pointer fields: nil = leave unchanged; pointer to value = set.
 // UpdateContentRequest 为管理员更新内容的 PATCH 请求体。指针=nil 不修改，指针=值则设置。
 type UpdateContentRequest struct {
-	Type               *string          `json:"type,omitempty" binding:"omitempty,oneof=article note project experience reflection portfolio"`
+	Type               *string          `json:"type,omitempty" binding:"omitempty,oneof=article note project"`
 	Title              *string          `json:"title,omitempty" binding:"omitempty,max=512"`
 	Slug               *string          `json:"slug,omitempty" binding:"omitempty,max=512"`
 	Excerpt            *string          `json:"excerpt,omitempty"`

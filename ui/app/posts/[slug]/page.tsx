@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 
+import { PublicContentDetail } from "@/components/PublicContentDetail";
 import { getPublicPost, listPublicPosts } from "@/lib/api/content";
 
 type PageProps = {
@@ -44,34 +43,5 @@ export default async function PostDetailPage({ params }: PageProps) {
   const post = await getPublicPost(slug);
   if (!post) notFound();
 
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BlogPosting",
-    headline: post.title,
-    description: post.description,
-    datePublished: post.publishedAt,
-    keywords: post.tags.join(", ")
-  };
-
-  return (
-    <main className="page">
-      <article className="article">
-        <p className="eyebrow">Article</p>
-        <h1>{post.title}</h1>
-        <div className="article-meta">
-          <time dateTime={post.publishedAt}>{new Intl.DateTimeFormat("zh-CN").format(new Date(post.publishedAt))}</time>
-          <span>{post.readingMinutes} 分钟阅读</span>
-        </div>
-        <div className="tag-row" aria-label="标签">
-          {post.tags.map((tag) => (
-            <span key={tag}>{tag}</span>
-          ))}
-        </div>
-        <div className="article-body">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.body}</ReactMarkdown>
-        </div>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      </article>
-    </main>
-  );
+  return <PublicContentDetail content={{ ...post, type: "article", typeLabel: "文章", href: `/posts/${post.slug}` }} eyebrow="Article" />;
 }

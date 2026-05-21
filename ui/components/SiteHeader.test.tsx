@@ -38,6 +38,9 @@ describe("SiteHeader", () => {
   it("shows login for anonymous visitors", () => {
     render(<SiteHeader />);
 
+    expect(screen.getByRole("link", { name: "文章" })).toHaveAttribute("href", "/posts");
+    expect(screen.getByRole("link", { name: "笔记" })).toHaveAttribute("href", "/notes");
+    expect(screen.getByRole("link", { name: "项目" })).toHaveAttribute("href", "/projects");
     expect(screen.getByRole("link", { name: "登录" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Studio" })).not.toBeInTheDocument();
   });

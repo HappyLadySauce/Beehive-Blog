@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { History, Loader2, RotateCcw, Save, Trash2 } from "lucide-react";
 
@@ -27,7 +27,8 @@ export function StudioContentVersionsPanel({ contentId, onRestored }: Props) {
   const [restoreTarget, setRestoreTarget] = useState<VersionItem | null>(null);
   const [message, setMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
 
-  async function load() {
+  const load = useCallback(async () => {
+    await Promise.resolve();
     setLoading(true);
     try {
       const result = await listContentVersions(contentId);
@@ -37,11 +38,14 @@ export function StudioContentVersionsPanel({ contentId, onRestored }: Props) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [contentId]);
 
   useEffect(() => {
-    void load();
-  }, [contentId]);
+    const timer = window.setTimeout(() => {
+      void load();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [load]);
 
   async function createSnapshot() {
     const name = snapshotName.trim();
