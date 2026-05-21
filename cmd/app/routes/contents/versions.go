@@ -217,9 +217,27 @@ func (c *ContentsController) CreateVersion(ctx *gin.Context) {
 	common.Success(ctx, resp)
 }
 
-// deleteVersion removes one version snapshot for a content item.
-// deleteVersion 删除某篇内容的一个版本快照。
+// deleteVersion removes one manual version snapshot for a content item.
+// Auto snapshots are system-managed and cannot be deleted.
+// deleteVersion 删除某篇内容的一个手动版本快照；自动快照由系统维护，不可删除。
 func (c *ContentsController) deleteVersion(ctx context.Context, contentID int64, versionNumber int) error {
+	if err := c.svc.DB.WithContext(ctx).First(&model.Content{}, contentID).Error; err != nil {
+		return mapFirstError(err, "content not found", "failed to fetch content")
+	}
+
+	var version model.ContentVersion
+	if err := c.svc.DB.WithContext(ctx).
+		Where("content_id = ? AND version_number = ?", contentID, versionNumber).
+		First(&version).Error; err != nil {
+		return mapFirstError(err, "version not found", "failed to fetch version")
+	}
+	if version.SnapshotType == versionSnapshotAuto {
+		return common.NewConflict(
+			"auto snapshots cannot be deleted",
+			fmt.Errorf("content %d version %d is auto", contentID, versionNumber),
+		)
+	}
+
 	result := c.svc.DB.WithContext(ctx).
 		Where("content_id = ? AND version_number = ?", contentID, versionNumber).
 		Delete(&model.ContentVersion{})
@@ -236,7 +254,7 @@ func (c *ContentsController) deleteVersion(ctx context.Context, contentID int64,
 // DeleteVersion 处理 DELETE /api/v1/contents/:id/versions/:versionNumber（管理员）。
 //
 //	@Summary		Delete content version
-//	@Description	Deletes one version snapshot for a content item. Admin only. 中文：删除某篇内容的一个版本快照（仅管理员）。
+//	@Description	Deletes one manual version snapshot for a content item. Auto snapshots cannot be deleted. Admin only. 中文：删除某篇内容的一个手动版本快照；自动快照不可删除（仅管理员）。
 //	@Tags			contents
 //	@Security		BearerAuth
 //	@Produce		json
@@ -247,6 +265,7 @@ func (c *ContentsController) deleteVersion(ctx context.Context, contentID int64,
 //	@Failure		401				{object}	common.BaseResponse
 //	@Failure		403				{object}	common.BaseResponse
 //	@Failure		404				{object}	common.BaseResponse
+//	@Failure		409				{object}	common.BaseResponse
 //	@Router			/api/v1/contents/{id}/versions/{versionNumber} [delete]
 func (c *ContentsController) DeleteVersion(ctx *gin.Context) {
 	id, ok := parseContentID(ctx)

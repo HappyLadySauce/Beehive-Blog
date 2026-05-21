@@ -26,18 +26,21 @@
 
 ---
 
-## 2. 当前模型与目标模型
+## 2. 当前模型
 
-当前已有模型：
+当前 schema（见 `sql/migrations/attachment/`）：
 
-| 模型 | 当前职责 | 目标职责 |
-| --- | --- | --- |
-| `attachment.attachments` | 附件元数据、存储定位、用途、可见性、上传状态 | 继续作为业务附件索引主表 |
-| `attachment.categories` | 附件分类树 | 保留，归属附件管理，不出现在文件管理页 |
-| `attachment.attachment_categories` | 附件与分类多对多 | 保留 |
-| `attachment.file_nodes` | 文件系统节点 | 由文件管理维护，附件可通过 `file_node_id` 引用 |
+| 模型 | 职责 |
+| --- | --- |
+| `attachment.storage_drivers` | 驱动类型与能力声明 |
+| `attachment.storage_mounts` | 存储实例与 `mount_path` |
+| `attachment.attachments` | 业务附件主表；存储定位为 `storage_mount_id` + `object_key` |
+| `attachment.categories` | 附件分类树（物化路径） |
+| `attachment.attachment_categories` | 附件与分类多对多 |
 
-`purpose` 暂不要求立即从数据库删除。它是旧附件语义和当前校验逻辑的一部分，但前端文件管理不再展示它。后续可由“附件引用类型 + 上传策略”逐步替代。
+`attachment.file_nodes` 与 `attachments.file_node_id` **已移除**（合并进迁移 squash，勿再添加 `015_attachment_drop_file_nodes.sql`）。文件浏览路径由 `object_key` 前缀在应用层解析，见 [文件管理架构](file-management-architecture.md)。
+
+`purpose` 仍为库内字段（`avatar | content | system | other`），驱动校验与归属策略；文件管理 UI 不展示。后续可由“引用类型 + 上传策略”逐步替代。
 
 ---
 
@@ -129,7 +132,7 @@
 ## 7. 验收标准
 
 - 附件分类只出现在附件管理域。
-- 附件详情能看到关联文件节点和存储实例。
+- 附件详情能看到 `storage_mount_id`、`object_key` 及解析后的存储实例。
 - 删除附件前能判断是否被文章、头像或其他业务对象引用。
 - 文件管理页移除附件用途和分类管理后，附件管理仍能完成分类和业务索引维护。
 

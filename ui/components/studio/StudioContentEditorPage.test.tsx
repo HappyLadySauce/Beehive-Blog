@@ -371,6 +371,31 @@ describe("StudioContentEditorPage", () => {
     await waitFor(() => expect(deleteContentVersion).toHaveBeenCalledWith(9, 2));
   });
 
+  it("does not show a delete button for auto snapshots", async () => {
+    listContentVersions.mockResolvedValue({
+      items: [{
+        body: "# Auto",
+        change_summary: null,
+        content_id: 9,
+        created_at: "2026-05-21T00:00:00Z",
+        created_by: 1,
+        excerpt: null,
+        id: 1,
+        name: "自动保存",
+        snapshot_type: "auto",
+        title: "Current title",
+        version_number: 1
+      }]
+    });
+    renderEditor("edit");
+
+    await waitFor(() => expect(screen.getByText("版本历史")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("版本历史"));
+
+    await waitFor(() => expect(screen.getByRole("button", { name: "回滚到此版本" })).toBeInTheDocument());
+    expect(screen.queryByRole("button", { name: "删除版本 1" })).not.toBeInTheDocument();
+  });
+
   it("imports markdown files into the editor body", async () => {
     renderEditor("create");
 

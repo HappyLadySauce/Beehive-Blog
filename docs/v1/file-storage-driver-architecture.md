@@ -47,7 +47,7 @@ OpenList 是支持多种存储的文件列表程序。它的 storage API 围绕 
 本项目做出的裁剪：
 
 - 使用 `JSONB config`，不使用 OpenList 的字符串化 `addition`。
-- 不把 provider 远端目录当作实时真相源；Beehive-Blog 的 `storage_mounts`、`file_nodes`、`attachments` 是数据库真相源。
+- 不把 provider 远端目录当作实时真相源；Beehive-Blog 的 `storage_mounts` 与 `attachments`（`storage_mount_id` + `object_key`）是数据库真相源。
 - 不在本层设计附件分类、引用关系或上传策略。
 
 ---

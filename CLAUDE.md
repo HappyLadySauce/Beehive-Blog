@@ -10,6 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **测试单个包**: `go test ./cmd/app/options/ -run TestInsecureServingValidateJoinsAllMissingFields`
 - **数据库迁移**: `go run ./sql/migrate/ -dsn "postgres://user:pass@host:5432/db?sslmode=disable" -mode versioned`
   - 迁移入口脚本: `./sql/migrate.sh` (Unix) 或 `.\sql\migrate.ps1` (Windows PowerShell)
+  - 运维说明（重编号 / squash 后升级、验收 SQL）: [sql/migrate/README.md](sql/migrate/README.md)
   - `MODE=adaptive` 可按语句执行并跳过"对象已存在"类错误；`MIGRATION_FORCE=1` 覆盖校验和不一致的记录；`MIGRATION_REAPPLY=1` 重跑已应用迁移
 
 ## 关键架构

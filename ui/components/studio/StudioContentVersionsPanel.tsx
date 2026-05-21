@@ -170,15 +170,17 @@ export function StudioContentVersionsPanel({ contentId, onRestored }: Props) {
                     {restoring === version.version_number ? <Loader2 aria-hidden className="spin" size={12} /> : <RotateCcw aria-hidden size={12} />}
                     回滚到此版本
                   </button>
-                  <button
-                    aria-label={`删除版本 ${version.version_number}`}
-                    className="secondary-button icon-button"
-                    disabled={restoring !== null || deleting !== null}
-                    type="button"
-                    onClick={() => setDeleteTarget(version)}
-                  >
-                    {deleting === version.version_number ? <Loader2 aria-hidden className="spin" size={12} /> : <Trash2 aria-hidden size={12} />}
-                  </button>
+                  {version.snapshot_type !== "auto" ? (
+                    <button
+                      aria-label={`删除版本 ${version.version_number}`}
+                      className="secondary-button icon-button"
+                      disabled={restoring !== null || deleting !== null}
+                      type="button"
+                      onClick={() => setDeleteTarget(version)}
+                    >
+                      {deleting === version.version_number ? <Loader2 aria-hidden className="spin" size={12} /> : <Trash2 aria-hidden size={12} />}
+                    </button>
+                  ) : null}
                 </div>
               </div>
               {expanded === version.version_number && (
@@ -268,7 +270,7 @@ function DeleteVersionDialog(props: {
     <div className={styles.overlay} role="presentation">
       <div aria-labelledby="delete-version-title" aria-modal="true" className={styles.modal} role="alertdialog">
         <h3 id="delete-version-title">确认删除版本</h3>
-        <p>确认删除「{versionLabel}」？删除后该版本不能再用于回滚。</p>
+        <p>确认删除手动版本「{versionLabel}」？删除后该版本不能再用于回滚。（自动保存版本不可删除。）</p>
         <div className={styles.modalActions}>
           <button className="secondary-button" disabled={props.deleting} type="button" onClick={props.onCancel}>
             取消

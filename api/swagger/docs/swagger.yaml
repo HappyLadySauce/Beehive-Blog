@@ -586,9 +586,6 @@ definitions:
         - article
         - note
         - project
-        - experience
-        - reflection
-        - portfolio
         type: string
       visibility:
         enum:
@@ -1220,9 +1217,6 @@ definitions:
         - article
         - note
         - project
-        - experience
-        - reflection
-        - portfolio
         type: string
       visibility:
         enum:
@@ -2620,9 +2614,6 @@ paths:
         - article
         - note
         - project
-        - experience
-        - reflection
-        - portfolio
         in: query
         name: type
         type: string
@@ -3259,7 +3250,8 @@ paths:
       - contents
   /api/v1/contents/{id}/versions/{versionNumber}:
     delete:
-      description: Deletes one version snapshot for a content item. Admin only. 中文：删除某篇内容的一个版本快照（仅管理员）。
+      description: Deletes one manual version snapshot for a content item. Auto snapshots
+        cannot be deleted. Admin only. 中文：删除某篇内容的一个手动版本快照；自动快照不可删除（仅管理员）。
       parameters:
       - description: Content ID
         in: path
@@ -3298,6 +3290,10 @@ paths:
             $ref: '#/definitions/common.BaseResponse'
         "404":
           description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Conflict
           schema:
             $ref: '#/definitions/common.BaseResponse'
       security:

@@ -1961,10 +1961,7 @@ const docTemplate = `{
                         "enum": [
                             "article",
                             "note",
-                            "project",
-                            "experience",
-                            "reflection",
-                            "portfolio"
+                            "project"
                         ],
                         "type": "string",
                         "description": "Filter by content type",
@@ -2964,7 +2961,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Deletes one version snapshot for a content item. Admin only. 中文：删除某篇内容的一个版本快照（仅管理员）。",
+                "description": "Deletes one manual version snapshot for a content item. Auto snapshots cannot be deleted. Admin only. 中文：删除某篇内容的一个手动版本快照；自动快照不可删除（仅管理员）。",
                 "produces": [
                     "application/json"
                 ],
@@ -3028,6 +3025,12 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/common.BaseResponse"
                         }
@@ -5666,10 +5669,7 @@ const docTemplate = `{
                     "enum": [
                         "article",
                         "note",
-                        "project",
-                        "experience",
-                        "reflection",
-                        "portfolio"
+                        "project"
                     ]
                 },
                 "visibility": {
@@ -6565,10 +6565,7 @@ const docTemplate = `{
                     "enum": [
                         "article",
                         "note",
-                        "project",
-                        "experience",
-                        "reflection",
-                        "portfolio"
+                        "project"
                     ]
                 },
                 "visibility": {
