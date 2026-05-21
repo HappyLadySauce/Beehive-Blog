@@ -12,12 +12,13 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { ToastMessage } from "@/components/toast/ToastProvider";
 import { attachmentContentUrl, uploadLocalAttachmentsBatch } from "@/lib/api/attachments";
 import { humanizeApiError } from "@/lib/api/client";
-import { createContent, getContent, setContentCategories, setContentTags, transitionContentStatusTo, updateContent } from "@/lib/api/contents";
+import { createContent, getContent, setContentCategories, setContentTags, transitionContentStatusTo, updateContent, upsertAutoContentVersion } from "@/lib/api/contents";
 import { listCategories } from "@/lib/api/categories";
 import { listTags } from "@/lib/api/tags";
 import type { AttachmentResponse, CategoryItem, ContentAIAccess, ContentDetailResponse, ContentStatus, ContentType, ContentVisibility, TagItem } from "@/lib/api/types";
 import styles from "./Studio.module.css";
 import type { MarkdownScrollTarget } from "./StudioMarkdownCodeMirror";
+import { StudioContentVersionsPanel } from "./StudioContentVersionsPanel";
 import { StudioSelect } from "./StudioSelect";
 
 const MarkdownCodeMirror = dynamic(
@@ -44,6 +45,12 @@ type ContentEditorForm = {
   aiAccess: string;
   tagIDs: number[];
   categoryIDs: number[];
+};
+
+type VersionTrackedFields = {
+  title: string;
+  body: string;
+  excerpt: string;
 };
 
 type StudioContentEditorPageProps = {
@@ -119,6 +126,27 @@ function formFromContent(content: ContentDetailResponse): ContentEditorForm {
   };
 }
 
+function versionTrackedFieldsFromContent(content: ContentDetailResponse): VersionTrackedFields {
+  return {
+    body: content.body ?? "",
+    excerpt: content.excerpt ?? "",
+    title: content.title
+  };
+}
+
+function versionTrackedFieldsFromForm(form: ContentEditorForm, titleValue: string): VersionTrackedFields {
+  return {
+    body: form.body || "",
+    excerpt: form.excerpt || "",
+    title: titleValue
+  };
+}
+
+function hasVersionTrackedChange(previous: VersionTrackedFields | null, next: VersionTrackedFields) {
+  if (!previous) return false;
+  return previous.title !== next.title || previous.body !== next.body || previous.excerpt !== next.excerpt;
+}
+
 function isMarkdownFile(file: File) {
   const name = file.name.toLowerCase();
   return name.endsWith(".md") || name.endsWith(".markdown") || file.type === "text/markdown";
@@ -191,6 +219,7 @@ export function StudioContentEditorPage({ contentId, mode }: StudioContentEditor
   const [viewMode, setViewMode] = useState<EditorViewMode>("live");
   const [scrollTarget, setScrollTarget] = useState<MarkdownScrollTarget | null>(null);
   const scrollIDRef = useRef(0);
+  const versionBaselineRef = useRef<VersionTrackedFields | null>(null);
 
   const statusOptions = mode === "create" ? createStatusOptions : editStatusOptions;
   const title = mode === "create" ? "新建内容" : form.title || "编辑内容";
@@ -212,6 +241,7 @@ export function StudioContentEditorPage({ contentId, mode }: StudioContentEditor
         if (content) {
           setForm(formFromContent(content));
           setOriginalStatus(content.status);
+          versionBaselineRef.current = versionTrackedFieldsFromContent(content);
           setSelection({ from: (content.body ?? "").length, to: (content.body ?? "").length });
         }
       })
@@ -313,6 +343,13 @@ export function StudioContentEditorPage({ contentId, mode }: StudioContentEditor
     void handleEditorFiles(files);
   }
 
+  function handleRestored(detail: ContentDetailResponse) {
+    setForm(formFromContent(detail));
+    setOriginalStatus(detail.status);
+    versionBaselineRef.current = versionTrackedFieldsFromContent(detail);
+    setMessage({ tone: "success", text: "已回滚到历史版本。" });
+  }
+
   function scrollToOutlineItem(item: OutlineItem) {
     scrollIDRef.current += 1;
     setScrollTarget({ id: scrollIDRef.current, line: item.line });
@@ -363,6 +400,8 @@ export function StudioContentEditorPage({ contentId, mode }: StudioContentEditor
         setMessage({ tone: "error", text: "缺少内容 ID。" });
         return;
       }
+      const nextVersionFields = versionTrackedFieldsFromForm(form, titleValue);
+      const shouldUpsertAutoVersion = hasVersionTrackedChange(versionBaselineRef.current, nextVersionFields);
       const updated = await updateContent(contentId, {
         ai_access: form.aiAccess,
         body: form.body || null,
@@ -378,7 +417,11 @@ export function StudioContentEditorPage({ contentId, mode }: StudioContentEditor
       if (form.status !== originalStatus) {
         await transitionContentStatusTo(contentId, originalStatus, form.status as ContentStatus);
       }
+      if (shouldUpsertAutoVersion) {
+        await upsertAutoContentVersion(contentId, { change_summary: "Auto-saved latest content changes" });
+      }
       setOriginalStatus(form.status);
+      versionBaselineRef.current = nextVersionFields;
       setForm(formFromContent({ ...updated, status: form.status as ContentStatus, tags: tags.filter((tag) => form.tagIDs.includes(tag.id)), categories: categories.filter((cat) => form.categoryIDs.includes(cat.id)) }));
       setMessage({ tone: "success", text: "内容已保存。" });
     } catch (error) {
@@ -558,6 +601,14 @@ export function StudioContentEditorPage({ contentId, mode }: StudioContentEditor
               <span>暂无可用分类</span>
             )}
           </fieldset>
+          {mode === "edit" && contentId && (
+            <>
+              <details style={{ marginTop: 12 }}>
+                <summary style={{ cursor: "pointer", fontSize: 14, fontWeight: 500 }}>版本历史</summary>
+                <StudioContentVersionsPanel contentId={contentId} onRestored={handleRestored} />
+              </details>
+            </>
+          )}
         </aside>
       </main>
     </form>

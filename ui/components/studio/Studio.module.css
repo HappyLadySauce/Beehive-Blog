@@ -1130,6 +1130,37 @@
   border-right: 0;
 }
 
+.versionSnapshotForm {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.versionSnapshotInput {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--ink);
+  min-height: 44px;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+.versionSnapshotInput::placeholder {
+  color: var(--muted);
+}
+
+.versionSnapshotInput:focus,
+.versionSnapshotInput:focus-visible {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+  outline: none;
+}
+
+.versionSnapshotButton {
+  width: 100%;
+}
+
 .contentEditorMain {
   background: white;
   display: grid;

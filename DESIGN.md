@@ -188,7 +188,7 @@ File management view:
 
 - Use an OpenList-like file list, not an attachment metadata table.
 - Root path `/` displays all storage mount paths as folder-like entries.
-- Entering a mount path displays directories and files from `file_nodes`.
+- Entering a mount path displays directories and files from the storage backend directly.
 - Columns should be limited to name, size, modified time, status, and actions.
 - Do not show attachment purpose, attachment category CRUD, article references, or business aggregation in the file list.
 

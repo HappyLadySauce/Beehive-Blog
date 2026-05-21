@@ -62,6 +62,8 @@ type TransitionStatusRequest struct {
 // CreateVersionRequest is the payload for creating a content version snapshot.
 // CreateVersionRequest 为创建内容版本快照的请求体。
 type CreateVersionRequest struct {
+	SnapshotType  *string `json:"snapshot_type,omitempty" binding:"omitempty,oneof=auto manual"`
+	Name          *string `json:"name,omitempty" binding:"omitempty,max=128"`
 	ChangeSummary *string `json:"change_summary,omitempty" binding:"omitempty,max=512"`
 }
 
@@ -78,6 +80,12 @@ type AddRelationRequest struct {
 // SetContentTagsRequest 为替换内容全部标签的请求体。
 type SetContentTagsRequest struct {
 	TagIDs []int64 `json:"tag_ids" binding:"required"`
+}
+
+// RestoreVersionRequest carries optional metadata for version restore.
+// RestoreVersionRequest 为回滚版本的元数据。
+type RestoreVersionRequest struct {
+	ChangeSummary *string `json:"change_summary,omitempty" binding:"omitempty,max=512"`
 }
 
 // SetContentCategoriesRequest is the payload for replacing all categories on a content.
@@ -114,21 +122,21 @@ type ContentItem struct {
 // PublicContentItem is the public-safe subset for reader-facing listings.
 // PublicContentItem 为面向读者的公开字段子集。
 type PublicContentItem struct {
-	ID                 int64      `json:"id"`
-	Type               string     `json:"type"`
-	Title              string     `json:"title"`
-	Slug               string     `json:"slug"`
-	Excerpt            *string    `json:"excerpt,omitempty"`
-	CoverAttachmentID  *int64     `json:"cover_attachment_id,omitempty"`
-	AuthorID           int64      `json:"author_id"`
-	AuthorUsername     string     `json:"author_username,omitempty"`
-	PublishedAt        *time.Time `json:"published_at,omitempty"`
-	WordCount          int        `json:"word_count"`
-	ReadingTimeMinutes int        `json:"reading_time_minutes"`
-	Tags               []TagItem       `json:"tags,omitempty"`
-	Categories         []CategoryItem  `json:"categories,omitempty"`
-	CreatedAt          time.Time       `json:"created_at"`
-	UpdatedAt          time.Time       `json:"updated_at"`
+	ID                 int64          `json:"id"`
+	Type               string         `json:"type"`
+	Title              string         `json:"title"`
+	Slug               string         `json:"slug"`
+	Excerpt            *string        `json:"excerpt,omitempty"`
+	CoverAttachmentID  *int64         `json:"cover_attachment_id,omitempty"`
+	AuthorID           int64          `json:"author_id"`
+	AuthorUsername     string         `json:"author_username,omitempty"`
+	PublishedAt        *time.Time     `json:"published_at,omitempty"`
+	WordCount          int            `json:"word_count"`
+	ReadingTimeMinutes int            `json:"reading_time_minutes"`
+	Tags               []TagItem      `json:"tags,omitempty"`
+	Categories         []CategoryItem `json:"categories,omitempty"`
+	CreatedAt          time.Time      `json:"created_at"`
+	UpdatedAt          time.Time      `json:"updated_at"`
 }
 
 // ListContentsResponse wraps the paginated admin content result set.
@@ -175,6 +183,8 @@ type VersionItem struct {
 	ID            int64     `json:"id"`
 	ContentID     int64     `json:"content_id"`
 	VersionNumber int       `json:"version_number"`
+	SnapshotType  string    `json:"snapshot_type"`
+	Name          string    `json:"name"`
 	Title         string    `json:"title"`
 	Body          *string   `json:"body,omitempty"`
 	Excerpt       *string   `json:"excerpt,omitempty"`

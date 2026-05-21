@@ -294,8 +294,6 @@ definitions:
         type: string
       etag:
         type: string
-      file_node_id:
-        type: integer
       filename:
         type: string
       id:
@@ -674,6 +672,14 @@ definitions:
       change_summary:
         maxLength: 512
         type: string
+      name:
+        maxLength: 128
+        type: string
+      snapshot_type:
+        enum:
+        - auto
+        - manual
+        type: string
     type: object
   v1.CreateVersionResponse:
     properties:
@@ -691,6 +697,10 @@ definitions:
         type: string
       id:
         type: integer
+      name:
+        type: string
+      snapshot_type:
+        type: string
       title:
         type: string
       version_number:
@@ -977,6 +987,12 @@ definitions:
         description: |-
           Token is the auth credential bundle granted on successful registration (auto-login).
           Token 为注册成功后自动签发的鉴权凭证集合（自动登录）。
+    type: object
+  v1.RestoreVersionRequest:
+    properties:
+      change_summary:
+        maxLength: 512
+        type: string
     type: object
   v1.SetContentCategoriesRequest:
     properties:
@@ -1355,6 +1371,10 @@ definitions:
         type: string
       id:
         type: integer
+      name:
+        type: string
+      snapshot_type:
+        type: string
       title:
         type: string
       version_number:
@@ -3235,6 +3255,62 @@ paths:
       security:
       - BearerAuth: []
       summary: Create content version
+      tags:
+      - contents
+  /api/v1/contents/{id}/versions/{versionNumber}/restore:
+    post:
+      consumes:
+      - application/json
+      description: Restores a version snapshot back to the current content. An auto
+        snapshot is created before restore. Admin only. 中文：将版本快照恢复到当前内容。回滚前自动创建快照（仅管理员）。
+      parameters:
+      - description: Content ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Version number to restore
+        in: path
+        name: versionNumber
+        required: true
+        type: integer
+      - description: Optional restore metadata
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.RestoreVersionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.ContentDetailResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Restore content version
       tags:
       - contents
   /api/v1/file-drivers:

@@ -43,6 +43,8 @@ type ContentVersion struct {
 	ID            int64     `gorm:"primaryKey;column:id"`
 	ContentID     int64     `gorm:"column:content_id;not null"`
 	VersionNumber int       `gorm:"column:version_number;not null"`
+	SnapshotType  string    `gorm:"column:snapshot_type;size:16;not null;default:manual"`
+	Name          string    `gorm:"column:name;size:128;not null;default:''"`
 	Title         string    `gorm:"column:title;size:512;not null"`
 	Body          *string   `gorm:"column:body"`
 	Excerpt       *string   `gorm:"column:excerpt"`

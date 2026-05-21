@@ -5,9 +5,13 @@ import type {
   ContentStatus,
   CreateContentRequest,
   CreateContentResponse,
+  CreateVersionRequest,
+  CreateVersionResponse,
   DeleteContentResponse,
   ListContentsRequest,
   ListContentsResponse,
+  ListVersionsResponse,
+  RestoreVersionRequest,
   SetContentCategoriesRequest,
   SetContentTagsRequest,
   TransitionContentStatusRequest,
@@ -93,5 +97,33 @@ export function setContentCategories(id: number, payload: SetContentCategoriesRe
   return apiFetch<Record<string, never>>(`/bff/contents/${id}/categories`, {
     method: "PUT",
     body: JSON.stringify(payload)
+  });
+}
+
+// --- Content Versions ---
+
+export function listContentVersions(id: number) {
+  return apiFetch<ListVersionsResponse>(`/bff/contents/${id}/versions`, { method: "GET" });
+}
+
+export function createContentVersion(id: number, payload?: CreateVersionRequest) {
+  return apiFetch<CreateVersionResponse>(`/bff/contents/${id}/versions`, {
+    method: "POST",
+    body: JSON.stringify(payload ?? {})
+  });
+}
+
+export function upsertAutoContentVersion(id: number, payload?: Pick<CreateVersionRequest, "change_summary">) {
+  return createContentVersion(id, {
+    snapshot_type: "auto",
+    name: "自动保存",
+    ...payload
+  });
+}
+
+export function restoreContentVersion(id: number, versionNumber: number, payload?: RestoreVersionRequest) {
+  return apiFetch<ContentDetailResponse>(`/bff/contents/${id}/versions/${versionNumber}/restore`, {
+    method: "POST",
+    body: JSON.stringify(payload ?? {})
   });
 }

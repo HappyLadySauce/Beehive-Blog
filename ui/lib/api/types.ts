@@ -253,7 +253,6 @@ export type AttachmentResponse = {
   mime_type: string;
   size: number;
   storage_mount_id: number;
-  file_node_id?: number | null;
   object_key: string;
   storage_metadata?: JsonObject | null;
   etag?: string | null;
@@ -588,3 +587,34 @@ export type SetContentCategoriesRequest = {
 };
 
 export type DeleteContentResponse = Record<string, never>;
+
+// --- Content Versions ---
+export type VersionItem = {
+  id: number;
+  content_id: number;
+  version_number: number;
+  snapshot_type: "auto" | "manual" | string;
+  name: string;
+  title: string;
+  body?: string | null;
+  excerpt?: string | null;
+  change_summary?: string | null;
+  created_by: number;
+  created_at: string;
+};
+
+export type ListVersionsResponse = {
+  items: VersionItem[];
+};
+
+export type CreateVersionRequest = {
+  snapshot_type?: "auto" | "manual";
+  name?: string | null;
+  change_summary?: string | null;
+};
+
+export type CreateVersionResponse = VersionItem;
+
+export type RestoreVersionRequest = {
+  change_summary?: string | null;
+};

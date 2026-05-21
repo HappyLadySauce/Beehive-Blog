@@ -2957,6 +2957,95 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/contents/{id}/versions/{versionNumber}/restore": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Restores a version snapshot back to the current content. An auto snapshot is created before restore. Admin only. 中文：将版本快照恢复到当前内容。回滚前自动创建快照（仅管理员）。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "contents"
+                ],
+                "summary": "Restore content version",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Content ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Version number to restore",
+                        "name": "versionNumber",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Optional restore metadata",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.RestoreVersionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/common.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/v1.ContentDetailResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/common.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/file-drivers": {
             "get": {
                 "security": [
@@ -5085,9 +5174,6 @@ const docTemplate = `{
                 "etag": {
                     "type": "string"
                 },
-                "file_node_id": {
-                    "type": "integer"
-                },
                 "filename": {
                     "type": "string"
                 },
@@ -5619,6 +5705,17 @@ const docTemplate = `{
                 "change_summary": {
                     "type": "string",
                     "maxLength": 512
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 128
+                },
+                "snapshot_type": {
+                    "type": "string",
+                    "enum": [
+                        "auto",
+                        "manual"
+                    ]
                 }
             }
         },
@@ -5645,6 +5742,12 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "snapshot_type": {
+                    "type": "string"
                 },
                 "title": {
                     "type": "string"
@@ -6035,6 +6138,15 @@ const docTemplate = `{
                             "$ref": "#/definitions/v1.AuthToken"
                         }
                     ]
+                }
+            }
+        },
+        "v1.RestoreVersionRequest": {
+            "type": "object",
+            "properties": {
+                "change_summary": {
+                    "type": "string",
+                    "maxLength": 512
                 }
             }
         },
@@ -6596,6 +6708,12 @@ const docTemplate = `{
                 },
                 "id": {
                     "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "snapshot_type": {
+                    "type": "string"
                 },
                 "title": {
                     "type": "string"

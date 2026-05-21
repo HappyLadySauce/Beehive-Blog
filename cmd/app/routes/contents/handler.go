@@ -55,6 +55,7 @@ func Init(svcCtx *svc.ServiceContext) error {
 	adminContents.PATCH("/:id/status", c.TransitionStatus)
 	adminContents.GET("/:id/versions", c.ListVersions)
 	adminContents.POST("/:id/versions", c.CreateVersion)
+	adminContents.POST("/:id/versions/:versionNumber/restore", c.RestoreVersion)
 	adminContents.POST("/:id/relations", c.AddRelation)
 	adminContents.DELETE("/:id/relations/:relationId", c.RemoveRelation)
 	adminContents.PUT("/:id/tags", c.SetTags)

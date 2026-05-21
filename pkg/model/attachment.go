@@ -18,7 +18,6 @@ type Attachment struct {
 	MimeType        string          `gorm:"column:mime_type;size:127;not null"`
 	Size            int64           `gorm:"column:size;not null"`
 	StorageMountID  int64           `gorm:"column:storage_mount_id;not null"`
-	FileNodeID      *int64          `gorm:"column:file_node_id"`
 	ObjectKey       string          `gorm:"column:object_key;size:1024;not null"`
 	StorageMetadata json.RawMessage `gorm:"column:storage_metadata;type:jsonb;not null;default:'{}'"`
 	ETag            *string         `gorm:"column:etag;size:80"`

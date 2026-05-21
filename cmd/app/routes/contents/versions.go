@@ -2,15 +2,24 @@ package contents
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	v1 "github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/api/v1"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
 	"github.com/HappyLadySauce/Beehive-Blog/pkg/model"
+)
+
+const (
+	versionSnapshotManual = "manual"
+	versionSnapshotAuto   = "auto"
+	autoVersionName       = "自动保存"
 )
 
 // listVersions lists version snapshots for a content item.
@@ -68,9 +77,26 @@ func (c *ContentsController) ListVersions(ctx *gin.Context) {
 	common.Success(ctx, resp)
 }
 
-// createVersion creates a version snapshot from the current content state inside a transaction.
-// createVersion 在事务中根据当前内容状态创建版本快照。
+// createVersion creates or updates a version snapshot from the current content state inside a transaction.
+// Manual snapshots are append-only; auto snapshots are overwritten per content item.
+// createVersion 在事务中根据当前内容状态创建或更新版本快照。
+// 手动快照追加保存；自动快照按内容覆盖保存。
 func (c *ContentsController) createVersion(ctx context.Context, contentID int64, createdBy int64, req *v1.CreateVersionRequest) (*v1.CreateVersionResponse, error) {
+	snapshotType := versionSnapshotManual
+	if req.SnapshotType != nil && *req.SnapshotType != "" {
+		snapshotType = *req.SnapshotType
+	}
+	name := ""
+	if req.Name != nil {
+		name = strings.TrimSpace(*req.Name)
+	}
+	if snapshotType == versionSnapshotManual && name == "" {
+		return nil, common.NewBadRequest("version name is required", fmt.Errorf("manual version name is empty"))
+	}
+	if snapshotType == versionSnapshotAuto {
+		name = autoVersionName
+	}
+
 	tx := c.svc.DB.WithContext(ctx).Begin()
 	if tx.Error != nil {
 		return nil, common.NewInternal("failed to begin transaction", tx.Error)
@@ -80,6 +106,42 @@ func (c *ContentsController) createVersion(ctx context.Context, contentID int64,
 	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&content, contentID).Error; err != nil {
 		tx.Rollback()
 		return nil, mapFirstError(err, "content not found", "failed to fetch content")
+	}
+
+	if snapshotType == versionSnapshotAuto {
+		var existing model.ContentVersion
+		err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("content_id = ? AND snapshot_type = ?", contentID, versionSnapshotAuto).
+			First(&existing).Error
+		if err == nil {
+			updates := map[string]interface{}{
+				"name":           name,
+				"title":          content.Title,
+				"body":           content.Body,
+				"excerpt":        content.Excerpt,
+				"change_summary": req.ChangeSummary,
+				"created_by":     createdBy,
+			}
+			if err := tx.Model(&existing).Updates(updates).Error; err != nil {
+				tx.Rollback()
+				return nil, common.NewInternal("failed to update auto version", err)
+			}
+			if err := tx.Commit().Error; err != nil {
+				return nil, common.NewInternal("failed to commit version creation", err)
+			}
+			existing.Name = name
+			existing.Title = content.Title
+			existing.Body = content.Body
+			existing.Excerpt = content.Excerpt
+			existing.ChangeSummary = req.ChangeSummary
+			existing.CreatedBy = createdBy
+			item := toVersionItem(existing)
+			return &v1.CreateVersionResponse{VersionItem: item}, nil
+		}
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			tx.Rollback()
+			return nil, common.NewInternal("failed to fetch auto version", err)
+		}
 	}
 
 	var maxVersion int
@@ -94,6 +156,8 @@ func (c *ContentsController) createVersion(ctx context.Context, contentID int64,
 	version := model.ContentVersion{
 		ContentID:     contentID,
 		VersionNumber: maxVersion + 1,
+		SnapshotType:  snapshotType,
+		Name:          name,
 		Title:         content.Title,
 		Body:          content.Body,
 		Excerpt:       content.Excerpt,
@@ -146,6 +210,130 @@ func (c *ContentsController) CreateVersion(ctx *gin.Context) {
 		createdBy = claims.UID
 	}
 	resp, err := c.createVersion(ctx.Request.Context(), id, createdBy, &req)
+	if err != nil {
+		common.Fail(ctx, err)
+		return
+	}
+	common.Success(ctx, resp)
+}
+
+// restoreVersion restores a version snapshot back to the content row inside a transaction.
+// An auto snapshot is created before restore to prevent data loss.
+// restoreVersion 在事务中将版本快照写回内容行。回滚前自动创建快照以防止数据丢失。
+func (c *ContentsController) restoreVersion(ctx context.Context, contentID int64, versionNumber int, createdBy int64, req *v1.RestoreVersionRequest) (*v1.ContentDetailResponse, error) {
+	tx := c.svc.DB.WithContext(ctx).Begin()
+	if tx.Error != nil {
+		return nil, common.NewInternal("failed to begin transaction", tx.Error)
+	}
+
+	var content model.Content
+	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&content, contentID).Error; err != nil {
+		tx.Rollback()
+		return nil, mapFirstError(err, "content not found", "failed to fetch content")
+	}
+
+	var version model.ContentVersion
+	if err := tx.Where("content_id = ? AND version_number = ?", contentID, versionNumber).First(&version).Error; err != nil {
+		tx.Rollback()
+		return nil, mapFirstError(err, "version not found", "failed to fetch version")
+	}
+
+	// Auto snapshot the current state before restoring.
+	// 回滚前对当前状态自动创建快照。
+	var maxVersion int
+	if err := tx.Model(&model.ContentVersion{}).
+		Select("COALESCE(MAX(version_number), 0)").
+		Where("content_id = ?", contentID).
+		Scan(&maxVersion).Error; err != nil {
+		tx.Rollback()
+		return nil, common.NewInternal("failed to read version number", err)
+	}
+
+	snapshotSummary := fmt.Sprintf("Restored from v%d; auto snapshot before restore", versionNumber)
+	if req.ChangeSummary != nil && *req.ChangeSummary != "" {
+		snapshotSummary = *req.ChangeSummary
+	}
+	snapshot := model.ContentVersion{
+		ContentID:     contentID,
+		VersionNumber: maxVersion + 1,
+		SnapshotType:  versionSnapshotManual,
+		Name:          "恢复前备份",
+		Title:         content.Title,
+		Body:          content.Body,
+		Excerpt:       content.Excerpt,
+		ChangeSummary: &snapshotSummary,
+		CreatedBy:     createdBy,
+	}
+	if err := tx.Create(&snapshot).Error; err != nil {
+		tx.Rollback()
+		return nil, mapVersionUniqueViolation(err)
+	}
+
+	// Write version snapshot fields back to the content row.
+	// 将快照字段写回内容行。
+	updates := map[string]interface{}{
+		"title":   version.Title,
+		"body":    version.Body,
+		"excerpt": version.Excerpt,
+	}
+	wc := computeWordCount(version.Body)
+	updates["word_count"] = wc
+	updates["reading_time_minutes"] = computeReadingTime(wc)
+
+	if err := tx.Model(&content).Updates(updates).Error; err != nil {
+		tx.Rollback()
+		return nil, common.NewInternal("failed to restore content from version", err)
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, common.NewInternal("failed to commit version restore", err)
+	}
+
+	resp, err := c.get(ctx, contentID, true)
+	if err != nil {
+		return nil, err
+	}
+	return resp.(*v1.ContentDetailResponse), nil
+}
+
+// RestoreVersion handles POST /api/v1/contents/:id/versions/:versionNumber/restore (admin).
+// RestoreVersion 处理 POST /api/v1/contents/:id/versions/:versionNumber/restore（管理员）。
+//
+//	@Summary		Restore content version
+//	@Description	Restores a version snapshot back to the current content. An auto snapshot is created before restore. Admin only. 中文：将版本快照恢复到当前内容。回滚前自动创建快照（仅管理员）。
+//	@Tags			contents
+//	@Security		BearerAuth
+//	@Accept			json
+//	@Produce		json
+//	@Param			id				path		int							true	"Content ID"
+//	@Param			versionNumber	path		int							true	"Version number to restore"
+//	@Param			body			body		v1.RestoreVersionRequest	true	"Optional restore metadata"
+//	@Success		200				{object}	common.BaseResponse{data=v1.ContentDetailResponse}
+//	@Failure		400				{object}	common.BaseResponse
+//	@Failure		401				{object}	common.BaseResponse
+//	@Failure		403				{object}	common.BaseResponse
+//	@Failure		404				{object}	common.BaseResponse
+//	@Router			/api/v1/contents/{id}/versions/{versionNumber}/restore [post]
+func (c *ContentsController) RestoreVersion(ctx *gin.Context) {
+	id, ok := parseContentID(ctx)
+	if !ok {
+		return
+	}
+	vn, ok := parseVersionNumber(ctx)
+	if !ok {
+		return
+	}
+	var req v1.RestoreVersionRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		common.Fail(ctx, common.NewBadRequest("invalid request body", err))
+		return
+	}
+	claims := middleware.GetClaims(ctx)
+	createdBy := int64(0)
+	if claims != nil {
+		createdBy = claims.UID
+	}
+	resp, err := c.restoreVersion(ctx.Request.Context(), id, vn, createdBy, &req)
 	if err != nil {
 		common.Fail(ctx, err)
 		return

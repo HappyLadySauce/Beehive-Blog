@@ -12,6 +12,8 @@ const updateContent = vi.hoisted(() => vi.fn());
 const transitionContentStatus = vi.hoisted(() => vi.fn());
 const setContentCategories = vi.hoisted(() => vi.fn());
 const setContentTags = vi.hoisted(() => vi.fn());
+const listContentVersions = vi.hoisted(() => vi.fn());
+const upsertAutoContentVersion = vi.hoisted(() => vi.fn());
 const listCategories = vi.hoisted(() => vi.fn());
 const listTags = vi.hoisted(() => vi.fn());
 
@@ -45,7 +47,9 @@ vi.mock("@/lib/api/contents", async () => {
       }
       return last;
     }),
-    updateContent
+    updateContent,
+    listContentVersions,
+    upsertAutoContentVersion
   };
 });
 
@@ -155,8 +159,12 @@ describe("StudioContentEditorPage", () => {
     setContentTags.mockReset();
     listCategories.mockReset();
     listTags.mockReset();
+    listContentVersions.mockReset();
+    upsertAutoContentVersion.mockReset();
     listCategories.mockResolvedValue(categories);
     listTags.mockResolvedValue(tags);
+    listContentVersions.mockResolvedValue({ items: [] });
+    upsertAutoContentVersion.mockResolvedValue({ id: 1 });
     getContent.mockResolvedValue(contentDetail);
     createContent.mockResolvedValue({ id: 10 });
     updateContent.mockResolvedValue(contentDetail);
@@ -198,7 +206,7 @@ describe("StudioContentEditorPage", () => {
     fireEvent.change(screen.getByLabelText("Slug"), { target: { value: "new-post" } });
     fireEvent.change(screen.getByLabelText("Markdown 正文"), { target: { value: "# Draft" } });
     fireEvent.click(screen.getByLabelText("AI"));
-    fireEvent.click(screen.getByRole("button", { name: /保存/ }));
+    fireEvent.click(screen.getByRole("button", { name: "保存" }));
 
     await waitFor(() => expect(createContent).toHaveBeenCalledWith(expect.objectContaining({ body: "# Draft", slug: "new-post", title: "New Post" })));
     expect(setContentTags).toHaveBeenCalledWith(10, { tag_ids: [3] });
@@ -261,13 +269,34 @@ describe("StudioContentEditorPage", () => {
     fireEvent.change(screen.getByLabelText("Markdown 正文"), { target: { value: "# Updated" } });
     fireEvent.click(screen.getByRole("combobox", { name: "内容状态" }));
     fireEvent.click(screen.getByRole("option", { name: "已发布" }));
-    fireEvent.click(screen.getByRole("button", { name: /保存/ }));
+    fireEvent.click(screen.getByRole("button", { name: "保存" }));
 
     await waitFor(() => expect(updateContent).toHaveBeenCalledWith(9, expect.objectContaining({ body: "# Updated" })));
     expect(setContentTags).toHaveBeenCalledWith(9, { tag_ids: [3] });
     expect(transitionContentStatus).toHaveBeenCalledTimes(2);
     expect(transitionContentStatus).toHaveBeenNthCalledWith(1, 9, { status: "review" });
     expect(transitionContentStatus).toHaveBeenNthCalledWith(2, 9, { status: "published" });
+    expect(upsertAutoContentVersion).toHaveBeenCalledWith(9, { change_summary: "Auto-saved latest content changes" });
+  });
+
+  it("does not render content relations in the editor sidebar", async () => {
+    renderEditor("edit");
+
+    await waitFor(() => expect(getContent).toHaveBeenCalledWith(9));
+
+    expect(screen.queryByText("内容关联")).not.toBeInTheDocument();
+  });
+
+  it("does not update the auto version when only taxonomy changes", async () => {
+    renderEditor("edit");
+
+    await waitFor(() => expect(getContent).toHaveBeenCalledWith(9));
+    fireEvent.click(screen.getByLabelText("AI"));
+    fireEvent.click(screen.getByRole("button", { name: "保存" }));
+
+    await waitFor(() => expect(updateContent).toHaveBeenCalledWith(9, expect.objectContaining({ title: "Hello World" })));
+    expect(setContentTags).toHaveBeenCalledWith(9, { tag_ids: [] });
+    expect(upsertAutoContentVersion).not.toHaveBeenCalled();
   });
 
   it("imports markdown files into the editor body", async () => {

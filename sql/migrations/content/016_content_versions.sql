@@ -12,6 +12,13 @@ CREATE TABLE IF NOT EXISTS content.content_versions (
   -- Monotonic version number per content_id. / 每个内容单调递增的版本号。
   version_number  INT NOT NULL,
 
+  -- Snapshot type: manual snapshots are append-only; auto snapshots are overwritten.
+  -- 快照类型：手动快照追加保存；自动快照覆盖保存。
+  snapshot_type   VARCHAR(16) NOT NULL DEFAULT 'manual',
+
+  -- Human-readable version name. / 可读版本名称。
+  name            VARCHAR(128) NOT NULL DEFAULT '',
+
   -- Snapshot of content fields at this version. / 此版本的内容字段快照。
   title           VARCHAR(512) NOT NULL,
   body            TEXT NULL,
@@ -36,6 +43,10 @@ CREATE TABLE IF NOT EXISTS content.content_versions (
 CREATE INDEX IF NOT EXISTS idx_content_versions_content_id
   ON content.content_versions (content_id, version_number DESC);
 
+CREATE UNIQUE INDEX IF NOT EXISTS ux_content_versions_single_auto
+  ON content.content_versions (content_id, snapshot_type)
+  WHERE snapshot_type = 'auto';
+
 COMMENT ON TABLE content.content_versions IS
   'Revision history for content. Snapshots of title, body, excerpt at each version. / 内容的修订历史。每个版本的标题、正文和摘要的快照。';
 
@@ -43,6 +54,10 @@ COMMENT ON COLUMN content.content_versions.content_id IS
   'FK to content.contents. / 内容外键。';
 COMMENT ON COLUMN content.content_versions.version_number IS
   'Monotonic version number; auto-incremented per content_id. / 每个内容单调递增的版本号。';
+COMMENT ON COLUMN content.content_versions.snapshot_type IS
+  'Snapshot type: manual or auto. / 快照类型：manual 或 auto。';
+COMMENT ON COLUMN content.content_versions.name IS
+  'Human-readable version name. / 可读版本名称。';
 COMMENT ON COLUMN content.content_versions.title IS
   'Snapshot of title at this version. / 此版本的标题快照。';
 COMMENT ON COLUMN content.content_versions.body IS

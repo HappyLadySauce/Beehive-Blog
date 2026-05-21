@@ -26,7 +26,6 @@ func toAttachmentResponseWithOwner(row model.Attachment, categoryIDs []int64, ow
 		MimeType:        row.MimeType,
 		Size:            row.Size,
 		StorageMountID:  row.StorageMountID,
-		FileNodeID:      row.FileNodeID,
 		ObjectKey:       row.ObjectKey,
 		StorageMetadata: row.StorageMetadata,
 		ETag:            row.ETag,

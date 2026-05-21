@@ -36,6 +36,18 @@ func parseContentID(ctx *gin.Context) (int64, bool) {
 	return id, true
 }
 
+// parseVersionNumber extracts the :versionNumber path parameter as positive int.
+// parseVersionNumber 将 :versionNumber 路径参数提取为正整数。
+func parseVersionNumber(ctx *gin.Context) (int, bool) {
+	raw := ctx.Param("versionNumber")
+	vn, err := strconv.Atoi(raw)
+	if err != nil || vn < 1 {
+		common.Fail(ctx, common.NewBadRequest("versionNumber must be a positive integer", fmt.Errorf("parse: %w", err)))
+		return 0, false
+	}
+	return vn, true
+}
+
 // parseRelationID extracts the :relationId path parameter as int64.
 // parseRelationID 将 :relationId 路径参数提取为 int64。
 func parseRelationID(ctx *gin.Context) (int64, bool) {
@@ -98,6 +110,8 @@ func toVersionItem(v model.ContentVersion) v1.VersionItem {
 		ID:            v.ID,
 		ContentID:     v.ContentID,
 		VersionNumber: v.VersionNumber,
+		SnapshotType:  v.SnapshotType,
+		Name:          v.Name,
 		Title:         v.Title,
 		Body:          v.Body,
 		Excerpt:       v.Excerpt,
