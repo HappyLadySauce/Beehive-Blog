@@ -93,11 +93,20 @@ WHERE NOT EXISTS (
 -- This was deferred until identity.users existed.
 -- 追加 attachment.attachments → identity.users 的归属外键。
 -- =========================================================================
-ALTER TABLE attachment.attachments
-  ADD CONSTRAINT IF NOT EXISTS fk_attachment_attachments_owner_user
-  FOREIGN KEY (owner_user_id)
-  REFERENCES identity.users (id)
-  ON DELETE RESTRICT;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'fk_attachment_attachments_owner_user'
+      AND conrelid = 'attachment.attachments'::regclass
+  ) THEN
+    ALTER TABLE attachment.attachments
+      ADD CONSTRAINT fk_attachment_attachments_owner_user
+      FOREIGN KEY (owner_user_id)
+      REFERENCES identity.users (id)
+      ON DELETE RESTRICT;
+  END IF;
+END $$;
 
 COMMENT ON CONSTRAINT fk_attachment_attachments_owner_user ON attachment.attachments IS
   'Owner user FK for non-system attachments. Hard-deleting a user with attachments is restricted; account removal should use identity.users.deleted_at. / 非 system 附件的归属用户外键。拥有附件的用户不允许物理删除；账号移除应使用 identity.users.deleted_at 软删。';
