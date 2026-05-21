@@ -42,6 +42,11 @@ func (c *ContentsController) list(ctx context.Context, req *v1.ListContentsReque
 			Select("content_id").Where("tag_id = ?", req.TagID)
 		query = query.Where("id IN (?)", subQuery)
 	}
+	if req.CategoryID > 0 {
+		subQuery := c.svc.DB.WithContext(ctx).Model(&model.ContentCategory{}).
+			Select("content_id").Where("category_id = ?", req.CategoryID)
+		query = query.Where("id IN (?)", subQuery)
+	}
 	if req.Search != "" {
 		pattern := "%" + req.Search + "%"
 		query = query.Where("title ILIKE ? OR COALESCE(excerpt, '') ILIKE ?", pattern, pattern)
@@ -73,6 +78,10 @@ func (c *ContentsController) list(ctx context.Context, req *v1.ListContentsReque
 	if err != nil {
 		return nil, common.NewInternal("failed to load content tags", err)
 	}
+	catMap, err := batchLoadContentCategories(ctx, c, contentIDs)
+	if err != nil {
+		return nil, common.NewInternal("failed to load content categories", err)
+	}
 
 	if !admin {
 		items := make([]v1.PublicContentItem, len(contents))
@@ -80,6 +89,7 @@ func (c *ContentsController) list(ctx context.Context, req *v1.ListContentsReque
 			item := toPublicContentItem(content)
 			item.AuthorUsername = authorMap[content.AuthorID]
 			item.Tags = tagMap[content.ID]
+			item.Categories = catMap[content.ID]
 			items[i] = item
 		}
 		return &v1.PublicListContentsResponse{
@@ -95,6 +105,7 @@ func (c *ContentsController) list(ctx context.Context, req *v1.ListContentsReque
 		item := toContentItem(content)
 		item.AuthorUsername = authorMap[content.AuthorID]
 		item.Tags = tagMap[content.ID]
+		item.Categories = catMap[content.ID]
 		items[i] = item
 	}
 
@@ -263,4 +274,97 @@ func loadContentTags(ctx context.Context, ctrl *ContentsController, contentID in
 		return nil, err
 	}
 	return tagsToItems(tags), nil
+}
+
+// fetchCategoriesByIDs loads category rows (non-soft-deleted via GORM scope).
+// fetchCategoriesByIDs 加载分类行（GORM 默认 scope 排除软删）。
+func fetchCategoriesByIDs(ctx context.Context, ctrl *ContentsController, catIDs []int64) ([]model.Category, error) {
+	if len(catIDs) == 0 {
+		return nil, nil
+	}
+	var cats []model.Category
+	if err := ctrl.svc.DB.WithContext(ctx).Where("id IN ?", uniqueInt64(catIDs)).Find(&cats).Error; err != nil {
+		return nil, err
+	}
+	return cats, nil
+}
+
+func categoriesToItems(cats []model.Category) []v1.CategoryItem {
+	items := make([]v1.CategoryItem, len(cats))
+	for i, c := range cats {
+		items[i] = v1.CategoryItem{
+			ID:          c.ID,
+			Name:        c.Name,
+			Slug:        c.Slug,
+			Description: c.Description,
+			ParentID:    c.ParentID,
+			SortOrder:   c.SortOrder,
+		}
+	}
+	return items
+}
+
+// batchLoadContentCategories loads categories for multiple content IDs in two queries.
+// batchLoadContentCategories 通过两次查询批量加载多个内容的分类。
+func batchLoadContentCategories(ctx context.Context, ctrl *ContentsController, contentIDs []int64) (map[int64][]v1.CategoryItem, error) {
+	if len(contentIDs) == 0 {
+		return nil, nil
+	}
+	var ccs []model.ContentCategory
+	if err := ctrl.svc.DB.WithContext(ctx).Where("content_id IN ?", contentIDs).Find(&ccs).Error; err != nil {
+		return nil, err
+	}
+	if len(ccs) == 0 {
+		return nil, nil
+	}
+
+	catIDs := make([]int64, len(ccs))
+	for i, cc := range ccs {
+		catIDs[i] = cc.CategoryID
+	}
+
+	cats, err := fetchCategoriesByIDs(ctx, ctrl, catIDs)
+	if err != nil {
+		return nil, err
+	}
+	catItemMap := make(map[int64]v1.CategoryItem, len(cats))
+	for _, c := range cats {
+		catItemMap[c.ID] = v1.CategoryItem{
+			ID:          c.ID,
+			Name:        c.Name,
+			Slug:        c.Slug,
+			Description: c.Description,
+			ParentID:    c.ParentID,
+			SortOrder:   c.SortOrder,
+		}
+	}
+
+	result := make(map[int64][]v1.CategoryItem, len(contentIDs))
+	for _, cc := range ccs {
+		if item, ok := catItemMap[cc.CategoryID]; ok {
+			result[cc.ContentID] = append(result[cc.ContentID], item)
+		}
+	}
+	return result, nil
+}
+
+// loadContentCategories fetches categories for a single content ID.
+// loadContentCategories 获取单个内容的分类列表。
+func loadContentCategories(ctx context.Context, ctrl *ContentsController, contentID int64) ([]v1.CategoryItem, error) {
+	var ccs []model.ContentCategory
+	if err := ctrl.svc.DB.WithContext(ctx).Where("content_id = ?", contentID).Find(&ccs).Error; err != nil {
+		return nil, err
+	}
+	if len(ccs) == 0 {
+		return []v1.CategoryItem{}, nil
+	}
+	catIDs := make([]int64, len(ccs))
+	for i, cc := range ccs {
+		catIDs[i] = cc.CategoryID
+	}
+	cats, err := fetchCategoriesByIDs(ctx, ctrl, catIDs)
+	if err != nil {
+		return nil, err
+	}
+	return categoriesToItems(cats), nil
 }

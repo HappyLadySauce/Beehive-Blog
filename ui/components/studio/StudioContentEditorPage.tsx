@@ -12,9 +12,10 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { ToastMessage } from "@/components/toast/ToastProvider";
 import { attachmentContentUrl, uploadLocalAttachmentsBatch } from "@/lib/api/attachments";
 import { humanizeApiError } from "@/lib/api/client";
-import { createContent, getContent, setContentTags, transitionContentStatus, updateContent } from "@/lib/api/contents";
+import { createContent, getContent, setContentCategories, setContentTags, transitionContentStatus, updateContent } from "@/lib/api/contents";
+import { listCategories } from "@/lib/api/categories";
 import { listTags } from "@/lib/api/tags";
-import type { AttachmentResponse, ContentAIAccess, ContentDetailResponse, ContentStatus, ContentType, ContentVisibility, TagItem } from "@/lib/api/types";
+import type { AttachmentResponse, CategoryItem, ContentAIAccess, ContentDetailResponse, ContentStatus, ContentType, ContentVisibility, TagItem } from "@/lib/api/types";
 import styles from "./Studio.module.css";
 import type { MarkdownScrollTarget } from "./StudioMarkdownCodeMirror";
 import { StudioSelect } from "./StudioSelect";
@@ -42,6 +43,7 @@ type ContentEditorForm = {
   visibility: string;
   aiAccess: string;
   tagIDs: number[];
+  categoryIDs: number[];
 };
 
 type StudioContentEditorPageProps = {
@@ -59,6 +61,7 @@ type OutlineItem = {
 const emptyForm: ContentEditorForm = {
   aiAccess: "allowed",
   body: "",
+  categoryIDs: [],
   coverAttachmentID: "",
   excerpt: "",
   slug: "",
@@ -109,6 +112,7 @@ function formFromContent(content: ContentDetailResponse): ContentEditorForm {
     slug: content.slug,
     status: content.status,
     tagIDs: content.tags?.map((tag) => tag.id) ?? [],
+    categoryIDs: content.categories?.map((cat) => cat.id) ?? [],
     title: content.title,
     type: content.type,
     visibility: content.visibility
@@ -176,6 +180,7 @@ export function StudioContentEditorPage({ contentId, mode }: StudioContentEditor
   const { claims } = useAuth();
   const [form, setForm] = useState<ContentEditorForm>(emptyForm);
   const [tags, setTags] = useState<TagItem[]>([]);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [originalStatus, setOriginalStatus] = useState("");
   const [loading, setLoading] = useState(mode === "edit");
   const [saving, setSaving] = useState(false);
@@ -194,13 +199,16 @@ export function StudioContentEditorPage({ contentId, mode }: StudioContentEditor
 
   useEffect(() => {
     let active = true;
-    const load = mode === "edit" && contentId ? Promise.all([listTags({ page: 1, page_size: 100 }), getContent(contentId)]) : Promise.all([listTags({ page: 1, page_size: 100 })]);
+    const load = mode === "edit" && contentId
+      ? Promise.all([listTags({ page: 1, page_size: 100 }), listCategories({ page: 1, page_size: 200 }), getContent(contentId)])
+      : Promise.all([listTags({ page: 1, page_size: 100 }), listCategories({ page: 1, page_size: 200 })]);
 
     load
       .then((result) => {
         if (!active) return;
-        const [tagPayload, content] = result as [Awaited<ReturnType<typeof listTags>>, ContentDetailResponse | undefined];
+        const [tagPayload, catPayload, content] = result as [Awaited<ReturnType<typeof listTags>>, Awaited<ReturnType<typeof listCategories>>, ContentDetailResponse | undefined];
         setTags(tagPayload.items);
+        setCategories(catPayload.items);
         if (content) {
           setForm(formFromContent(content));
           setOriginalStatus(content.status);
@@ -227,6 +235,13 @@ export function StudioContentEditorPage({ contentId, mode }: StudioContentEditor
     setForm((current) => ({
       ...current,
       tagIDs: checked ? Array.from(new Set([...current.tagIDs, id])) : current.tagIDs.filter((tagID) => tagID !== id)
+    }));
+  }
+
+  function toggleCategory(id: number, checked: boolean) {
+    setForm((current) => ({
+      ...current,
+      categoryIDs: checked ? Array.from(new Set([...current.categoryIDs, id])) : current.categoryIDs.filter((catID) => catID !== id)
     }));
   }
 
@@ -336,6 +351,9 @@ export function StudioContentEditorPage({ contentId, mode }: StudioContentEditor
         if (form.tagIDs.length > 0) {
           await setContentTags(created.id, { tag_ids: form.tagIDs });
         }
+        if (form.categoryIDs.length > 0) {
+          await setContentCategories(created.id, { category_ids: form.categoryIDs });
+        }
         setMessage({ tone: "success", text: "内容已创建。" });
         router.replace(`/studio/content/${created.id}/edit`);
         return;
@@ -356,11 +374,12 @@ export function StudioContentEditorPage({ contentId, mode }: StudioContentEditor
         visibility: form.visibility
       });
       await setContentTags(contentId, { tag_ids: form.tagIDs });
+      await setContentCategories(contentId, { category_ids: form.categoryIDs });
       if (form.status !== originalStatus) {
         await transitionContentStatus(contentId, { status: form.status });
       }
       setOriginalStatus(form.status);
-      setForm(formFromContent({ ...updated, status: form.status as ContentStatus, tags: tags.filter((tag) => form.tagIDs.includes(tag.id)) }));
+      setForm(formFromContent({ ...updated, status: form.status as ContentStatus, tags: tags.filter((tag) => form.tagIDs.includes(tag.id)), categories: categories.filter((cat) => form.categoryIDs.includes(cat.id)) }));
       setMessage({ tone: "success", text: "内容已保存。" });
     } catch (error) {
       setMessage({ tone: "error", text: humanizeApiError(error) });
@@ -524,6 +543,19 @@ export function StudioContentEditorPage({ contentId, mode }: StudioContentEditor
               ))
             ) : (
               <span>暂无可用标签</span>
+            )}
+          </fieldset>
+          <fieldset className={styles.editorTagFieldset}>
+            <legend>分类</legend>
+            {categories.length > 0 ? (
+              categories.map((cat) => (
+                <label key={cat.id}>
+                  <span>{cat.name}</span>
+                  <input checked={form.categoryIDs.includes(cat.id)} type="checkbox" onChange={(event) => toggleCategory(cat.id, event.target.checked)} />
+                </label>
+              ))
+            ) : (
+              <span>暂无可用分类</span>
             )}
           </fieldset>
         </aside>

@@ -43,6 +43,11 @@ func (c *ContentsController) get(ctx context.Context, id int64, admin bool) (int
 			return nil, common.NewInternal("failed to load content tags", err)
 		}
 		item.Tags = tags
+		categories, err := loadContentCategories(ctx, c, content.ID)
+		if err != nil {
+			return nil, common.NewInternal("failed to load content categories", err)
+		}
+		item.Categories = categories
 
 		return &v1.PublicContentDetailResponse{
 			PublicContentItem: item,
@@ -57,6 +62,11 @@ func (c *ContentsController) get(ctx context.Context, id int64, admin bool) (int
 		return nil, common.NewInternal("failed to load content tags", err)
 	}
 	item.Tags = tags
+	categories, err := loadContentCategories(ctx, c, content.ID)
+	if err != nil {
+		return nil, common.NewInternal("failed to load content categories", err)
+	}
+	item.Categories = categories
 
 	return &v1.ContentDetailResponse{
 		ContentItem: item,

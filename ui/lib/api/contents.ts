@@ -6,6 +6,7 @@ import type {
   DeleteContentResponse,
   ListContentsRequest,
   ListContentsResponse,
+  SetContentCategoriesRequest,
   SetContentTagsRequest,
   TransitionContentStatusRequest,
   UpdateContentRequest
@@ -19,6 +20,7 @@ export function listContents(params: ListContentsRequest = {}) {
   if (params.status) search.set("status", params.status);
   if (params.visibility) search.set("visibility", params.visibility);
   if (params.tag_id) search.set("tag_id", String(params.tag_id));
+  if (params.category_id) search.set("category_id", String(params.category_id));
   if (params.search) search.set("search", params.search);
   if (params.slug) search.set("slug", params.slug);
   const query = search.toString();
@@ -56,6 +58,13 @@ export function transitionContentStatus(id: number, payload: TransitionContentSt
 
 export function setContentTags(id: number, payload: SetContentTagsRequest) {
   return apiFetch<Record<string, never>>(`/bff/contents/${id}/tags`, {
+    method: "PUT",
+    body: JSON.stringify(payload)
+  });
+}
+
+export function setContentCategories(id: number, payload: SetContentCategoriesRequest) {
+  return apiFetch<Record<string, never>>(`/bff/contents/${id}/categories`, {
     method: "PUT",
     body: JSON.stringify(payload)
   });

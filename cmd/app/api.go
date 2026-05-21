@@ -14,6 +14,7 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/router"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/attachments"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/auth"
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/categories"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/contents"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/filedrivers"
 	routesettings "github.com/HappyLadySauce/Beehive-Blog/cmd/app/routes/settings"
@@ -126,6 +127,9 @@ func routesInit(ctx context.Context, sc *svc.ServiceContext) error {
 		return err
 	}
 	if err := tags.Init(sc); err != nil {
+		return err
+	}
+	if err := categories.Init(sc); err != nil {
 		return err
 	}
 	return nil

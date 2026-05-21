@@ -23,6 +23,8 @@ func TestListContentsSlugFilter(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows([]string{"id", "username"}).AddRow(10, "author"))
 	mock.ExpectQuery(`SELECT \* FROM "content"."content_tags" WHERE`).
 		WillReturnRows(sqlmock.NewRows([]string{"content_id", "tag_id"}))
+	mock.ExpectQuery(`SELECT \* FROM "content"."content_categories" WHERE`).
+		WillReturnRows(sqlmock.NewRows([]string{"content_id", "category_id"}))
 
 	ctx, rec := testCrudContext(http.MethodGet, "/api/v1/contents?slug=my-slug&type=article", nil)
 	c.List(ctx)

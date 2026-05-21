@@ -14,6 +14,7 @@ type ListContentsRequest struct {
 	Status     string `form:"status" binding:"omitempty,oneof=draft review published archived"`
 	Visibility string `form:"visibility" binding:"omitempty,oneof=public member private"`
 	TagID      int64  `form:"tag_id" binding:"omitempty,min=1"`
+	CategoryID int64  `form:"category_id" binding:"omitempty,min=1"`
 	Search     string `form:"search" binding:"omitempty,max=256"`
 	Slug       string `form:"slug" binding:"omitempty,max=512"`
 }
@@ -79,6 +80,12 @@ type SetContentTagsRequest struct {
 	TagIDs []int64 `json:"tag_ids" binding:"required"`
 }
 
+// SetContentCategoriesRequest is the payload for replacing all categories on a content.
+// SetContentCategoriesRequest 为替换内容全部分类的请求体。
+type SetContentCategoriesRequest struct {
+	CategoryIDs []int64 `json:"category_ids" binding:"required"`
+}
+
 // ContentItem is the admin-safe response item for content listings.
 // ContentItem 为管理员内容列表项响应。
 type ContentItem struct {
@@ -99,6 +106,7 @@ type ContentItem struct {
 	Metadata           json.RawMessage `json:"metadata,omitempty" swaggertype:"object"`
 	ViewCount          int64           `json:"view_count"`
 	Tags               []TagItem       `json:"tags,omitempty"`
+	Categories         []CategoryItem  `json:"categories,omitempty"`
 	CreatedAt          time.Time       `json:"created_at"`
 	UpdatedAt          time.Time       `json:"updated_at"`
 }
@@ -117,9 +125,10 @@ type PublicContentItem struct {
 	PublishedAt        *time.Time `json:"published_at,omitempty"`
 	WordCount          int        `json:"word_count"`
 	ReadingTimeMinutes int        `json:"reading_time_minutes"`
-	Tags               []TagItem  `json:"tags,omitempty"`
-	CreatedAt          time.Time  `json:"created_at"`
-	UpdatedAt          time.Time  `json:"updated_at"`
+	Tags               []TagItem       `json:"tags,omitempty"`
+	Categories         []CategoryItem  `json:"categories,omitempty"`
+	CreatedAt          time.Time       `json:"created_at"`
+	UpdatedAt          time.Time       `json:"updated_at"`
 }
 
 // ListContentsResponse wraps the paginated admin content result set.

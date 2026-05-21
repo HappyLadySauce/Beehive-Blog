@@ -447,6 +447,54 @@ export type UpdateTagRequest = {
 export type TagDetailResponse = TagItem;
 export type DeleteTagResponse = Record<string, never>;
 
+export type CategoryItem = {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  parent_id?: number | null;
+  sort_order: number;
+  content_count?: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ListCategoriesRequest = {
+  page?: number;
+  page_size?: number;
+  search?: string;
+};
+
+export type ListCategoriesResponse = {
+  items: CategoryItem[];
+  total: number;
+  page: number;
+  page_size: number;
+};
+
+export type CreateCategoryRequest = {
+  name: string;
+  slug: string;
+  description?: string | null;
+  parent_id?: number | null;
+  sort_order?: number;
+};
+
+export type CreateCategoryResponse = {
+  id: number;
+};
+
+export type UpdateCategoryRequest = {
+  name?: string;
+  slug?: string;
+  description?: string | null;
+  parent_id?: number | null;
+  sort_order?: number;
+};
+
+export type CategoryDetailResponse = CategoryItem;
+export type DeleteCategoryResponse = Record<string, never>;
+
 export type ContentItem = {
   id: number;
   type: ContentType;
@@ -466,6 +514,7 @@ export type ContentItem = {
   metadata?: JsonObject | null;
   view_count: number;
   tags?: TagItem[];
+  categories?: CategoryItem[];
   created_at: string;
   updated_at: string;
 };
@@ -477,6 +526,7 @@ export type ListContentsRequest = {
   status?: string;
   visibility?: string;
   tag_id?: number;
+  category_id?: number;
   search?: string;
   slug?: string;
 };
@@ -531,6 +581,10 @@ export type TransitionContentStatusRequest = {
 
 export type SetContentTagsRequest = {
   tag_ids: number[];
+};
+
+export type SetContentCategoriesRequest = {
+  category_ids: number[];
 };
 
 export type DeleteContentResponse = Record<string, never>;

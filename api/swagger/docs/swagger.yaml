@@ -371,6 +371,48 @@ definitions:
           TokenType 为凭证类型；OAuth2 客户端固定为 "Bearer"。
         type: string
     type: object
+  v1.CategoryDetailResponse:
+    properties:
+      content_count:
+        type: integer
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      parent_id:
+        type: integer
+      slug:
+        type: string
+      sort_order:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  v1.CategoryItem:
+    properties:
+      content_count:
+        type: integer
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      parent_id:
+        type: integer
+      slug:
+        type: string
+      sort_order:
+        type: integer
+      updated_at:
+        type: string
+    type: object
   v1.ContentDetailResponse:
     properties:
       ai_access:
@@ -381,6 +423,10 @@ definitions:
         type: string
       body:
         type: string
+      categories:
+        items:
+          $ref: '#/definitions/v1.CategoryItem'
+        type: array
       cover_attachment_id:
         type: integer
       created_at:
@@ -424,6 +470,10 @@ definitions:
         type: integer
       author_username:
         type: string
+      categories:
+        items:
+          $ref: '#/definitions/v1.CategoryItem'
+        type: array
       cover_attachment_id:
         type: integer
       created_at:
@@ -481,6 +531,29 @@ definitions:
         type: string
       target_type:
         type: string
+    type: object
+  v1.CreateCategoryRequest:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 64
+        type: string
+      parent_id:
+        type: integer
+      slug:
+        maxLength: 64
+        type: string
+      sort_order:
+        type: integer
+    required:
+    - name
+    - slug
+    type: object
+  v1.CreateCategoryResponse:
+    properties:
+      id:
+        type: integer
     type: object
   v1.CreateContentRequest:
     properties:
@@ -740,6 +813,19 @@ definitions:
           State 必须在 POST /auth/login（github_oauth2）回传，并与 Redis 中一次性条目匹配。
         type: string
     type: object
+  v1.ListCategoriesResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/v1.CategoryItem'
+        type: array
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total:
+        type: integer
+    type: object
   v1.ListContentRelationsResponse:
     properties:
       items:
@@ -891,6 +977,15 @@ definitions:
         description: |-
           Token is the auth credential bundle granted on successful registration (auto-login).
           Token 为注册成功后自动签发的鉴权凭证集合（自动登录）。
+    type: object
+  v1.SetContentCategoriesRequest:
+    properties:
+      category_ids:
+        items:
+          type: integer
+        type: array
+    required:
+    - category_ids
     type: object
   v1.SetContentTagsRequest:
     properties:
@@ -1065,6 +1160,21 @@ definitions:
         type: string
     required:
     - status
+    type: object
+  v1.UpdateCategoryRequest:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 64
+        type: string
+      parent_id:
+        type: integer
+      slug:
+        maxLength: 64
+        type: string
+      sort_order:
+        type: integer
     type: object
   v1.UpdateContentRequest:
     properties:
@@ -2260,6 +2370,214 @@ paths:
       summary: Get current auth session
       tags:
       - auth
+  /api/v1/categories:
+    get:
+      description: Paginated list of non-deleted categories. 中文：分页返回未软删分类。
+      parameters:
+      - default: 1
+        description: Page number (default 1)
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page (default 20, max 100)
+        in: query
+        name: page_size
+        type: integer
+      - description: Search name or slug
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.ListCategoriesResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: List categories
+      tags:
+      - categories
+    post:
+      consumes:
+      - application/json
+      description: Creates a new category. Admin only. 中文：创建新分类（仅管理员）。
+      parameters:
+      - description: Category creation request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.CreateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.CreateCategoryResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Slug conflict
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Create category
+      tags:
+      - categories
+  /api/v1/categories/{id}:
+    delete:
+      description: Soft-deletes a category when not referenced by content; removed
+        categories no longer appear in listings. Admin only. 中文：无内容引用时软删除分类，删除后列表不可见（仅管理员）。
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Category still referenced
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete category
+      tags:
+      - categories
+    get:
+      description: Returns a non-deleted category by ID. Soft-deleted categories return
+        404. 中文：按 ID 返回未软删分类；已软删返回 404。
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.CategoryDetailResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: Get category detail
+      tags:
+      - categories
+    patch:
+      consumes:
+      - application/json
+      description: Updates a category. Admin only. 中文：更新分类（仅管理员）。
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Category update request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.UpdateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/common.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/v1.CategoryDetailResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Update category
+      tags:
+      - categories
   /api/v1/contents:
     get:
       description: 'Paginated list of contents with optional filters. Without token:
@@ -2501,6 +2819,80 @@ paths:
       security:
       - BearerAuth: []
       summary: Update content
+      tags:
+      - contents
+  /api/v1/contents/{id}/categories:
+    get:
+      description: Returns categories attached to a content item. Without token only
+        for public published content; admin Bearer for any content. 中文：返回内容关联的分类；无
+        token 仅公开已发布内容，管理员 Bearer 可访问任意内容。
+      parameters:
+      - description: Content ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      summary: List content categories
+      tags:
+      - contents
+    put:
+      consumes:
+      - application/json
+      description: Replaces all categories on a content item atomically. Admin only.
+        中文：原子性替换内容的全部分类（仅管理员）。
+      parameters:
+      - description: Content ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Category ID list
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/v1.SetContentCategoriesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/common.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Set content categories
       tags:
       - contents
   /api/v1/contents/{id}/relations:

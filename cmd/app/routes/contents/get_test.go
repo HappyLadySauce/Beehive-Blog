@@ -69,6 +69,11 @@ func TestGetContentPublicReturnsPublicFields(t *testing.T) {
 		WithArgs(int64(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"content_id", "tag_id", "created_at"}))
 
+	// Content categories: SELECT * FROM "content"."content_categories" WHERE content_id = ?
+	mock.ExpectQuery(`SELECT \* FROM "content"."content_categories" WHERE`).
+		WithArgs(int64(1)).
+		WillReturnRows(sqlmock.NewRows([]string{"content_id", "category_id", "created_at"}))
+
 	ctx, rec := testCrudContextWithID(http.MethodGet, "/api/v1/contents/1", nil, "1")
 	c.Get(ctx)
 	env := decodeCrudEnvelope(t, rec)
@@ -120,6 +125,10 @@ func TestGetContentAdminViaBearerToken(t *testing.T) {
 		WithArgs(int64(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"content_id", "tag_id", "created_at"}))
 
+	mock.ExpectQuery(`SELECT \* FROM "content"."content_categories" WHERE`).
+		WithArgs(int64(1)).
+		WillReturnRows(sqlmock.NewRows([]string{"content_id", "category_id", "created_at"}))
+
 	ctx, rec := testCrudContextWithID(http.MethodGet, "/api/v1/contents/1", nil, "1")
 	ctx.Request.Header.Set("Authorization", "Bearer "+pair.Access.Token)
 	runOptionalAuth(t, c, ctx, c.Get)
@@ -156,6 +165,10 @@ func TestGetContentAdminReturnsFullFields(t *testing.T) {
 	mock.ExpectQuery(`SELECT \* FROM "content"."content_tags" WHERE`).
 		WithArgs(int64(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"content_id", "tag_id", "created_at"}))
+
+	mock.ExpectQuery(`SELECT \* FROM "content"."content_categories" WHERE`).
+		WithArgs(int64(1)).
+		WillReturnRows(sqlmock.NewRows([]string{"content_id", "category_id", "created_at"}))
 
 	ctx, rec := testCrudContextWithID(http.MethodGet, "/api/v1/contents/1", nil, "1")
 	ctx.Set(jwt.ClaimsKey, &jwt.Claims{UID: 10, Role: "admin"})
@@ -217,6 +230,16 @@ func TestGetContentPublicLoadsLinkedTags(t *testing.T) {
 		WillReturnRows(sqlmock.NewRows(tagColumns()).
 			AddRow(1, "Active", "active", nil, nil, now, now, nil))
 
+	mock.ExpectQuery(`SELECT \* FROM "content"."content_categories" WHERE`).
+		WithArgs(int64(1)).
+		WillReturnRows(sqlmock.NewRows([]string{"content_id", "category_id", "created_at"}).
+			AddRow(1, 10, now))
+
+	mock.ExpectQuery(`SELECT \* FROM "content"."categories" WHERE`).
+		WithArgs(int64(10)).
+		WillReturnRows(sqlmock.NewRows(categoryColumns()).
+			AddRow(10, "Tech", "tech", nil, nil, 0, now, now, nil))
+
 	ctx, rec := testCrudContextWithID(http.MethodGet, "/api/v1/contents/1", nil, "1")
 	c.Get(ctx)
 	env := decodeCrudEnvelope(t, rec)
@@ -233,6 +256,12 @@ func TestGetContentPublicLoadsLinkedTags(t *testing.T) {
 	}
 	if resp.Tags[0].Slug != "active" {
 		t.Fatalf("tag slug = %q, want active", resp.Tags[0].Slug)
+	}
+	if len(resp.Categories) != 1 {
+		t.Fatalf("categories len = %d, want 1", len(resp.Categories))
+	}
+	if resp.Categories[0].Slug != "tech" {
+		t.Fatalf("category slug = %q, want tech", resp.Categories[0].Slug)
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatalf("unmet expectations: %v", err)
@@ -294,6 +323,10 @@ func TestGetContentViewCountFailureStillOK(t *testing.T) {
 		WithArgs(int64(1)).
 		WillReturnRows(sqlmock.NewRows([]string{"content_id", "tag_id", "created_at"}))
 
+	mock.ExpectQuery(`SELECT \* FROM "content"."content_categories" WHERE`).
+		WithArgs(int64(1)).
+		WillReturnRows(sqlmock.NewRows([]string{"content_id", "category_id", "created_at"}))
+
 	ctx, rec := testCrudContextWithID(http.MethodGet, "/api/v1/contents/1", nil, "1")
 	c.Get(ctx)
 
@@ -307,4 +340,8 @@ func TestGetContentViewCountFailureStillOK(t *testing.T) {
 
 func tagColumns() []string {
 	return []string{"id", "name", "slug", "description", "color", "created_at", "updated_at", "deleted_at"}
+}
+
+func categoryColumns() []string {
+	return []string{"id", "name", "slug", "description", "parent_id", "sort_order", "created_at", "updated_at", "deleted_at"}
 }
