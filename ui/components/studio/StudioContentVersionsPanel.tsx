@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { History, Loader2, RotateCcw, Save } from "lucide-react";
 
 import { humanizeApiError } from "@/lib/api/client";
@@ -21,6 +22,7 @@ export function StudioContentVersionsPanel({ contentId, onRestored }: Props) {
   const [snapshotName, setSnapshotName] = useState("");
   const [snapshotSummary, setSnapshotSummary] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
+  const [restoreTarget, setRestoreTarget] = useState<VersionItem | null>(null);
   const [message, setMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
 
   async function load() {
@@ -141,11 +143,7 @@ export function StudioContentVersionsPanel({ contentId, onRestored }: Props) {
                   disabled={restoring !== null}
                   style={{ fontSize: 12 }}
                   type="button"
-                  onClick={() => {
-                    if (window.confirm("将用此版本快照的标题、正文和摘要覆盖当前内容。slug、状态、标签和分类不会改变。回滚前会自动保存当前内容为快照。确认回滚？")) {
-                      void restore(version.version_number);
-                    }
-                  }}
+                  onClick={() => setRestoreTarget(version)}
                 >
                   {restoring === version.version_number ? <Loader2 aria-hidden className="spin" size={12} /> : <RotateCcw aria-hidden size={12} />}
                   回滚到此版本
@@ -164,6 +162,48 @@ export function StudioContentVersionsPanel({ contentId, onRestored }: Props) {
           ))}
         </ul>
       )}
+      {restoreTarget ? (
+        <RestoreConfirmDialog
+          restoring={restoring === restoreTarget.version_number}
+          version={restoreTarget}
+          onCancel={() => setRestoreTarget(null)}
+          onConfirm={() => {
+            const versionNumber = restoreTarget.version_number;
+            setRestoreTarget(null);
+            void restore(versionNumber);
+          }}
+        />
+      ) : null}
     </div>
+  );
+}
+
+function RestoreConfirmDialog(props: {
+  restoring: boolean;
+  version: VersionItem;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const versionLabel = props.version.snapshot_type === "auto" ? "自动保存" : props.version.name || `v${props.version.version_number}`;
+
+  return createPortal(
+    <div className={styles.overlay} role="presentation">
+      <div aria-labelledby="restore-version-title" aria-modal="true" className={styles.modal} role="alertdialog">
+        <h3 id="restore-version-title">确认回滚版本</h3>
+        <p>
+          将用「{versionLabel}」的标题、正文和摘要覆盖当前内容。Slug、状态、标签和分类不会改变，回滚前会自动保存当前内容为快照。
+        </p>
+        <div className={styles.modalActions}>
+          <button className="secondary-button" disabled={props.restoring} type="button" onClick={props.onCancel}>
+            取消
+          </button>
+          <button className="danger-button" disabled={props.restoring} type="button" onClick={props.onConfirm}>
+            {props.restoring ? <Loader2 aria-hidden className="spin" size={14} /> : <RotateCcw aria-hidden size={14} />}
+            确认回滚
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }

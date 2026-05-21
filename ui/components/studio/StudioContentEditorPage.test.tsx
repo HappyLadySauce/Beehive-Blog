@@ -12,7 +12,9 @@ const updateContent = vi.hoisted(() => vi.fn());
 const transitionContentStatus = vi.hoisted(() => vi.fn());
 const setContentCategories = vi.hoisted(() => vi.fn());
 const setContentTags = vi.hoisted(() => vi.fn());
+const createContentVersion = vi.hoisted(() => vi.fn());
 const listContentVersions = vi.hoisted(() => vi.fn());
+const restoreContentVersion = vi.hoisted(() => vi.fn());
 const upsertAutoContentVersion = vi.hoisted(() => vi.fn());
 const listCategories = vi.hoisted(() => vi.fn());
 const listTags = vi.hoisted(() => vi.fn());
@@ -36,6 +38,7 @@ vi.mock("@/lib/api/contents", async () => {
   const { planStatusTransition } = await import("@/lib/content-status");
   return {
     createContent,
+    createContentVersion,
     getContent,
     setContentCategories,
     setContentTags,
@@ -49,6 +52,7 @@ vi.mock("@/lib/api/contents", async () => {
     }),
     updateContent,
     listContentVersions,
+    restoreContentVersion,
     upsertAutoContentVersion
   };
 });
@@ -157,13 +161,17 @@ describe("StudioContentEditorPage", () => {
     transitionContentStatus.mockReset();
     setContentCategories.mockReset();
     setContentTags.mockReset();
+    createContentVersion.mockReset();
     listCategories.mockReset();
     listTags.mockReset();
     listContentVersions.mockReset();
+    restoreContentVersion.mockReset();
     upsertAutoContentVersion.mockReset();
     listCategories.mockResolvedValue(categories);
     listTags.mockResolvedValue(tags);
+    createContentVersion.mockResolvedValue({ id: 1 });
     listContentVersions.mockResolvedValue({ items: [] });
+    restoreContentVersion.mockResolvedValue(contentDetail);
     upsertAutoContentVersion.mockResolvedValue({ id: 1 });
     getContent.mockResolvedValue(contentDetail);
     createContent.mockResolvedValue({ id: 10 });
@@ -297,6 +305,38 @@ describe("StudioContentEditorPage", () => {
     await waitFor(() => expect(updateContent).toHaveBeenCalledWith(9, expect.objectContaining({ title: "Hello World" })));
     expect(setContentTags).toHaveBeenCalledWith(9, { tag_ids: [] });
     expect(upsertAutoContentVersion).not.toHaveBeenCalled();
+  });
+
+  it("uses a Studio modal instead of native confirm for version restore", async () => {
+    const confirmSpy = vi.spyOn(window, "confirm");
+    listContentVersions.mockResolvedValue({
+      items: [{
+        body: "# Old",
+        change_summary: null,
+        content_id: 9,
+        created_at: "2026-05-21T00:00:00Z",
+        created_by: 1,
+        excerpt: "Old excerpt",
+        id: 2,
+        name: "发布前版本",
+        snapshot_type: "manual",
+        title: "Old title",
+        version_number: 2
+      }]
+    });
+    renderEditor("edit");
+
+    await waitFor(() => expect(screen.getByText("版本历史")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("版本历史"));
+    fireEvent.click(await screen.findByRole("button", { name: "回滚到此版本" }));
+
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(screen.getByRole("alertdialog", { name: "确认回滚版本" })).toBeInTheDocument();
+
+    fireEvent.click(within(screen.getByRole("alertdialog", { name: "确认回滚版本" })).getByRole("button", { name: "确认回滚" }));
+
+    await waitFor(() => expect(restoreContentVersion).toHaveBeenCalledWith(9, 2));
+    confirmSpy.mockRestore();
   });
 
   it("imports markdown files into the editor body", async () => {
