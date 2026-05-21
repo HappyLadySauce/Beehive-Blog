@@ -30,14 +30,24 @@ vi.mock("@/lib/api/attachments", () => ({
   uploadLocalAttachmentsBatch
 }));
 
-vi.mock("@/lib/api/contents", () => ({
-  createContent,
-  getContent,
-  setContentCategories,
-  setContentTags,
-  transitionContentStatus,
-  updateContent
-}));
+vi.mock("@/lib/api/contents", async () => {
+  const { planStatusTransition } = await import("@/lib/content-status");
+  return {
+    createContent,
+    getContent,
+    setContentCategories,
+    setContentTags,
+    transitionContentStatus,
+    transitionContentStatusTo: vi.fn(async (id: number, from: string, to: string) => {
+      let last = null;
+      for (const status of planStatusTransition(from, to)) {
+        last = await transitionContentStatus(id, { status });
+      }
+      return last;
+    }),
+    updateContent
+  };
+});
 
 vi.mock("@/lib/api/categories", () => ({
   listCategories
@@ -255,7 +265,9 @@ describe("StudioContentEditorPage", () => {
 
     await waitFor(() => expect(updateContent).toHaveBeenCalledWith(9, expect.objectContaining({ body: "# Updated" })));
     expect(setContentTags).toHaveBeenCalledWith(9, { tag_ids: [3] });
-    expect(transitionContentStatus).toHaveBeenCalledWith(9, { status: "published" });
+    expect(transitionContentStatus).toHaveBeenCalledTimes(2);
+    expect(transitionContentStatus).toHaveBeenNthCalledWith(1, 9, { status: "review" });
+    expect(transitionContentStatus).toHaveBeenNthCalledWith(2, 9, { status: "published" });
   });
 
   it("imports markdown files into the editor body", async () => {

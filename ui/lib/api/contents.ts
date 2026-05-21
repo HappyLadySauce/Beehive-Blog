@@ -1,6 +1,8 @@
+import { planStatusTransition } from "../content-status";
 import { apiFetch } from "./client";
 import type {
   ContentDetailResponse,
+  ContentStatus,
   CreateContentRequest,
   CreateContentResponse,
   DeleteContentResponse,
@@ -54,6 +56,30 @@ export function transitionContentStatus(id: number, payload: TransitionContentSt
     method: "PATCH",
     body: JSON.stringify(payload)
   });
+}
+
+/**
+ * Applies a multi-step status transition when the target is not directly reachable.
+ * transitionContentStatusTo 在目标状态不可直达时按最短路径串行调用状态流转 API。
+ */
+export async function transitionContentStatusTo(
+  id: number,
+  from: string,
+  to: ContentStatus
+): Promise<ContentDetailResponse | null> {
+  const steps = planStatusTransition(from, to);
+  if (steps.length === 0) {
+    if (from === to) {
+      return null;
+    }
+    throw new Error(`invalid status transition from "${from}" to "${to}"`);
+  }
+
+  let last: ContentDetailResponse | null = null;
+  for (const status of steps) {
+    last = await transitionContentStatus(id, { status });
+  }
+  return last;
 }
 
 export function setContentTags(id: number, payload: SetContentTagsRequest) {

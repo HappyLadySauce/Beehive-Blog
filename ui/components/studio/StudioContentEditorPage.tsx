@@ -12,7 +12,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { ToastMessage } from "@/components/toast/ToastProvider";
 import { attachmentContentUrl, uploadLocalAttachmentsBatch } from "@/lib/api/attachments";
 import { humanizeApiError } from "@/lib/api/client";
-import { createContent, getContent, setContentCategories, setContentTags, transitionContentStatus, updateContent } from "@/lib/api/contents";
+import { createContent, getContent, setContentCategories, setContentTags, transitionContentStatusTo, updateContent } from "@/lib/api/contents";
 import { listCategories } from "@/lib/api/categories";
 import { listTags } from "@/lib/api/tags";
 import type { AttachmentResponse, CategoryItem, ContentAIAccess, ContentDetailResponse, ContentStatus, ContentType, ContentVisibility, TagItem } from "@/lib/api/types";
@@ -376,7 +376,7 @@ export function StudioContentEditorPage({ contentId, mode }: StudioContentEditor
       await setContentTags(contentId, { tag_ids: form.tagIDs });
       await setContentCategories(contentId, { category_ids: form.categoryIDs });
       if (form.status !== originalStatus) {
-        await transitionContentStatus(contentId, { status: form.status });
+        await transitionContentStatusTo(contentId, originalStatus, form.status as ContentStatus);
       }
       setOriginalStatus(form.status);
       setForm(formFromContent({ ...updated, status: form.status as ContentStatus, tags: tags.filter((tag) => form.tagIDs.includes(tag.id)), categories: categories.filter((cat) => form.categoryIDs.includes(cat.id)) }));
