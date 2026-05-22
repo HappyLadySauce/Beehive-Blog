@@ -8,7 +8,7 @@ const e2eDir = path.join(uiDir, "e2e");
 const e2eConfigPath = path.join(repoRoot, "e2e", "config.beehive-blog.yaml");
 const authFile = path.join(uiDir, "e2e", ".auth", "admin.json");
 
-const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000";
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
 const goApiURL = process.env.E2E_GO_API_URL ?? "http://127.0.0.1:8080";
 const reuseExistingServer = !process.env.CI;
 

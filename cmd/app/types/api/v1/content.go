@@ -128,13 +128,16 @@ type PublicContentItem struct {
 	Slug               string         `json:"slug"`
 	Excerpt            *string        `json:"excerpt,omitempty"`
 	CoverAttachmentID  *int64         `json:"cover_attachment_id,omitempty"`
+	CoverURL           string         `json:"cover_url,omitempty"`
 	AuthorID           int64          `json:"author_id"`
 	AuthorUsername     string         `json:"author_username,omitempty"`
 	PublishedAt        *time.Time     `json:"published_at,omitempty"`
 	WordCount          int            `json:"word_count"`
 	ReadingTimeMinutes int            `json:"reading_time_minutes"`
+	ViewCount          int64          `json:"view_count"`
 	Tags               []TagItem      `json:"tags,omitempty"`
 	Categories         []CategoryItem `json:"categories,omitempty"`
+	Category           *CategoryItem  `json:"category,omitempty"`
 	CreatedAt          time.Time      `json:"created_at"`
 	UpdatedAt          time.Time      `json:"updated_at"`
 }
@@ -175,6 +178,100 @@ type ContentDetailResponse struct {
 type PublicContentDetailResponse struct {
 	PublicContentItem
 	Body *string `json:"body,omitempty"`
+}
+
+// PublicSiteOverviewResponse is the one-shot public reader shell payload.
+// PublicSiteOverviewResponse 是读者侧外壳的一次性聚合响应。
+type PublicSiteOverviewResponse struct {
+	Latest      []PublicContentItem `json:"latest"`
+	Featured    []PublicContentItem `json:"featured"`
+	Recent      []PublicContentItem `json:"recent"`
+	Categories  []CategoryItem      `json:"categories"`
+	Tags        []TagItem           `json:"tags"`
+	Archives    []ArchiveItem       `json:"archives"`
+	Stats       SiteStats           `json:"stats"`
+	Author      SiteAuthor          `json:"author"`
+	GeneratedAt time.Time           `json:"generated_at"`
+}
+
+// ArchiveItem summarizes public content counts by month.
+// ArchiveItem 汇总公开内容的月度数量。
+type ArchiveItem struct {
+	Year  int    `json:"year"`
+	Month int    `json:"month"`
+	Label string `json:"label"`
+	Count int64  `json:"count"`
+}
+
+// SiteStats carries public site counters for sidebars.
+// SiteStats 承载侧栏展示的公开站点计数。
+type SiteStats struct {
+	Articles int64 `json:"articles"`
+	Notes    int64 `json:"notes"`
+	Projects int64 `json:"projects"`
+	Views    int64 `json:"views"`
+	Tags     int64 `json:"tags"`
+}
+
+// SiteAuthor carries display-only author card settings.
+// SiteAuthor 承载仅用于展示的作者卡配置。
+type SiteAuthor struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	AvatarURL   string `json:"avatar_url,omitempty"`
+}
+
+// PublicReaderContextResponse carries side data for a public content detail page.
+// PublicReaderContextResponse 承载公开详情页的上下文侧栏数据。
+type PublicReaderContextResponse struct {
+	Previous *PublicContentItem   `json:"previous,omitempty"`
+	Next     *PublicContentItem   `json:"next,omitempty"`
+	Related  []PublicContentItem  `json:"related"`
+	Recent   []PublicContentItem  `json:"recent"`
+	Comments ListCommentsResponse `json:"comments"`
+}
+
+// ListCommentsRequest carries public comment pagination.
+// ListCommentsRequest 承载公开评论分页查询参数。
+type ListCommentsRequest struct {
+	Page     int `form:"page" binding:"omitempty,min=1"`
+	PageSize int `form:"page_size" binding:"omitempty,min=1,max=50"`
+}
+
+// CommentItem is a public approved comment.
+// CommentItem 是公开展示的已审核评论。
+type CommentItem struct {
+	ID        int64     `json:"id"`
+	ContentID int64     `json:"content_id"`
+	Nickname  string    `json:"nickname"`
+	Website   *string   `json:"website,omitempty"`
+	Body      string    `json:"body"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// ListCommentsResponse wraps a paginated public comment list.
+// ListCommentsResponse 封装分页公开评论列表。
+type ListCommentsResponse struct {
+	Items    []CommentItem `json:"items"`
+	Total    int64         `json:"total"`
+	Page     int           `json:"page"`
+	PageSize int           `json:"page_size"`
+}
+
+// CreateCommentRequest is the anonymous comment creation payload.
+// CreateCommentRequest 是匿名评论创建请求。
+type CreateCommentRequest struct {
+	Nickname string  `json:"nickname" binding:"required,min=1,max=80"`
+	Email    string  `json:"email" binding:"required,email,max=255"`
+	Website  *string `json:"website,omitempty" binding:"omitempty,max=512"`
+	Body     string  `json:"body" binding:"required,min=1,max=2000"`
+}
+
+// CreateCommentResponse returns the moderation status of a new comment.
+// CreateCommentResponse 返回新评论的审核状态。
+type CreateCommentResponse struct {
+	ID     int64  `json:"id"`
+	Status string `json:"status"`
 }
 
 // VersionItem is a single content version entry.

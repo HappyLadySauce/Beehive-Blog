@@ -4,11 +4,24 @@ test.describe("Public Web smoke", () => {
   test("home page renders hero and latest posts", async ({ page }) => {
     await page.goto("/");
 
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("知识蜂巢");
-    await expect(page.getByRole("heading", { name: "最新文章" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "最新笔记" })).toBeVisible();
-    await expect(page.getByRole("heading", { exact: true, name: "项目" })).toBeVisible();
-    await expect(page.locator("section[aria-labelledby='latest-posts']").getByText(/公开文章|发布第一篇公开文章/)).toBeVisible();
+    await expect(page.getByText("Theme-AnZhiYu")).toBeVisible();
+    await expect(page.getByRole("link", { name: "首页", exact: true })).toBeVisible();
+    await expect(page.getByRole("complementary", { name: "侧栏" }).getByRole("heading", { name: "标签" })).toBeVisible();
+    await expect(page.locator("section[aria-labelledby='latest-posts']").getByText(/分钟|暂无公开文章/).first()).toBeVisible();
+  });
+
+  test("home page supports search and shortcut panel", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    await page.locator(".anz-header-actions").getByRole("button", { name: "站内搜索" }).click();
+    await expect(page.getByRole("dialog", { name: "站内搜索" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog", { name: "站内搜索" })).toBeHidden();
+
+    await page.keyboard.down("Shift");
+    await expect(page.getByText("博客快捷键")).toBeVisible();
+    await page.keyboard.up("Shift");
   });
 
   test("posts index renders public articles or an empty state", async ({ page }) => {

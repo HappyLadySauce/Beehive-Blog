@@ -48,6 +48,7 @@ func (c *ContentsController) get(ctx context.Context, id int64, admin bool) (int
 			return nil, common.NewInternal("failed to load content categories", err)
 		}
 		item.Categories = categories
+		attachPrimaryCategory(&item)
 
 		return &v1.PublicContentDetailResponse{
 			PublicContentItem: item,

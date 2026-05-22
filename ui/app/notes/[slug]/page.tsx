@@ -43,5 +43,5 @@ export default async function NoteDetailPage({ params }: PageProps) {
   const note = await getPublicContent("note", slug);
   if (!note) notFound();
 
-  return <PublicContentDetail content={note} eyebrow="Note" />;
+  return await PublicContentDetail({ content: note, eyebrow: "Note" });
 }

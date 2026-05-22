@@ -76,3 +76,24 @@ type ContentRelation struct {
 func (ContentRelation) TableName() string {
 	return "content.content_relations"
 }
+
+// Comment maps to content.comments for reader-facing moderated comments.
+// Comment 映射到 content.comments 读者侧审核评论表。
+type Comment struct {
+	ID        int64          `gorm:"primaryKey;column:id"`
+	ContentID int64          `gorm:"column:content_id;not null"`
+	Nickname  string         `gorm:"column:nickname;size:80;not null"`
+	EmailHash string         `gorm:"column:email_hash;size:64;not null"`
+	Website   *string        `gorm:"column:website;size:512"`
+	Body      string         `gorm:"column:body;not null"`
+	Status    string         `gorm:"column:status;size:16;not null;default:review"`
+	CreatedAt time.Time      `gorm:"column:created_at;not null"`
+	UpdatedAt time.Time      `gorm:"column:updated_at;not null"`
+	DeletedAt gorm.DeletedAt `gorm:"column:deleted_at;index"`
+}
+
+// TableName returns the fully qualified table name for Comment.
+// TableName 返回 Comment 的完全限定表名。
+func (Comment) TableName() string {
+	return "content.comments"
+}

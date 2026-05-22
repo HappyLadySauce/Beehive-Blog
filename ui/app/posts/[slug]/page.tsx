@@ -43,5 +43,8 @@ export default async function PostDetailPage({ params }: PageProps) {
   const post = await getPublicPost(slug);
   if (!post) notFound();
 
-  return <PublicContentDetail content={{ ...post, type: "article", typeLabel: "文章", href: `/posts/${post.slug}` }} eyebrow="Article" />;
+  return await PublicContentDetail({
+    content: { ...post, type: "article", typeLabel: "文章", href: `/posts/${post.slug}` },
+    eyebrow: "Article"
+  });
 }

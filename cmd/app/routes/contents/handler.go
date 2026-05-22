@@ -41,9 +41,13 @@ func Init(svcCtx *svc.ServiceContext) error {
 	publicContents.Use(middleware.OptionalAuthMiddleware(svcCtx))
 	publicContents.GET("", c.List)
 	publicContents.GET("/:id", c.Get)
+	publicContents.GET("/:id/reader-context", c.ReaderContext)
 	publicContents.GET("/:id/relations", c.GetRelations)
 	publicContents.GET("/:id/tags", c.GetContentTags)
 	publicContents.GET("/:id/categories", c.GetContentCategories)
+
+	public := router.V1().Group("/public")
+	public.GET("/site-overview", c.SiteOverview)
 
 	// Admin-only routes (separate group avoids stacking with OptionalAuth).
 	// 管理员专用路由（独立分组，避免与 OptionalAuth 叠加）。

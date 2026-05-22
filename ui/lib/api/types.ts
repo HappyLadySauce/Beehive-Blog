@@ -50,12 +50,18 @@ export type LoginRequest =
 export type PublicContentKind = "article" | "note" | "project";
 
 export type PublicPost = {
+  id: number;
   slug: string;
   title: string;
   description: string;
   body: string;
   publishedAt: string;
   tags: string[];
+  categories: PublicTaxonomyItem[];
+  category?: PublicTaxonomyItem;
+  coverUrl?: string;
+  authorUsername?: string;
+  viewCount: number;
   readingMinutes: number;
 };
 
@@ -63,6 +69,83 @@ export type PublicContent = PublicPost & {
   type: PublicContentKind;
   typeLabel: string;
   href: string;
+};
+
+export type PublicTaxonomyItem = {
+  id: number;
+  name: string;
+  slug: string;
+  content_count?: number;
+  color?: string | null;
+};
+
+export type ArchiveItem = {
+  year: number;
+  month: number;
+  label: string;
+  count: number;
+};
+
+export type SiteStats = {
+  articles: number;
+  notes: number;
+  projects: number;
+  views: number;
+  tags: number;
+};
+
+export type SiteAuthor = {
+  name: string;
+  description: string;
+  avatar_url?: string;
+};
+
+export type PublicSiteOverview = {
+  latest: PublicContent[];
+  featured: PublicContent[];
+  recent: PublicContent[];
+  categories: PublicTaxonomyItem[];
+  tags: PublicTaxonomyItem[];
+  archives: ArchiveItem[];
+  stats: SiteStats;
+  author: SiteAuthor;
+  generated_at: string;
+};
+
+export type PublicReaderContext = {
+  previous?: PublicContent;
+  next?: PublicContent;
+  related: PublicContent[];
+  recent: PublicContent[];
+  comments: ListCommentsResponse;
+};
+
+export type CommentItem = {
+  id: number;
+  content_id: number;
+  nickname: string;
+  website?: string | null;
+  body: string;
+  created_at: string;
+};
+
+export type ListCommentsResponse = {
+  items: CommentItem[];
+  total: number;
+  page: number;
+  page_size: number;
+};
+
+export type CreateCommentRequest = {
+  nickname: string;
+  email: string;
+  website?: string;
+  body: string;
+};
+
+export type CreateCommentResponse = {
+  id: number;
+  status: string;
 };
 
 export type EmailSettingsPublic = {

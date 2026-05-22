@@ -90,6 +90,7 @@ func (c *ContentsController) list(ctx context.Context, req *v1.ListContentsReque
 			item.AuthorUsername = authorMap[content.AuthorID]
 			item.Tags = tagMap[content.ID]
 			item.Categories = catMap[content.ID]
+			attachPrimaryCategory(&item)
 			items[i] = item
 		}
 		return &v1.PublicListContentsResponse{

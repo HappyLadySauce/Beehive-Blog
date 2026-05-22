@@ -44,12 +44,18 @@ describe("public content API", () => {
     );
     expect(posts).toEqual([
       {
+        id: 7,
         slug: "real-post",
         title: "真实文章",
         description: "来自后端的摘要",
         body: "",
         publishedAt: "2026-05-20T00:00:00.000Z",
         tags: ["Backend"],
+        categories: [],
+        category: undefined,
+        coverUrl: undefined,
+        authorUsername: undefined,
+        viewCount: 0,
         readingMinutes: 6
       }
     ]);
@@ -207,6 +213,21 @@ describe("public content API", () => {
 
     await expect(listPublicPosts()).resolves.toEqual([]);
     await expect(getPublicPost("ai-assisted-writing-loop")).resolves.toBeNull();
+  });
+
+  it("uses seeded fallback post details outside production when the backend returns an empty slug result", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(jsonResponse({ items: [], total: 0, page: 1, page_size: 1 }))
+    );
+
+    const { getPublicPost } = await import("./content");
+
+    await expect(getPublicPost("ai-assisted-writing-loop")).resolves.toMatchObject({
+      slug: "ai-assisted-writing-loop",
+      title: "AI 协作写作回路"
+    });
   });
 
   it("returns null when a public slug is not found", async () => {

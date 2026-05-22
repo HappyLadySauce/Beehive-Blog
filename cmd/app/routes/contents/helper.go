@@ -87,20 +87,42 @@ func toContentItem(c model.Content) v1.ContentItem {
 // toPublicContentItem converts a model.Content to its public API response item.
 // toPublicContentItem 将 model.Content 转换为公开 API 响应项（不含 metadata）。
 func toPublicContentItem(c model.Content) v1.PublicContentItem {
-	return v1.PublicContentItem{
+	item := v1.PublicContentItem{
 		ID:                 c.ID,
 		Type:               c.Type,
 		Title:              c.Title,
 		Slug:               c.Slug,
 		Excerpt:            c.Excerpt,
 		CoverAttachmentID:  c.CoverAttachmentID,
+		CoverURL:           coverURL(c.CoverAttachmentID),
 		AuthorID:           c.AuthorID,
 		PublishedAt:        c.PublishedAt,
 		WordCount:          c.WordCount,
 		ReadingTimeMinutes: c.ReadingTimeMinutes,
+		ViewCount:          c.ViewCount,
 		CreatedAt:          c.CreatedAt,
 		UpdatedAt:          c.UpdatedAt,
 	}
+	return item
+}
+
+// coverURL resolves a public attachment content URL from an optional cover attachment ID.
+// coverURL 根据可选封面附件 ID 生成公开附件内容 URL。
+func coverURL(id *int64) string {
+	if id == nil || *id <= 0 {
+		return ""
+	}
+	return fmt.Sprintf("/api/v1/attachments/%d/content", *id)
+}
+
+// attachPrimaryCategory copies the first category to the convenience category field.
+// attachPrimaryCategory 将第一个分类复制到便捷 category 字段。
+func attachPrimaryCategory(item *v1.PublicContentItem) {
+	if len(item.Categories) == 0 {
+		return
+	}
+	category := item.Categories[0]
+	item.Category = &category
 }
 
 // toVersionItem converts a model.ContentVersion to its API response item.

@@ -43,5 +43,5 @@ export default async function ProjectDetailPage({ params }: PageProps) {
   const project = await getPublicContent("project", slug);
   if (!project) notFound();
 
-  return <PublicContentDetail content={project} eyebrow="Project" />;
+  return await PublicContentDetail({ content: project, eyebrow: "Project" });
 }

@@ -1,89 +1,52 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen } from "lucide-react";
 
-import { PublicContentCard } from "@/components/PublicContentCard";
-import { PostCard } from "@/components/PostCard";
-import { listPublicContents, listPublicPosts } from "@/lib/api/content";
+import { AnzhiyuHomeTop } from "@/components/anzhiyu/AnzhiyuHomeTop";
+import { AnzhiyuPostCard } from "@/components/anzhiyu/AnzhiyuPostCard";
+import { AnzhiyuSidebar } from "@/components/anzhiyu/AnzhiyuSidebar";
+import { getPublicSiteOverview } from "@/lib/api/content";
 
 export default async function HomePage() {
-  const [posts, notes, projects] = await Promise.all([
-    listPublicPosts(),
-    listPublicContents("note", { pageSize: 3 }),
-    listPublicContents("project", { pageSize: 3 })
-  ]);
+  const overview = await getPublicSiteOverview();
+  const posts = overview.latest.length > 0 ? overview.latest : overview.featured;
 
   return (
-    <main className="page">
-      <section className="hero">
-        <div>
-          <p className="eyebrow">Public Web</p>
-          <h1>把长期写作、项目和 AI 协作整理成一个可发布的知识蜂巢。</h1>
-          <p>
-            Beehive Blog 面向读者呈现公开文章、项目与知识脉络。公开页面强调 SSR 与 SEO，让内容稳定可读、可索引。
-          </p>
-          <div className="hero-actions">
-            <Link className="primary-button" href="/posts">
-              <BookOpen aria-hidden size={18} />
-              阅读文章
+    <main className="page anzhiyu-page">
+      <div className="anz-flash">
+        <strong>即刻</strong>
+        <span>快写一首情歌，雅俗共赏 ~</span>
+        <Link href="/posts">→</Link>
+      </div>
+      <AnzhiyuHomeTop categories={overview.categories} featured={overview.featured} />
+      <div className="anz-layout">
+        <section className="anz-feed" aria-labelledby="latest-posts">
+          <div className="anz-tabs" id="latest-posts">
+            <Link className="is-active" href="/">
+              首页
             </Link>
+            <Link href="/posts">AI</Link>
+            <Link href="/projects">项目</Link>
+            <Link href="/notes">生活</Link>
+            <Link href="/posts">前端</Link>
+            <Link href="/posts">更多</Link>
           </div>
-        </div>
-        <div className="hero-visual" aria-hidden>
-          <div className="honeycomb">
-            {Array.from({ length: 12 }, (_, index) => (
-              <span key={index} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section aria-labelledby="latest-posts">
-        <div className="section-heading">
-          <h2 id="latest-posts">最新文章</h2>
-          <Link className="text-link" href="/posts">
-            全部文章 <ArrowRight aria-hidden size={16} />
-          </Link>
-        </div>
-        <div className="post-grid">
           {posts.length > 0 ? (
-            posts.slice(0, 3).map((post) => <PostCard key={post.slug} post={post} />)
+            <div className="anz-post-grid">
+              {posts.map((post) => (
+                <AnzhiyuPostCard content={post} key={`${post.type}-${post.slug}`} />
+              ))}
+            </div>
           ) : (
             <div className="public-empty">暂无公开文章。发布第一篇公开文章后会显示在这里。</div>
           )}
-        </div>
-      </section>
-
-      <section aria-labelledby="latest-notes">
-        <div className="section-heading">
-          <h2 id="latest-notes">最新笔记</h2>
-          <Link className="text-link" href="/notes">
-            全部笔记 <ArrowRight aria-hidden size={16} />
-          </Link>
-        </div>
-        <div className="post-grid">
-          {notes.length > 0 ? (
-            notes.map((note) => <PublicContentCard key={note.slug} content={note} />)
-          ) : (
-            <div className="public-empty">暂无公开笔记。发布第一条公开笔记后会显示在这里。</div>
-          )}
-        </div>
-      </section>
-
-      <section aria-labelledby="latest-projects">
-        <div className="section-heading">
-          <h2 id="latest-projects">项目</h2>
-          <Link className="text-link" href="/projects">
-            全部项目 <ArrowRight aria-hidden size={16} />
-          </Link>
-        </div>
-        <div className="post-grid">
-          {projects.length > 0 ? (
-            projects.map((project) => <PublicContentCard key={project.slug} content={project} />)
-          ) : (
-            <div className="public-empty">暂无公开项目。发布第一个公开项目后会显示在这里。</div>
-          )}
-        </div>
-      </section>
+        </section>
+        <AnzhiyuSidebar
+          archives={overview.archives}
+          author={overview.author}
+          recent={overview.recent}
+          stats={overview.stats}
+          tags={overview.tags}
+        />
+      </div>
     </main>
   );
 }
