@@ -12,7 +12,7 @@ func TestSchemaMigrationsEncodeAvatarFallbackSemantics(t *testing.T) {
 
 	root := repoRootFromWorkingDir(t)
 	identitySQL := readIdentityUsersMigration(t, root)
-	attachmentSQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "attachment", "000_attachment_attachments.sql"))
+	attachmentSQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "attachment", "002_attachment_attachments.sql"))
 
 	if !strings.Contains(identitySQL, "NULL means use the application default avatar") {
 		t.Fatalf("identity migration should document that NULL avatar_attachment_id falls back to the application default avatar")
@@ -27,16 +27,16 @@ func TestSchemaMigrationsPlaceAvatarSoftDeleteTriggerWithAttachmentLifecycle(t *
 
 	root := repoRootFromWorkingDir(t)
 	identitySQL := readIdentityUsersMigration(t, root)
-	attachmentSQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "attachment", "000_attachment_attachments.sql"))
+	attachmentSQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "attachment", "002_attachment_attachments.sql"))
 
-	if strings.Contains(identitySQL, "trg_attachment_attachments_clear_users_avatar_on_soft_delete") {
-		t.Fatalf("identity migration should not define attachment soft-delete trigger")
+	if !strings.Contains(identitySQL, "trg_attachment_attachments_clear_users_avatar_on_soft_delete") {
+		t.Fatalf("identity migration should define attachment soft-delete trigger after identity.users exists")
 	}
-	if !strings.Contains(attachmentSQL, "trg_attachment_attachments_clear_users_avatar_on_soft_delete") {
-		t.Fatalf("attachment migration should define attachment soft-delete trigger")
+	if strings.Contains(attachmentSQL, "trg_attachment_attachments_clear_users_avatar_on_soft_delete") {
+		t.Fatalf("attachment migration should defer avatar soft-delete trigger until identity.users exists")
 	}
-	if !strings.Contains(attachmentSQL, "updated_at = NOW()") {
-		t.Fatalf("attachment migration should refresh user updated_at when avatar falls back to default")
+	if !strings.Contains(identitySQL, "updated_at = NOW()") {
+		t.Fatalf("identity migration should refresh user updated_at when avatar falls back to default")
 	}
 }
 
@@ -44,33 +44,24 @@ func TestAttachmentSchemaMigrationsFinalizeStorageMountLocator(t *testing.T) {
 	t.Helper()
 
 	root := repoRootFromWorkingDir(t)
-	finalSQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "attachment", "007_attachment_finalize_storage_mounts.sql"))
+	attachmentSQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "attachment", "002_attachment_attachments.sql"))
 
-	if !strings.Contains(finalSQL, "ALTER COLUMN storage_mount_id SET NOT NULL") {
-		t.Fatalf("final storage migration should require storage_mount_id")
+	if !strings.Contains(attachmentSQL, "storage_mount_id BIGINT NOT NULL") {
+		t.Fatalf("attachment migration should require storage_mount_id")
 	}
-	if !strings.Contains(finalSQL, "ALTER COLUMN object_key SET NOT NULL") {
-		t.Fatalf("final storage migration should require object_key")
+	if !strings.Contains(attachmentSQL, "object_key      VARCHAR(1024) NOT NULL") {
+		t.Fatalf("attachment migration should require object_key")
 	}
-	for _, oldColumn := range []string{"DROP COLUMN storage_type", "DROP COLUMN bucket", "DROP COLUMN local_path"} {
-		if !strings.Contains(finalSQL, oldColumn) {
-			t.Fatalf("final storage migration should remove old column statement %q", oldColumn)
+	for _, oldColumn := range []string{"storage_type", "bucket", "local_path"} {
+		if strings.Contains(attachmentSQL, oldColumn) {
+			t.Fatalf("attachment migration should not include legacy locator column %q", oldColumn)
 		}
 	}
-	if !strings.Contains(finalSQL, "CREATE UNIQUE INDEX ux_attachment_attachments_mount_object_key") {
-		t.Fatalf("final storage migration should define mount + object_key uniqueness")
+	if !strings.Contains(attachmentSQL, "CREATE UNIQUE INDEX ux_attachment_attachments_mount_object_key") {
+		t.Fatalf("attachment migration should define mount + object_key uniqueness")
 	}
-	if !strings.Contains(finalSQL, "ON attachment.attachments (storage_mount_id, created_at DESC, id DESC)") {
-		t.Fatalf("final storage migration should list by storage_mount_id, created_at DESC, id DESC")
-	}
-	for _, legacyIndex := range []string{
-		"idx_attachment_attachments_live_storage_type_created_at",
-		"ux_attachment_attachments_remote_object",
-		"ux_attachment_attachments_local_path",
-	} {
-		if !strings.Contains(finalSQL, legacyIndex) {
-			t.Fatalf("final storage migration should explicitly drop legacy index %q", legacyIndex)
-		}
+	if !strings.Contains(attachmentSQL, "ON attachment.attachments (storage_mount_id, created_at DESC, id DESC)") {
+		t.Fatalf("attachment migration should list by storage_mount_id, created_at DESC, id DESC")
 	}
 }
 
@@ -78,8 +69,8 @@ func TestAttachmentSchemaMigrationsKeepPurposeAndAddOwnerFKAfterIdentity(t *test
 	t.Helper()
 
 	root := repoRootFromWorkingDir(t)
-	attachmentSQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "attachment", "000_attachment_attachments.sql"))
-	ownerFKSQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "attachment", "014_attachment_attachments_owner_fk.sql"))
+	attachmentSQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "attachment", "002_attachment_attachments.sql"))
+	identitySQL := readIdentityUsersMigration(t, root)
 
 	for _, want := range []string{
 		"purpose         VARCHAR(32) NOT NULL DEFAULT 'content'",
@@ -101,7 +92,7 @@ func TestAttachmentSchemaMigrationsKeepPurposeAndAddOwnerFKAfterIdentity(t *test
 		"REFERENCES identity.users (id)",
 		"ON DELETE RESTRICT",
 	} {
-		if !strings.Contains(ownerFKSQL, want) {
+		if !strings.Contains(identitySQL, want) {
 			t.Fatalf("owner FK migration missing %q", want)
 		}
 	}
@@ -111,8 +102,8 @@ func TestIdentitySchemaMigrationsAddRefreshSessionsAndProviderIdentities(t *test
 	t.Helper()
 
 	root := repoRootFromWorkingDir(t)
-	sessionSQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "identity", "012_identity_user_sessions.sql"))
-	identitySQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "identity", "013_identity_user_identities.sql"))
+	sessionSQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "identity", "006_identity_user_sessions.sql"))
+	identitySQL := readRepoFile(t, root, filepath.Join("sql", "migrations", "identity", "007_identity_user_identities.sql"))
 
 	for _, want := range []string{
 		"CREATE TABLE identity.user_sessions",
