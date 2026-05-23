@@ -16,3 +16,19 @@ func TestCleanOptionalWebsiteRejectsUnsafeScheme(t *testing.T) {
 		t.Fatal("expected unsafe website URL to be rejected")
 	}
 }
+
+func TestCleanRequiredTextRejectsWhitespaceOnly(t *testing.T) {
+	if _, err := cleanRequiredText(" \n\t ", "body"); err == nil {
+		t.Fatal("expected whitespace-only text to be rejected")
+	}
+}
+
+func TestCleanRequiredTextTrimsValidText(t *testing.T) {
+	value, err := cleanRequiredText("  hello  ", "body")
+	if err != nil {
+		t.Fatalf("expected valid text, got error: %v", err)
+	}
+	if value != "hello" {
+		t.Fatalf("unexpected trimmed value: %q", value)
+	}
+}

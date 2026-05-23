@@ -44,6 +44,16 @@ func normalizeEmailHash(email string) string {
 	return hex.EncodeToString(sum[:])
 }
 
+// cleanRequiredText trims required text fields and rejects whitespace-only values.
+// cleanRequiredText 清理必填文本字段，并拒绝纯空白值。
+func cleanRequiredText(raw string, field string) (string, error) {
+	value := strings.TrimSpace(raw)
+	if value == "" {
+		return "", common.NewBadRequest(field+" is required", fmt.Errorf("empty after trim"))
+	}
+	return value, nil
+}
+
 func cleanOptionalWebsite(raw *string) (*string, error) {
 	if raw == nil {
 		return nil, nil

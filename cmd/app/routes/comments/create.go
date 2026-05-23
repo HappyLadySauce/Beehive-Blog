@@ -3,7 +3,6 @@ package comments
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -20,6 +19,14 @@ func (c *CommentsController) create(ctx context.Context, contentID int64, req *v
 		return nil, mapCommentFirstError(err)
 	}
 
+	nickname, err := cleanRequiredText(req.Nickname, "nickname")
+	if err != nil {
+		return nil, err
+	}
+	body, err := cleanRequiredText(req.Body, "body")
+	if err != nil {
+		return nil, err
+	}
 	website, err := cleanOptionalWebsite(req.Website)
 	if err != nil {
 		return nil, err
@@ -28,10 +35,10 @@ func (c *CommentsController) create(ctx context.Context, contentID int64, req *v
 	now := nowUTC()
 	row := model.Comment{
 		ContentID: contentID,
-		Nickname:  strings.TrimSpace(req.Nickname),
+		Nickname:  nickname,
 		EmailHash: normalizeEmailHash(req.Email),
 		Website:   website,
-		Body:      strings.TrimSpace(req.Body),
+		Body:      body,
 		Status:    "review",
 		CreatedAt: now,
 		UpdatedAt: now,
