@@ -1,19 +1,16 @@
 import Link from "next/link";
-import { ArrowUpRight, Flame, Sparkles, Tags } from "lucide-react";
+import { ArrowUpRight, BookOpen, FolderKanban, NotebookTabs, Sparkles } from "lucide-react";
 
-import type { PublicContent, PublicTaxonomyItem } from "@/lib/api/types";
+import type { PublicContent } from "@/lib/api/types";
 import { coverStyle } from "./cover";
 
 export function AnzhiyuHomeTop({
-  categories,
   featured
 }: {
-  categories: PublicTaxonomyItem[];
   featured: PublicContent[];
 }) {
   const main = featured[0];
-  const secondary = featured.slice(1, 4);
-  const categoryTiles = normalizedCategories(categories);
+  const entryTiles = homeEntries;
 
   return (
     <section className="anz-home-top" aria-label="首页推荐">
@@ -30,10 +27,10 @@ export function AnzhiyuHomeTop({
           </span>
         </Link>
         <div className="anz-category-row">
-          {categoryTiles.map((category, index) => (
-            <Link className={`anz-category-tile anz-category-tile--${index + 1}`} href="/posts" key={`${category.slug}-${index}`}>
-              <span>{category.name}</span>
-              <Tags aria-hidden size={76} />
+          {entryTiles.map((entry, index) => (
+            <Link className={`anz-category-tile anz-category-tile--${index + 1}`} href={entry.href} key={entry.href}>
+              <span>{entry.name}</span>
+              <entry.icon aria-hidden size={76} />
             </Link>
           ))}
         </div>
@@ -48,24 +45,13 @@ export function AnzhiyuHomeTop({
             更多推荐
           </Link>
         </div>
-        <div className="anz-mini-feature-grid">
-          {secondary.map((item) => (
-            <Link href={item.href} key={item.id} style={coverStyle(item)}>
-              <Flame aria-hidden size={18} />
-              <span>{item.title}</span>
-            </Link>
-          ))}
-        </div>
       </div>
     </section>
   );
 }
 
-function normalizedCategories(categories: PublicTaxonomyItem[]) {
-  const fallback = [
-    { id: 1, name: "前端", slug: "frontend" },
-    { id: 2, name: "生活", slug: "life" },
-    { id: 3, name: "安和鱼", slug: "anzhiyu" }
-  ];
-  return [...categories, ...fallback].slice(0, 3);
-}
+const homeEntries = [
+  { name: "文库", href: "/posts", icon: BookOpen },
+  { name: "笔记", href: "/notes", icon: NotebookTabs },
+  { name: "项目", href: "/projects", icon: FolderKanban }
+];

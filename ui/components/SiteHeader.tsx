@@ -9,6 +9,7 @@ import { AnzhiyuRightTools } from "@/components/anzhiyu/AnzhiyuRightTools";
 import { AnzhiyuSearch } from "@/components/anzhiyu/AnzhiyuSearch";
 import { AnzhiyuShortcutPanel } from "@/components/anzhiyu/AnzhiyuShortcutPanel";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { ThemeToggleButton } from "@/components/theme/ThemeProvider";
 import { isStudioContentEditorPath } from "@/lib/studio/routes";
 
 export function SiteHeader() {
@@ -52,16 +53,11 @@ export function SiteHeader() {
           <Grid2X2 aria-hidden size={22} />
           <span>安和鱼</span>
         </Link>
-        <nav className="main-nav anzhiyu-nav" aria-label="主导航">
-          <Link href="/posts">文库</Link>
-          <Link href="/projects">友链</Link>
-          <Link href="/notes">我的</Link>
-          <Link href="/projects">关于</Link>
-        </nav>
         <div className="anz-header-actions">
           <button className="anz-header-icon" type="button" aria-label="站内搜索" onClick={() => setSearchOpen(true)}>
             <Search aria-hidden size={19} />
           </button>
+          <ThemeToggleButton className="anz-header-icon" />
           {loading ? null : isAuthenticated ? (
             <div className="user-menu" ref={menuRef}>
               <button

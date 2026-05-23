@@ -26,12 +26,24 @@ type GithubOAuth2SettingsPublic struct {
 	AllowNonGitHubEndpoints bool   `json:"allow_non_github_endpoints"`
 }
 
+// ProfileSettingsPublic is the public author profile shown on reader-facing pages.
+// ProfileSettingsPublic 是读者侧页面展示的公开博主资料。
+type ProfileSettingsPublic struct {
+	DisplayName string `json:"display_name"`
+	AvatarURL   string `json:"avatar_url"`
+	Headline    string `json:"headline"`
+	Bio         string `json:"bio"`
+	Location    string `json:"location"`
+	Website     string `json:"website"`
+}
+
 // SettingsResponse is returned by GET /api/v1/settings (sanitized).
 // SettingsResponse 为 GET /api/v1/settings 的脱敏响应。
 type SettingsResponse struct {
 	Revision     int64                      `json:"revision"`
 	Email        EmailSettingsPublic        `json:"email"`
 	GithubOAuth2 GithubOAuth2SettingsPublic `json:"github_oauth2"`
+	Profile      ProfileSettingsPublic      `json:"profile"`
 }
 
 // EmailSMTPPatchJSON is the JSON body fragment for PATCH /api/v1/settings (partial email update).
@@ -60,11 +72,23 @@ type GithubOAuth2PatchJSON struct {
 	AllowNonGitHubEndpoints *bool   `json:"allow_non_github_endpoints"`
 }
 
+// ProfilePatchJSON is the JSON body fragment for PATCH /api/v1/settings/profile.
+// ProfilePatchJSON 为 PATCH /api/v1/settings/profile 的 JSON 片段。
+type ProfilePatchJSON struct {
+	DisplayName *string `json:"display_name" binding:"omitempty,max=80"`
+	AvatarURL   *string `json:"avatar_url" binding:"omitempty,max=512"`
+	Headline    *string `json:"headline" binding:"omitempty,max=160"`
+	Bio         *string `json:"bio" binding:"omitempty,max=1000"`
+	Location    *string `json:"location" binding:"omitempty,max=120"`
+	Website     *string `json:"website" binding:"omitempty,max=512"`
+}
+
 // SettingsPatchRequestJSON is the PATCH body; only keys present are merged server-side.
 // SettingsPatchRequestJSON 为 PATCH 请求体；仅出现的键在服务端参与合并。
 type SettingsPatchRequestJSON struct {
 	Email        *EmailSMTPPatchJSON    `json:"email"`
 	GithubOAuth2 *GithubOAuth2PatchJSON `json:"github_oauth2"`
+	Profile      *ProfilePatchJSON      `json:"profile"`
 }
 
 // SettingsEmailTestRequest is the body for sending a test email with saved SMTP settings.

@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
+	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/middleware"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/router"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/types/common"
@@ -41,6 +42,12 @@ func Init(svcCtx *svc.ServiceContext) error {
 	group := router.V1().Group("/contents/:id/comments")
 	group.GET("", c.List)
 	group.POST("", c.Create)
+
+	admin := router.V1().Group("/comments")
+	admin.Use(middleware.AuthMiddleware(svcCtx), middleware.RequireRole("admin"))
+	admin.GET("", c.ListAdmin)
+	admin.PATCH("/:commentId/status", c.UpdateStatus)
+	admin.DELETE("/:commentId", c.Delete)
 	return nil
 }
 

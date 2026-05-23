@@ -1,6 +1,7 @@
 import { apiFetch } from "./client";
 import type {
   GithubOAuth2Patch,
+  ProfilePatch,
   SettingsEmailTestRequest,
   SettingsEmailTestResponse,
   SettingsPatchRequest,
@@ -28,6 +29,19 @@ export function getGithubOAuth2Settings() {
 
 export function patchGithubOAuth2Settings(payload: GithubOAuth2Patch) {
   return apiFetch<SettingsResponse>("/bff/settings/github-oauth2", {
+    method: "PATCH",
+    body: JSON.stringify(payload)
+  });
+}
+
+export function getProfileSettings() {
+  return apiFetch<SettingsResponse>("/bff/settings/profile", {
+    method: "GET"
+  });
+}
+
+export function patchProfileSettings(payload: ProfilePatch) {
+  return apiFetch<SettingsResponse>("/bff/settings/profile", {
     method: "PATCH",
     body: JSON.stringify(payload)
   });

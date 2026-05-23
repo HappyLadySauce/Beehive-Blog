@@ -39,21 +39,38 @@ func (c *ContentsController) siteOverview(ctx context.Context) (*v1.PublicSiteOv
 	if err != nil {
 		return nil, err
 	}
+	author := c.publicAuthor()
 
 	return &v1.PublicSiteOverviewResponse{
-		Latest:     latest,
-		Featured:   featured,
-		Recent:     latest,
-		Categories: categories,
-		Tags:       tags,
-		Archives:   archives,
-		Stats:      stats,
-		Author: v1.SiteAuthor{
-			Name:        "安和鱼",
-			Description: "生活明朗，万物可爱",
-		},
+		Latest:      latest,
+		Featured:    featured,
+		Recent:      latest,
+		Categories:  categories,
+		Tags:        tags,
+		Archives:    archives,
+		Stats:       stats,
+		Author:      author,
 		GeneratedAt: time.Now().UTC(),
 	}, nil
+}
+
+func (c *ContentsController) publicAuthor() v1.SiteAuthor {
+	author := v1.SiteAuthor{Name: "安和鱼", Description: "生活明朗，万物可爱"}
+	if c.svc == nil || c.svc.SettingsProvider == nil {
+		return author
+	}
+	profile := c.svc.SettingsProvider.Current().Profile
+	if profile.DisplayName != "" {
+		author.Name = profile.DisplayName
+	}
+	if profile.Headline != "" {
+		author.Description = profile.Headline
+	}
+	author.AvatarURL = profile.AvatarURL
+	author.Bio = profile.Bio
+	author.Location = profile.Location
+	author.Website = profile.Website
+	return author
 }
 
 // SiteOverview handles GET /api/v1/public/site-overview.

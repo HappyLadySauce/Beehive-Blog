@@ -219,6 +219,9 @@ type SiteAuthor struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	AvatarURL   string `json:"avatar_url,omitempty"`
+	Bio         string `json:"bio,omitempty"`
+	Location    string `json:"location,omitempty"`
+	Website     string `json:"website,omitempty"`
 }
 
 // PublicReaderContextResponse carries side data for a public content detail page.
@@ -272,6 +275,46 @@ type CreateCommentRequest struct {
 type CreateCommentResponse struct {
 	ID     int64  `json:"id"`
 	Status string `json:"status"`
+}
+
+// ListAdminCommentsRequest carries admin filters for moderated comments.
+// ListAdminCommentsRequest 承载管理员评论列表筛选参数。
+type ListAdminCommentsRequest struct {
+	Page      int    `form:"page" binding:"omitempty,min=1"`
+	PageSize  int    `form:"page_size" binding:"omitempty,min=1,max=100"`
+	Status    string `form:"status" binding:"omitempty,oneof=review published hidden"`
+	ContentID int64  `form:"content_id" binding:"omitempty,min=1"`
+	Search    string `form:"search" binding:"omitempty,max=128"`
+}
+
+// AdminCommentItem is a moderated comment row for Studio.
+// AdminCommentItem 是 Studio 中展示的待管理评论行。
+type AdminCommentItem struct {
+	ID           int64     `json:"id"`
+	ContentID    int64     `json:"content_id"`
+	ContentTitle string    `json:"content_title"`
+	ContentSlug  string    `json:"content_slug"`
+	Nickname     string    `json:"nickname"`
+	Website      *string   `json:"website,omitempty"`
+	Body         string    `json:"body"`
+	Status       string    `json:"status"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+// ListAdminCommentsResponse wraps the admin comment list.
+// ListAdminCommentsResponse 封装管理员评论列表。
+type ListAdminCommentsResponse struct {
+	Items    []AdminCommentItem `json:"items"`
+	Total    int64              `json:"total"`
+	Page     int                `json:"page"`
+	PageSize int                `json:"page_size"`
+}
+
+// UpdateCommentStatusRequest changes one moderated comment status.
+// UpdateCommentStatusRequest 修改单条审核评论状态。
+type UpdateCommentStatusRequest struct {
+	Status string `json:"status" binding:"required,oneof=review published hidden"`
 }
 
 // VersionItem is a single content version entry.

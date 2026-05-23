@@ -11,23 +11,18 @@ export default async function HomePage() {
 
   return (
     <main className="page anzhiyu-page">
-      <div className="anz-flash">
-        <strong>即刻</strong>
-        <span>快写一首情歌，雅俗共赏 ~</span>
-        <Link href="/posts">→</Link>
-      </div>
-      <AnzhiyuHomeTop categories={overview.categories} featured={overview.featured} />
+      <AnzhiyuHomeTop featured={overview.featured} />
       <div className="anz-layout">
         <section className="anz-feed" aria-labelledby="latest-posts">
           <div className="anz-tabs" id="latest-posts">
             <Link className="is-active" href="/">
               首页
             </Link>
-            <Link href="/posts">AI</Link>
-            <Link href="/projects">项目</Link>
-            <Link href="/notes">生活</Link>
-            <Link href="/posts">前端</Link>
-            <Link href="/posts">更多</Link>
+            {overview.categories.map((category) => (
+              <Link href="/posts" key={category.slug}>
+                {category.name}
+              </Link>
+            ))}
           </div>
           {posts.length > 0 ? (
             <div className="anz-post-grid">

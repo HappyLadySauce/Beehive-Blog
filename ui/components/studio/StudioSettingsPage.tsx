@@ -1,25 +1,27 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { ChevronDown, Github, Loader2, Mail, Save, Send, Settings } from "lucide-react";
+import { ChevronDown, Github, Loader2, Mail, Save, Send, Settings, UserRound } from "lucide-react";
 
 import { humanizeApiError } from "@/lib/api/client";
 import {
   getGithubOAuth2Settings,
+  getProfileSettings,
   getSettings,
   patchGithubOAuth2Settings,
+  patchProfileSettings,
   patchSettings,
   testEmailSettings
 } from "@/lib/api/settings";
 import { ToastMessage } from "@/components/toast/ToastProvider";
-import type { EmailSettingsPublic, GithubOAuth2SettingsPublic, SettingsResponse } from "@/lib/api/types";
+import type { EmailSettingsPublic, GithubOAuth2SettingsPublic, ProfileSettingsPublic, SettingsResponse } from "@/lib/api/types";
 import styles from "./Studio.module.css";
 import { StudioPanel } from "./StudioPanel";
 import { StudioSelect } from "./StudioSelect";
 import { StudioTopbar } from "./StudioTopbar";
 
 type PasswordMode = "keep" | "set" | "clear";
-type SettingsSection = "email" | "github";
+type SettingsSection = "email" | "github" | "profile";
 
 const defaultEmail: EmailSettingsPublic = {
   enabled: false,
@@ -43,6 +45,15 @@ const defaultGithubOAuth2: GithubOAuth2SettingsPublic = {
   allow_non_github_endpoints: false
 };
 
+const defaultProfile: ProfileSettingsPublic = {
+  display_name: "安和鱼",
+  avatar_url: "",
+  headline: "生活明朗，万物可爱",
+  bio: "",
+  location: "",
+  website: ""
+};
+
 const tlsOptions = [
   { value: "none", label: "None" },
   { value: "starttls", label: "STARTTLS" },
@@ -51,6 +62,7 @@ const tlsOptions = [
 
 let settingsInflight: Promise<SettingsResponse> | null = null;
 let githubSettingsInflight: Promise<SettingsResponse> | null = null;
+let profileSettingsInflight: Promise<SettingsResponse> | null = null;
 
 function requestSettings() {
   return getSettings();
@@ -86,11 +98,27 @@ function loadGithubOAuth2Settings() {
   return promise;
 }
 
+function requestProfileSettings() {
+  return getProfileSettings();
+}
+
+function loadProfileSettings() {
+  if (profileSettingsInflight) {
+    return profileSettingsInflight;
+  }
+  const promise = requestProfileSettings().finally(() => {
+    profileSettingsInflight = null;
+  });
+  profileSettingsInflight = promise;
+  return promise;
+}
+
 // resetSettingsPageModuleStateForTests clears module caches between unit tests.
 // resetSettingsPageModuleStateForTests 在单元测试之间清空模块级缓存。
 export function resetSettingsPageModuleStateForTests() {
   settingsInflight = null;
   githubSettingsInflight = null;
+  profileSettingsInflight = null;
 }
 
 export function StudioSettingsPage() {
@@ -98,6 +126,7 @@ export function StudioSettingsPage() {
   const [activeSection, setActiveSection] = useState<SettingsSection>("email");
   const [email, setEmail] = useState<EmailSettingsPublic>(defaultEmail);
   const [githubOAuth2, setGithubOAuth2] = useState<GithubOAuth2SettingsPublic>(defaultGithubOAuth2);
+  const [profile, setProfile] = useState<ProfileSettingsPublic>(defaultProfile);
   const [password, setPassword] = useState("");
   const [passwordMode, setPasswordMode] = useState<PasswordMode>("keep");
   const [githubSecret, setGithubSecret] = useState("");
@@ -106,7 +135,9 @@ export function StudioSettingsPage() {
   const [testRecipient, setTestRecipient] = useState("");
   const [loading, setLoading] = useState(true);
   const [githubLoaded, setGithubLoaded] = useState(false);
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const [loadingGithub, setLoadingGithub] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(false);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [message, setMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
@@ -120,6 +151,7 @@ export function StudioSettingsPage() {
         setSettings(payload);
         setEmail(payload.email);
         setGithubOAuth2(payload.github_oauth2 ?? defaultGithubOAuth2);
+        setProfile(payload.profile ?? defaultProfile);
         setTestRecipient(payload.email.from || payload.email.username);
       })
       .catch((error) => {
@@ -175,6 +207,43 @@ export function StudioSettingsPage() {
     };
   }, [activeSection, githubLoaded, settings]);
 
+  useEffect(() => {
+    if (activeSection !== "profile" || profileLoaded || !settings) {
+      return;
+    }
+
+    let active = true;
+    void loadProfile();
+
+    async function loadProfile() {
+      setLoadingProfile(true);
+      try {
+        const profilePayload = await loadProfileSettings();
+        if (!active) return;
+        const profileSettings = profilePayload.profile ?? defaultProfile;
+        setSettings((current) =>
+          current
+            ? {
+                ...current,
+                revision: Math.max(current.revision, profilePayload.revision),
+                profile: profileSettings
+              }
+            : current
+        );
+        setProfile(profileSettings);
+        setProfileLoaded(true);
+      } catch (error) {
+        if (active) setMessage({ tone: "error", text: humanizeApiError(error) });
+      } finally {
+        if (active) setLoadingProfile(false);
+      }
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [activeSection, profileLoaded, settings]);
+
   const passwordHint = useMemo(() => {
     if (passwordMode === "clear") return "保存后会清空当前 SMTP 密码。";
     if (password.trim() !== "") return "保存后会更新 SMTP 密码。";
@@ -193,6 +262,10 @@ export function StudioSettingsPage() {
 
   function updateGithubOAuth2<K extends keyof GithubOAuth2SettingsPublic>(key: K, value: GithubOAuth2SettingsPublic[K]) {
     setGithubOAuth2((current) => ({ ...current, [key]: value }));
+  }
+
+  function updateProfile<K extends keyof ProfileSettingsPublic>(key: K, value: ProfileSettingsPublic[K]) {
+    setProfile((current) => ({ ...current, [key]: value }));
   }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -264,6 +337,36 @@ export function StudioSettingsPage() {
     }
   }
 
+  async function onSubmitProfile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const validation = validateProfile(profile);
+    if (validation) {
+      setMessage({ tone: "error", text: validation });
+      return;
+    }
+
+    setSaving(true);
+    setMessage(null);
+    try {
+      const next = await patchProfileSettings({
+        display_name: profile.display_name,
+        avatar_url: profile.avatar_url,
+        headline: profile.headline,
+        bio: profile.bio,
+        location: profile.location,
+        website: profile.website
+      });
+      setSettings(next);
+      setProfile(next.profile ?? defaultProfile);
+      setProfileLoaded(true);
+      setMessage({ tone: "success", text: "个人设置已保存。" });
+    } catch (error) {
+      setMessage({ tone: "error", text: humanizeApiError(error) });
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function onSendTestEmail() {
     const recipient = testRecipient.trim();
     const validation = validateTestRecipient(email, recipient);
@@ -322,6 +425,18 @@ export function StudioSettingsPage() {
         >
           <Github aria-hidden size={18} />
           GitHub OAuth2
+        </button>
+        <button
+          aria-pressed={activeSection === "profile"}
+          className={activeSection === "profile" ? styles.segmentedTabActive : styles.segmentedTab}
+          type="button"
+          onClick={() => {
+            setActiveSection("profile");
+            setMessage(null);
+          }}
+        >
+          <UserRound aria-hidden size={18} />
+          个人设置
         </button>
       </div>
 
@@ -446,7 +561,8 @@ export function StudioSettingsPage() {
 
             <ToastMessage message={message} />
           </form>
-          ) : loadingGithub ? (
+          ) : activeSection === "github" ? (
+          loadingGithub ? (
           <div className={styles.emptyState} role="status">
             <Loader2 aria-hidden className="spin" size={24} />
             <strong>正在加载 GitHub OAuth2 设置...</strong>
@@ -547,6 +663,55 @@ export function StudioSettingsPage() {
             <ToastMessage message={message} />
           </form>
           )
+          ) : loadingProfile ? (
+          <div className={styles.emptyState} role="status">
+            <Loader2 aria-hidden className="spin" size={24} />
+            <strong>正在加载个人设置...</strong>
+          </div>
+          ) : (
+          <form className={styles.formGrid} id="studio-settings-form" onSubmit={onSubmitProfile}>
+            <label className={styles.field}>
+              <span>显示名称</span>
+              <input value={profile.display_name} onChange={(event) => updateProfile("display_name", event.target.value)} />
+            </label>
+
+            <label className={styles.field}>
+              <span>头像 URL</span>
+              <input placeholder="https://example.com/avatar.png" value={profile.avatar_url} onChange={(event) => updateProfile("avatar_url", event.target.value)} />
+            </label>
+
+            <label className={styles.fieldFull}>
+              <span>一句话简介</span>
+              <input value={profile.headline} onChange={(event) => updateProfile("headline", event.target.value)} />
+            </label>
+
+            <label className={styles.fieldFull}>
+              <span>个人介绍</span>
+              <textarea
+                className={styles.textarea}
+                value={profile.bio}
+                onChange={(event) => updateProfile("bio", event.target.value)}
+              />
+            </label>
+
+            <label className={styles.field}>
+              <span>所在地</span>
+              <input value={profile.location} onChange={(event) => updateProfile("location", event.target.value)} />
+            </label>
+
+            <label className={styles.field}>
+              <span>个人网站</span>
+              <input placeholder="https://example.com" value={profile.website} onChange={(event) => updateProfile("website", event.target.value)} />
+            </label>
+
+            <div className={`${styles.metaRow} ${styles.fieldFull}`}>
+              <span className={styles.muted}>这些信息会用于公开首页个人卡片。</span>
+              {settings ? <span className={styles.muted}>Revision {settings.revision}</span> : null}
+            </div>
+
+            <ToastMessage message={message} />
+          </form>
+          )
         )}
       </StudioPanel>
     </>
@@ -555,11 +720,13 @@ export function StudioSettingsPage() {
 
 function settingsPanelTitle(section: SettingsSection) {
   if (section === "github") return "GitHub OAuth2";
+  if (section === "profile") return "个人设置";
   return "邮件 SMTP";
 }
 
 function settingsPanelIcon(section: SettingsSection) {
   if (section === "github") return <Github aria-hidden size={20} />;
+  if (section === "profile") return <UserRound aria-hidden size={20} />;
   return <Settings aria-hidden size={20} />;
 }
 
@@ -616,6 +783,27 @@ function validateGithubOAuth2(githubOAuth2: GithubOAuth2SettingsPublic, githubSe
     ["Auth URL", githubOAuth2.auth_url],
     ["Token URL", githubOAuth2.token_url],
     ["User Info URL", githubOAuth2.user_info_url]
+  ] as const) {
+    if (value.trim() === "") continue;
+    try {
+      const parsed = new URL(value);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        return `${label} 必须使用 http 或 https。`;
+      }
+    } catch {
+      return `${label} 格式不正确。`;
+    }
+  }
+  return null;
+}
+
+function validateProfile(profile: ProfileSettingsPublic) {
+  if (profile.display_name.trim() === "") {
+    return "显示名称不能为空。";
+  }
+  for (const [label, value] of [
+    ["头像 URL", profile.avatar_url],
+    ["个人网站", profile.website]
   ] as const) {
     if (value.trim() === "") continue;
     try {

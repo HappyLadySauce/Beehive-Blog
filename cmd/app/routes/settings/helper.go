@@ -38,6 +38,14 @@ func toResponse(s settingtypes.ApplicationSettings, revision int64) v1.SettingsR
 			UserInfoURL:             g.UserInfoURL,
 			AllowNonGitHubEndpoints: g.AllowNonGitHubEndpoints,
 		},
+		Profile: v1.ProfileSettingsPublic{
+			DisplayName: s.Profile.DisplayName,
+			AvatarURL:   s.Profile.AvatarURL,
+			Headline:    s.Profile.Headline,
+			Bio:         s.Profile.Bio,
+			Location:    s.Profile.Location,
+			Website:     s.Profile.Website,
+		},
 	}
 }
 
@@ -70,5 +78,19 @@ func patchGithubFromV1(p *v1.GithubOAuth2PatchJSON) *settingtypes.GithubOAuth2Pa
 		TokenURL:                p.TokenURL,
 		UserInfoURL:             p.UserInfoURL,
 		AllowNonGitHubEndpoints: p.AllowNonGitHubEndpoints,
+	}
+}
+
+func patchProfileFromV1(p *v1.ProfilePatchJSON) *settingtypes.ProfilePatch {
+	if p == nil {
+		return nil
+	}
+	return &settingtypes.ProfilePatch{
+		DisplayName: p.DisplayName,
+		AvatarURL:   p.AvatarURL,
+		Headline:    p.Headline,
+		Bio:         p.Bio,
+		Location:    p.Location,
+		Website:     p.Website,
 	}
 }

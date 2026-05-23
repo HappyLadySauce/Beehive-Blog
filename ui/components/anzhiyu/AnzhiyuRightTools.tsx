@@ -1,6 +1,8 @@
 "use client";
 
-import { ArrowUp, Moon, Search, SquareMenu } from "lucide-react";
+import { ArrowUp, Search, SquareMenu } from "lucide-react";
+
+import { ThemeToggleButton } from "@/components/theme/ThemeProvider";
 
 export function AnzhiyuRightTools({ onSearch }: { onSearch: () => void }) {
   return (
@@ -8,9 +10,7 @@ export function AnzhiyuRightTools({ onSearch }: { onSearch: () => void }) {
       <button aria-label="站内搜索" type="button" onClick={onSearch}>
         <Search aria-hidden size={18} />
       </button>
-      <button aria-label="显示模式" type="button">
-        <Moon aria-hidden size={18} />
-      </button>
+      <ThemeToggleButton />
       <button aria-label="页面菜单" type="button">
         <SquareMenu aria-hidden size={18} />
       </button>

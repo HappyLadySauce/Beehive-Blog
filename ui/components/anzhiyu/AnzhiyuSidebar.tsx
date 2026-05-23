@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { BookOpen, CalendarDays, Eye, Hash, Rss } from "lucide-react";
+import Image from "next/image";
+import { BookOpen, CalendarDays, Eye, Hash } from "lucide-react";
 
 import type { ArchiveItem, PublicContent, PublicTaxonomyItem, SiteAuthor, SiteStats } from "@/lib/api/types";
 
@@ -20,16 +21,12 @@ export function AnzhiyuSidebar({
     <aside className="anz-sidebar" aria-label="侧栏">
       <section className="anz-author-card">
         <span className="anz-author-card__hello">欢迎光临</span>
-        <div className="anz-author-card__avatar">{author.name.slice(0, 1)}</div>
+        <div className="anz-author-card__avatar">
+          {author.avatar_url ? <Image alt={author.name} height={96} src={author.avatar_url} unoptimized width={96} /> : author.name.slice(0, 1)}
+        </div>
         <strong>{author.name}</strong>
         <p>{author.description}</p>
-      </section>
-      <section className="anz-wechat-card">
-        <Rss aria-hidden size={28} />
-        <div>
-          <strong>公众号</strong>
-          <span>快人一步获取最新文章</span>
-        </div>
+        {author.bio ? <small>{author.bio}</small> : null}
       </section>
       <section className="anz-widget">
         <h2>

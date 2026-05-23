@@ -38,9 +38,12 @@ describe("SiteHeader", () => {
   it("shows login for anonymous visitors", () => {
     render(<SiteHeader />);
 
-    expect(screen.getByRole("link", { name: "文库" })).toHaveAttribute("href", "/posts");
-    expect(screen.getByRole("link", { name: "我的" })).toHaveAttribute("href", "/notes");
-    expect(screen.getByRole("link", { name: "友链" })).toHaveAttribute("href", "/projects");
+    expect(screen.queryByRole("link", { name: "文库" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "我的" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "友链" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "关于" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "站内搜索" })).toHaveLength(2);
+    expect(screen.getAllByRole("button", { name: /切换显示模式/ })).toHaveLength(2);
     expect(screen.getByRole("link", { name: "登录" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Studio" })).not.toBeInTheDocument();
   });

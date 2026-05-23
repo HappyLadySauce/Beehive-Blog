@@ -83,6 +83,10 @@ func Init(ctx context.Context, svcCtx *svc.ServiceContext) error {
 	githubOAuth2.GET("", h.GetGithubOAuth2Settings)
 	githubOAuth2.PATCH("", h.PatchGithubOAuth2Settings)
 
+	profile := g.Group("/profile")
+	profile.GET("", h.GetProfileSettings)
+	profile.PATCH("", h.PatchProfileSettings)
+
 	return nil
 }
 

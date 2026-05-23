@@ -98,6 +98,9 @@ export type SiteAuthor = {
   name: string;
   description: string;
   avatar_url?: string;
+  bio?: string;
+  location?: string;
+  website?: string;
 };
 
 export type PublicSiteOverview = {
@@ -127,6 +130,38 @@ export type CommentItem = {
   website?: string | null;
   body: string;
   created_at: string;
+};
+
+export type AdminCommentItem = {
+  id: number;
+  content_id: number;
+  content_title: string;
+  content_slug: string;
+  nickname: string;
+  website?: string | null;
+  body: string;
+  status: "review" | "published" | "hidden" | string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ListAdminCommentsRequest = {
+  page?: number;
+  page_size?: number;
+  status?: string;
+  content_id?: number;
+  search?: string;
+};
+
+export type ListAdminCommentsResponse = {
+  items: AdminCommentItem[];
+  total: number;
+  page: number;
+  page_size: number;
+};
+
+export type UpdateCommentStatusRequest = {
+  status: "review" | "published" | "hidden";
 };
 
 export type ListCommentsResponse = {
@@ -170,10 +205,20 @@ export type GithubOAuth2SettingsPublic = {
   allow_non_github_endpoints: boolean;
 };
 
+export type ProfileSettingsPublic = {
+  display_name: string;
+  avatar_url: string;
+  headline: string;
+  bio: string;
+  location: string;
+  website: string;
+};
+
 export type SettingsResponse = {
   revision: number;
   email: EmailSettingsPublic;
   github_oauth2: GithubOAuth2SettingsPublic;
+  profile: ProfileSettingsPublic;
 };
 
 export type EmailSMTPPatch = {
@@ -188,7 +233,8 @@ export type EmailSMTPPatch = {
 };
 
 export type SettingsPatchRequest = {
-  email: EmailSMTPPatch;
+  email?: EmailSMTPPatch;
+  profile?: ProfilePatch;
 };
 
 export type GithubOAuth2Patch = {
@@ -703,6 +749,8 @@ export type CreateVersionRequest = {
   name?: string | null;
   change_summary?: string | null;
 };
+
+export type ProfilePatch = Partial<ProfileSettingsPublic>;
 
 export type CreateVersionResponse = VersionItem;
 

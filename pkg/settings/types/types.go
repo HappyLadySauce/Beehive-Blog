@@ -12,6 +12,7 @@ import (
 type ApplicationSettings struct {
 	Email        EmailSMTPSettings    `json:"email"`
 	GithubOAuth2 GithubOAuth2Settings `json:"github_oauth2"`
+	Profile      ProfileSettings      `json:"profile"`
 }
 
 // Normalize fills defaults for omitted JSON fields after decode.
@@ -24,6 +25,7 @@ func (s *ApplicationSettings) Normalize() {
 		s.Email.TLS = EmailTLSStartTLS
 	}
 	s.GithubOAuth2.Normalize()
+	s.Profile.Normalize()
 }
 
 // Validate checks business rules for the full settings document.
@@ -34,6 +36,9 @@ func (s *ApplicationSettings) Validate() error {
 		return err
 	}
 	if err := validateGithubOAuth2(&s.GithubOAuth2); err != nil {
+		return err
+	}
+	if err := validateProfile(&s.Profile); err != nil {
 		return err
 	}
 	return nil
@@ -55,6 +60,10 @@ func DefaultApplicationSettings() ApplicationSettings {
 		},
 		GithubOAuth2: GithubOAuth2Settings{
 			Enabled: false,
+		},
+		Profile: ProfileSettings{
+			DisplayName: "安和鱼",
+			Headline:    "生活明朗，万物可爱",
 		},
 	}
 	s.GithubOAuth2.Normalize()
@@ -122,6 +131,27 @@ func MergePatch(base ApplicationSettings, patch *SettingsPatchRequest) (Applicat
 			out.GithubOAuth2.AllowNonGitHubEndpoints = *p.AllowNonGitHubEndpoints
 		}
 	}
+	if patch.Profile != nil {
+		p := patch.Profile
+		if p.DisplayName != nil {
+			out.Profile.DisplayName = *p.DisplayName
+		}
+		if p.AvatarURL != nil {
+			out.Profile.AvatarURL = *p.AvatarURL
+		}
+		if p.Headline != nil {
+			out.Profile.Headline = *p.Headline
+		}
+		if p.Bio != nil {
+			out.Profile.Bio = *p.Bio
+		}
+		if p.Location != nil {
+			out.Profile.Location = *p.Location
+		}
+		if p.Website != nil {
+			out.Profile.Website = *p.Website
+		}
+	}
 	out.Normalize()
 	if err := out.Validate(); err != nil {
 		return ApplicationSettings{}, err
@@ -134,6 +164,7 @@ func MergePatch(base ApplicationSettings, patch *SettingsPatchRequest) (Applicat
 type SettingsPatchRequest struct {
 	Email        *EmailSMTPPatch    `json:"email"`
 	GithubOAuth2 *GithubOAuth2Patch `json:"github_oauth2"`
+	Profile      *ProfilePatch      `json:"profile"`
 }
 
 // ParsePayload decodes JSON bytes into ApplicationSettings and validates.
