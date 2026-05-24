@@ -828,7 +828,7 @@ html[data-theme="dark"] [class*="contentEditorNavigator"] {
 
 .anzhiyu-page {
   max-width: 1400px;
-  padding-top: 0;
+  padding-top: 14px;
 }
 
 .anz-flash {

@@ -51,7 +51,7 @@ export function SiteHeader() {
       <header className="site-header anzhiyu-header">
         <Link className="brand" href="/" aria-label="Beehive Blog 首页">
           <Grid2X2 aria-hidden size={22} />
-          <span>安和鱼</span>
+          <span>Beehive</span>
         </Link>
         <div className="anz-header-actions">
           <button className="anz-header-icon" type="button" aria-label="站内搜索" onClick={() => setSearchOpen(true)}>
