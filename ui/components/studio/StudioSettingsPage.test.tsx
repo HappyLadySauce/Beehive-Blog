@@ -6,14 +6,18 @@ import { resetSettingsPageModuleStateForTests, StudioSettingsPage } from "./Stud
 
 const getSettings = vi.hoisted(() => vi.fn());
 const getGithubOAuth2Settings = vi.hoisted(() => vi.fn());
+const getProfileSettings = vi.hoisted(() => vi.fn());
 const patchSettings = vi.hoisted(() => vi.fn());
 const patchGithubOAuth2Settings = vi.hoisted(() => vi.fn());
+const patchProfileSettings = vi.hoisted(() => vi.fn());
 const testEmailSettings = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api/settings", () => ({
   getGithubOAuth2Settings,
+  getProfileSettings,
   getSettings,
   patchGithubOAuth2Settings,
+  patchProfileSettings,
   patchSettings,
   testEmailSettings
 }));
@@ -39,6 +43,14 @@ const baseSettings = {
     token_url: "https://github.com/login/oauth/access_token",
     user_info_url: "https://api.github.com/user",
     allow_non_github_endpoints: false
+  },
+  profile: {
+    display_name: "安和鱼",
+    avatar_url: "",
+    headline: "生活明朗，万物可爱",
+    bio: "",
+    location: "",
+    website: ""
   }
 };
 
@@ -55,13 +67,17 @@ describe("StudioSettingsPage", () => {
     resetSettingsPageModuleStateForTests();
     getSettings.mockReset();
     getGithubOAuth2Settings.mockReset();
+    getProfileSettings.mockReset();
     patchSettings.mockReset();
     patchGithubOAuth2Settings.mockReset();
+    patchProfileSettings.mockReset();
     testEmailSettings.mockReset();
     getSettings.mockResolvedValue(baseSettings);
     getGithubOAuth2Settings.mockResolvedValue(baseSettings);
+    getProfileSettings.mockResolvedValue(baseSettings);
     patchSettings.mockResolvedValue({ ...baseSettings, revision: 6 });
     patchGithubOAuth2Settings.mockResolvedValue({ ...baseSettings, revision: 6 });
+    patchProfileSettings.mockResolvedValue({ ...baseSettings, revision: 6 });
     testEmailSettings.mockResolvedValue({ recipient: "reader@example.com" });
   });
 
@@ -79,6 +95,7 @@ describe("StudioSettingsPage", () => {
     await waitFor(() => expect(screen.getByLabelText("SMTP Host")).toHaveValue("smtp.example.com"));
     expect(getSettings).toHaveBeenCalledTimes(1);
     expect(getGithubOAuth2Settings).not.toHaveBeenCalled();
+    expect(getProfileSettings).not.toHaveBeenCalled();
   });
 
   it("loads GitHub OAuth2 settings when opening the GitHub tab", async () => {
@@ -139,6 +156,31 @@ describe("StudioSettingsPage", () => {
     expect(screen.getByLabelText("Client ID")).toHaveValue("");
     expect(screen.getByLabelText("Redirect URL")).toHaveValue("");
     expect(screen.getByText("Client secret not set")).toBeInTheDocument();
+  });
+
+  it("loads profile settings when opening the profile tab", async () => {
+    renderSettingsPage();
+    await waitFor(() => expect(screen.getByRole("button", { name: "个人设置" })).toBeInTheDocument());
+    expect(getProfileSettings).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "个人设置" }));
+    await waitFor(() => expect(getProfileSettings).toHaveBeenCalledTimes(1));
+    expect(screen.getByLabelText("显示名称")).toHaveValue("安和鱼");
+    expect(screen.getByLabelText("一句话简介")).toHaveValue("生活明朗，万物可爱");
+  });
+
+  it("saves profile settings through the profile API", async () => {
+    renderSettingsPage();
+    await waitFor(() => expect(screen.getByRole("button", { name: "个人设置" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "个人设置" }));
+    await waitFor(() => expect(screen.getByLabelText("显示名称")).toHaveValue("安和鱼"));
+
+    fireEvent.change(screen.getByLabelText("显示名称"), { target: { value: "Beehive Admin" } });
+    fireEvent.click(screen.getByRole("button", { name: "保存设置" }));
+
+    await waitFor(() => expect(patchProfileSettings).toHaveBeenCalled());
+    expect(patchProfileSettings.mock.calls[0][0]).toMatchObject({ display_name: "Beehive Admin" });
+    expect(await screen.findByText("个人设置已保存。")).toBeInTheDocument();
   });
 
   it("validates enabled GitHub OAuth2 before saving", async () => {
