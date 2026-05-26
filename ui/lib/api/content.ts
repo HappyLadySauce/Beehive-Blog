@@ -399,8 +399,8 @@ function fallbackOverview(latest: PublicContent[]): PublicSiteOverview {
       tags: tags.length
     },
     author: {
-      name: "安和鱼",
-      description: "生活明朗，万物可爱"
+      name: "Beehive",
+      description: "个人博客与知识中台"
     },
     generated_at: new Date().toISOString()
   };

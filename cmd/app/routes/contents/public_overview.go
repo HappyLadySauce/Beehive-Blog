@@ -55,7 +55,7 @@ func (c *ContentsController) siteOverview(ctx context.Context) (*v1.PublicSiteOv
 }
 
 func (c *ContentsController) publicAuthor() v1.SiteAuthor {
-	author := v1.SiteAuthor{Name: "安和鱼", Description: "生活明朗，万物可爱"}
+	author := v1.SiteAuthor{Name: "Beehive", Description: "个人博客与知识中台"}
 	if c.svc == nil || c.svc.SettingsProvider == nil {
 		return author
 	}

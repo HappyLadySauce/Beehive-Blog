@@ -62,8 +62,8 @@ func DefaultApplicationSettings() ApplicationSettings {
 			Enabled: false,
 		},
 		Profile: ProfileSettings{
-			DisplayName: "安和鱼",
-			Headline:    "生活明朗，万物可爱",
+			DisplayName: "Beehive",
+			Headline:    "个人博客与知识中台",
 		},
 	}
 	s.GithubOAuth2.Normalize()

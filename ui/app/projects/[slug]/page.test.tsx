@@ -31,7 +31,7 @@ vi.mock("@/lib/api/content", () => ({
     tags: [],
     archives: [],
     stats: { articles: 0, notes: 0, projects: 1, views: 18, tags: 1 },
-    author: { name: "安和鱼", description: "生活明朗，万物可爱" },
+    author: { name: "Beehive", description: "个人博客与知识中台" },
     generated_at: "2026-05-22T00:00:00.000Z"
   })),
   listPublicContents: vi.fn(async () => [])

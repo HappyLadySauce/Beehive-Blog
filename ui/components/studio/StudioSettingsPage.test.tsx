@@ -45,9 +45,9 @@ const baseSettings = {
     allow_non_github_endpoints: false
   },
   profile: {
-    display_name: "安和鱼",
+    display_name: "Beehive",
     avatar_url: "",
-    headline: "生活明朗，万物可爱",
+    headline: "个人博客与知识中台",
     bio: "",
     location: "",
     website: ""
@@ -165,15 +165,15 @@ describe("StudioSettingsPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "个人设置" }));
     await waitFor(() => expect(getProfileSettings).toHaveBeenCalledTimes(1));
-    expect(screen.getByLabelText("显示名称")).toHaveValue("安和鱼");
-    expect(screen.getByLabelText("一句话简介")).toHaveValue("生活明朗，万物可爱");
+    expect(screen.getByLabelText("显示名称")).toHaveValue("Beehive");
+    expect(screen.getByLabelText("一句话简介")).toHaveValue("个人博客与知识中台");
   });
 
   it("saves profile settings through the profile API", async () => {
     renderSettingsPage();
     await waitFor(() => expect(screen.getByRole("button", { name: "个人设置" })).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: "个人设置" }));
-    await waitFor(() => expect(screen.getByLabelText("显示名称")).toHaveValue("安和鱼"));
+    await waitFor(() => expect(screen.getByLabelText("显示名称")).toHaveValue("Beehive"));
 
     fireEvent.change(screen.getByLabelText("显示名称"), { target: { value: "Beehive Admin" } });
     fireEvent.click(screen.getByRole("button", { name: "保存设置" }));

@@ -46,9 +46,9 @@ const defaultGithubOAuth2: GithubOAuth2SettingsPublic = {
 };
 
 const defaultProfile: ProfileSettingsPublic = {
-  display_name: "安和鱼",
+  display_name: "Beehive",
   avatar_url: "",
-  headline: "生活明朗，万物可爱",
+  headline: "个人博客与知识中台",
   bio: "",
   location: "",
   website: ""
