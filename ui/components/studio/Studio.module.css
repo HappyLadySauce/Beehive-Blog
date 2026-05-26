@@ -803,10 +803,11 @@
 
 .filterBar .selectTrigger,
 .filterBar .searchInput {
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: none;
+  color: var(--ink);
 }
 
 .filterBar .selectTrigger {
@@ -819,15 +820,16 @@
 .filterBar .selectTrigger:hover,
 .filterBar .selectTrigger:focus-visible {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px #d8f1ec;
+  box-shadow: var(--focus-ring);
   outline: none;
 }
 
 .searchInput {
   align-items: center;
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
+  color: var(--ink);
   display: flex;
   gap: 8px;
   flex: 1 1 260px;
@@ -836,12 +838,22 @@
   padding: 0 12px;
 }
 
+.searchInput svg {
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
 .searchInput input {
   background: transparent;
   border: 0;
+  color: var(--ink);
   min-height: 44px;
   padding: 10px 0;
   width: 100%;
+}
+
+.searchInput input::placeholder {
+  color: var(--muted);
 }
 
 .searchInput input:focus,
@@ -851,9 +863,10 @@
 }
 
 .compactInput {
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
+  color: var(--ink);
   min-height: 44px;
   padding: 10px 12px;
   width: 120px;

@@ -795,6 +795,10 @@ html[data-theme="dark"] textarea::placeholder {
   color: rgba(214, 220, 231, 0.48);
 }
 
+html[data-theme="dark"] [class*="searchInput"] input {
+  background: transparent;
+}
+
 html[data-theme="dark"] [class*="modal"],
 html[data-theme="dark"] [class*="selectTrigger"],
 html[data-theme="dark"] [class*="selectPopover"],

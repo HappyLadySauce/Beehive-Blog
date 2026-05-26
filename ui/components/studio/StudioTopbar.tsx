@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 
-import { ThemeToggleButton } from "@/components/theme/ThemeProvider";
 import styles from "./Studio.module.css";
 
 type StudioTopbarProps = {
@@ -18,10 +17,7 @@ export function StudioTopbar({ actions, description, eyebrow, title }: StudioTop
         <h1>{title}</h1>
         <p>{description}</p>
       </div>
-      <div className={styles.actions}>
-        <ThemeToggleButton className="icon-button" />
-        {actions}
-      </div>
+      <div className={styles.actions}>{actions}</div>
     </div>
   );
 }
