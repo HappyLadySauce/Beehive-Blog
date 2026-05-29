@@ -63,15 +63,17 @@ export function writeThemePreferenceCookie(next: ThemePreference) {
   document.cookie = `${THEME_COOKIE_NAME}=${encodeURIComponent(next)}; path=/; max-age=31536000; SameSite=Lax${secure}`;
 }
 
-export function syncThemePreferenceFromStorage() {
+export function syncThemePreferenceFromStorage(): boolean {
   const stored = readStoredThemePreference();
   if (!stored) {
-    return;
+    return false;
   }
   const cookiePreference = readThemePreferenceFromDocumentCookie();
   if (cookiePreference !== stored) {
     writeThemePreferenceCookie(stored);
+    return true;
   }
+  return false;
 }
 
 export { getServerThemeSnapshot };

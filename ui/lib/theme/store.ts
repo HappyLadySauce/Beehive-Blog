@@ -1,13 +1,15 @@
 "use client";
 
-import {
-  getClientThemeSnapshot,
-  getServerThemeSnapshot,
-  syncThemePreferenceFromStorage,
-  writeThemePreference
-} from "./client";
-import type { ThemeSnapshot } from "./resolve";
+import { getClientThemeSnapshot, syncThemePreferenceFromStorage, writeThemePreference } from "./client";
+import { SERVER_THEME_SNAPSHOT, type ThemeSnapshot } from "./resolve";
 import { THEME_STORAGE_KEY, type ThemePreference } from "./constants";
+
+function snapshotKey(snapshot: ThemeSnapshot) {
+  return `${snapshot.preference}:${snapshot.systemTheme}`;
+}
+
+let cachedClientSnapshot: ThemeSnapshot = SERVER_THEME_SNAPSHOT;
+let cachedClientSnapshotKey = snapshotKey(SERVER_THEME_SNAPSHOT);
 
 type Listener = () => void;
 
@@ -42,19 +44,29 @@ export function subscribeThemeStore(listener: Listener) {
 }
 
 export function getThemeSnapshot(): ThemeSnapshot {
-  return getClientThemeSnapshot();
+  const fresh = getClientThemeSnapshot();
+  const key = snapshotKey(fresh);
+  if (key === cachedClientSnapshotKey) {
+    return cachedClientSnapshot;
+  }
+  cachedClientSnapshotKey = key;
+  cachedClientSnapshot = fresh;
+  return cachedClientSnapshot;
 }
 
 export function getThemeServerSnapshot(): ThemeSnapshot {
-  return getServerThemeSnapshot();
+  return SERVER_THEME_SNAPSHOT;
 }
 
 export function setThemePreference(next: ThemePreference) {
   writeThemePreference(next);
+  cachedClientSnapshotKey = "";
   emitChange();
 }
 
 export function ensureThemePreferenceSynced() {
-  syncThemePreferenceFromStorage();
-  emitChange();
+  if (syncThemePreferenceFromStorage()) {
+    cachedClientSnapshotKey = "";
+    emitChange();
+  }
 }

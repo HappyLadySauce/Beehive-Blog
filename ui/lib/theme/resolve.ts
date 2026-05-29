@@ -42,6 +42,13 @@ export function resolveThemeFromCookies(cookieStore: ThemeCookieReader, headers?
   return hinted ?? DEFAULT_SYSTEM_THEME;
 }
 
+// Cached for useSyncExternalStore getServerSnapshot (must be referentially stable).
+// 供 useSyncExternalStore 的 getServerSnapshot 使用（必须保持引用稳定）。
+export const SERVER_THEME_SNAPSHOT: ThemeSnapshot = {
+  preference: DEFAULT_THEME_PREFERENCE,
+  systemTheme: DEFAULT_SYSTEM_THEME
+};
+
 export function getServerThemeSnapshot(): ThemeSnapshot {
-  return { preference: DEFAULT_THEME_PREFERENCE, systemTheme: DEFAULT_SYSTEM_THEME };
+  return SERVER_THEME_SNAPSHOT;
 }
