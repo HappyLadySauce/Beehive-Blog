@@ -8,6 +8,7 @@ import (
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/router"
 	"github.com/HappyLadySauce/Beehive-Blog/cmd/app/svc"
 	pkgsettings "github.com/HappyLadySauce/Beehive-Blog/pkg/settings"
+	settingtypes "github.com/HappyLadySauce/Beehive-Blog/pkg/settings/types"
 )
 
 // SettingsController serves admin settings HTTP endpoints.
@@ -34,6 +35,9 @@ func NewSettingsController(ctx context.Context, svcCtx *svc.ServiceContext) (*Se
 	}
 	seed := emailSeed
 	seed.GithubOAuth2 = githubSeed.GithubOAuth2
+	defaults := settingtypes.DefaultApplicationSettings()
+	seed.Profile = defaults.Profile
+	seed.Site = defaults.Site
 
 	store := svcCtx.SettingsStore
 	if store == nil {
@@ -86,6 +90,10 @@ func Init(ctx context.Context, svcCtx *svc.ServiceContext) error {
 	profile := g.Group("/profile")
 	profile.GET("", h.GetProfileSettings)
 	profile.PATCH("", h.PatchProfileSettings)
+
+	site := g.Group("/site")
+	site.GET("", h.GetSiteSettings)
+	site.PATCH("", h.PatchSiteSettings)
 
 	return nil
 }

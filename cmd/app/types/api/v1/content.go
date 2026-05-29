@@ -191,6 +191,7 @@ type PublicSiteOverviewResponse struct {
 	Archives    []ArchiveItem       `json:"archives"`
 	Stats       SiteStats           `json:"stats"`
 	Author      SiteAuthor          `json:"author"`
+	Site        SiteSettingsPublic  `json:"site"`
 	GeneratedAt time.Time           `json:"generated_at"`
 }
 

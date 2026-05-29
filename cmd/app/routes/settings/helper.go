@@ -46,6 +46,18 @@ func toResponse(s settingtypes.ApplicationSettings, revision int64) v1.SettingsR
 			Location:    s.Profile.Location,
 			Website:     s.Profile.Website,
 		},
+		Site: v1.SiteSettingsPublic{
+			Name:        s.Site.Name,
+			URL:         s.Site.URL,
+			Subtitle:    s.Site.Subtitle,
+			Description: s.Site.Description,
+			Keywords:    s.Site.Keywords,
+			LogoURL:     s.Site.LogoURL,
+			FaviconURL:  s.Site.FaviconURL,
+			ICPBeian:    s.Site.ICPBeian,
+			PoliceBeian: s.Site.PoliceBeian,
+			FooterText:  s.Site.FooterText,
+		},
 	}
 }
 
@@ -92,5 +104,23 @@ func patchProfileFromV1(p *v1.ProfilePatchJSON) *settingtypes.ProfilePatch {
 		Bio:         p.Bio,
 		Location:    p.Location,
 		Website:     p.Website,
+	}
+}
+
+func patchSiteFromV1(p *v1.SitePatchJSON) *settingtypes.SitePatch {
+	if p == nil {
+		return nil
+	}
+	return &settingtypes.SitePatch{
+		Name:        p.Name,
+		URL:         p.URL,
+		Subtitle:    p.Subtitle,
+		Description: p.Description,
+		Keywords:    p.Keywords,
+		LogoURL:     p.LogoURL,
+		FaviconURL:  p.FaviconURL,
+		ICPBeian:    p.ICPBeian,
+		PoliceBeian: p.PoliceBeian,
+		FooterText:  p.FooterText,
 	}
 }

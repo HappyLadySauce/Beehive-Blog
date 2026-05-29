@@ -112,6 +112,7 @@ export type PublicSiteOverview = {
   archives: ArchiveItem[];
   stats: SiteStats;
   author: SiteAuthor;
+  site?: SiteSettingsPublic;
   generated_at: string;
 };
 
@@ -214,11 +215,25 @@ export type ProfileSettingsPublic = {
   website: string;
 };
 
+export type SiteSettingsPublic = {
+  name: string;
+  url: string;
+  subtitle: string;
+  description: string;
+  keywords: string;
+  logo_url: string;
+  favicon_url: string;
+  icp_beian: string;
+  police_beian: string;
+  footer_text: string;
+};
+
 export type SettingsResponse = {
   revision: number;
   email: EmailSettingsPublic;
   github_oauth2: GithubOAuth2SettingsPublic;
   profile: ProfileSettingsPublic;
+  site: SiteSettingsPublic;
 };
 
 export type EmailSMTPPatch = {
@@ -235,6 +250,7 @@ export type EmailSMTPPatch = {
 export type SettingsPatchRequest = {
   email?: EmailSMTPPatch;
   profile?: ProfilePatch;
+  site?: SitePatch;
 };
 
 export type GithubOAuth2Patch = {
@@ -751,6 +767,7 @@ export type CreateVersionRequest = {
 };
 
 export type ProfilePatch = Partial<ProfileSettingsPublic>;
+export type SitePatch = Partial<SiteSettingsPublic>;
 
 export type CreateVersionResponse = VersionItem;
 

@@ -7,17 +7,21 @@ import { resetSettingsPageModuleStateForTests, StudioSettingsPage } from "./Stud
 const getSettings = vi.hoisted(() => vi.fn());
 const getGithubOAuth2Settings = vi.hoisted(() => vi.fn());
 const getProfileSettings = vi.hoisted(() => vi.fn());
+const getSiteSettings = vi.hoisted(() => vi.fn());
 const patchSettings = vi.hoisted(() => vi.fn());
 const patchGithubOAuth2Settings = vi.hoisted(() => vi.fn());
 const patchProfileSettings = vi.hoisted(() => vi.fn());
+const patchSiteSettings = vi.hoisted(() => vi.fn());
 const testEmailSettings = vi.hoisted(() => vi.fn());
 
 vi.mock("@/lib/api/settings", () => ({
   getGithubOAuth2Settings,
   getProfileSettings,
+  getSiteSettings,
   getSettings,
   patchGithubOAuth2Settings,
   patchProfileSettings,
+  patchSiteSettings,
   patchSettings,
   testEmailSettings
 }));
@@ -51,6 +55,18 @@ const baseSettings = {
     bio: "",
     location: "",
     website: ""
+  },
+  site: {
+    name: "Beehive",
+    url: "",
+    subtitle: "Beehive Blog",
+    description: "个人博客、AI 协作创作与面向智能体的个人知识中台。",
+    keywords: "",
+    logo_url: "",
+    favicon_url: "",
+    icp_beian: "",
+    police_beian: "",
+    footer_text: ""
   }
 };
 
@@ -68,16 +84,20 @@ describe("StudioSettingsPage", () => {
     getSettings.mockReset();
     getGithubOAuth2Settings.mockReset();
     getProfileSettings.mockReset();
+    getSiteSettings.mockReset();
     patchSettings.mockReset();
     patchGithubOAuth2Settings.mockReset();
     patchProfileSettings.mockReset();
+    patchSiteSettings.mockReset();
     testEmailSettings.mockReset();
     getSettings.mockResolvedValue(baseSettings);
     getGithubOAuth2Settings.mockResolvedValue(baseSettings);
     getProfileSettings.mockResolvedValue(baseSettings);
+    getSiteSettings.mockResolvedValue(baseSettings);
     patchSettings.mockResolvedValue({ ...baseSettings, revision: 6 });
     patchGithubOAuth2Settings.mockResolvedValue({ ...baseSettings, revision: 6 });
     patchProfileSettings.mockResolvedValue({ ...baseSettings, revision: 6 });
+    patchSiteSettings.mockResolvedValue({ ...baseSettings, revision: 6 });
     testEmailSettings.mockResolvedValue({ recipient: "reader@example.com" });
   });
 
@@ -96,6 +116,7 @@ describe("StudioSettingsPage", () => {
     expect(getSettings).toHaveBeenCalledTimes(1);
     expect(getGithubOAuth2Settings).not.toHaveBeenCalled();
     expect(getProfileSettings).not.toHaveBeenCalled();
+    expect(getSiteSettings).not.toHaveBeenCalled();
   });
 
   it("loads GitHub OAuth2 settings when opening the GitHub tab", async () => {
@@ -181,6 +202,36 @@ describe("StudioSettingsPage", () => {
     await waitFor(() => expect(patchProfileSettings).toHaveBeenCalled());
     expect(patchProfileSettings.mock.calls[0][0]).toMatchObject({ display_name: "Beehive Admin" });
     expect(await screen.findByText("个人设置已保存。")).toBeInTheDocument();
+  });
+
+  it("loads and saves site settings through the site API", async () => {
+    renderSettingsPage();
+    await waitFor(() => expect(screen.getByRole("button", { name: "站点设置" })).toBeInTheDocument());
+    expect(getSiteSettings).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "站点设置" }));
+    await waitFor(() => expect(getSiteSettings).toHaveBeenCalledTimes(1));
+    expect(screen.getByLabelText("站点名称")).toHaveValue("Beehive");
+
+    fireEvent.change(screen.getByLabelText("站点 URL"), { target: { value: "https://example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: "保存设置" }));
+
+    await waitFor(() => expect(patchSiteSettings).toHaveBeenCalled());
+    expect(patchSiteSettings.mock.calls[0][0]).toMatchObject({ name: "Beehive", url: "https://example.com" });
+    expect(await screen.findByText("站点设置已保存。")).toBeInTheDocument();
+  });
+
+  it("validates site URL before saving", async () => {
+    renderSettingsPage();
+    await waitFor(() => expect(screen.getByRole("button", { name: "站点设置" })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "站点设置" }));
+    await waitFor(() => expect(screen.getByLabelText("站点名称")).toHaveValue("Beehive"));
+
+    fireEvent.change(screen.getByLabelText("站点 URL"), { target: { value: "ftp://example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: "保存设置" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("站点 URL 必须使用 http 或 https。");
+    expect(patchSiteSettings).not.toHaveBeenCalled();
   });
 
   it("validates enabled GitHub OAuth2 before saving", async () => {

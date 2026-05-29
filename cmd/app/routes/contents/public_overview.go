@@ -40,6 +40,7 @@ func (c *ContentsController) siteOverview(ctx context.Context) (*v1.PublicSiteOv
 		return nil, err
 	}
 	author := c.publicAuthor()
+	site := c.publicSite()
 
 	return &v1.PublicSiteOverviewResponse{
 		Latest:      latest,
@@ -50,8 +51,34 @@ func (c *ContentsController) siteOverview(ctx context.Context) (*v1.PublicSiteOv
 		Archives:    archives,
 		Stats:       stats,
 		Author:      author,
+		Site:        site,
 		GeneratedAt: time.Now().UTC(),
 	}, nil
+}
+
+func (c *ContentsController) publicSite() v1.SiteSettingsPublic {
+	site := v1.SiteSettingsPublic{Name: "Beehive", Subtitle: "Beehive Blog", Description: "个人博客与知识中台"}
+	if c.svc == nil || c.svc.SettingsProvider == nil {
+		return site
+	}
+	current := c.svc.SettingsProvider.Current().Site
+	if current.Name != "" {
+		site.Name = current.Name
+	}
+	if current.Subtitle != "" {
+		site.Subtitle = current.Subtitle
+	}
+	if current.Description != "" {
+		site.Description = current.Description
+	}
+	site.URL = current.URL
+	site.Keywords = current.Keywords
+	site.LogoURL = current.LogoURL
+	site.FaviconURL = current.FaviconURL
+	site.ICPBeian = current.ICPBeian
+	site.PoliceBeian = current.PoliceBeian
+	site.FooterText = current.FooterText
+	return site
 }
 
 func (c *ContentsController) publicAuthor() v1.SiteAuthor {

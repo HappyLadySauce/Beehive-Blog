@@ -3,9 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getGithubOAuth2Settings,
   getProfileSettings,
+  getSiteSettings,
   getSettings,
   patchGithubOAuth2Settings,
   patchProfileSettings,
+  patchSiteSettings,
   patchSettings,
   testEmailSettings
 } from "./settings";
@@ -104,6 +106,32 @@ describe("settings API client", () => {
     expect(fetchMock.mock.calls[0][0]).toBe("/api/bff/settings/profile");
     expect(init.method).toBe("PATCH");
     expect(JSON.parse(String(init.body))).toEqual({ display_name: "Beehive" });
+  });
+
+  it("loads site settings through the BFF route", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ revision: 7, site: { name: "Beehive" } }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await getSiteSettings();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/bff/settings/site",
+      expect.objectContaining({
+        method: "GET"
+      })
+    );
+  });
+
+  it("patches site settings through the BFF route", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ revision: 8, site: { name: "Beehive" } }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await patchSiteSettings({ name: "Beehive", url: "https://example.com" });
+
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/bff/settings/site");
+    expect(init.method).toBe("PATCH");
+    expect(JSON.parse(String(init.body))).toEqual({ name: "Beehive", url: "https://example.com" });
   });
 });
 

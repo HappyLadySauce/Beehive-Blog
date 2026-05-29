@@ -1,9 +1,33 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 
 import { AnzhiyuHomeTop } from "@/components/anzhiyu/AnzhiyuHomeTop";
 import { AnzhiyuPostCard } from "@/components/anzhiyu/AnzhiyuPostCard";
 import { AnzhiyuSidebar } from "@/components/anzhiyu/AnzhiyuSidebar";
 import { getPublicSiteOverview } from "@/lib/api/content";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const overview = await getPublicSiteOverview();
+  const siteName = overview.site?.name || "Beehive";
+  const description = overview.site?.description || "个人博客、AI 协作创作与面向智能体的个人知识中台。";
+  const keywords = overview.site?.keywords
+    ? overview.site.keywords
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean)
+    : undefined;
+  return {
+    title: siteName,
+    description,
+    keywords,
+    openGraph: {
+      title: siteName,
+      description,
+      type: "website",
+      url: overview.site?.url || undefined
+    }
+  };
+}
 
 export default async function HomePage() {
   const overview = await getPublicSiteOverview();

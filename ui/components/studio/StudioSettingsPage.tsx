@@ -1,27 +1,35 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { ChevronDown, Github, Loader2, Mail, Save, Send, Settings, UserRound } from "lucide-react";
+import { ChevronDown, Github, Globe2, Loader2, Mail, Save, Send, Settings, UserRound } from "lucide-react";
 
 import { humanizeApiError } from "@/lib/api/client";
 import {
   getGithubOAuth2Settings,
   getProfileSettings,
+  getSiteSettings,
   getSettings,
   patchGithubOAuth2Settings,
   patchProfileSettings,
+  patchSiteSettings,
   patchSettings,
   testEmailSettings
 } from "@/lib/api/settings";
 import { ToastMessage } from "@/components/toast/ToastProvider";
-import type { EmailSettingsPublic, GithubOAuth2SettingsPublic, ProfileSettingsPublic, SettingsResponse } from "@/lib/api/types";
+import type {
+  EmailSettingsPublic,
+  GithubOAuth2SettingsPublic,
+  ProfileSettingsPublic,
+  SettingsResponse,
+  SiteSettingsPublic
+} from "@/lib/api/types";
 import styles from "./Studio.module.css";
 import { StudioPanel } from "./StudioPanel";
 import { StudioSelect } from "./StudioSelect";
 import { StudioTopbar } from "./StudioTopbar";
 
 type PasswordMode = "keep" | "set" | "clear";
-type SettingsSection = "email" | "github" | "profile";
+type SettingsSection = "email" | "github" | "profile" | "site";
 
 const defaultEmail: EmailSettingsPublic = {
   enabled: false,
@@ -54,6 +62,19 @@ const defaultProfile: ProfileSettingsPublic = {
   website: ""
 };
 
+const defaultSite: SiteSettingsPublic = {
+  name: "Beehive",
+  url: "",
+  subtitle: "Beehive Blog",
+  description: "个人博客、AI 协作创作与面向智能体的个人知识中台。",
+  keywords: "",
+  logo_url: "",
+  favicon_url: "",
+  icp_beian: "",
+  police_beian: "",
+  footer_text: ""
+};
+
 const tlsOptions = [
   { value: "none", label: "None" },
   { value: "starttls", label: "STARTTLS" },
@@ -63,6 +84,7 @@ const tlsOptions = [
 let settingsInflight: Promise<SettingsResponse> | null = null;
 let githubSettingsInflight: Promise<SettingsResponse> | null = null;
 let profileSettingsInflight: Promise<SettingsResponse> | null = null;
+let siteSettingsInflight: Promise<SettingsResponse> | null = null;
 
 function requestSettings() {
   return getSettings();
@@ -113,12 +135,28 @@ function loadProfileSettings() {
   return promise;
 }
 
+function requestSiteSettings() {
+  return getSiteSettings();
+}
+
+function loadSiteSettings() {
+  if (siteSettingsInflight) {
+    return siteSettingsInflight;
+  }
+  const promise = requestSiteSettings().finally(() => {
+    siteSettingsInflight = null;
+  });
+  siteSettingsInflight = promise;
+  return promise;
+}
+
 // resetSettingsPageModuleStateForTests clears module caches between unit tests.
 // resetSettingsPageModuleStateForTests 在单元测试之间清空模块级缓存。
 export function resetSettingsPageModuleStateForTests() {
   settingsInflight = null;
   githubSettingsInflight = null;
   profileSettingsInflight = null;
+  siteSettingsInflight = null;
 }
 
 export function StudioSettingsPage() {
@@ -127,6 +165,7 @@ export function StudioSettingsPage() {
   const [email, setEmail] = useState<EmailSettingsPublic>(defaultEmail);
   const [githubOAuth2, setGithubOAuth2] = useState<GithubOAuth2SettingsPublic>(defaultGithubOAuth2);
   const [profile, setProfile] = useState<ProfileSettingsPublic>(defaultProfile);
+  const [site, setSite] = useState<SiteSettingsPublic>(defaultSite);
   const [password, setPassword] = useState("");
   const [passwordMode, setPasswordMode] = useState<PasswordMode>("keep");
   const [githubSecret, setGithubSecret] = useState("");
@@ -136,8 +175,10 @@ export function StudioSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [githubLoaded, setGithubLoaded] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [siteLoaded, setSiteLoaded] = useState(false);
   const [loadingGithub, setLoadingGithub] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(false);
+  const [loadingSite, setLoadingSite] = useState(false);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [message, setMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
@@ -152,6 +193,7 @@ export function StudioSettingsPage() {
         setEmail(payload.email);
         setGithubOAuth2(payload.github_oauth2 ?? defaultGithubOAuth2);
         setProfile(payload.profile ?? defaultProfile);
+        setSite(payload.site ?? defaultSite);
         setTestRecipient(payload.email.from || payload.email.username);
       })
       .catch((error) => {
@@ -244,6 +286,43 @@ export function StudioSettingsPage() {
     };
   }, [activeSection, profileLoaded, settings]);
 
+  useEffect(() => {
+    if (activeSection !== "site" || siteLoaded || !settings) {
+      return;
+    }
+
+    let active = true;
+    void loadSite();
+
+    async function loadSite() {
+      setLoadingSite(true);
+      try {
+        const sitePayload = await loadSiteSettings();
+        if (!active) return;
+        const siteSettings = sitePayload.site ?? defaultSite;
+        setSettings((current) =>
+          current
+            ? {
+                ...current,
+                revision: Math.max(current.revision, sitePayload.revision),
+                site: siteSettings
+              }
+            : current
+        );
+        setSite(siteSettings);
+        setSiteLoaded(true);
+      } catch (error) {
+        if (active) setMessage({ tone: "error", text: humanizeApiError(error) });
+      } finally {
+        if (active) setLoadingSite(false);
+      }
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [activeSection, siteLoaded, settings]);
+
   const passwordHint = useMemo(() => {
     if (passwordMode === "clear") return "保存后会清空当前 SMTP 密码。";
     if (password.trim() !== "") return "保存后会更新 SMTP 密码。";
@@ -266,6 +345,10 @@ export function StudioSettingsPage() {
 
   function updateProfile<K extends keyof ProfileSettingsPublic>(key: K, value: ProfileSettingsPublic[K]) {
     setProfile((current) => ({ ...current, [key]: value }));
+  }
+
+  function updateSite<K extends keyof SiteSettingsPublic>(key: K, value: SiteSettingsPublic[K]) {
+    setSite((current) => ({ ...current, [key]: value }));
   }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -367,6 +450,40 @@ export function StudioSettingsPage() {
     }
   }
 
+  async function onSubmitSite(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const validation = validateSite(site);
+    if (validation) {
+      setMessage({ tone: "error", text: validation });
+      return;
+    }
+
+    setSaving(true);
+    setMessage(null);
+    try {
+      const next = await patchSiteSettings({
+        name: site.name,
+        url: site.url,
+        subtitle: site.subtitle,
+        description: site.description,
+        keywords: site.keywords,
+        logo_url: site.logo_url,
+        favicon_url: site.favicon_url,
+        icp_beian: site.icp_beian,
+        police_beian: site.police_beian,
+        footer_text: site.footer_text
+      });
+      setSettings(next);
+      setSite(next.site ?? defaultSite);
+      setSiteLoaded(true);
+      setMessage({ tone: "success", text: "站点设置已保存。" });
+    } catch (error) {
+      setMessage({ tone: "error", text: humanizeApiError(error) });
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function onSendTestEmail() {
     const recipient = testRecipient.trim();
     const validation = validateTestRecipient(email, recipient);
@@ -437,6 +554,18 @@ export function StudioSettingsPage() {
         >
           <UserRound aria-hidden size={18} />
           个人设置
+        </button>
+        <button
+          aria-pressed={activeSection === "site"}
+          className={activeSection === "site" ? styles.segmentedTabActive : styles.segmentedTab}
+          type="button"
+          onClick={() => {
+            setActiveSection("site");
+            setMessage(null);
+          }}
+        >
+          <Globe2 aria-hidden size={18} />
+          站点设置
         </button>
       </div>
 
@@ -663,7 +792,8 @@ export function StudioSettingsPage() {
             <ToastMessage message={message} />
           </form>
           )
-          ) : loadingProfile ? (
+          ) : activeSection === "profile" ? (
+          loadingProfile ? (
           <div className={styles.emptyState} role="status">
             <Loader2 aria-hidden className="spin" size={24} />
             <strong>正在加载个人设置...</strong>
@@ -712,6 +842,75 @@ export function StudioSettingsPage() {
             <ToastMessage message={message} />
           </form>
           )
+          ) : loadingSite ? (
+          <div className={styles.emptyState} role="status">
+            <Loader2 aria-hidden className="spin" size={24} />
+            <strong>正在加载站点设置...</strong>
+          </div>
+          ) : (
+          <form className={styles.formGrid} id="studio-settings-form" onSubmit={onSubmitSite}>
+            <label className={styles.field}>
+              <span>站点名称</span>
+              <input value={site.name} onChange={(event) => updateSite("name", event.target.value)} />
+            </label>
+
+            <label className={styles.field}>
+              <span>站点 URL</span>
+              <input placeholder="https://example.com" value={site.url} onChange={(event) => updateSite("url", event.target.value)} />
+            </label>
+
+            <label className={styles.fieldFull}>
+              <span>副标题</span>
+              <input value={site.subtitle} onChange={(event) => updateSite("subtitle", event.target.value)} />
+            </label>
+
+            <label className={styles.fieldFull}>
+              <span>站点描述</span>
+              <textarea
+                className={styles.textarea}
+                value={site.description}
+                onChange={(event) => updateSite("description", event.target.value)}
+              />
+            </label>
+
+            <label className={styles.fieldFull}>
+              <span>关键词</span>
+              <input placeholder="blog, AI, knowledge" value={site.keywords} onChange={(event) => updateSite("keywords", event.target.value)} />
+            </label>
+
+            <label className={styles.field}>
+              <span>Logo URL</span>
+              <input placeholder="https://example.com/logo.png" value={site.logo_url} onChange={(event) => updateSite("logo_url", event.target.value)} />
+            </label>
+
+            <label className={styles.field}>
+              <span>Favicon URL</span>
+              <input placeholder="https://example.com/favicon.ico" value={site.favicon_url} onChange={(event) => updateSite("favicon_url", event.target.value)} />
+            </label>
+
+            <label className={styles.field}>
+              <span>ICP备案号</span>
+              <input value={site.icp_beian} onChange={(event) => updateSite("icp_beian", event.target.value)} />
+            </label>
+
+            <label className={styles.field}>
+              <span>公安备案号</span>
+              <input value={site.police_beian} onChange={(event) => updateSite("police_beian", event.target.value)} />
+            </label>
+
+            <label className={styles.fieldFull}>
+              <span>页脚文案</span>
+              <input value={site.footer_text} onChange={(event) => updateSite("footer_text", event.target.value)} />
+            </label>
+
+            <div className={`${styles.metaRow} ${styles.fieldFull}`}>
+              <span className={styles.muted}>这些信息会进入公开站点概览，可用于首页、SEO 和页脚展示。</span>
+              {settings ? <span className={styles.muted}>Revision {settings.revision}</span> : null}
+            </div>
+
+            <ToastMessage message={message} />
+          </form>
+          )
         )}
       </StudioPanel>
     </>
@@ -721,12 +920,14 @@ export function StudioSettingsPage() {
 function settingsPanelTitle(section: SettingsSection) {
   if (section === "github") return "GitHub OAuth2";
   if (section === "profile") return "个人设置";
+  if (section === "site") return "站点设置";
   return "邮件 SMTP";
 }
 
 function settingsPanelIcon(section: SettingsSection) {
   if (section === "github") return <Github aria-hidden size={20} />;
   if (section === "profile") return <UserRound aria-hidden size={20} />;
+  if (section === "site") return <Globe2 aria-hidden size={20} />;
   return <Settings aria-hidden size={20} />;
 }
 
@@ -804,6 +1005,28 @@ function validateProfile(profile: ProfileSettingsPublic) {
   for (const [label, value] of [
     ["头像 URL", profile.avatar_url],
     ["个人网站", profile.website]
+  ] as const) {
+    if (value.trim() === "") continue;
+    try {
+      const parsed = new URL(value);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        return `${label} 必须使用 http 或 https。`;
+      }
+    } catch {
+      return `${label} 格式不正确。`;
+    }
+  }
+  return null;
+}
+
+function validateSite(site: SiteSettingsPublic) {
+  if (site.name.trim() === "") {
+    return "站点名称不能为空。";
+  }
+  for (const [label, value] of [
+    ["站点 URL", site.url],
+    ["Logo URL", site.logo_url],
+    ["Favicon URL", site.favicon_url]
   ] as const) {
     if (value.trim() === "") continue;
     try {

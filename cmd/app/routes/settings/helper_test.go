@@ -35,6 +35,17 @@ func TestToResponseEmptySecretsNotSet(t *testing.T) {
 	}
 }
 
+func TestToResponseIncludesSiteSettings(t *testing.T) {
+	s := settingtypes.DefaultApplicationSettings()
+	s.Site.Name = "Beehive Docs"
+	s.Site.URL = "https://example.com"
+
+	got := toResponse(s, 7)
+	if got.Site.Name != "Beehive Docs" || got.Site.URL != "https://example.com" {
+		t.Fatalf("Site = %+v", got.Site)
+	}
+}
+
 func TestPatchFromV1Nil(t *testing.T) {
 	if patchFromV1(nil) != nil {
 		t.Fatal("patchFromV1(nil) should be nil")
@@ -67,5 +78,14 @@ func TestPatchGithubFromV1MapsClientID(t *testing.T) {
 	got := patchGithubFromV1(&v1.GithubOAuth2PatchJSON{ClientID: &id})
 	if got == nil || got.ClientID == nil || *got.ClientID != id {
 		t.Fatalf("patchGithubFromV1() = %+v", got)
+	}
+}
+
+func TestPatchSiteFromV1MapsFields(t *testing.T) {
+	name := "Beehive Docs"
+	url := "https://example.com"
+	got := patchSiteFromV1(&v1.SitePatchJSON{Name: &name, URL: &url})
+	if got == nil || got.Name == nil || *got.Name != name || got.URL == nil || *got.URL != url {
+		t.Fatalf("patchSiteFromV1() = %+v", got)
 	}
 }

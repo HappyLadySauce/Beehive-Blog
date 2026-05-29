@@ -30,6 +30,16 @@ func TestApplicationSettingsNormalize(t *testing.T) {
 			t.Fatalf("Port: got %d, want 25", s.Email.Port)
 		}
 	})
+	t.Run("normalizes site fields", func(t *testing.T) {
+		s := ApplicationSettings{
+			Email: EmailSMTPSettings{Port: 587, TLS: EmailTLSStartTLS},
+			Site:  SiteSettings{Name: "  Beehive  ", URL: " https://example.com "},
+		}
+		s.Normalize()
+		if s.Site.Name != "Beehive" || s.Site.URL != "https://example.com" {
+			t.Fatalf("Site normalize: %+v", s.Site)
+		}
+	})
 }
 
 func TestApplicationSettingsValidate(t *testing.T) {
@@ -107,6 +117,28 @@ func TestMergePatch(t *testing.T) {
 			out.Email.Username != user || out.Email.Password != pass || out.Email.From != from ||
 			out.Email.FromName != name || out.Email.TLS != tls {
 			t.Fatalf("unexpected merged settings: %+v", out.Email)
+		}
+	})
+
+	t.Run("merges site settings", func(t *testing.T) {
+		name := "Beehive Docs"
+		url := "https://example.com"
+		out, err := MergePatch(base, &SettingsPatchRequest{
+			Site: &SitePatch{Name: &name, URL: &url},
+		})
+		if err != nil {
+			t.Fatalf("MergePatch: %v", err)
+		}
+		if out.Site.Name != name || out.Site.URL != url {
+			t.Fatalf("unexpected site settings: %+v", out.Site)
+		}
+	})
+
+	t.Run("rejects invalid site url", func(t *testing.T) {
+		rawURL := "ftp://example.com"
+		_, err := MergePatch(base, &SettingsPatchRequest{Site: &SitePatch{URL: &rawURL}})
+		if err == nil || !strings.Contains(err.Error(), "site url") {
+			t.Fatalf("MergePatch: got err=%v", err)
 		}
 	})
 }

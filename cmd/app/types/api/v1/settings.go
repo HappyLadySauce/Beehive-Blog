@@ -37,6 +37,21 @@ type ProfileSettingsPublic struct {
 	Website     string `json:"website"`
 }
 
+// SiteSettingsPublic is the public site identity configuration without secrets.
+// SiteSettingsPublic 是不含敏感信息的公开站点身份配置。
+type SiteSettingsPublic struct {
+	Name        string `json:"name"`
+	URL         string `json:"url"`
+	Subtitle    string `json:"subtitle"`
+	Description string `json:"description"`
+	Keywords    string `json:"keywords"`
+	LogoURL     string `json:"logo_url"`
+	FaviconURL  string `json:"favicon_url"`
+	ICPBeian    string `json:"icp_beian"`
+	PoliceBeian string `json:"police_beian"`
+	FooterText  string `json:"footer_text"`
+}
+
 // SettingsResponse is returned by GET /api/v1/settings (sanitized).
 // SettingsResponse 为 GET /api/v1/settings 的脱敏响应。
 type SettingsResponse struct {
@@ -44,6 +59,7 @@ type SettingsResponse struct {
 	Email        EmailSettingsPublic        `json:"email"`
 	GithubOAuth2 GithubOAuth2SettingsPublic `json:"github_oauth2"`
 	Profile      ProfileSettingsPublic      `json:"profile"`
+	Site         SiteSettingsPublic         `json:"site"`
 }
 
 // EmailSMTPPatchJSON is the JSON body fragment for PATCH /api/v1/settings (partial email update).
@@ -83,12 +99,28 @@ type ProfilePatchJSON struct {
 	Website     *string `json:"website" binding:"omitempty,max=512"`
 }
 
+// SitePatchJSON is the JSON body fragment for PATCH /api/v1/settings/site.
+// SitePatchJSON 为 PATCH /api/v1/settings/site 的 JSON 片段。
+type SitePatchJSON struct {
+	Name        *string `json:"name" binding:"omitempty,max=80"`
+	URL         *string `json:"url" binding:"omitempty,max=512"`
+	Subtitle    *string `json:"subtitle" binding:"omitempty,max=160"`
+	Description *string `json:"description" binding:"omitempty,max=1000"`
+	Keywords    *string `json:"keywords" binding:"omitempty,max=512"`
+	LogoURL     *string `json:"logo_url" binding:"omitempty,max=512"`
+	FaviconURL  *string `json:"favicon_url" binding:"omitempty,max=512"`
+	ICPBeian    *string `json:"icp_beian" binding:"omitempty,max=120"`
+	PoliceBeian *string `json:"police_beian" binding:"omitempty,max=120"`
+	FooterText  *string `json:"footer_text" binding:"omitempty,max=512"`
+}
+
 // SettingsPatchRequestJSON is the PATCH body; only keys present are merged server-side.
 // SettingsPatchRequestJSON 为 PATCH 请求体；仅出现的键在服务端参与合并。
 type SettingsPatchRequestJSON struct {
 	Email        *EmailSMTPPatchJSON    `json:"email"`
 	GithubOAuth2 *GithubOAuth2PatchJSON `json:"github_oauth2"`
 	Profile      *ProfilePatchJSON      `json:"profile"`
+	Site         *SitePatchJSON         `json:"site"`
 }
 
 // SettingsEmailTestRequest is the body for sending a test email with saved SMTP settings.

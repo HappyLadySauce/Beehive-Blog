@@ -402,6 +402,18 @@ function fallbackOverview(latest: PublicContent[]): PublicSiteOverview {
       name: "Beehive",
       description: "个人博客与知识中台"
     },
+    site: {
+      name: "Beehive",
+      url: "",
+      subtitle: "Beehive Blog",
+      description: "个人博客与知识中台",
+      keywords: "",
+      logo_url: "",
+      favicon_url: "",
+      icp_beian: "",
+      police_beian: "",
+      footer_text: ""
+    },
     generated_at: new Date().toISOString()
   };
 }

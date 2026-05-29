@@ -13,6 +13,7 @@ type ApplicationSettings struct {
 	Email        EmailSMTPSettings    `json:"email"`
 	GithubOAuth2 GithubOAuth2Settings `json:"github_oauth2"`
 	Profile      ProfileSettings      `json:"profile"`
+	Site         SiteSettings         `json:"site"`
 }
 
 // Normalize fills defaults for omitted JSON fields after decode.
@@ -26,6 +27,7 @@ func (s *ApplicationSettings) Normalize() {
 	}
 	s.GithubOAuth2.Normalize()
 	s.Profile.Normalize()
+	s.Site.Normalize()
 }
 
 // Validate checks business rules for the full settings document.
@@ -39,6 +41,9 @@ func (s *ApplicationSettings) Validate() error {
 		return err
 	}
 	if err := validateProfile(&s.Profile); err != nil {
+		return err
+	}
+	if err := validateSite(&s.Site); err != nil {
 		return err
 	}
 	return nil
@@ -64,6 +69,11 @@ func DefaultApplicationSettings() ApplicationSettings {
 		Profile: ProfileSettings{
 			DisplayName: "Beehive",
 			Headline:    "个人博客与知识中台",
+		},
+		Site: SiteSettings{
+			Name:        "Beehive",
+			Subtitle:    "Beehive Blog",
+			Description: "个人博客、AI 协作创作与面向智能体的个人知识中台。",
 		},
 	}
 	s.GithubOAuth2.Normalize()
@@ -152,6 +162,39 @@ func MergePatch(base ApplicationSettings, patch *SettingsPatchRequest) (Applicat
 			out.Profile.Website = *p.Website
 		}
 	}
+	if patch.Site != nil {
+		p := patch.Site
+		if p.Name != nil {
+			out.Site.Name = *p.Name
+		}
+		if p.URL != nil {
+			out.Site.URL = *p.URL
+		}
+		if p.Subtitle != nil {
+			out.Site.Subtitle = *p.Subtitle
+		}
+		if p.Description != nil {
+			out.Site.Description = *p.Description
+		}
+		if p.Keywords != nil {
+			out.Site.Keywords = *p.Keywords
+		}
+		if p.LogoURL != nil {
+			out.Site.LogoURL = *p.LogoURL
+		}
+		if p.FaviconURL != nil {
+			out.Site.FaviconURL = *p.FaviconURL
+		}
+		if p.ICPBeian != nil {
+			out.Site.ICPBeian = *p.ICPBeian
+		}
+		if p.PoliceBeian != nil {
+			out.Site.PoliceBeian = *p.PoliceBeian
+		}
+		if p.FooterText != nil {
+			out.Site.FooterText = *p.FooterText
+		}
+	}
 	out.Normalize()
 	if err := out.Validate(); err != nil {
 		return ApplicationSettings{}, err
@@ -165,6 +208,7 @@ type SettingsPatchRequest struct {
 	Email        *EmailSMTPPatch    `json:"email"`
 	GithubOAuth2 *GithubOAuth2Patch `json:"github_oauth2"`
 	Profile      *ProfilePatch      `json:"profile"`
+	Site         *SitePatch         `json:"site"`
 }
 
 // ParsePayload decodes JSON bytes into ApplicationSettings and validates.
