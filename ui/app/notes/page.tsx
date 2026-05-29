@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 
+import { AnzhiyuFooter } from "@/components/anzhiyu/AnzhiyuFooter";
 import { PublicContentCard } from "@/components/PublicContentCard";
-import { listPublicContents } from "@/lib/api/content";
+import { getPublicSiteOverview, listPublicContents } from "@/lib/api/content";
 
 export const metadata: Metadata = {
   title: "笔记",
@@ -9,22 +10,25 @@ export const metadata: Metadata = {
 };
 
 export default async function NotesPage() {
-  const notes = await listPublicContents("note");
+  const [notes, overview] = await Promise.all([listPublicContents("note"), getPublicSiteOverview()]);
 
   return (
-    <main className="page">
-      <section className="page-title">
-        <p className="eyebrow">Notes</p>
-        <h1>公开笔记</h1>
-        <p>轻量记录与知识原材料，保留思考过程，也为后续文章和项目提供上下文。</p>
-      </section>
-      <section className="post-grid" aria-label="笔记列表">
-        {notes.length > 0 ? (
-          notes.map((note) => <PublicContentCard key={note.slug} content={note} />)
-        ) : (
-          <div className="public-empty">暂无公开笔记。发布第一条公开笔记后会显示在这里。</div>
-        )}
-      </section>
-    </main>
+    <>
+      <main className="page">
+        <section className="page-title">
+          <p className="eyebrow">Notes</p>
+          <h1>公开笔记</h1>
+          <p>轻量记录与知识原材料，保留思考过程，也为后续文章和项目提供上下文。</p>
+        </section>
+        <section className="post-grid" aria-label="笔记列表">
+          {notes.length > 0 ? (
+            notes.map((note) => <PublicContentCard key={note.slug} content={note} />)
+          ) : (
+            <div className="public-empty">暂无公开笔记。发布第一条公开笔记后会显示在这里。</div>
+          )}
+        </section>
+      </main>
+      <AnzhiyuFooter author={overview.author} site={overview.site} stats={overview.stats} />
+    </>
   );
 }

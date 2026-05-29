@@ -2,6 +2,7 @@ import { CalendarDays, Clock3, Eye, Hash, MapPin } from "lucide-react";
 import Link from "next/link";
 
 import { AnzhiyuCommentBox } from "@/components/anzhiyu/AnzhiyuCommentBox";
+import { AnzhiyuFooter } from "@/components/anzhiyu/AnzhiyuFooter";
 import { AnzhiyuMarkdown, extractToc } from "@/components/anzhiyu/AnzhiyuMarkdown";
 import { AnzhiyuPostCard } from "@/components/anzhiyu/AnzhiyuPostCard";
 import { AnzhiyuSidebar } from "@/components/anzhiyu/AnzhiyuSidebar";
@@ -108,6 +109,7 @@ export async function PublicContentDetail({ content, eyebrow }: { content: Publi
           </aside>
         </div>
       </main>
+      <AnzhiyuFooter author={overview.author} site={overview.site} stats={overview.stats} />
     </>
   );
 }

@@ -29,6 +29,18 @@ vi.mock("@/lib/api/content", () => ({
     archives: [],
     stats: { articles: 1, notes: 0, projects: 0, views: 88, tags: 1 },
     author: { name: "Beehive", description: "个人博客与知识中台" },
+    site: {
+      name: "Beehive Blog",
+      url: "https://example.com",
+      subtitle: "Beehive",
+      description: "站点描述",
+      keywords: "",
+      logo_url: "",
+      favicon_url: "",
+      icp_beian: "湘ICP备2023015794号-2",
+      police_beian: "",
+      footer_text: "所有业务正常"
+    },
     generated_at: "2026-05-22T00:00:00.000Z"
   })),
   listPublicPosts: vi.fn(async () => [])
@@ -43,5 +55,7 @@ describe("PostDetailPage", () => {
     expect(screen.getByRole("heading", { level: 2, name: "二级标题" })).toBeInTheDocument();
     expect(screen.getByText("第一项")).toBeInTheDocument();
     expect(screen.queryByText("## 二级标题")).not.toBeInTheDocument();
+    expect(screen.getByRole("contentinfo")).toHaveTextContent("Beehive Blog");
+    expect(screen.getByRole("contentinfo")).toHaveTextContent("湘ICP备2023015794号-2");
   });
 });

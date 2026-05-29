@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import { cookies, headers } from "next/headers";
 
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { ToastProvider } from "@/components/toast/ToastProvider";
 import { themeBootstrapScript } from "@/lib/theme/bootstrap";
-import { resolveThemeFromCookies } from "@/lib/theme/resolve";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -23,13 +21,9 @@ export const metadata: Metadata = {
   }
 };
 
-export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const cookieStore = await cookies();
-  const headerStore = await headers();
-  const resolvedTheme = resolveThemeFromCookies(cookieStore, headerStore);
-
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="zh-CN" data-scroll-behavior="smooth" data-theme={resolvedTheme} suppressHydrationWarning>
+    <html lang="zh-CN" data-scroll-behavior="smooth" data-theme="light" suppressHydrationWarning>
       <head>
         <meta name="color-scheme" content="light dark" />
         <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
