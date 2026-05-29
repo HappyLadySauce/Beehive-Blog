@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
+import { cookies, headers } from "next/headers";
 
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { ToastProvider } from "@/components/toast/ToastProvider";
+import { themeBootstrapScript } from "@/lib/theme/bootstrap";
+import { resolveThemeFromCookies } from "@/lib/theme/resolve";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -20,10 +23,15 @@ export const metadata: Metadata = {
   }
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const cookieStore = await cookies();
+  const headerStore = await headers();
+  const resolvedTheme = resolveThemeFromCookies(cookieStore, headerStore);
+
   return (
-    <html lang="zh-CN" data-scroll-behavior="smooth" data-theme="light" suppressHydrationWarning>
+    <html lang="zh-CN" data-scroll-behavior="smooth" data-theme={resolvedTheme} suppressHydrationWarning>
       <head>
+        <meta name="color-scheme" content="light dark" />
         <script dangerouslySetInnerHTML={{ __html: themeBootstrapScript }} />
       </head>
       <body>
@@ -41,36 +49,3 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     </html>
   );
 }
-
-const themeBootstrapScript = `
-(function () {
-  var key = "beehive.theme";
-  var preference = "system";
-  try {
-    var stored = window.localStorage && window.localStorage.getItem(key);
-    if (stored === "system" || stored === "light" || stored === "dark") preference = stored;
-  } catch (_) {}
-  var media = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
-  function resolved() {
-    return preference === "system" ? (media && media.matches ? "dark" : "light") : preference;
-  }
-  function apply() {
-    document.documentElement.setAttribute("data-theme", resolved());
-  }
-  function persist(next) {
-    preference = next;
-    try {
-      if (window.localStorage) window.localStorage.setItem(key, next);
-    } catch (_) {}
-    apply();
-  }
-  apply();
-  if (media && media.addEventListener) media.addEventListener("change", apply);
-  document.addEventListener("click", function (event) {
-    var target = event.target && event.target.closest ? event.target.closest("[data-theme-toggle]") : null;
-    if (!target) return;
-    var next = preference === "system" ? "light" : preference === "light" ? "dark" : "system";
-    persist(next);
-  }, true);
-})();
-`;
