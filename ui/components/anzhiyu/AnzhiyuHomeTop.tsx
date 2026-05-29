@@ -17,9 +17,9 @@ export function AnzhiyuHomeTop({
       <div className="anz-home-top__left">
         <Link className="anz-today-card" href={main?.href ?? "/posts"} style={main ? coverStyle(main) : undefined}>
           <div>
-            <span>生活明朗</span>
-            <strong>{main?.title ?? "生活明朗，万物可爱。"}</strong>
-            <small>{main?.authorUsername || "ANHEYU.COM"}</small>
+            <span>Beehive</span>
+            <strong>{main?.title ?? "个人博客与知识中台"}</strong>
+            <small>{main?.authorUsername || "Beehive Blog"}</small>
           </div>
           <span className="anz-today-card__button">
             <ArrowUpRight aria-hidden size={18} />
