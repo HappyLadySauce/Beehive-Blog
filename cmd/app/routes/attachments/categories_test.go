@@ -9,8 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
 	pkgattachment "github.com/HappyLadySauce/Beehive-Blog/pkg/attachment"
+	"github.com/HappyLadySauce/Beehive-Blog/pkg/auth/jwt"
 )
 
 func TestListCategoriesForbidden(t *testing.T) {

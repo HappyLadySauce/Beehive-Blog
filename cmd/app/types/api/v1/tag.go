@@ -32,12 +32,12 @@ type UpdateTagRequest struct {
 // TagItem is the response item for tag listings.
 // TagItem 为标签列表项响应。
 type TagItem struct {
-	ID           int64      `json:"id"`
-	Name         string     `json:"name"`
-	Slug         string     `json:"slug"`
-	Description  *string    `json:"description,omitempty"`
-	Color        *string    `json:"color,omitempty"`
-	ContentCount int64      `json:"content_count,omitempty"`
+	ID           int64     `json:"id"`
+	Name         string    `json:"name"`
+	Slug         string    `json:"slug"`
+	Description  *string   `json:"description,omitempty"`
+	Color        *string   `json:"color,omitempty"`
+	ContentCount int64     `json:"content_count,omitempty"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
